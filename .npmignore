@@ -44,5 +44,8 @@ next-env.d.ts
 *.temp
 *.experiment.*
 
-# build output
-dist/
+# src input
+app/
+components/
+lib/
+pages/

@@ -18,10 +18,13 @@
     "postinstall": "npm run ws -- -y",
     "ws": "npx --yes next-ws-cli@latest patch"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "GENERATOR.md",
+    "APOLLO.md"
   ],
   "dependencies": {
     "@apollo/client": "^3.13.8",

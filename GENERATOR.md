@@ -11,12 +11,14 @@ This document describes the `Generator` function located in `lib/generator.ts`. 
 3.  **Generate:** Call the `generate` function with an `options` object defining the desired operation.
 
 ```typescript
-import { Generator, GenerateOptions, GenerateResult } from './generator';
-// Assuming schema is correctly loaded
-import schema from './schema.json'; 
+// Assuming 'nextjs-hasura-auth' is your published package name
+import { Generator, GenerateOptions, GenerateResult } from 'nextjs-hasura-auth'; 
+// Assuming schema is correctly loaded (you might need to handle schema loading differently when using the package)
+// import schema from './schema.json'; 
 
-// Initialize the generator
-const generate = Generator(schema);
+// Initialize the generator (Schema needs to be passed)
+// const generate = Generator(schema); 
+// TODO: Document how schema should be provided when using the package
 
 // Define options for your query
 const options: GenerateOptions = {

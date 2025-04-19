@@ -2,9 +2,11 @@
 
 This project provides a robust starting point for building applications using Next.js (App Router), Hasura, and strong authentication patterns. It features JWT-based authentication with NextAuth.js, a secure GraphQL proxy to Hasura, direct WebSocket support for subscriptions, and a powerful dynamic query generator.
 
-[![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md)
+[![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md) [![Apollo Client Documentation](https://img.shields.io/badge/Apollo%20Client%20Docs-MD-orange)](APOLLO.md)
 
 See [`GENERATOR.md`](GENERATOR.md) for detailed documentation on the dynamic GraphQL query generator, which simplifies creating queries, mutations, and subscriptions based on your Hasura schema.
+
+See [`APOLLO.md`](APOLLO.md) for details on the configured Apollo Client instance and how it handles authenticated requests and subscriptions.
 
 ## ✨ Features Checklist
 

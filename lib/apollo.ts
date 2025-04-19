@@ -4,7 +4,8 @@ import { getMainDefinition } from '@apollo/client/utilities';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient as graphqlWSClient } from 'graphql-ws';
 import fetch from 'cross-fetch';
-import Debug from '@/lib/debug';
+import Debug from './debug';
+import { useMemo } from 'react';
 
 // Create a debug logger for this module
 const debug = Debug('apollo');
@@ -41,6 +42,13 @@ export const getJwtSecret = (): Uint8Array => {
   }
 };
 
+interface ApolloOptions {
+  url?: string;
+  ws?: boolean;
+  token?: string;
+  secret?: string;
+}
+
 /**
  * Create Apollo Client
  * 
@@ -50,32 +58,25 @@ export const getJwtSecret = (): Uint8Array => {
  * @param {string} options.secret - Admin secret for Hasura
  * @returns {ApolloClient} Apollo Client
  */
-export function createClient(options: {
-  ws?: boolean;
-  token?: string;
-  secret?: string;
-} = {}) {
+export function createClient(options: ApolloOptions = {}) {
   // Default values
   const { 
+    url = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL,
     ws = false, 
     token = undefined, 
-    secret = undefined 
+    secret = process.env.HASURA_ADMIN_SECRET 
   } = options;
   
-  // Get required variables from .env or use passed values
-  const HASURA_ENDPOINT = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
-  const HASURA_ADMIN_SECRET = secret || process.env.HASURA_ADMIN_SECRET;
-  
-  if (!HASURA_ENDPOINT) {
-    throw new Error('❌ NEXT_PUBLIC_HASURA_GRAPHQL_URL not defined');
+  if (!url) {
+    throw new Error('❌ options.url or NEXT_PUBLIC_HASURA_GRAPHQL_URL not defined');
   }
   
-  debug('apollo', '🔌 Creating Apollo client with endpoint:', HASURA_ENDPOINT);
+  debug('apollo', '🔌 Creating Apollo client with endpoint:', url);
   
   
   // HTTP connection without authorization
   const publicHttpLink = new HttpLink({
-    uri: HASURA_ENDPOINT,
+    uri: url,
     fetch,
   });
   
@@ -96,13 +97,13 @@ export function createClient(options: {
   if (token) {
     // If token provided, use it for authorization
     httpLink = ApolloLink.from([authLink, publicHttpLink]);
-  } else if (HASURA_ADMIN_SECRET) {
+  } else if (secret) {
     // If no token but admin secret exists, use it
     httpLink = new HttpLink({
-      uri: HASURA_ENDPOINT,
+      uri: url,
       fetch,
       headers: {
-        'x-hasura-admin-secret': HASURA_ADMIN_SECRET || ''
+        'x-hasura-admin-secret': secret || ''
       }
     });;
   } else {
@@ -115,7 +116,7 @@ export function createClient(options: {
   
   // If WebSocket connection needed and we're in browser
   if (ws && isClient) {
-    const wsEndpoint = HASURA_ENDPOINT.replace('http', 'ws').replace('https', 'wss');
+    const wsEndpoint = url.replace('http', 'ws').replace('https', 'wss');
     
     // Configure connection parameters
     const connectionParams: { headers?: Record<string, string> } = {};
@@ -125,10 +126,10 @@ export function createClient(options: {
       connectionParams.headers = {
         Authorization: `Bearer ${token}`,
       };
-    } else if (HASURA_ADMIN_SECRET) {
+    } else if (secret) {
       // If no token but admin secret exists, use it
       connectionParams.headers = {
-        'x-hasura-admin-secret': HASURA_ADMIN_SECRET,
+        'x-hasura-admin-secret': secret,
       };
     }
     
@@ -185,6 +186,14 @@ export function getClient(options = {}) {
     clientInstance = createClient(options);
   }
   return clientInstance;
+}
+
+/**
+ * React hook to get Apollo client instance
+ * @returns Apollo client instance
+ */
+export function useClient(options: ApolloOptions) {
+  return useMemo(() => createClient(options), [options]);
 }
 
 const CHECK_CONNECTION = gql`
