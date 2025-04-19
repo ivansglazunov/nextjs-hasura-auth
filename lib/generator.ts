@@ -14,7 +14,8 @@ export interface GenerateOptions {
   operation: GenerateOperation;
   table: string;
   where?: Record<string, any>;
-  returning?: (string | Record<string, any>)[]; // More specific type? Consider Hasura types
+  // Allow array, object (for appending), or string (legacy split)
+  returning?: (string | Record<string, any>)[] | Record<string, any> | string; 
   aggregate?: Record<string, any>;
   object?: Record<string, any>;
   objects?: Record<string, any>[];
@@ -426,67 +427,81 @@ export function Generator(schema: any) { // TODO: Define a more specific type fo
 
     const varCounterRef = { count: varCounter }; // Use ref for mutable counter in recursion
 
-    // Process top-level returning fields
-    if (aggregate) {
-        const aggregateFields: string[] = [];
-        for (const [key, value] of Object.entries(aggregate)) {
-            if (typeof value === 'boolean' && value) {
-                aggregateFields.push(key);
-            } else if (typeof value === 'object' && value !== null) {
-                const subFields = Object.entries(value)
-                    .filter(([_, v]) => v)
-                    .map(([k]) => k)
-                    .join('\n            ');
-                if (subFields) {
-                     aggregateFields.push(`${key} {\n            ${subFields}\n          }`);
-                }
+    // ---- START MODIFICATION ----
+    let defaultFieldsGenerated = false;
+
+    // Function to generate default fields based on operation type and schema
+    const generateDefaultFields = () => {
+        if (defaultFieldsGenerated) return; // Generate only once
+
+        if (aggregate) {
+            // Aggregate logic already adds `aggregate { ... }` and potentially `nodes { ... }`
+            // No separate default fields needed here unless `returning` for nodes is omitted
+            // The existing aggregate logic handles the structure.
+        } else if (queryInfo.returning_fields && !isByPkOperation && operation !== 'delete') {
+             // Default fields for query, subscription, insert (non-PK)
+             returningFields.push('id');
+             ['name', 'email', 'created_at', 'updated_at'].forEach(f => {
+                 if (queryInfo.returning_fields[f]) returningFields.push(f);
+             });
+        } else if (isByPkOperation && operation === 'delete') {
+            // Default for delete_by_pk: Try to return PK fields, fallback to id
+            if (opts.pk_columns && queryInfo.returning_fields) {
+                Object.keys(opts.pk_columns).forEach(pkField => {
+                    if (queryInfo.returning_fields[pkField]) {
+                        returningFields.push(pkField);
+                    }
+                });
+            }
+            // If no PK fields were added, push id as fallback
+            if (returningFields.length === 0 && queryInfo.returning_fields?.id) {
+                returningFields.push('id');
+            }
+        } else { // Default for other mutations _by_pk (update) and query_by_pk
+            if (queryInfo.returning_fields) {
+                 returningFields.push('id'); // Default fallback
             }
         }
-         if (aggregateFields.length > 0) {
-            returningFields.push(`aggregate {\n          ${aggregateFields.join('\n          ')}\n        }`);
-         }
+        defaultFieldsGenerated = true;
+    };
 
-         if (returning) { // Add nodes if returning is also specified with aggregate
-             const nodeFields = (Array.isArray(returning) ? returning : [returning])
-                 .map(field => processReturningField(field, varCounterRef))
+    // Process returning option
+    if (returning) {
+        if (Array.isArray(returning)) { // Explicit array provided - overrides defaults
+            returning
+                .map(field => processReturningField(field, varCounterRef))
+                .filter(Boolean)
+                .forEach(processedField => returningFields.push(processedField));
+             defaultFieldsGenerated = true; // Mark defaults as handled/overridden
+        } else if (typeof returning === 'string') { // Explicit string provided - overrides defaults
+            returning.split(/\s+/).filter(Boolean)
+                 .map(field => processReturningField(field, varCounterRef)) // Process simple strings
                  .filter(Boolean)
-                 .join('\n          ');
-             if (nodeFields) {
-                 returningFields.push(`nodes {\n          ${nodeFields}\n        }`);
-             }
-         }
-
-    } else if (returning) {
-        (Array.isArray(returning) ? returning : [returning]) // Ensure it's an array
-            .map(field => processReturningField(field, varCounterRef))
-            .filter(Boolean) // Filter out empty strings from skipped fields
-            .forEach(processedField => returningFields.push(processedField));
-    } else if (queryInfo.returning_fields && !isByPkOperation && operation !== 'delete') { // Default fields for non-PK queries/subs/inserts
-        returningFields.push('id');
-        // Add other common fields if they exist in schema
-        ['name', 'email', 'created_at', 'updated_at'].forEach(f => {
-            if (queryInfo.returning_fields[f]) returningFields.push(f);
-        });
-    } else if (isByPkOperation && operation === 'delete') {
-         // Default for delete_by_pk might be just the PK field or nothing practical to return
-         // Often, affected_rows is preferred, handle below. Let's return PK if available.
-         if (opts.pk_columns && queryInfo.returning_fields) {
-             Object.keys(opts.pk_columns).forEach(pkField => {
-                 if (queryInfo.returning_fields[pkField]) {
-                     returningFields.push(pkField);
+                 .forEach(processedField => returningFields.push(processedField));
+             defaultFieldsGenerated = true; // Mark defaults as handled/overridden
+        } else if (typeof returning === 'object' && returning !== null) { // NEW: Object provided - ADD to defaults
+             // 1. Generate default fields first
+             generateDefaultFields();
+             // 2. Process the object as additional relations/fields
+             Object.entries(returning).forEach(([key, value]) => {
+                 // Construct the object format processReturningField expects: { relationName: subOptions }
+                 const fieldObject = { [key]: value };
+                 const processedField = processReturningField(fieldObject, varCounterRef);
+                 if (processedField) {
+                     // Avoid adding duplicates if default already added it (less likely for relations)
+                     if (!returningFields.includes(processedField)) {
+                        returningFields.push(processedField);
+                     }
                  }
              });
-         } else {
-             returningFields.push('id'); // Default fallback
-         }
-
-    } else {
-        // Default for mutations returning single object or _by_pk queries
-        if (queryInfo.returning_fields) {
-             returningFields.push('id'); // Default fallback
-         }
+        } else {
+             // Invalid returning type? Fallback to defaults.
+             generateDefaultFields();
+        }
+    } else { // returning is null or undefined - Use defaults
+        generateDefaultFields();
     }
-
+    // ---- END MODIFICATION ----
 
      varCounter = varCounterRef.count; // Update main counter
 

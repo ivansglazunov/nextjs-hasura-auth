@@ -34,6 +34,9 @@ const { queryString, query, variables }: GenerateResult = generate(options);
 // or `queryString` for logging/debugging.
 ```
 
+<details>
+<summary>Options (`GenerateOptions` Interface)</summary>
+
 ## Options (`GenerateOptions` Interface)
 
 The `generate` function accepts an object with the following properties:
@@ -44,8 +47,8 @@ The `generate` function accepts an object with the following properties:
     *   Type: `string`
 *   `where`: (Optional) An object defining the filtering conditions for `query`, `subscription`, `update`, and `delete` operations. Structure should match Hasura's `_bool_exp` input type.
     *   Type: `Record<string, any>`
-*   `returning`: (Optional) Specifies the fields to return from the operation. Can be an array of strings or objects for nested fields/relations. If omitted for queries/subscriptions, defaults to `id` and common fields like `name`, `email`, `created_at`, `updated_at` if found in the schema. For mutations, defaults vary (e.g., `affected_rows` for bulk, specific fields for `_by_pk`/`_one`).
-    *   Type: `(string | Record<string, any>)[]`
+*   `returning`: (Optional) Specifies the fields to return from the operation. Can be an array of strings or objects for nested fields/relations, or a single object to append fields/relations to defaults. If omitted for queries/subscriptions, defaults to `id` and common fields like `name`, `email`, `created_at`, `updated_at` if found in the schema. For mutations, defaults vary (e.g., `affected_rows` for bulk, specific fields for `_by_pk`/`_one`).
+    *   Type: `(string | Record<string, any>)[] | Record<string, any> | string`
 *   `aggregate`: (Optional) An object defining aggregation operations for `query` operations. Will generate a query targeting the `<table>_aggregate` field.
     *   Type: `Record<string, any>` (e.g., `{ count: true, max: { created_at: true } }`)
 *   `object`: (Optional) For `insert` operations targeting a single row (`insert_<table>_one`). The object containing the data to insert. Use this OR `objects`, not both.
@@ -68,19 +71,101 @@ The `generate` function accepts an object with the following properties:
     *   Type: `Record<string, any>`
 *   `varCounter`: (Optional) Initial counter for variable naming (e.g., `$v1`, `$v2`). Defaults to 1.
     *   Type: `number`
+</details>
 
 ## Examples
 
 *(Note: Variable types like `users_bool_exp`, `[users_order_by!]`, `uuid!`, `users_pk_columns_input!`, `users_set_input!`, `[users_insert_input!]!` are inferred based on schema structure and conventions. Ensure your `schema.json` reflects the actual types used by Hasura.)*
 
-### 1. Basic Query with `where`
+**Navigation**
+
+*   [1. Advanced Nested Query (Appending to Defaults)](#1-advanced-nested-query-appending-to-defaults) 
+*   [2. Basic Query with `where`](#2-basic-query-with-where)
+*   [3. Query with Pagination and Sorting](#3-query-with-pagination-and-sorting)
+*   [4. Query by Primary Key](#4-query-by-primary-key)
+*   [5. Nested Query with Parameters and Alias](#5-nested-query-with-parameters-and-alias)
+*   [6. Aggregate Query](#6-aggregate-query)
+*   [7. Insert Mutation (Single Object)](#7-insert-mutation-single-object)
+*   [8. Insert Mutation (Bulk)](#8-insert-mutation-bulk)
+*   [9. Update Mutation by Primary Key](#9-update-mutation-by-primary-key)
+*   [10. Update Mutation by `where` Condition](#10-update-mutation-by-where-condition)
+*   [11. Delete Mutation by Primary Key](#11-delete-mutation-by-primary-key)
+*   [12. Delete Mutation by `where` Condition](#12-delete-mutation-by-where-condition)
+*   [13. Subscription](#13-subscription)
+
+
+### 1. Advanced Nested Query (Appending to Defaults)
+
+This primary example demonstrates appending a complex relation to the default returned fields by providing `returning` as an object. This relation includes an alias, filtering (`where`), and pagination (`limit`).
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    where: { id: { _eq: 'user-for-test-13' } },
+    // Provide returning as an object to append relations/fields to defaults
+    returning: {
+      accounts: { // Key is the relation name from schema
+        // --- Parameters for the relation --- 
+        alias: 'github_accounts', // Optional: Alias for the field in the result
+        where: { provider: { _eq: 'github' } }, // Optional: Filter relation results
+        limit: 5, // Optional: Limit relation results
+        // order_by: { created_at: 'desc' }, // Also supported
+        // offset: 10, // Also supported
+        // ... any other valid args for this relation from schema
+        // -------------------------------------
+        returning: ['id', 'provider'] // Fields to return for this relation
+      }
+      // Can add more relations here, e.g.:
+      // posts: { where: { published: { _eq: true } }, returning: ['id', 'title'] } 
+    }
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+// Note: Type github_accounts_bool_exp is derived from the alias
+query QueryUsers($v1: users_bool_exp, $v2: github_accounts_bool_exp, $v3: Int) {
+  users(where: $v1) {
+    # Default fields (id, name, etc. based on schema):
+    id
+    name
+    email
+    created_at
+    updated_at
+    # Appended relation (using alias) with parameters:
+    accounts: github_accounts(where: $v2, limit: $v3) {
+      id
+      provider
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "id": { "_eq": "user-for-test-13" } },
+  "v2": { "provider": { "_eq": "github" } },
+  "v3": 5
+}
+```
+</details>
+
+### 2. Basic Query with `where`
 
 ```typescript
 const options: GenerateOptions = {
   operation: 'query',
   table: 'users',
   where: { email: { _ilike: '%@example.com' } },
-  returning: ['id', 'name', 'email']
+  returning: ['id', 'name', 'email'] // Explicit returning array (overrides defaults)
 };
 const result = generate(options);
 ```
@@ -113,13 +198,13 @@ query QueryUsers($v1: users_bool_exp) {
 ```
 </details>
 
-### 2. Query with Pagination and Sorting
+### 3. Query with Pagination and Sorting
 
 ```typescript
 const options: GenerateOptions = {
   operation: 'query',
   table: 'users',
-  returning: ['id', 'name', 'email'],
+  returning: ['id', 'name', 'email'], // Explicit array
   limit: 5,
   offset: 10,
   order_by: [{ created_at: 'desc' }]
@@ -157,13 +242,13 @@ query QueryUsers($v1: Int, $v2: Int, $v3: [users_order_by!]) {
 ```
 </details>
 
-### 3. Query by Primary Key
+### 4. Query by Primary Key
 
 ```typescript
 const options: GenerateOptions = {
     operation: 'query',
     table: 'users', // Base table name
-    returning: ['id', 'name', 'email'],
+    returning: ['id', 'name', 'email'], // Explicit array
     pk_columns: { id: '123e4567-e89b-12d3-a456-426614174000' }
 };
 const result = generate(options);
@@ -193,7 +278,9 @@ query QueryUsersByPk($v1: uuid!) {
 ```
 </details>
 
-### 4. Nested Query with Parameters and Alias
+### 5. Nested Query with Parameters and Alias
+
+This example uses an *explicit array* for `returning`, fully defining the structure including the nested relation.
 
 ```typescript
 const options: GenerateOptions = {
@@ -249,7 +336,7 @@ query QueryUsers($v1: users_bool_exp, $v2: active_google_accounts_bool_exp, $v3:
 ```
 </details>
 
-### 5. Aggregate Query
+### 6. Aggregate Query
 
 ```typescript
 const options: GenerateOptions = {
@@ -260,7 +347,7 @@ const options: GenerateOptions = {
     count: true,
     max: { created_at: true }
   },
-  // Optionally add `returning` to get nodes alongside aggregate
+  // Optionally add `returning` (as array) to get nodes alongside aggregate
   // returning: ['id', 'name'] 
 };
 const result = generate(options);
@@ -278,7 +365,7 @@ query QueryUsersAggregate($v1: users_bool_exp) {
         created_at
       }
     }
-    # nodes { # Only if returning was provided
+    # nodes { # Only if returning array was provided
     #   id  
     #   name
     # }
@@ -301,7 +388,7 @@ query QueryUsersAggregate($v1: users_bool_exp) {
 ```
 </details>
 
-### 6. Insert Mutation (Single Object)
+### 7. Insert Mutation (Single Object)
 
 ```typescript
 const options: GenerateOptions = {
@@ -311,7 +398,7 @@ const options: GenerateOptions = {
       name: 'Single User',
       email: 'single@example.com'
     },
-    returning: ['id', 'name', 'email']
+    returning: ['id', 'name', 'email'] // Explicit array
 };
 const result = generate(options);
 ```
@@ -343,7 +430,7 @@ mutation MutationInsertUsersOne($v1: users_insert_input!) {
 ```
 </details>
 
-### 7. Insert Mutation (Bulk)
+### 8. Insert Mutation (Bulk)
 
 ```typescript
 const options: GenerateOptions = {
@@ -354,7 +441,7 @@ const options: GenerateOptions = {
     },{
       name: 'New User 2', email: 'new2@example.com'
     }],
-    returning: ['id', 'name']
+    returning: ['id', 'name'] // Explicit array
 };
 const result = generate(options);
 ```
@@ -388,7 +475,7 @@ mutation MutationInsertUsers($v1: [users_insert_input!]!) {
 ```
 </details>
 
-### 8. Update Mutation by Primary Key
+### 9. Update Mutation by Primary Key
 
 ```typescript
 const options: GenerateOptions = {
@@ -396,7 +483,7 @@ const options: GenerateOptions = {
     table: 'users',
     pk_columns: { id: '123e4567-e89b-12d3-a456-426614174000' },
     _set: { name: 'Updated User' },
-    returning: ['id', 'name', 'updated_at']
+    returning: ['id', 'name', 'updated_at'] // Explicit array
 };
 const result = generate(options);
 ```
@@ -430,7 +517,7 @@ mutation MutationUpdateUsersByPk($v1: users_pk_columns_input!, $v2: users_set_in
 ```
 </details>
 
-### 9. Update Mutation by `where` Condition
+### 10. Update Mutation by `where` Condition
 
 ```typescript
 const options: GenerateOptions = {
@@ -438,7 +525,7 @@ const options: GenerateOptions = {
   table: 'users',
   where: { email: { _ilike: '%@test.com' } },
   _set: { name: 'Updated Bulk User' },
-  returning: ['affected_rows'] // Or specify fields for returning { ... }
+  returning: ['affected_rows'] // Explicit array (can also use object returning { ... })
 };
 const result = generate(options);
 ```
@@ -450,7 +537,7 @@ const result = generate(options);
 mutation MutationUpdateUsers($v1: users_bool_exp!, $v2: users_set_input!) {
   update_users(where: $v1, _set: $v2) {
     affected_rows
-    # returning { ... } # If returning fields were specified
+    # returning { ... } # Only if returning fields were specified
   }
 }
 ```
@@ -467,7 +554,7 @@ mutation MutationUpdateUsers($v1: users_bool_exp!, $v2: users_set_input!) {
 ```
 </details>
 
-### 10. Delete Mutation by Primary Key
+### 11. Delete Mutation by Primary Key
 
 ```typescript
 const options: GenerateOptions = {
@@ -503,7 +590,7 @@ mutation MutationDeleteUsersByPk($v1: uuid!) {
 ```
 </details>
 
-### 11. Delete Mutation by `where` Condition
+### 12. Delete Mutation by `where` Condition
 
 ```typescript
 const options: GenerateOptions = {
@@ -541,7 +628,7 @@ mutation MutationDeleteUsers($v1: users_bool_exp!) {
 ```
 </details>
 
-### 12. Subscription
+### 13. Subscription
 
 ```typescript
 const options: GenerateOptions = {

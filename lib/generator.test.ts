@@ -556,6 +556,55 @@ describe('GraphQL Query Generator', () => {
     debug('✅ Nested query with alias/params passed');
   });
 
+  it('Test 13: Should append relations (with alias, where, limit) to default returning fields when returning is an object', () => {
+    debug('\n📝 Test 13: Append relations (alias, where, limit) via returning object');
+    const options: GenerateOptions = {
+        operation: 'query',
+        table: 'users',
+        where: { id: { _eq: 'user-for-test-13' } },
+        // Provide returning as an object to append to defaults
+        returning: {
+          accounts: { // Relation name from schema (used as key)
+            alias: 'github_accounts', // <<< ADDED ALIAS
+            where: { provider: { _eq: 'github' } },
+            limit: 5, // <<< ADDED LIMIT
+            // order_by, offset etc. also supported here
+            returning: ['id', 'provider']
+          }
+        }
+    };
+    const result = generate(options);
+
+    // Expected query should include default fields + the aliased 'github_accounts' relation WITH where & limit
+    const expectedQuery = `
+      query QueryUsers($v1: users_bool_exp, $v2: github_accounts_bool_exp, $v3: Int) { 
+        users(where: $v1) {
+          id
+          name
+          email
+          created_at
+          updated_at
+          accounts: github_accounts(where: $v2, limit: $v3) { 
+            id
+            provider
+          }
+        }
+      }
+    `;
+    // Note: Type for $v2 uses alias base `github_accounts_bool_exp`
+
+    const expectedVariables = {
+      v1: { id: { _eq: 'user-for-test-13' } },
+      v2: { provider: { _eq: 'github' } },
+      v3: 5 // <<< Added v3 variable for limit
+    };
+
+    // Normalize and compare
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    debug('✅ Appending relations (alias, where, limit) via returning object passed');
+  });
+
 }); // End describe block
 
 // Add a log to indicate the end of the test file execution in case tests run silently
