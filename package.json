@@ -15,6 +15,7 @@
     "lint": "next lint --turbopack",
     "test": "jest",
     "test:build": "jest build.test.ts",
+    "postinstall": "npm run ws",
     "ws": "npx --yes next-ws-cli@latest patch"
   },
   "main": "dist/index.js",
