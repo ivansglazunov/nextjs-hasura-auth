@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { checkConnection, getClient } from '../apollo';
-import debug from '@/lib/debug';
+import Debug from '@/lib/debug';
 
 // Create a debug logger for this module
-const log = debug('hooks:connection');
+const debug = Debug('hooks:connection');
 
 type ConnectionStatus = 'connecting' | 'connected' | 'error';
 

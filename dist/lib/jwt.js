@@ -19,7 +19,7 @@ const debug_1 = __importDefault(require("@/lib/debug"));
 // No explicit import needed for it, but Node's 'crypto' might be needed for other things if used elsewhere.
 // import crypto from 'crypto'; // We don't need the Node-specific module anymore for hashing.
 // Create a debug logger for this module
-const log = (0, debug_1.default)('jwt');
+const debug = (0, debug_1.default)('jwt');
 /**
  * Get JWT secret from environment variables (for signing/verifying JWS)
  * This remains synchronous as it doesn't involve async crypto operations here.
@@ -42,7 +42,7 @@ const getJwtSecret = () => {
         return new TextEncoder().encode(secretKey);
     }
     catch (error) {
-        log('Error getting JWT secret:', error); // Use logger
+        debug('Error getting JWT secret:', error); // Use logger
         throw error;
     }
 };
@@ -66,7 +66,7 @@ const getNextAuthSecret = () => __awaiter(void 0, void 0, void 0, function* () {
         return new Uint8Array(hashBuffer); // Return the 32-byte hash
     }
     catch (error) {
-        log('Error getting/hashing NextAuth secret:', error); // Use logger
+        debug('Error getting/hashing NextAuth secret:', error); // Use logger
         throw error;
     }
 });
@@ -88,7 +88,7 @@ const getJwtAlgorithm = () => {
         }
     }
     catch (error) {
-        log('Error getting JWT algorithm:', error); // Use logger
+        debug('Error getting JWT algorithm:', error); // Use logger
         return 'HS256';
     }
 };
@@ -117,11 +117,11 @@ const generateJWT = (userId_1, ...args_1) => __awaiter(void 0, [userId_1, ...arg
             .setIssuedAt()
             .setExpirationTime(expiresIn)
             .sign(secret);
-        log('JWT (JWS) token successfully created using jose');
+        debug('JWT (JWS) token successfully created using jose');
         return token;
     }
     catch (error) {
-        log('Error generating JWT (JWS) with jose:', error);
+        debug('Error generating JWT (JWS) with jose:', error);
         throw error;
     }
 });
@@ -135,11 +135,11 @@ const verifyJWT = (token) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const secret = (0, exports.getJwtSecret)();
         const { payload } = yield (0, jose_1.jwtVerify)(token, secret);
-        log('JWT (JWS) token successfully verified');
+        debug('JWT (JWS) token successfully verified');
         return payload;
     }
     catch (error) {
-        log('Error verifying JWT (JWS):', error);
+        debug('Error verifying JWT (JWS):', error);
         throw error;
     }
 });
@@ -153,13 +153,13 @@ const decryptNextAuthToken = (sessionToken) => __awaiter(void 0, void 0, void 0,
     try {
         // Now calls the async version of getNextAuthSecret
         const secret = yield (0, exports.getNextAuthSecret)();
-        log('Attempting to decrypt NextAuth session token (JWE)...');
+        debug('Attempting to decrypt NextAuth session token (JWE)...');
         const { payload } = yield (0, jose_1.jwtDecrypt)(sessionToken, secret);
-        log('NextAuth session token (JWE) successfully decrypted.');
+        debug('NextAuth session token (JWE) successfully decrypted.');
         return payload;
     }
     catch (error) {
-        log('Error decrypting NextAuth session token (JWE):', error);
+        debug('Error decrypting NextAuth session token (JWE):', error);
         throw error; // Re-throw the error to be handled by the caller
     }
 });

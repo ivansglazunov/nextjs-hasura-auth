@@ -1,31 +1,24 @@
-import _debug, { Debugger } from 'debug';
+import _debug from 'debug';
+// @ts-ignore
 import pckg from '../package.json'; // Using relative path
 
+export type DebuggerFunction = (...args: any[]) => void;
+
 // Initialize root debugger using package name
-const rootDebug: Debugger = _debug(pckg.shortName || pckg.name);
+const rootDebug = _debug(pckg.shortName || pckg.name);
 
 /**
- * Debug utility.
- * 
- * Allows two calling patterns:
- * 1. debug('namespace')('message', ...args) - Returns a debugger function for the namespace.
- * 2. debug('message', ...args) - Logs a message with the default namespace ('app').
- * 
- * @param namespace - Namespace for the message or the message itself (if other args passed).
- * @param args - Arguments to log (used only in the second calling pattern).
- * @returns Either a debugger function for the specified namespace or void.
+ * Debug utility factory.
+ *
+ * Always returns a debugger function for the specified namespace.
+ * If no namespace is provided, uses 'app' as the default.
+ *
+ * @param namespace - Namespace for the debugger.
+ * @returns A debugger function for the specified namespace.
  */
-function debug(namespace: string, ...args: any[]): Debugger | void {
-  if (args.length > 0) {
-    // Pattern 2: Used like debug('message', ...args)
-    // Here, namespace is actually the first message argument
-    const log = rootDebug.extend('app'); // Default namespace
-    log(namespace, ...args); // Log namespace as the first argument
-    return;
-  }
-  // Pattern 1: Used like debug('namespace')
-  // Return the debugger function for that namespace
-  return rootDebug.extend(namespace || 'app');
+function Debug(namespace?: string): DebuggerFunction {
+  // Return the debugger function for that namespace, defaulting to 'app'
+  return rootDebug.extend(namespace || 'app') as DebuggerFunction;
 }
 
-export default debug; 
+export default Debug; 

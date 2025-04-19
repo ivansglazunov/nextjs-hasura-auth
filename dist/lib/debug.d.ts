@@ -1,14 +1,12 @@
-import { Debugger } from 'debug';
+export type DebuggerFunction = (...args: any[]) => void;
 /**
- * Debug utility.
+ * Debug utility factory.
  *
- * Allows two calling patterns:
- * 1. debug('namespace')('message', ...args) - Returns a debugger function for the namespace.
- * 2. debug('message', ...args) - Logs a message with the default namespace ('app').
+ * Always returns a debugger function for the specified namespace.
+ * If no namespace is provided, uses 'app' as the default.
  *
- * @param namespace - Namespace for the message or the message itself (if other args passed).
- * @param args - Arguments to log (used only in the second calling pattern).
- * @returns Either a debugger function for the specified namespace or void.
+ * @param namespace - Namespace for the debugger.
+ * @returns A debugger function for the specified namespace.
  */
-declare function debug(namespace: string, ...args: any[]): Debugger | void;
-export default debug;
+declare function Debug(namespace?: string): DebuggerFunction;
+export default Debug;

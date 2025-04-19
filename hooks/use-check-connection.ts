@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { checkConnection } from '@/lib/apollo'; // Assuming checkConnection is exported from lib/apollo
 import { useApolloClient } from '@apollo/client';
-import debug from '@/lib/debug'; // Import from the new path
+import Debug from '@/lib/debug'; // Import from the new path
 
 // Create logger function
-const log = debug('hook:useCheckConnection') as debug.Debugger;
+const debug = Debug('hook:useCheckConnection');
 
 type ConnectionStatus = 'connecting' | 'connected' | 'error';
 
@@ -20,21 +20,21 @@ export function useCheckConnection() {
   const client = useApolloClient(); // Get Apollo Client from context
 
   const check = useCallback(async () => {
-    log('🔄 Checking Hasura connection...');
+    debug('🔄 Checking Hasura connection...');
     setStatus('connecting');
     setError(null);
     try {
       const isConnected = await checkConnection(client);
       if (isConnected) {
-        log('✅ Connection successful');
+        debug('✅ Connection successful');
         setStatus('connected');
       } else {
-        log('⚠️ Connection failed (no error, but check returned false)');
+        debug('⚠️ Connection failed (no error, but check returned false)');
         setStatus('error');
         setError(new Error('Connection check returned false'));
       }
     } catch (err: any) {
-      log('❌ Connection error:', err);
+      debug('❌ Connection error:', err);
       setStatus('error');
       setError(err);
     }

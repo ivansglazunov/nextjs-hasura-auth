@@ -1,11 +1,11 @@
 import { SignJWT, jwtVerify, jwtDecrypt, type JWTPayload } from 'jose';
-import debug from '@/lib/debug';
+import Debug from '@/lib/debug';
 // crypto.subtle is globally available in Node >= 15, browsers, and edge runtimes.
 // No explicit import needed for it, but Node's 'crypto' might be needed for other things if used elsewhere.
 // import crypto from 'crypto'; // We don't need the Node-specific module anymore for hashing.
 
 // Create a debug logger for this module
-const log = debug('jwt') as debug.Debugger;
+const debug = Debug('jwt');
 
 /**
  * Get JWT secret from environment variables (for signing/verifying JWS)
@@ -27,7 +27,7 @@ export const getJwtSecret = (): Uint8Array => {
     }
     return new TextEncoder().encode(secretKey);
   } catch (error) {
-    log('Error getting JWT secret:', error); // Use logger
+    debug('Error getting JWT secret:', error); // Use logger
     throw error;
   }
 };
@@ -50,7 +50,7 @@ export const getNextAuthSecret = async (): Promise<Uint8Array> => {
     const hashBuffer = await crypto.subtle.digest('SHA-256', secretBuffer);
     return new Uint8Array(hashBuffer); // Return the 32-byte hash
   } catch (error) {
-    log('Error getting/hashing NextAuth secret:', error); // Use logger
+    debug('Error getting/hashing NextAuth secret:', error); // Use logger
     throw error;
   }
 };
@@ -70,7 +70,7 @@ export const getJwtAlgorithm = (): string => {
       return 'HS256';
     }
   } catch (error) {
-    log('Error getting JWT algorithm:', error); // Use logger
+    debug('Error getting JWT algorithm:', error); // Use logger
     return 'HS256';
   }
 };
@@ -108,10 +108,10 @@ export const generateJWT = async (
       .setIssuedAt()
       .setExpirationTime(expiresIn)
       .sign(secret);
-    log('JWT (JWS) token successfully created using jose');
+    debug('JWT (JWS) token successfully created using jose');
     return token;
   } catch (error) {
-    log('Error generating JWT (JWS) with jose:', error);
+    debug('Error generating JWT (JWS) with jose:', error);
     throw error;
   }
 };
@@ -125,10 +125,10 @@ export const verifyJWT = async (token: string): Promise<JWTPayload> => {
   try {
     const secret = getJwtSecret();
     const { payload } = await jwtVerify(token, secret);
-    log('JWT (JWS) token successfully verified');
+    debug('JWT (JWS) token successfully verified');
     return payload;
   } catch (error) {
-    log('Error verifying JWT (JWS):', error);
+    debug('Error verifying JWT (JWS):', error);
     throw error;
   }
 };
@@ -142,12 +142,12 @@ export const decryptNextAuthToken = async (sessionToken: string): Promise<JWTPay
   try {
     // Now calls the async version of getNextAuthSecret
     const secret = await getNextAuthSecret(); 
-    log('Attempting to decrypt NextAuth session token (JWE)...');
+    debug('Attempting to decrypt NextAuth session token (JWE)...');
     const { payload } = await jwtDecrypt(sessionToken, secret);
-    log('NextAuth session token (JWE) successfully decrypted.');
+    debug('NextAuth session token (JWE) successfully decrypted.');
     return payload;
   } catch (error) {
-    log('Error decrypting NextAuth session token (JWE):', error);
+    debug('Error decrypting NextAuth session token (JWE):', error);
     throw error; // Re-throw the error to be handled by the caller
   }
 };

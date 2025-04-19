@@ -7,9 +7,9 @@ import { Status } from '@/components/nha/status';
 import { CodeBlock } from '@/components/code-block';
 import { Button } from '../ui/button';
 import { RefreshCw } from 'lucide-react';
-import debug from '@/lib/debug';
+import Debug from '@/lib/debug';
 
-const log = debug('auth:get-status') as debug.Debugger;
+const debug = Debug('auth:get-status');
 
 type AuthData = { authenticated: false } | { authenticated: true, token: any };
 
@@ -19,7 +19,7 @@ export function GetAuthStatus() {
   const [error, setError] = useState<any>(null);
 
   const fetchData = async () => {
-    log('GET /api/auth: Fetching status...');
+    debug('GET /api/auth: Fetching status...');
     setStatus('loading');
     setError(null);
     setAuthData(null);
@@ -29,11 +29,11 @@ export function GetAuthStatus() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data: AuthData = await response.json();
-      log('GET /api/auth: Fetch successful', data);
+      debug('GET /api/auth: Fetch successful', data);
       setAuthData(data);
       setStatus('success');
     } catch (err: any) {
-      log('GET /api/auth: Fetch error:', err);
+      debug('GET /api/auth: Fetch error:', err);
       setError(err);
       setStatus('error');
     }

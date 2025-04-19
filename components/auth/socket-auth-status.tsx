@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Status } from '@/components/nha/status';
 import { CodeBlock } from '@/components/code-block';
-import debug from '@/lib/debug';
+import Debug from '@/lib/debug';
 
-const log = debug('auth:socket-status') as debug.Debugger;
+const debug = Debug('auth:socket-status');
 
 type SocketAuthData = { authenticated: false } | { authenticated: true, userId: string, token: any };
 
@@ -24,14 +24,14 @@ export function SocketAuthStatus() {
     // Use current host and port, but path /api/auth
     const wsUrl = `${protocol}://${window.location.host}/api/auth`;
     
-    log(`Attempting to connect WebSocket: ${wsUrl}`);
+    debug(`Attempting to connect WebSocket: ${wsUrl}`);
     setConnectionStatus('connecting');
     setError(null);
     setAuthData(null);
 
     // Close previous connection if it exists
     if (ws.current && ws.current.readyState !== WebSocket.CLOSED) {
-      log('Closing previous WebSocket connection.');
+      debug('Closing previous WebSocket connection.');
       ws.current.close();
     }
 
@@ -39,7 +39,7 @@ export function SocketAuthStatus() {
       ws.current = new WebSocket(wsUrl);
 
       ws.current.onopen = () => {
-        log('WebSocket connection opened.');
+        debug('WebSocket connection opened.');
         setConnectionStatus('connected');
         // The auth_status message should arrive from the server immediately after opening
       };
@@ -47,7 +47,7 @@ export function SocketAuthStatus() {
       ws.current.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data.toString());
-          log('WebSocket message received:', message);
+          debug('WebSocket message received:', message);
           if (message.type === 'auth_status') {
             setAuthData(message as SocketAuthData);
           } else if (message.type === 'auth_error') {
@@ -56,20 +56,20 @@ export function SocketAuthStatus() {
           }
           // Handle other message types if needed
         } catch (parseError) {
-          log('Error parsing WebSocket message:', parseError, 'Raw data:', event.data);
+          debug('Error parsing WebSocket message:', parseError, 'Raw data:', event.data);
           setError(new Error('Failed to parse message from server'));
           setConnectionStatus('error');
         }
       };
 
       ws.current.onerror = (event) => {
-        log('WebSocket error:', event);
+        debug('WebSocket error:', event);
         setError(new Error('WebSocket connection error'));
         setConnectionStatus('error');
       };
 
       ws.current.onclose = (event) => {
-        log(`WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}`);
+        debug(`WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}`);
         // Do not reset status to idle if closure was expected or after an error
         if (connectionStatus !== 'error') {
           setConnectionStatus('idle'); // Or another state like 'disconnected'
@@ -78,7 +78,7 @@ export function SocketAuthStatus() {
       };
 
     } catch (connectionError) {
-        log('Failed to initialize WebSocket:', connectionError);
+        debug('Failed to initialize WebSocket:', connectionError);
         setError(connectionError);
         setConnectionStatus('error');
     }
@@ -90,7 +90,7 @@ export function SocketAuthStatus() {
     // Cleanup on component unmount
     return () => {
       if (ws.current) {
-        log('Closing WebSocket connection on component unmount.');
+        debug('Closing WebSocket connection on component unmount.');
         ws.current.close();
       }
     };

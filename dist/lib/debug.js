@@ -4,30 +4,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const debug_1 = __importDefault(require("debug"));
+// @ts-ignore
 const package_json_1 = __importDefault(require("../package.json")); // Using relative path
 // Initialize root debugger using package name
 const rootDebug = (0, debug_1.default)(package_json_1.default.shortName || package_json_1.default.name);
 /**
- * Debug utility.
+ * Debug utility factory.
  *
- * Allows two calling patterns:
- * 1. debug('namespace')('message', ...args) - Returns a debugger function for the namespace.
- * 2. debug('message', ...args) - Logs a message with the default namespace ('app').
+ * Always returns a debugger function for the specified namespace.
+ * If no namespace is provided, uses 'app' as the default.
  *
- * @param namespace - Namespace for the message or the message itself (if other args passed).
- * @param args - Arguments to log (used only in the second calling pattern).
- * @returns Either a debugger function for the specified namespace or void.
+ * @param namespace - Namespace for the debugger.
+ * @returns A debugger function for the specified namespace.
  */
-function debug(namespace, ...args) {
-    if (args.length > 0) {
-        // Pattern 2: Used like debug('message', ...args)
-        // Here, namespace is actually the first message argument
-        const log = rootDebug.extend('app'); // Default namespace
-        log(namespace, ...args); // Log namespace as the first argument
-        return;
-    }
-    // Pattern 1: Used like debug('namespace')
-    // Return the debugger function for that namespace
+function Debug(namespace) {
+    // Return the debugger function for that namespace, defaulting to 'app'
     return rootDebug.extend(namespace || 'app');
 }
-exports.default = debug;
+exports.default = Debug;
