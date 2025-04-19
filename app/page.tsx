@@ -19,9 +19,19 @@ import pckg from "@/package.json"
 import { HasuraCard } from "@/components/hasura/card"
 import { ProxyCard } from "@/components/proxy/card"
 import { ApolloCard } from "@/components/apollo/card"
-import { AuthCard } from "@/components/auth/card"
+import { SessionCard } from "@/components/auth/session-card"
+import { AuthActionsCard } from "@/components/auth/auth-actions-card"
 
-export default function Page() {
+// Imports for getting server-side session
+import { getServerSession } from "next-auth/next"
+import authOptions from "@/app/api/auth/[...nextauth]/options" 
+import { Session } from "next-auth" // Import Session type
+
+// Now this is an async server component
+export default async function Page() {
+  // Get session on the server
+  const session: Session | null = await getServerSession(authOptions);
+
   return (
     <SidebarProvider>
       <AppSidebar activeUrl={'/'} />
@@ -48,7 +58,8 @@ export default function Page() {
             <HasuraCard/>
             <ProxyCard/>
             <ApolloCard/>
-            <AuthCard/>
+            <AuthActionsCard/>
+            <SessionCard serverSession={session}/>
           </div>
           <div className="grid auto-rows-min gap-4 md:grid-cols-3">
             <div className="aspect-video rounded-xl bg-muted/50" />

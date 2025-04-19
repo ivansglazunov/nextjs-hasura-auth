@@ -3,6 +3,13 @@
 // For React 18 testing
 require('@testing-library/jest-dom');
 
+// Add TextEncoder and TextDecoder for jose library
+if (typeof TextEncoder === 'undefined') {
+  const { TextEncoder, TextDecoder } = require('util');
+  global.TextEncoder = TextEncoder;
+  global.TextDecoder = TextDecoder;
+}
+
 // Mock next/router
 jest.mock('next/router', () => ({
   useRouter: () => ({

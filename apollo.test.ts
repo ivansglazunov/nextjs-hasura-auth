@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from '@jest/globals';
 import dotenv from 'dotenv';
-import debug from './debug';
+import debug from './lib/debug';
 import { checkConnection, createClient, getClient } from './lib/apollo';
 
 // Explicitly load the .env file

@@ -22,9 +22,9 @@ const utilities_1 = require("@apollo/client/utilities");
 const subscriptions_1 = require("@apollo/client/link/subscriptions");
 const graphql_ws_1 = require("graphql-ws");
 const cross_fetch_1 = __importDefault(require("cross-fetch"));
-const debug_js_1 = __importDefault(require("../debug.js"));
+const debug_1 = __importDefault(require("@/lib/debug"));
 // Create a debug logger for this module
-const log = (0, debug_js_1.default)('apollo');
+const log = (0, debug_1.default)('apollo');
 // Determine if running on client
 const isClient = typeof window !== 'undefined';
 /**
@@ -51,7 +51,7 @@ const getJwtSecret = () => {
         return new TextEncoder().encode(secretKey);
     }
     catch (error) {
-        (0, debug_js_1.default)('apollo', '❌ Error getting JWT secret:', error);
+        (0, debug_1.default)('apollo', '❌ Error getting JWT secret:', error);
         throw error;
     }
 };
@@ -74,7 +74,7 @@ function createClient(options = {}) {
     if (!HASURA_ENDPOINT) {
         throw new Error('❌ NEXT_PUBLIC_HASURA_GRAPHQL_URL not defined');
     }
-    (0, debug_js_1.default)('apollo', '🔌 Creating Apollo client with endpoint:', HASURA_ENDPOINT);
+    (0, debug_1.default)('apollo', '🔌 Creating Apollo client with endpoint:', HASURA_ENDPOINT);
     // HTTP connection without authorization
     const publicHttpLink = new client_1.HttpLink({
         uri: HASURA_ENDPOINT,

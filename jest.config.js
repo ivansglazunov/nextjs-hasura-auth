@@ -5,6 +5,7 @@ module.exports = {
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   transform: {
     '^.+\\.(ts|tsx)$': ['babel-jest', { configFile: "./babel.jest.config.js" }],
+    'node_modules/jose/.+\\.(js|ts)$': ['babel-jest', { configFile: "./babel.jest.config.js" }],
   },
   setupFilesAfterEnv: ['./jest.setup.js'],
   moduleNameMapper: {
@@ -16,5 +17,8 @@ module.exports = {
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/.next/**',
+  ],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(jose)/)'
   ],
 }; 

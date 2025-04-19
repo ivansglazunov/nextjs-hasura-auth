@@ -4,7 +4,7 @@ import { getMainDefinition } from '@apollo/client/utilities';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient as graphqlWSClient } from 'graphql-ws';
 import fetch from 'cross-fetch';
-import debug from '../debug.js';
+import debug from '@/lib/debug';
 
 // Create a debug logger for this module
 const log = debug('apollo');
