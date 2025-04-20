@@ -1,7 +1,7 @@
 {
   "name": "nextjs-hasura-auth",
   "shortName": "nha",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "engines": {
     "node": "22.14"
   },
@@ -11,8 +11,8 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build && npm run build:lib",
-    "build:lib": "tsc -p tsconfig.lib.json",
+    "build": "npm run build:lib && next build",
+    "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json",
     "build:next": "next build --turbopack",
     "start": "next start --turbopack",
     "lint": "next lint --turbopack",
@@ -22,7 +22,8 @@
     "ws": "npx --yes next-ws-cli@latest patch",
     "nha:migrate": "tsx ./migrations/nha/up.ts",
     "nha:unmigrate": "tsx ./migrations/nha/down.ts",
-    "hasura:schema": "tsx ./lib/hasura-schema.ts"
+    "hasura:schema": "tsx ./lib/hasura-schema.ts",
+    "codegen": "graphql-codegen --config codegen.ts"
   },
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
@@ -102,6 +103,8 @@
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.27.0",
     "@deep-foundation/hasura": "^0.0.68",
+    "@graphql-codegen/cli": "^5.0.5",
+    "@graphql-codegen/typescript": "^4.1.6",
     "@jest/globals": "^29.7.0",
     "@swc/core": "^1.11.21",
     "@swc/jest": "^0.2.37",
@@ -117,6 +120,7 @@
     "babel-jest": "^29.7.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "prettier": "^3.5.3",
     "tailwindcss": "^4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",

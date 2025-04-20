@@ -4,6 +4,7 @@ This project provides a robust starting point for building applications using Ne
 
 [![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md) [![Apollo Client Documentation](https://img.shields.io/badge/Apollo%20Client%20Docs-MD-orange)](APOLLO.md)
 [![Authentication Helpers Documentation](https://img.shields.io/badge/Auth%20Helpers%20Docs-MD-green)](AUTH.md) [![Hasura Admin Client Documentation](https://img.shields.io/badge/Hasura%20Client%20Docs-MD-purple)](HASURA.md)
+[![Generated Client Documentation](https://img.shields.io/badge/Generated%20Client%20Docs-MD-cyan)](CLIENT.md)
 
 See [`GENERATOR.md`](GENERATOR.md) for detailed documentation on the dynamic GraphQL query generator, which simplifies creating queries, mutations, and subscriptions based on your Hasura schema.
 
@@ -12,6 +13,8 @@ See [`APOLLO.md`](APOLLO.md) for details on the configured Apollo Client instanc
 See [`AUTH.md`](AUTH.md) for documentation on WebSocket and request authentication helpers.
 
 See [`HASURA.md`](HASURA.md) for details on the Hasura Admin API client used for migrations.
+
+See [`CLIENT.md`](CLIENT.md) for details on the `Client` class and React hooks that combine the Generator and Apollo Client for easy data operations.
 
 ## ✨ Features Checklist
 
@@ -22,16 +25,17 @@ See [`HASURA.md`](HASURA.md) for details on the Hasura Admin API client used for
 *   [x] **Unified Apollo Client:** A configured Apollo Client instance handles both authenticated HTTP requests (via the proxy) and direct, authenticated WebSocket connections for subscriptions.
 *   [x] **Dynamic Query Generator:** A versatile query generator (`lib/generator.ts`) allows dynamic creation of GraphQL operations based on options and schema, suitable for client/server use.
 *   [x] **WebSocket Authentication:** Real-time subscriptions connect directly to Hasura via WebSockets, authenticated using the user's session JWT.
+*   [x] **Generated Client Wrapper:** A `Client` class and associated React hooks (`useQuery`, `useSubscription`) that combine the Generator and Apollo Client for simplified data fetching and mutations (`lib/client.tsx`).
 
 **Planned / Future Ideas:**
 
-*   [ ] **Convenience Hooks:** Create easy-to-use React hooks (`useQuery`, `useSubscription`, potentially a `useCRUD` hook/class) that integrate the `Generator` with Apollo Client for streamlined data fetching in components.
+*   [ ] **Advanced Convenience Hooks:** Potentially create a more advanced `useCRUD` hook/class built on top of the existing `Client` or hooks for even more streamlined common CRUD operations in components.
 *   [ ] **Multi-Platform Builds:** Native builders for Android, iOS, MacOS, Windows, Linux, Oculus (e.g., using Tauri, Capacitor, or Electron).
 *   [ ] **Unique Environment Builders:** Specific builds for Chrome Extensions, Firefox Extensions, and VSCode Extensions (including custom UI elements).
 *   [ ] Additional Authentication Providers (OAuth: Google, GitHub, etc.).
 *   [ ] Role-based access control examples.
 *   [ ] Advanced caching strategies.
-*   [ ] Comprehensive end-to-end testing setup.
+*   [ ] Comprehensive end-to-end testing setup for UI and hooks.
 
 ## 🚀 Core Concepts
 

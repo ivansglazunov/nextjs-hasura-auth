@@ -6,41 +6,13 @@ import { createClient as graphqlWSClient } from 'graphql-ws';
 import fetch from 'cross-fetch';
 import Debug from './debug';
 import { useMemo } from 'react';
+import { getJwtSecret } from './jwt';
 
 // Create a debug logger for this module
 const debug = Debug('apollo');
 
 // Determine if running on client
 const isClient = typeof window !== 'undefined';
-
-/**
- * Get JWT secret from environment variables
- * @returns {Uint8Array} Secret key for JWT signing
- */
-export const getJwtSecret = (): Uint8Array => {
-  try {
-    const jwtSecret = process.env.HASURA_JWT_SECRET || '{"type":"HS256","key":"your-secret-key"}';
-    
-    // Parse JWT configuration (may be in JSON format)
-    let secretKey: string;
-    try {
-      const jwtConfig = typeof jwtSecret === 'string' ? JSON.parse(jwtSecret) : jwtSecret;
-      secretKey = jwtConfig.key;
-      if (!secretKey) {
-        throw new Error('JWT key not found in configuration');
-      }
-    } catch (e) {
-      // If failed to parse as JSON, use as string
-      secretKey = jwtSecret as string;
-    }
-
-    // Convert key to Uint8Array (required for jose)
-    return new TextEncoder().encode(secretKey);
-  } catch (error) {
-    debug('apollo', '❌ Error getting JWT secret:', error);
-    throw error;
-  }
-};
 
 export interface ApolloOptions {
   url?: string;
@@ -62,7 +34,7 @@ export interface ApolloClientWithProvider extends ApolloClient<any> {
  * @param {string} options.secret - Admin secret for Hasura
  * @returns {ApolloClient} Apollo Client
  */
-export function createClient(options: ApolloOptions = {}) {
+export function createApolloClient(options: ApolloOptions = {}) {
   // Default values
   const { 
     url = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL,
@@ -193,7 +165,7 @@ let clientInstance: ApolloClient<any> | null = null;
  */
 export function getClient(options = {}) {
   if (!clientInstance) {
-    clientInstance = createClient(options);
+    clientInstance = createApolloClient(options);
   }
   return clientInstance;
 }
@@ -203,7 +175,7 @@ export function getClient(options = {}) {
  * @returns Apollo client instance
  */
 export function useCreateApolloClient(options: ApolloOptions) {
-  return useMemo(() => createClient(options), [options]);
+  return useMemo(() => createApolloClient(options), [options]);
 }
 
 const CHECK_CONNECTION = gql`
@@ -227,7 +199,7 @@ export async function checkConnection(client = getClient()): Promise<boolean> {
 }
 
 export default {
-  createClient,
+  createApolloClient,
   getClient,
   getJwtSecret,
   checkConnection

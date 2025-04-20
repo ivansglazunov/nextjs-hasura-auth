@@ -17,13 +17,13 @@ The Apollo Client setup provides a unified interface for sending GraphQL queries
     *   **Admin Secret Fallback:** If no `token` is provided, but the `HASURA_ADMIN_SECRET` environment variable is set (or a `secret` is passed explicitly), it's sent in the `x-hasura-admin-secret` header (for both HTTP and WS).
     *   **Public Access:** If neither a token nor a secret is available, requests are sent without authentication headers.
 *   **Server-Side Rendering (SSR) / Client-Side Rendering (CSR) Compatibility:** The client can be created and used both on the server and the client.
-*   **Convenient Provider:** The `createClient` function returns an enhanced client instance that includes a `.Provider` component (`ApolloClientWithProvider`) for easily wrapping parts of your React application.
+*   **Convenient Provider:** The `createApolloClient` function returns an enhanced client instance that includes a `.Provider` component (`ApolloClientWithProvider`) for easily wrapping parts of your React application.
 *   **Helper Hook:** Provides `useCreateApolloClient` hook for easily creating memoized client instances in React components, especially useful for integrating with authentication state.
 
 <details>
 <summary>Core Exports & Options (`lib/apollo.tsx`)</summary>
 
-*   `createClient(options: ApolloOptions): ApolloClientWithProvider`: Creates a new Apollo Client instance.
+*   `createApolloClient(options: ApolloOptions): ApolloClientWithProvider`: Creates a new Apollo Client instance.
     *   `options.url`: Hasura GraphQL endpoint URL (defaults to `process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL`).
     *   `options.ws`: Boolean, enable WebSocket link for subscriptions (defaults to `false`, only works client-side).
     *   `options.token`: String, JWT token for Bearer authentication.
@@ -124,26 +124,26 @@ The Apollo Client setup provides a unified interface for sending GraphQL queries
 
 ### Server-Side (SSR/SSG/Server Components/API Routes)
 
-1.  **Create Client Instance:** Use `createClient` directly. You need to decide how to authenticate:
+1.  **Create Client Instance:** Use `createApolloClient` directly. You need to decide how to authenticate:
     *   **Admin Access:** Pass the admin secret (e.g., from environment variables) using the `secret` option if you need privileged access.
     *   **User Access:** If running in the context of a specific user request, obtain their Hasura JWT (e.g., from session data, request headers) and pass it using the `token` option.
 
     ```typescript
     // Example in an API Route or Server Component
-    import { createClient } from '@/lib/apollo'; // Adjust path
+    import { createApolloClient } from '@/lib/apollo'; // Adjust path
     import { gql } from '@apollo/client';
     // import { getToken } from "next-auth/jwt"
 
     async function getUserDataOnServer(userId: string, request?: Request) {
       // Option 1: Use Admin Secret for privileged access
-      // const client = createClient({
+      // const client = createApolloClient({
       //   secret: process.env.HASURA_ADMIN_SECRET // Ensure secret is available server-side
       // });
 
       // Option 2: Use User Token (if available from request/session)
       // Example: const sessionToken = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
       // const hasuraToken = sessionToken?.accessToken;
-      const client = createClient({
+      const client = createApolloClient({
         token: process.env.SOME_SERVICE_ACCOUNT_TOKEN_IF_NEEDED // Or fetch user token if applicable
         // url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL // URL can also be passed explicitly
       });

@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions, screen } from '@testing-library/react';
 import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
-import { createClient } from './apollo';
+import { createApolloClient } from './apollo';
 
 // Create a mock Apollo client for testing
 const createMockClient = () => {

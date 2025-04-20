@@ -4,3 +4,5 @@ export * from './apollo';
 export * from './generator';
 export * from './hasura';
 export * from './auth';
+export * from './client';
+export * from './jwt';

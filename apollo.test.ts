@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, test } from '@jest/globals';
 import dotenv from 'dotenv';
 import debug from './lib/debug';
-import { checkConnection, createClient, getClient } from './lib/apollo';
+import { checkConnection, createApolloClient, getClient } from './lib/apollo';
 
 // Explicitly load the .env file
 dotenv.config();
@@ -17,7 +17,7 @@ describe('Apollo client', () => {
   });
 
   test('should create a client with env variables', () => {
-    const client = createClient();
+    const client = createApolloClient();
     expect(client).toBeDefined();
     debug('✅ Client created successfully');
   });
@@ -30,7 +30,7 @@ describe('Apollo client', () => {
   });
 
   test('should connect to Hasura GraphQL endpoint', async () => {
-    const client = createClient();
+    const client = createApolloClient();
     const isConnected = await checkConnection(client);
     expect(isConnected).toBe(true);
     debug('✅ Successfully connected to Hasura GraphQL endpoint');

@@ -1,18 +1,19 @@
 // @ts-ignore
-import schema from '../public/hasura-schema.json'; // Assuming public/hasura-schema.json is in the same directory
+import introspectionResult from '../public/hasura-schema.json'; // Импортируем результат интроспекции
 import Debug from './debug';
+import { gql, DocumentNode } from '@apollo/client/core';
 
-// @ts-ignore // Assuming debug.js is moved to lib/debug.ts or similar and returns a function
+// Импортируем базовые сгенерированные типы
+import type { Query_Root, Mutation_Root, Subscription_Root } from '../types/hasura-codegen'; // Путь к сгенерированным типам
+
 const debug = Debug('apollo:generator');
-
-import { gql, DocumentNode } from '@apollo/client/core'; // Use core for gql
 
 // Types for options and return value
 export type GenerateOperation = 'query' | 'subscription' | 'insert' | 'update' | 'delete';
 
 export interface GenerateOptions {
   operation: GenerateOperation;
-  table: string;
+  table: string; // Пока оставим string, типизируем на следующем шаге
   where?: Record<string, any>;
   // Allow array, object (for appending), or string (legacy split)
   returning?: (string | Record<string, any>)[] | Record<string, any> | string; 
@@ -36,24 +37,68 @@ export interface GenerateResult {
   varCounter: number;
 }
 
-/**
- * Creates a GraphQL query generator based on the provided schema.
- *
- * @param schema - The GraphQL schema in public/hasura-schema.json format.
- * @returns A function to generate queries.
- */
-export function Generator(schema: any) { // TODO: Define a more specific type for the schema
-  // Check schema structure
-  if (!schema || !schema.first_level_queries) {
-    throw new Error('❌ Invalid schema format. Schema must contain first_level_queries field');
+// Получаем объект __schema из импортированного результата
+// Добавляем базовую проверку
+if (!introspectionResult.data || !introspectionResult.data.__schema) {
+    throw new Error('❌ Invalid introspection result format. Expected { data: { __schema: { ... } } }');
+}
+const schema = introspectionResult.data.__schema;
+
+// --- Вспомогательная функция для разбора типа GraphQL ---
+// Рекурсивно разбирает тип (обрабатывая NON_NULL и LIST) и возвращает базовое имя и флаги
+function getTypeInfo(type: any): { name: string | null; kind: string; isList: boolean; isNonNull: boolean; isNonNullItem: boolean } {
+    let isList = false;
+    let isNonNull = false;
+    let isNonNullItem = false; // Для проверки [Type!]
+    let currentType = type;
+
+    if (currentType.kind === 'NON_NULL') {
+        isNonNull = true;
+        currentType = currentType.ofType;
+    }
+    if (currentType.kind === 'LIST') {
+        isList = true;
+        currentType = currentType.ofType;
+        if (currentType.kind === 'NON_NULL') {
+            isNonNullItem = true;
+            currentType = currentType.ofType;
+        }
+    }
+     // Второй NON_NULL возможен для [Type!]!
+     if (currentType.kind === 'NON_NULL') {
+         isNonNullItem = true; // Если внешний LIST был NON_NULL, то и внутренний тоже
+         currentType = currentType.ofType;
+     }
+
+    return {
+        name: currentType.name || null, // Return null if name is missing
+        kind: currentType.kind,
+        isList,
+        isNonNull,
+        isNonNullItem,
+    };
+}
+// --- ---
+
+export function Generator(schema: any) { // Принимаем __schema объект
+  if (!schema || !schema.queryType || !schema.types) {
+    throw new Error('❌ Invalid schema format. Expected standard introspection __schema object.');
   }
 
-  /**
-   * Generates a GraphQL query based on the provided options.
-   *
-   * @param opts - Options object for query generation.
-   * @returns The GraphQL query, variables, and current variable counter.
-   */
+  const queryRootName = schema.queryType.name;
+  const mutationRootName = schema.mutationType?.name; // Может отсутствовать
+  const subscriptionRootName = schema.subscriptionType?.name; // Может отсутствовать
+
+  // Находим детальные описания корневых типов
+  const queryRoot = schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === queryRootName);
+  const mutationRoot = mutationRootName ? schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === mutationRootName) : null;
+  const subscriptionRoot = subscriptionRootName ? schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === subscriptionRootName) : null;
+
+  if (!queryRoot) {
+      throw new Error('❌ Query root type description not found in schema types.');
+  }
+
+
   return function generate(opts: GenerateOptions): GenerateResult {
     let varCounter = opts.varCounter || 1;
 
@@ -72,485 +117,448 @@ export function Generator(schema: any) { // TODO: Define a more specific type fo
       throw new Error(`❌ Invalid operation type: ${operation}. Allowed types: ${validOperations.join(', ')}`);
     }
 
-    let tableName = table;
-    let schemaSection = 'first_level_queries';
-
-    if (aggregate && operation === 'query') {
-      tableName = `${table}_aggregate`;
-    }
+    // --- Определение корневого типа и полей для поиска ---
+    let rootType: any = null; // Тип будет 'OBJECT' из __schema.types
+    let rootFields: any[] = []; // Массив полей из корневого типа
 
     if (operation === 'query') {
-      schemaSection = 'first_level_queries';
+      rootType = queryRoot;
+      rootFields = queryRoot.fields || [];
     } else if (operation === 'subscription') {
-      schemaSection = 'subscriptions';
-    } else if (['insert', 'update', 'delete'].includes(operation)) {
-      schemaSection = 'mutations';
-      if (operation === 'insert') {
-        tableName = `insert_${table}`;
-      } else if (operation === 'update') {
-        // Handle _by_pk update separately later
-        // tableName = `update_${table}`; // Keep original table for now
-      } else if (operation === 'delete') {
-         // Handle _by_pk delete separately later
-        // tableName = `delete_${table}`; // Keep original table for now
-      }
+      if (!subscriptionRoot) throw new Error('❌ Subscription operations not supported by the schema.');
+      rootType = subscriptionRoot;
+      rootFields = subscriptionRoot.fields || [];
+    } else { // insert, update, delete
+      if (!mutationRoot) throw new Error('❌ Mutation operations not supported by the schema.');
+      rootType = mutationRoot;
+      rootFields = mutationRoot.fields || [];
     }
+    // --- ---
 
-     if (!schema[schemaSection]) {
-      throw new Error(`❌ Schema section ${schemaSection} not found. Schema might be outdated or incorrect.`);
-    }
-
-    // Special handling for update/delete by pk
+    // --- Логика определения имени операции (queryName) ---
+    let targetFieldName = table; // Имя поля, которое ищем в корневом типе
     let isByPkOperation = false;
-    if (['update', 'delete'].includes(operation) && opts.pk_columns) {
+    let isAggregate = operation === 'query' && !!aggregate;
+
+    // Определяем префиксы и суффиксы для мутаций и by_pk запросов
+    const mutationPrefix = operation === 'insert' ? 'insert_' : operation === 'update' ? 'update_' : operation === 'delete' ? 'delete_' : '';
+    const pkSuffix = '_by_pk';
+    const aggregateSuffix = '_aggregate';
+    const oneSuffix = '_one';
+
+    // Формируем ожидаемые имена полей (улучшенная логика)
+    if (isAggregate) {
+        targetFieldName = `${table}${aggregateSuffix}`;
+    } else if (opts.pk_columns) {
+        if (operation === 'query') {
+             targetFieldName = `${table}${pkSuffix}`;
         isByPkOperation = true;
-        tableName = `${operation}_${table}_by_pk`; // e.g., update_users_by_pk
-    } else if (operation === 'query' && opts.pk_columns) {
+        } else if (['update', 'delete'].includes(operation)) {
+             targetFieldName = `${mutationPrefix}${table}${pkSuffix}`;
         isByPkOperation = true;
-        tableName = `${table}_by_pk`; // e.g., users_by_pk
+        }
+        // pk_columns не влияет на insert
     } else if (operation === 'insert' && opts.object && !opts.objects) {
-        // Try to find insert_table_one mutation
-        const oneMutationName = `insert_${table}_one`;
-        if (schema.mutations && schema.mutations[oneMutationName]) {
-            tableName = oneMutationName;
-            isByPkOperation = true; // Treat insert_one like a by_pk operation for simplicity
+        const oneFieldName = `${mutationPrefix}${table}${oneSuffix}`;
+        if (rootFields.find(f => f.name === oneFieldName)) {
+            targetFieldName = oneFieldName;
+            // Не ставим isByPkOperation в true для insert_one, т.к. аргументы другие
         } else {
-            tableName = `insert_${table}`; // Fallback to regular insert
+            targetFieldName = `${mutationPrefix}${table}`;
         }
     } else if (operation === 'insert') {
-         tableName = `insert_${table}`;
+        targetFieldName = `${mutationPrefix}${table}`;
     } else if (operation === 'update') {
-         tableName = `update_${table}`;
+         targetFieldName = `${mutationPrefix}${table}`; // Bulk update
     } else if (operation === 'delete') {
-         tableName = `delete_${table}`;
+         targetFieldName = `${mutationPrefix}${table}`; // Bulk delete
     }
-    // If not by_pk, and it's a query/sub, keep the original table name for non-aggregate
-    else if (['query', 'subscription'].includes(operation) && !aggregate) {
-        tableName = table;
-    }
-    // If it's an aggregate query
-    else if (operation === 'query' && aggregate) {
-        tableName = `${table}_aggregate`;
-    }
+    // Для обычных query/subscription без pk_columns и aggregate, имя таблицы (targetFieldName) остается исходным 'table'
 
 
-    const possibleQueries = Object.keys(schema[schemaSection]);
-    let queryName = possibleQueries.find(q => q === tableName);
+    const queryInfo = rootFields.find(f => f.name === targetFieldName);
 
-
-    // Fallback logic if specific query (like insert_table_one) wasn't found directly
-    if (!queryName) {
-        // General fallback: find first matching query
-        queryName = possibleQueries.find(q => q.includes(table)) || possibleQueries[0];
-        if (!queryName) {
-             throw new Error(`❌ Query/Mutation/Subscription for table "${table}" not found in schema section "${schemaSection}"`);
-        }
-         console.log(`[generator] ⚠️ Could not find exact query name "${tableName}", using fallback "${queryName}"`);
-    }
-
-
-    const queryInfo = schema[schemaSection][queryName];
     if (!queryInfo) {
-      throw new Error(`❌ Query info for "${queryName}" not found in schema section "${schemaSection}"`);
+         // Fallback для случая, когда _by_pk/aggregate/etc не найдены, но базовый запрос есть
+         const fallbackQueryInfo = rootFields.find(f => f.name === table);
+         if (fallbackQueryInfo && ['query', 'subscription'].includes(operation) && !isAggregate && !isByPkOperation) {
+             console.warn(`[generator] ⚠️ Exact field "${targetFieldName}" not found, using fallback "${table}" in ${rootType.name}`);
+             targetFieldName = table; // Используем базовое имя
+             // queryInfo = fallbackQueryInfo; // Переприсваиваем для дальнейшего использования
+             throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}"`); // Упадем здесь, если все равно не нашли
+         } else {
+             throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}"`);
+         }
     }
+    const queryName = queryInfo.name; // Имя поля GraphQL, которое будем использовать
+    // --- ---
 
 
     const queryArgs: string[] = [];
     const variables: Record<string, any> = {};
     const varParts: string[] = [];
 
-    // Helper function with improved required logic
-    const getGqlType = (argName: string, argSchema: any, value: any, defaultType: string = 'String', forceRequired: boolean = false): string => {
-        let typeName = argSchema?.type || defaultType;
-        let isList = argSchema?.isList || false; // Rely more on schema or explicit checks
-        let isRequired = forceRequired || argSchema?.isRequired || false;
-
-        // Check type name conventions first (e.g., from introspection)
-        if (typeof typeName === 'string') {
-            let baseTypeName = typeName;
-            if (baseTypeName.endsWith('!')) {
-                 isRequired = true;
-                 baseTypeName = baseTypeName.slice(0, -1);
-             }
-             if (baseTypeName.startsWith('[') && baseTypeName.endsWith(']')) {
-                 isList = true;
-                 baseTypeName = baseTypeName.slice(1, -1);
-                 // Check for inner required type e.g., [String!]
-                 if (baseTypeName.endsWith('!')) {
-                     // Mark inner as required if needed? (Handled later for known types)
-                     baseTypeName = baseTypeName.slice(0, -1);
-                 }
-             }
-             typeName = baseTypeName;
+    // --- РЕФАКТОРИНГ getGqlType ---
+    const getGqlTypeFromSchema = (argType: any): string => {
+        const info = getTypeInfo(argType);
+        if (!info.name) {
+             throw new Error(`Cannot determine base type name for argType: ${JSON.stringify(argType)}`);
         }
-
-        // Determine list/required based on arg name conventions
-        const baseTable = table; // Use original table name for type conventions
-        let finalType = typeName;
-        let finalIsRequired = isRequired;
-        let finalIsList = isList;
-        let innerRequired = false;
-
-        // Apply conventions/overrides
-        if (argName === 'objects') { finalType = `${baseTable}_insert_input`; finalIsList = true; finalIsRequired = true; innerRequired = true; }
-        if (argName === 'object') { finalType = `${baseTable}_insert_input`; finalIsList = false; finalIsRequired = true; }
-        if (argName === 'order_by') { finalType = `${baseTable}_order_by`; finalIsList = true; finalIsRequired = false; innerRequired = true; } // List itself not required, but inner usually is
-        if (argName === 'pk_columns') { finalType = `${baseTable}_pk_columns_input`; finalIsList = false; finalIsRequired = true; }
-        if (argName === '_set') { finalType = `${baseTable}_set_input`; finalIsList = false; finalIsRequired = true; }
-        if (argName === 'where') { finalType = `${baseTable}_bool_exp`; finalIsList = false; finalIsRequired = false; }
-        
-        // If it's a direct PK arg (like `id` in `users_by_pk(id: uuid!)`)
-        if (forceRequired) { 
-            finalIsRequired = true; 
-            finalIsList = false; // Direct PK args are typically not lists
+        let typeStr: string = info.name; // Now we know info.name is a string
+        if (info.isList) {
+            typeStr = `[${info.name}${info.isNonNullItem ? '!' : ''}]`;
         }
-
-        // Construct the final type string
-        let typeString = finalType;
-        if (finalIsList) {
-            typeString = `[${finalType}${innerRequired ? '!' : ''}]`;
+        if (info.isNonNull) {
+            typeStr += '!';
         }
-        if (finalIsRequired) {
-            typeString += '!';
-        }
-
-        return typeString;
+        return typeStr;
     };
+    // --- ---
 
-    // Argument processing function (now relies on getGqlType for correctness)
-    const processArg = (argName: string, value: any, argSchema: any, isDirectPk: boolean = false) => {
-        if (value === undefined || value === null) return;
+    // --- РЕФАКТОРИНГ Цикла обработки аргументов (Top Level) ---
+    const processedArgs = new Set<string>();
+    const addArgument = (argName: string, value: any, argDefinition: any) => {
+         if (processedArgs.has(argName)) return;
         const varName = `v${varCounter++}`;
         queryArgs.push(`${argName}: $${varName}`);
         variables[varName] = value;
-        const gqlType = getGqlType(argName, argSchema, value, 'String', isDirectPk);
+         const gqlType = getGqlTypeFromSchema(argDefinition.type);
+          // Check if var already exists before pushing
+          if (!varParts.some(p => p.startsWith(`$${varName}:`))) {
         varParts.push(`$${varName}: ${gqlType}`);
+          }
+         processedArgs.add(argName);
     };
 
-    // --- Argument Processing with deterministic order --- 
-    const argProcessingOrder = [
-        // Common args first
-        'where',
-        // PK args (direct or pk_columns object)
-        ...(isByPkOperation && opts.pk_columns ? Object.keys(opts.pk_columns) : []), // Direct PK args like 'id'
-        'pk_columns', // The pk_columns input object itself
-        // Mutation specific
-        '_set', 
-        'objects', 
-        'object', 
-        // Pagination/Sorting
-        'limit', 
-        'offset',
-        'order_by'
-    ];
-
-    const processedArgs = new Set<string>();
-
-    // Process args in defined order
-    for (const argName of argProcessingOrder) {
-        if (!queryInfo.args || !queryInfo.args[argName]) continue; // Skip if arg not in schema
-        if (processedArgs.has(argName)) continue; 
-
-        const argSchema = queryInfo.args[argName];
+    // 1. Обработка прямых аргументов поля (из queryInfo.args)
+    queryInfo.args?.forEach((argDef: any) => {
+        const argName = argDef.name;
         let value: any = undefined;
-        let isDirectPk = false;
-
-        // Map opts to schema args
         if (argName === 'pk_columns' && opts.pk_columns) {
-             // Process this ONLY if the operation expects pk_columns (update_by_pk)
-             if (operation === 'update') { 
                  value = opts.pk_columns;
-             } else {
-                 // For query_by_pk and delete_by_pk, pk_columns is used to find direct args
-                 continue; // Skip processing pk_columns itself here
-             }
         } else if (argName === '_set' && opts._set) {
             value = opts._set;
         } else if (argName === 'objects' && (opts.objects || opts.object)) {
             value = opts.objects || [opts.object];
         } else if (argName === 'object' && opts.object && !opts.objects) {
+             if (queryName.endsWith('_one')) {
             value = opts.object;
-        } else if (isByPkOperation && opts.pk_columns && opts.pk_columns[argName] !== undefined) {
-             // Handle direct PK arg like `id` for `_by_pk` operations 
-             // Check if the schema actually expects this direct arg
-             if (queryInfo.args[argName]) {
-                 value = opts.pk_columns[argName];
-                 isDirectPk = true;
              } else {
-                  // This direct PK arg is not in schema, maybe it expects pk_columns object?
-                  // Let's skip processing it directly if pk_columns object is also in the processing order
-                  if (argProcessingOrder.includes('pk_columns')) continue; 
-                  else value = opts.pk_columns[argName]; // Process if pk_columns object isn't expected
+                 value = [opts.object];
+                 if (!queryInfo.args.find((a: any) => a.name === 'objects')) {
+                      debug(`Passing single 'object' to bulk operation "%s" which might expect 'objects' array.`, queryName);
+                      const objectsArgDef = queryInfo.args.find((a: any) => a.name === 'objects');
+                       if (objectsArgDef) {
+                           addArgument('objects', value, objectsArgDef);
+                       } else {
+                           console.error(`[generator] Cannot determine correct argument ('object' or 'objects') for "${queryName}".`);
+                       }
+                       return;
+                 } else if(queryInfo.args.find((a: any) => a.name === 'object')) {
+                       return; 
+                 } else {
+                      const objectsArgDef = queryInfo.args.find((a: any) => a.name === 'objects');
+                       if (objectsArgDef) {
+                            addArgument('objects', value, objectsArgDef);
+                       }
+                        return; 
+                 }
              }
+        } else if (isByPkOperation && opts.pk_columns && opts.pk_columns[argName] !== undefined) {
+             value = opts.pk_columns[argName];
         } else if (opts[argName as keyof GenerateOptions] !== undefined) {
              value = opts[argName as keyof GenerateOptions];
         }
 
         if (value !== undefined) {
-            processArg(argName, value, argSchema, isDirectPk); 
-            processedArgs.add(argName);
+            addArgument(argName, value, argDef);
         }
-    }
+    });
+    // --- End Top Level Argument Processing ---
 
-    // Process any remaining args not in the defined order (should be rare)
-     if (queryInfo.args) {
-         for (const argName in queryInfo.args) {
-             if (!processedArgs.has(argName)) {
-                 const value = opts[argName as keyof GenerateOptions];
-                 if (value !== undefined) {
-                     processArg(argName, value, queryInfo.args[argName], false); 
-                     processedArgs.add(argName);
-                 }
-             }
-         }
-     }
-    // --- End Argument Processing ---
 
+    // --- Returning Field Processing (REWORKED) ---
     const returningFields: string[] = [];
+    const varCounterRef = { count: varCounter }; // Use ref for nested calls
 
-    function processReturningField(field: string | Record<string, any>, currentVarCounterRef: { count: number }): string {
-      if (typeof field === 'string') {
-        return field.trim();
-      }
+    // Helper to find type details from schema by name
+    const findTypeDetails = (typeName: string | null) => {
+        if (!typeName) return null;
+        return schema.types.find((t: any) => t.name === typeName && (t.kind === 'OBJECT' || t.kind === 'INTERFACE'));
+    };
+
+    // Recursive function to process fields
+    function processReturningField(
+        field: string | Record<string, any>,
+        parentTypeName: string | null,
+        currentVarCounterRef: { count: number }
+    ): string {
+        if (typeof field === 'string') return field.trim();
 
       if (typeof field === 'object' && field !== null) {
         const fieldName = Object.keys(field)[0];
         const subFieldsOrParams = field[fieldName];
 
-        if (typeof subFieldsOrParams === 'boolean' && subFieldsOrParams) {
-          return fieldName;
-        }
-        if (typeof subFieldsOrParams === 'boolean' && !subFieldsOrParams) {
-           return ''; // Explicitly skip false fields
-        }
+            // Find the field definition in the parent type
+            const parentTypeDetails = findTypeDetails(parentTypeName);
+            const fieldInfo = parentTypeDetails?.fields?.find((f: any) => f.name === fieldName);
+            if (!fieldInfo) {
+                 // Use debug instead of console.warn
+                 debug(`Field "%s" not found in type "%s". Skipping.`, fieldName, parentTypeName);
+                 return ''; // Skip if field not found in parent
+            }
 
-        if (Array.isArray(subFieldsOrParams)) {
-          const subFieldsStr = subFieldsOrParams
-             .map(sf => processReturningField(sf, currentVarCounterRef))
-             .filter(Boolean) // Remove empty strings from skipped fields
+            // Determine the return type of this field
+            let fieldReturnTypeName: string | null = null;
+            let currentFieldType = fieldInfo.type;
+            while (currentFieldType.ofType) currentFieldType = currentFieldType.ofType; // Unwrap LIST/NON_NULL
+            fieldReturnTypeName = currentFieldType.name;
+
+
+            if (typeof subFieldsOrParams === 'boolean' && subFieldsOrParams) return fieldName;
+            if (typeof subFieldsOrParams === 'boolean' && !subFieldsOrParams) return ''; // Skip false
+
+            if (Array.isArray(subFieldsOrParams) || typeof subFieldsOrParams === 'string') {
+                // Simple nested fields (array of strings/objects or single string)
+                const nestedFields = Array.isArray(subFieldsOrParams) ? subFieldsOrParams : subFieldsOrParams.split(/\s+/).filter(Boolean);
+                const nestedProcessed = nestedFields
+                    .map(sf => processReturningField(sf, fieldReturnTypeName, currentVarCounterRef)) // <<< Pass return type as new parent
+                    .filter(Boolean)
              .join('\n        ');
-          return subFieldsStr ? `${fieldName} {\n        ${subFieldsStr}\n      }` : '';
-        }
+                return nestedProcessed ? `${fieldName} {\n        ${nestedProcessed}\n      }` : fieldName; // Return just fieldName if no nested fields processed
+            }
 
-        if (typeof subFieldsOrParams === 'string') {
-           return `${fieldName} {\n        ${subFieldsOrParams}\n      }`;
-        }
+            if (typeof subFieldsOrParams === 'object') { // Nested query with potential args
+                const { returning: nestedReturning, alias, ...nestedArgsInput } = subFieldsOrParams;
+                const fieldAliasOrName = alias || fieldName;
+                // Field definition might include alias
+                const fieldDefinition = alias ? `${alias}: ${fieldName}` : fieldName;
 
-        // Handling nested query object with potential parameters
-        if (typeof subFieldsOrParams === 'object' && subFieldsOrParams !== null) {
-          const { where: nestedWhere, limit: nestedLimit, offset: nestedOffset, order_by: nestedOrderBy, alias, returning: nestedReturningDef, ...otherParams } = subFieldsOrParams;
-          const relationName = fieldName;
-          const fieldAliasOrName = alias || relationName;
-          const relationArgTypeNameBase = alias ? alias : relationName;
+                // --- Process Nested Arguments --- (IMPLEMENTED)
           const nestedArgs: string[] = [];
-
-           // Nested argument processing
-          const processNestedArg = (argName: string, value: any, typeSuffix: string, defaultType: string = 'String', forceList: boolean = false) => {
-                if (value === undefined || value === null) return;
+                if (fieldInfo.args && Object.keys(nestedArgsInput).length > 0) {
+                     Object.entries(nestedArgsInput).forEach(([argName, argValue]) => {
+                         const argDef = fieldInfo.args.find((a: any) => a.name === argName);
+                         if (argDef && argValue !== undefined) {
                 const varName = `v${currentVarCounterRef.count++}`;
                 nestedArgs.push(`${argName}: $${varName}`);
-                variables[varName] = value;
-                // Construct type, e.g., users_bool_exp, posts_order_by
-                let gqlType = typeSuffix ? `${relationArgTypeNameBase}${typeSuffix}` : defaultType;
-                let isRequired = false; // Assume nested args aren't required unless schema says so
-                let isList = forceList || (argName === 'order_by'); // Force list for order_by
+                             variables[varName] = argValue;
+                             const gqlType = getGqlTypeFromSchema(argDef.type); // Use existing helper
+                             // Check if var already exists before pushing
+                             if (!varParts.some(p => p.startsWith(`$${varName}:`))) {
+                                  varParts.push(`$${varName}: ${gqlType}`);
+                             }
+                         } else {
+                              // Use debug instead of console.warn
+                              debug(`Argument "%s" not found or value is undefined for field "%s"`, argName, fieldName);
+                         }
+                     });
+                }
+                const nestedArgsStr = nestedArgs.length > 0 ? `(${nestedArgs.join(', ')})` : '';
+                // --- End Nested Arguments ---
 
-                // Basic check if type name implies list/required (might need schema lookup)
-                if (gqlType.startsWith('[')) isList = true;
-                if (gqlType.endsWith('!')) {
-                     isRequired = true;
-                     gqlType = gqlType.slice(0, -1);
+
+                // --- Process Nested Returning Fields --- (Improved Default Logic)
+                let finalNestedReturning: (string | Record<string, any>)[] = [];
+                 if (nestedReturning) {
+                      if (Array.isArray(nestedReturning)) {
+                            finalNestedReturning = nestedReturning;
+                      } else if (typeof nestedReturning === 'string') {
+                           finalNestedReturning = nestedReturning.split(/\s+/).filter(Boolean);
+                      } else if (typeof nestedReturning === 'object') {
+                            finalNestedReturning = Object.entries(nestedReturning)
+                                .filter(([_, v]) => v)
+                                .map(([k, v]) => (typeof v === 'boolean' ? k : { [k]: v }));
+                      }
                  }
-                 // Strip list markers if present, handle wrapping below
-                if (gqlType.startsWith('[') && gqlType.endsWith(']')) {
-                     gqlType = gqlType.slice(1, -1);
+                 // If no nested returning specified, try to add default 'id' or '__typename'
+                 if (finalNestedReturning.length === 0) {
+                     const nestedTypeDetails = findTypeDetails(fieldReturnTypeName);
+                     if (nestedTypeDetails?.fields?.find((f: any) => f.name === 'id')) {
+                         finalNestedReturning.push('id');
+                     } else if (nestedTypeDetails?.kind === 'OBJECT' || nestedTypeDetails?.kind === 'INTERFACE') {
+                          finalNestedReturning.push('__typename');
+                     }
+                      // If it's a SCALAR/ENUM, no body needed
                  }
 
-                let finalType = gqlType;
-                if (isList) {
-                     // Assume inner type is required for order_by list
-                     const innerRequired = argName === 'order_by' ? '!' : ''; 
-                     finalType = `[${gqlType}${innerRequired}]`;
-                      // Is the list itself required? (Usually not for nested args)
-                     isRequired = false;
-                 }
+                const nestedReturningStr = finalNestedReturning
+                    .map(f => processReturningField(f, fieldReturnTypeName, currentVarCounterRef)) // <<< Pass return type
+                    .filter(Boolean)
+                    .join('\n        ');
+                // --- End Nested Returning Fields ---
 
-                varParts.push(`$${varName}: ${finalType}${isRequired ? '!' : ''}`);
-          };
-
-           processNestedArg('where', nestedWhere, '_bool_exp');
-           processNestedArg('limit', nestedLimit, '', 'Int');
-           processNestedArg('offset', nestedOffset, '', 'Int');
-           // Pass forceList=true for order_by
-           processNestedArg('order_by', nestedOrderBy, '_order_by', 'String', true);
-
-           // Process other arbitrary parameters
-          for (const paramName in otherParams) {
-              processNestedArg(paramName, otherParams[paramName], ''); // Assume String default
-          }
-
-
-          const nestedArgsStr = nestedArgs.length > 0 ? `(${nestedArgs.join(', ')})` : '';
-
-          let finalNestedReturning: (string | Record<string, any>)[] = ['id']; // Default returning 'id'
-          if (nestedReturningDef) {
-             if (Array.isArray(nestedReturningDef)) {
-                finalNestedReturning = nestedReturningDef;
-             } else if (typeof nestedReturningDef === 'string') {
-                 finalNestedReturning = nestedReturningDef.split(/\s+/).filter(Boolean);
-             } else if (typeof nestedReturningDef === 'object') {
-                // Convert object { field: true, another: {...} } to array ['field', { another: {...} }]
-                finalNestedReturning = Object.entries(nestedReturningDef)
-                  .filter(([_, value]) => value) // Filter out false values
-                  .map(([key, value]) => (typeof value === 'boolean' ? key : { [key]: value }));
-             }
-          }
-
-
-          const nestedFieldsStr = finalNestedReturning
-             .map(f => processReturningField(f, currentVarCounterRef))
-              .filter(Boolean) // Remove empty strings from skipped fields
-             .join('\n        ');
-
-           // Use alias in the field definition if present
-          const fieldDefinition = alias ? `${relationName}: ${fieldAliasOrName}` : fieldAliasOrName;
-
-          return nestedFieldsStr ? `${fieldDefinition}${nestedArgsStr} {\n        ${nestedFieldsStr}\n      }` : '';
+                // Only add body if there are fields to return AND the type is OBJECT/INTERFACE
+                 const nestedFieldTypeDetails = findTypeDetails(fieldReturnTypeName);
+                 const needsNestedBody = (nestedFieldTypeDetails?.kind === 'OBJECT' || nestedFieldTypeDetails?.kind === 'INTERFACE') && nestedReturningStr;
+                const nestedBody = needsNestedBody ? ` {\n        ${nestedReturningStr}\n      }` : '';
+                return `${fieldDefinition}${nestedArgsStr}${nestedBody}`;
+            }
         }
-
-         return ''; // Skip invalid field types
-      }
-
-      return ''; // Skip invalid field types
+        return ''; // Should not happen for valid input
     }
 
+    // --- Main Returning Logic (REWORKED) ---
+    let topLevelReturnTypeName: string | null = null;
+    let currentQueryType = queryInfo.type;
+    while (currentQueryType.ofType) currentQueryType = currentQueryType.ofType;
+    topLevelReturnTypeName = currentQueryType.name;
 
-    const varCounterRef = { count: varCounter }; // Use ref for mutable counter in recursion
+    let finalReturningFields: string[] = []; // Initialize final list
 
-    // ---- START MODIFICATION ----
-    let defaultFieldsGenerated = false;
-
-    // Function to generate default fields based on operation type and schema
-    const generateDefaultFields = () => {
-        if (defaultFieldsGenerated) return; // Generate only once
-
-        if (aggregate) {
-            // Aggregate logic already adds `aggregate { ... }` and potentially `nodes { ... }`
-            // No separate default fields needed here unless `returning` for nodes is omitted
-            // The existing aggregate logic handles the structure.
-        } else if (queryInfo.returning_fields && !isByPkOperation && operation !== 'delete') {
-             // Default fields for query, subscription, insert (non-PK)
-             returningFields.push('id');
-             ['name', 'email', 'created_at', 'updated_at'].forEach(f => {
-                 if (queryInfo.returning_fields[f]) returningFields.push(f);
-             });
-        } else if (isByPkOperation && operation === 'delete') {
-            // Default for delete_by_pk: Try to return PK fields, fallback to id
-            if (opts.pk_columns && queryInfo.returning_fields) {
-                Object.keys(opts.pk_columns).forEach(pkField => {
-                    if (queryInfo.returning_fields[pkField]) {
-                        returningFields.push(pkField);
-                    }
-                });
+    // Helper to generate base default fields
+    const baseGenerateDefaultFields = (parentTypeName: string | null): string[] => {
+      const defaults: string[] = [];
+      if (aggregate) {
+          // Simplified default for aggregate
+           const aggregateFieldInfo = rootFields.find(f => f.name === queryName);
+            let aggReturnTypeName: string | null = null;
+             if(aggregateFieldInfo) {
+                let currentAggType = aggregateFieldInfo.type;
+                 while(currentAggType.ofType) currentAggType = currentAggType.ofType;
+                 aggReturnTypeName = currentAggType.name;
+             }
+             const aggTypeDetails = findTypeDetails(aggReturnTypeName);
+             if (aggTypeDetails?.fields?.find((f: any) => f.name === 'aggregate')) {
+                  const aggregateNestedField = aggTypeDetails.fields.find((f: any) => f.name === 'aggregate');
+                  let aggregateNestedTypeName: string | null = null;
+                  if (aggregateNestedField) {
+                      let currentNestedType = aggregateNestedField.type;
+                      while(currentNestedType.ofType) currentNestedType = currentNestedType.ofType;
+                       aggregateNestedTypeName = currentNestedType.name;
+                  }
+                  const aggregateNestedTypeDetails = findTypeDetails(aggregateNestedTypeName);
+                  if (aggregateNestedTypeDetails?.fields?.find((f:any) => f.name === 'count')) {
+                     defaults.push('aggregate { count }');
+                  } else {
+                     defaults.push('aggregate { __typename }');
+                  }
+             } else {
+                 defaults.push('__typename');
+             }
+      } else {
+          const returnTypeDetails = findTypeDetails(parentTypeName);
+          if (returnTypeDetails?.fields?.find((f: any) => f.name === 'id')) {
+              defaults.push('id');
+          }
+          // Add other simple default fields like name, email if they exist?
+          // Example: Check if 'name' exists and add it
+           if (returnTypeDetails?.fields?.find((f: any) => f.name === 'name')) {
+               defaults.push('name');
+           }
+           if (returnTypeDetails?.fields?.find((f: any) => f.name === 'email')) {
+                defaults.push('email');
+           }
+           if (returnTypeDetails?.fields?.find((f: any) => f.name === 'created_at')) {
+                 defaults.push('created_at');
             }
-            // If no PK fields were added, push id as fallback
-            if (returningFields.length === 0 && queryInfo.returning_fields?.id) {
-                returningFields.push('id');
+            if (returnTypeDetails?.fields?.find((f: any) => f.name === 'updated_at')) {
+                 defaults.push('updated_at');
             }
-        } else { // Default for other mutations _by_pk (update) and query_by_pk
-            if (queryInfo.returning_fields) {
-                 returningFields.push('id'); // Default fallback
-            }
-        }
-        defaultFieldsGenerated = true;
+           // Fallback __typename if still empty and it's an object/interface
+          if (defaults.length === 0 && (returnTypeDetails?.kind === 'OBJECT' || returnTypeDetails?.kind === 'INTERFACE')) {
+              defaults.push('__typename');
+          }
+      }
+      return defaults;
     };
 
-    // Process returning option
     if (returning) {
-        if (Array.isArray(returning)) { // Explicit array provided - overrides defaults
-            returning
-                .map(field => processReturningField(field, varCounterRef))
-                .filter(Boolean)
-                .forEach(processedField => returningFields.push(processedField));
-             defaultFieldsGenerated = true; // Mark defaults as handled/overridden
-        } else if (typeof returning === 'string') { // Explicit string provided - overrides defaults
-            returning.split(/\s+/).filter(Boolean)
-                 .map(field => processReturningField(field, varCounterRef)) // Process simple strings
-                 .filter(Boolean)
-                 .forEach(processedField => returningFields.push(processedField));
-             defaultFieldsGenerated = true; // Mark defaults as handled/overridden
-        } else if (typeof returning === 'object' && returning !== null) { // NEW: Object provided - ADD to defaults
-             // 1. Generate default fields first
-             generateDefaultFields();
-             // 2. Process the object as additional relations/fields
+      if (Array.isArray(returning)) {
+        finalReturningFields = returning
+          .map(field => processReturningField(field, topLevelReturnTypeName, varCounterRef))
+          .filter(Boolean);
+        // Defaults are fully overridden by array
+      } else if (typeof returning === 'string') {
+        finalReturningFields = returning.split(/\s+/).filter(Boolean)
+          .map(field => processReturningField(field, topLevelReturnTypeName, varCounterRef))
+          .filter(Boolean);
+        // Defaults are fully overridden by string
+      } else if (typeof returning === 'object' && returning !== null) {
+        // 1. Get default fields
+        let currentDefaults = baseGenerateDefaultFields(topLevelReturnTypeName);
+        const customFields: string[] = [];
+
+        // 2. Process fields from the returning object
              Object.entries(returning).forEach(([key, value]) => {
-                 // Construct the object format processReturningField expects: { relationName: subOptions }
                  const fieldObject = { [key]: value };
-                 const processedField = processReturningField(fieldObject, varCounterRef);
+          const processedField = processReturningField(fieldObject, topLevelReturnTypeName, varCounterRef);
                  if (processedField) {
-                     // Avoid adding duplicates if default already added it (less likely for relations)
-                     if (!returningFields.includes(processedField)) {
-                        returningFields.push(processedField);
-                     }
-                 }
-             });
+            // Determine base name (handle alias: "alias: realName" or just "realName")
+            const baseNameMatch = processedField.match(/^([\w\d_]+)(?:\s*:\s*[\w\d_]+)?/);
+             // If alias exists use the original field name (key), otherwise use the matched name
+             const baseName = (value?.alias && typeof value === 'object') ? key : (baseNameMatch ? baseNameMatch[1] : key);
+
+            // Remove default if it exists with the same base name
+            currentDefaults = currentDefaults.filter(defaultField => {
+              const defaultBaseNameMatch = defaultField.match(/^([\w\d_]+)/);
+              return !(defaultBaseNameMatch && defaultBaseNameMatch[1] === baseName);
+            });
+            customFields.push(processedField); // Add the processed field
+          }
+        });
+        // 3. Combine remaining defaults and custom fields
+        finalReturningFields = [...currentDefaults, ...customFields];
         } else {
-             // Invalid returning type? Fallback to defaults.
-             generateDefaultFields();
+        // Invalid type or null, use defaults
+        finalReturningFields = baseGenerateDefaultFields(topLevelReturnTypeName);
         }
-    } else { // returning is null or undefined - Use defaults
-        generateDefaultFields();
+    } else {
+      // No returning provided, use defaults
+      finalReturningFields = baseGenerateDefaultFields(topLevelReturnTypeName);
     }
-    // ---- END MODIFICATION ----
-
      varCounter = varCounterRef.count; // Update main counter
+    // --- End Returning ---
 
-    // Adjust structure for bulk mutations (insert, update, delete) vs single (_one, _by_pk)
-    let finalReturningFields = [...returningFields];
-    if (['insert', 'update', 'delete'].includes(operation) && !isByPkOperation) {
-        // Bulk operations usually return affected_rows and a nested 'returning' array
-        const fieldsForReturning = finalReturningFields.filter(f => !f.startsWith('affected_rows')); // Keep existing fields
-        finalReturningFields = ['affected_rows']; // Start with affected_rows
-        if (fieldsForReturning.length > 0) {
-            const returningFieldsStr = fieldsForReturning.join('\n        ');
-            finalReturningFields.push(`returning {\n        ${returningFieldsStr}\n      }`);
+    // --- Final Query String Assembly --- (Adjusted section)
+    // const returningStr = finalReturningFields.length > 0 ? finalReturningFields.join('\n      ') : ''; // Use the calculated finalReturningFields
+
+    // Логика для affected_rows
+    let assembledReturningFields = [...finalReturningFields]; // Start with the combined list
+    if (['insert', 'update', 'delete'].includes(operation) && !queryName.endsWith('_by_pk') && !queryName.endsWith('_one')) {
+      let directFieldReturnType = queryInfo.type;
+      while(directFieldReturnType.ofType) directFieldReturnType = directFieldReturnType.ofType;
+      const returnTypeDetails = findTypeDetails(directFieldReturnType.name);
+
+      if (returnTypeDetails?.fields?.find((f:any) => f.name === 'affected_rows') && returnTypeDetails?.fields?.find((f:any) => f.name === 'returning')) {
+        const fieldsForNestedReturning = assembledReturningFields.filter(f => !f.trim().startsWith('affected_rows'));
+        assembledReturningFields = ['affected_rows']; // Reset and start with affected_rows
+        if (fieldsForNestedReturning.length > 0) {
+          const returningFieldsStr = fieldsForNestedReturning.join('\n        ');
+          assembledReturningFields.push(`returning {\n        ${returningFieldsStr}\n      }`);
         }
+      } else {
+        debug(`Mutation "%s" does not seem to return standard affected_rows/returning fields.`, queryName);
+      }
     }
-    // Ensure single operations (_one, _by_pk) don't have affected_rows unless explicitly asked?
-    // The current logic seems to handle this by default returning fields based on queryInfo
 
-
-    // Determine the GraphQL operation type based on the input operation
     let gqlOperationType: 'query' | 'mutation' | 'subscription';
-    if (operation === 'query') {
-      gqlOperationType = 'query';
-    } else if (operation === 'subscription') {
-      gqlOperationType = 'subscription';
-    } else { // insert, update, delete
-      gqlOperationType = 'mutation';
-    }
+    if (operation === 'query') gqlOperationType = 'query';
+    else if (operation === 'subscription') gqlOperationType = 'subscription';
+    else gqlOperationType = 'mutation';
 
-    // Construct operation name (e.g., QueryUsers, MutationInsertUsersOne)
     const opNamePrefix = gqlOperationType.charAt(0).toUpperCase() + gqlOperationType.slice(1);
-    // Ensure tablePascal handles potential empty parts from split
-    const tablePascal = queryName.split('_').map(part => part ? part.charAt(0).toUpperCase() + part.slice(1) : '').join('');
-    const operationName = `${opNamePrefix}${tablePascal}`;
-
+    const queryNamePascal = queryName.split('_').map((part: string) => part ? part.charAt(0).toUpperCase() + part.slice(1) : '').join('');
+    const operationName = `${opNamePrefix}${queryNamePascal}`;
 
     const argsStr = queryArgs.length > 0 ? `(${queryArgs.join(', ')})` : '';
-    const returningStr = finalReturningFields.length > 0 ? finalReturningFields.join('\n      ') : (queryInfo.returning_fields ? 'id' : ''); // Fallback to id if possible
+
+    const needsBody = currentQueryType.kind === 'OBJECT' || currentQueryType.kind === 'INTERFACE';
+    const returningStr = assembledReturningFields.length > 0 ? assembledReturningFields.join('\n      ') : '';
+    const bodyStr = needsBody && returningStr ? ` {\n          ${returningStr}\n        }` : '';
 
     const fragmentsStr = fragments.length > 0 ? `\n${fragments.join('\n')}` : '';
 
     const queryStr = `
       ${gqlOperationType} ${operationName}${varParts.length > 0 ? `(${varParts.join(', ')})` : ''} {
-        ${queryName}${argsStr}${returningStr ? ` {
-          ${returningStr}
-        }` : ''}
+        ${queryName}${argsStr}${bodyStr}
       }${fragmentsStr}
     `;
+    // --- End Assembly ---
 
     try {
+        // debug("Generated Query:", queryStr);
+        // debug("Generated Variables:", variables);
         const gqlQuery = gql(queryStr);
         return {
           queryString: queryStr,
@@ -567,5 +575,5 @@ export function Generator(schema: any) { // TODO: Define a more specific type fo
   };
 }
 
-// Export the factory function
-export default Generator; 
+// Экспортируем Generator с уже загруженной схемой
+export default Generator(schema); 

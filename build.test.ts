@@ -28,15 +28,15 @@ describe('Build process', () => {
   test('should be able to import Apollo client from built library', () => {
     // Import Apollo client specifically
     const apollo = require(join(process.cwd(), 'dist', 'lib', 'apollo.js'));
-    expect(apollo.createClient).toBeDefined();
-    expect(typeof apollo.createClient).toBe('function');
+    expect(apollo.createApolloClient).toBeDefined();
+    expect(typeof apollo.createApolloClient).toBe('function');
     expect(apollo.getClient).toBeDefined();
     expect(typeof apollo.getClient).toBe('function');
   });
 
   test('should create a working Apollo client from built library', () => {
-    const { createClient } = require('./dist/lib/apollo');
-    const client = createClient();
+    const { createApolloClient } = require('./dist/lib/apollo');
+    const client = createApolloClient();
     expect(client).toBeDefined();
     expect(client.query).toBeDefined();
   });

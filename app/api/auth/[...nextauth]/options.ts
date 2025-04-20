@@ -4,7 +4,7 @@ import YandexProvider from 'next-auth/providers/yandex'; // Add Yandex
 // import GitHubProvider from 'next-auth/providers/github'; // Uncomment if needed
 // import { HasuraAdapter } from '@auth/hasura-adapter'; // REMOVE ADAPTER
 import Debug from '@/lib/debug'; // Import from new path
-import { generateJWT } from '@/lib/jwt'; // Use our JWT generation function
+import { generateJWT } from 'nextjs-hasura-auth'; // Use our JWT generation function
 
 // Create logger function for this module
 const debug = Debug('auth:next-auth'); 
