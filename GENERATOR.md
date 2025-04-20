@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document describes the `Generator` function located in `lib/generator.ts`. Its purpose is to dynamically generate GraphQL query strings, `DocumentNode` objects (compatible with Apollo Client), and corresponding variables based on a provided set of options and a Hasura-like schema (`schema.json`). This simplifies the process of constructing GraphQL operations (queries, mutations, subscriptions) within the application.
+This document describes the `Generator` function located in `lib/generator.ts`. Its purpose is to dynamically generate GraphQL query strings, `DocumentNode` objects (compatible with Apollo Client), and corresponding variables based on a provided set of options and a Hasura-like schema (`public/hasura-schema.json`). This simplifies the process of constructing GraphQL operations (queries, mutations, subscriptions) within the application.
 
 ## Usage
 
@@ -14,11 +14,10 @@ This document describes the `Generator` function located in `lib/generator.ts`. 
 // Assuming 'nextjs-hasura-auth' is your published package name
 import { Generator, GenerateOptions, GenerateResult } from 'nextjs-hasura-auth'; 
 // Assuming schema is correctly loaded (you might need to handle schema loading differently when using the package)
-// import schema from './schema.json'; 
+import schema from './public/hasura-schema.json'; 
 
 // Initialize the generator (Schema needs to be passed)
-// const generate = Generator(schema); 
-// TODO: Document how schema should be provided when using the package
+const generate = Generator(schema); 
 
 // Define options for your query
 const options: GenerateOptions = {
@@ -77,7 +76,7 @@ The `generate` function accepts an object with the following properties:
 
 ## Examples
 
-*(Note: Variable types like `users_bool_exp`, `[users_order_by!]`, `uuid!`, `users_pk_columns_input!`, `users_set_input!`, `[users_insert_input!]!` are inferred based on schema structure and conventions. Ensure your `schema.json` reflects the actual types used by Hasura.)*
+*(Note: Variable types like `users_bool_exp`, `[users_order_by!]`, `uuid!`, `users_pk_columns_input!`, `users_set_input!`, `[users_insert_input!]!` are inferred based on schema structure and conventions. Ensure your `public/hasura-schema.json` reflects the actual types used by Hasura.)*
 
 **Navigation**
 

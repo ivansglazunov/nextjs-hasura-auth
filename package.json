@@ -21,7 +21,8 @@
     "postinstall": "npm run ws -- -y",
     "ws": "npx --yes next-ws-cli@latest patch",
     "nha:migrate": "tsx ./migrations/nha/up.ts",
-    "nha:unmigrate": "tsx ./migrations/nha/down.ts"
+    "nha:unmigrate": "tsx ./migrations/nha/down.ts",
+    "hasura:schema": "tsx ./lib/hasura-schema.ts"
   },
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",

@@ -1,5 +1,5 @@
 // @ts-ignore
-import schema from './schema.json'; // Assuming schema.json is in the same directory
+import schema from '../public/hasura-schema.json'; // Assuming public/hasura-schema.json is in the same directory
 import Debug from './debug';
 
 // @ts-ignore // Assuming debug.js is moved to lib/debug.ts or similar and returns a function
@@ -39,7 +39,7 @@ export interface GenerateResult {
 /**
  * Creates a GraphQL query generator based on the provided schema.
  *
- * @param schema - The GraphQL schema in schema.json format.
+ * @param schema - The GraphQL schema in public/hasura-schema.json format.
  * @returns A function to generate queries.
  */
 export function Generator(schema: any) { // TODO: Define a more specific type for the schema

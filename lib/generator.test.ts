@@ -2,7 +2,7 @@ import assert from 'assert';
 import { gql } from '@apollo/client/core'; // Import gql
 import { Generator, GenerateOptions, GenerateResult } from './generator'; // Assuming Generator is exported from generator.ts
 // @ts-ignore
-import schema from '../schema.json'; // Assuming schema.json is in the same directory
+import schema from '../public/hasura-schema.json'; // Assuming schema.json is in the same directory
 import Debug from './debug'; // Import the actual Debug function
 
 // Initialize the actual Debugger instance

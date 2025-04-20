@@ -67,7 +67,7 @@ Interaction with the Hasura GraphQL Engine is handled in two primary ways:
 
 ### 4. Dynamic Query Generation (`GENERATOR.md`)
 
-*   The core `Generator` function in `lib/generator.ts` allows you to build complex GraphQL operations dynamically based on a simple options object and your `schema.json`.
+*   The core `Generator` function in `lib/generator.ts` allows you to build complex GraphQL operations dynamically based on a simple options object and your `public/hasura-schema.json`.
 *   This avoids writing lengthy GraphQL query strings manually.
 *   See [`GENERATOR.md`](GENERATOR.md) for full usage details and examples.
 *   *Convenience hooks (like `useQuery`, `useSubscription`, `useCRUD`) are planned to further simplify using the generator within React components.*
@@ -89,10 +89,10 @@ Interaction with the Hasura GraphQL Engine is handled in two primary ways:
 │   ├── debug.ts          # Debug utility
 │   └── ...
 ├── public/               # Static assets
+│   ├── hasura-schema.json # Hasura GraphQL schema (for Generator)
 ├── styles/               # Global styles
 ├── .env                  # Environment variables (Gitignored)
 ├── GENERATOR.md          # Query Generator Documentation
-├── schema.json           # Hasura GraphQL schema (for Generator)
 ├── next.config.js        # Next.js configuration
 ├── package.json          # Project dependencies and scripts
 └── tsconfig.json         # TypeScript configuration
@@ -159,7 +159,7 @@ Interaction with the Hasura GraphQL Engine is handled in two primary ways:
     *   Ensure `NEXTAUTH_URL` points to your application's base URL.
 
 4.  **Update Hasura Schema:**
-    Make sure the `schema.json` file in the root is up-to-date with your Hasura instance's schema. You might need to fetch this from Hasura if you've made changes.
+    Make sure the `public/hasura-schema.json` file in the root is up-to-date with your Hasura instance's schema. You might need to fetch this from Hasura if you've made changes.
 
 5.  **Run the development server:**
     ```bash
