@@ -1,7 +1,7 @@
 {
   "name": "nextjs-hasura-auth",
   "shortName": "nha",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": {
     "node": "22.14"
   },
@@ -19,7 +19,9 @@
     "test": "jest",
     "test:build": "jest build.test.ts",
     "postinstall": "npm run ws -- -y",
-    "ws": "npx --yes next-ws-cli@latest patch"
+    "ws": "npx --yes next-ws-cli@latest patch",
+    "nha:migrate": "tsx ./migrations/nha/up.ts",
+    "nha:unmigrate": "tsx ./migrations/nha/down.ts"
   },
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
@@ -88,7 +90,9 @@
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
     "tw-animate-css": "^1.2.5",
+    "uuid": "^11.1.0",
     "vaul": "^1.1.2",
+    "zerobounce": "^0.3.0",
     "zod": "^3.24.3"
   },
   "devDependencies": {
@@ -96,6 +100,7 @@
     "@babel/preset-env": "^7.26.9",
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.27.0",
+    "@deep-foundation/hasura": "^0.0.68",
     "@jest/globals": "^29.7.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.4.0",
@@ -111,6 +116,8 @@
     "jest-environment-jsdom": "^29.7.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
     "typescript": "^5"
   }
 }

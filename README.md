@@ -3,10 +3,15 @@
 This project provides a robust starting point for building applications using Next.js (App Router), Hasura, and strong authentication patterns. It features JWT-based authentication with NextAuth.js, a secure GraphQL proxy to Hasura, direct WebSocket support for subscriptions, and a powerful dynamic query generator.
 
 [![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md) [![Apollo Client Documentation](https://img.shields.io/badge/Apollo%20Client%20Docs-MD-orange)](APOLLO.md)
+[![Authentication Helpers Documentation](https://img.shields.io/badge/Auth%20Helpers%20Docs-MD-green)](AUTH.md) [![Hasura Admin Client Documentation](https://img.shields.io/badge/Hasura%20Client%20Docs-MD-purple)](HASURA.md)
 
 See [`GENERATOR.md`](GENERATOR.md) for detailed documentation on the dynamic GraphQL query generator, which simplifies creating queries, mutations, and subscriptions based on your Hasura schema.
 
 See [`APOLLO.md`](APOLLO.md) for details on the configured Apollo Client instance and how it handles authenticated requests and subscriptions.
+
+See [`AUTH.md`](AUTH.md) for documentation on WebSocket and request authentication helpers.
+
+See [`HASURA.md`](HASURA.md) for details on the Hasura Admin API client used for migrations.
 
 ## ✨ Features Checklist
 
@@ -85,7 +90,7 @@ Interaction with the Hasura GraphQL Engine is handled in two primary ways:
 │   └── ...
 ├── public/               # Static assets
 ├── styles/               # Global styles
-├── .env.local            # Environment variables (Gitignored)
+├── .env                  # Environment variables (Gitignored)
 ├── GENERATOR.md          # Query Generator Documentation
 ├── schema.json           # Hasura GraphQL schema (for Generator)
 ├── next.config.js        # Next.js configuration
@@ -95,23 +100,47 @@ Interaction with the Hasura GraphQL Engine is handled in two primary ways:
 
 ## 🛠️ Getting Started
 
+### As package
+
+1.  **Install the package:**
+    ```bash
+    npm install nextjs-hasura-auth
+    ```
+
+2.  **Import the package:**
+    ```ts
+    import { ... } from 'nextjs-hasura-auth';
+    ```
+
+
+### As boilerplate
+
 1.  **Clone the repository:**
     ```bash
     git clone <repository-url>
     cd <repository-directory>
+    git remote add <your-project-name> <your-project-url>
+    git push <your-project-name> main
+    ```
+
+    Sync updates from the original repository:
+    ```bash
+    git fetch origin
+    git checkout main
+    git merge origin/main
+    # solve conflicts
+    git push origin main
     ```
 
 2.  **Install dependencies:**
     ```bash
-    npm install
-    # or
-    yarn install
-    # or
-    pnpm install
+    npm ci
     ```
 
 3.  **Set up Environment Variables:**
-    Create a `.env.local` file in the root directory and add the following variables:
+    Create a `.env` file in the root directory and add the following variables:
+
+    > Create Hasura instance in [Hasura Cloud](https://hasura.io/cloud) or [Hasura Self-Hosted](https://hasura.io/docs/latest/graphql/core/deployment/hasura-cli/hasura-cli-install/)
 
     ```env
     # Hasura Configuration
@@ -143,6 +172,36 @@ Interaction with the Hasura GraphQL Engine is handled in two primary ways:
 
 6.  Open [http://localhost:3000](http://localhost:3000) (or your `NEXTAUTH_URL`) in your browser.
 
+7. Configure Google OAuth
+    - Go to [Google Cloud Console](https://console.cloud.google.com/)
+    - Create a new project
+    - Enable Google OAuth API
+    - Create credentials
+    - Add `http://localhost:3000/api/auth/callback/google` as a redirect URI
+    - Copy the client ID and client secret
+    - Add them to the `.env` file or vercel environment variables
+    ```env
+    GOOGLE_CLIENT_ID="<your-google-client-id>"
+    GOOGLE_CLIENT_SECRET="<your-google-client-secret>"
+    ```
+
+8. Configure Yandex OAuth
+    - Go to [Yandex Cloud Console](https://oauth.yandex.com/client/new)
+    - Create a new application
+    - Add `http://localhost:3000/api/auth/callback/yandex` as a redirect URI
+    - Copy the client ID and client secret
+    - Add them to the `.env` file or vercel environment variables
+    ```env
+    YANDEX_CLIENT_ID="<your-yandex-client-id>"
+    YANDEX_CLIENT_SECRET="<your-yandex-client-secret>"  
+    ```
+
+9. Configure Vercel
+    - Go to [Vercel](https://vercel.com/)
+    - Create a new project
+    - Add vercel environment variables from `.env` file
+    - Deploy the project
+
 ## Environment Variables Summary
 
 *   `NEXT_PUBLIC_HASURA_GRAPHQL_ENDPOINT`: Public URL for Hasura GraphQL HTTP endpoint.
@@ -150,5 +209,3 @@ Interaction with the Hasura GraphQL Engine is handled in two primary ways:
 *   `HASURA_ADMIN_SECRET`: Your Hasura admin secret (kept server-side).
 *   `NEXTAUTH_URL`: The canonical URL of your Next.js application.
 *   `NEXTAUTH_SECRET`: A secret key used by NextAuth.js to sign JWTs, etc.
-
-Let me know what you think!

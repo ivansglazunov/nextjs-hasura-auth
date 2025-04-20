@@ -2,3 +2,5 @@
 export * from './utils';
 export * from './apollo';
 export * from './generator';
+export * from './hasura';
+export * from './auth';

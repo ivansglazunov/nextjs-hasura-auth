@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, HttpLink, split, ApolloLink, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, HttpLink, split, ApolloLink, gql, ApolloProvider } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
@@ -42,11 +42,15 @@ export const getJwtSecret = (): Uint8Array => {
   }
 };
 
-interface ApolloOptions {
+export interface ApolloOptions {
   url?: string;
   ws?: boolean;
   token?: string;
   secret?: string;
+}
+
+export interface ApolloClientWithProvider extends ApolloClient<any> {
+  Provider: React.ComponentType<{ children: React.ReactNode }>;
 }
 
 /**
@@ -154,7 +158,7 @@ export function createClient(options: ApolloOptions = {}) {
   }
   
   // Create Apollo Client
-  return new ApolloClient({
+  const apolloClient: ApolloClientWithProvider = new ApolloClient({
     link: splitLink,
     cache: new InMemoryCache(),
     defaultOptions: {
@@ -170,7 +174,13 @@ export function createClient(options: ApolloOptions = {}) {
         errorPolicy: 'all',
       },
     }
-  });
+  }) as ApolloClientWithProvider;
+
+  apolloClient.Provider = function Provider({ children }: { children: React.ReactNode }) {
+    return <ApolloProvider client={apolloClient}>{children}</ApolloProvider>;
+  }
+
+  return apolloClient;
 }
 
 // Default client instance
@@ -192,7 +202,7 @@ export function getClient(options = {}) {
  * React hook to get Apollo client instance
  * @returns Apollo client instance
  */
-export function useClient(options: ApolloOptions) {
+export function useCreateApolloClient(options: ApolloOptions) {
   return useMemo(() => createClient(options), [options]);
 }
 

@@ -1,26 +1,25 @@
 'use client'; // Layout must be client-side due to providers
 
-import { ThemeProvider } from "@/components/theme-provider"
-import "./globals.css"
-import { SessionProvider, useSession } from "next-auth/react" // Import SessionProvider and useSession
-import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
+import { ThemeProvider } from "@/components/theme-provider";
+import { useCreateApolloClient } from '@/lib/apollo'; // Our client creation function
+import { SessionProvider, useSession } from "next-auth/react"; // Import SessionProvider and useSession
 import { useMemo } from "react";
-import { createClient, useClient } from '@/lib/apollo'; // Our client creation function
+import "./globals.css";
 
 // Wrapper component for ApolloProvider that uses the session
 function ApolloWrapper({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession(); // Get session
   
   // Create Apollo Client using the token from the session if it exists
-  const client = useClient(useMemo(() => ({
+  const client = useCreateApolloClient(useMemo(() => ({
     token: session?.accessToken, // Pass Hasura token from session
     ws: true // Enable WebSocket support
   }), [session]));
 
   return (
-    <ApolloProvider client={client}>
+    <client.Provider>
       {children}
-    </ApolloProvider>
+    </client.Provider>
   );
 }
 
