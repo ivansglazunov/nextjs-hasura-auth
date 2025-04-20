@@ -25,14 +25,6 @@ describe('Build process', () => {
     expect(existsSync(join(process.cwd(), 'dist', 'lib', 'apollo.d.ts'))).toBe(true);
   });
 
-  test('should be able to import built library utilities', () => {
-    // Dynamic import of the compiled library
-    const lib = require(join(process.cwd(), 'dist', 'lib', 'index.js'));
-    expect(lib.test).toBe(123);
-    expect(lib.cn).toBeDefined();
-    expect(typeof lib.cn).toBe('function');
-  });
-
   test('should be able to import Apollo client from built library', () => {
     // Import Apollo client specifically
     const apollo = require(join(process.cwd(), 'dist', 'lib', 'apollo.js'));

@@ -1,14 +1,10 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
-  preset: 'ts-jest',
   testEnvironment: 'jsdom',
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],
-  transform: {
-    '^.+\\.(ts|tsx)$': ['babel-jest', { configFile: "./babel.jest.config.js" }],
-    'node_modules/jose/.+\\.(js|ts)$': ['babel-jest', { configFile: "./babel.jest.config.js" }],
-  },
   setupFilesAfterEnv: ['./jest.setup.js'],
   moduleNameMapper: {
+    '^jose$': require.resolve('jose'),
     '^@/(.*)$': '<rootDir>/$1',
   },
   testPathIgnorePatterns: ['/node_modules/', '/.next/'],
@@ -19,6 +15,24 @@ module.exports = {
     '!**/.next/**',
   ],
   transformIgnorePatterns: [
-    '/node_modules/(?!(jose)/)'
+    '/node_modules/(?!(jose|next-auth|@panva|@babel|uuid|debug)/)',
   ],
+  transform: {
+    '^.+\\.(t|j)sx?$': ['@swc/jest', {
+      jsc: {
+        transform: {
+          react: {
+            runtime: 'automatic'
+          },
+        },
+        parser: {
+          syntax: 'typescript',
+          tsx: true,
+        },
+      },
+      module: {
+        type: 'commonjs',
+      },
+    }],
+  },
 }; 

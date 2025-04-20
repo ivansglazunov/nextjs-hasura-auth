@@ -102,6 +102,8 @@
     "@babel/preset-typescript": "^7.27.0",
     "@deep-foundation/hasura": "^0.0.68",
     "@jest/globals": "^29.7.0",
+    "@swc/core": "^1.11.21",
+    "@swc/jest": "^0.2.37",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.4.0",
     "@testing-library/react": "^15.0.0",
