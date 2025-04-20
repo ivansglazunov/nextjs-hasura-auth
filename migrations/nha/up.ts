@@ -90,7 +90,6 @@ const relationships = [
 // Определения прав из init-gql.js
 const permissionsToDrop = [
   { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'users' }, role: 'user' } },
-  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'users' }, role: 'me' } },
   { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'users' }, role: 'admin' } },
   { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'accounts' }, role: 'admin' } },
 ];
@@ -116,12 +115,22 @@ const userPermissions = [
       table: { schema: 'public', name: 'users' },
       role: 'me',
       permission: {
-        columns: ['id', 'name', 'email', 'email_verified', 'image', 'created_at', 'updated_at', 'is_admin', 'hasura_role'],
+        columns: [
+          'id',
+          'name',
+          'email',
+          'email_verified',
+          'image',
+          'created_at',
+          'updated_at',
+          'is_admin',
+          'hasura_role'
+        ],
         filter: {
           id: { _eq: 'X-Hasura-User-Id' }
         }
       },
-      comment: 'Users can see their own full information' // Changed to English
+      comment: 'Users can see their own full information'
     }
   }
 ];

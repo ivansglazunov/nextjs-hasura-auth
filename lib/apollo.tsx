@@ -1,12 +1,16 @@
-import { ApolloClient, InMemoryCache, HttpLink, split, ApolloLink, gql, ApolloProvider } from '@apollo/client';
+import { ApolloClient, InMemoryCache, HttpLink, split, ApolloLink, gql, ApolloProvider, createHttpLink, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient as graphqlWSClient } from 'graphql-ws';
 import fetch from 'cross-fetch';
 import Debug from './debug';
+import { ContextSetter } from '@apollo/client/link/context';
+import { GraphQLRequest } from '@apollo/client/core';
 import { useMemo } from 'react';
 import { getJwtSecret } from './jwt';
+import { WebSocketLink } from '@apollo/client/link/ws'; // Deprecated, consider migrating
+import { onError } from '@apollo/client/link/error';
 
 // Create a debug logger for this module
 const debug = Debug('apollo');
@@ -24,6 +28,22 @@ export interface ApolloOptions {
 export interface ApolloClientWithProvider extends ApolloClient<any> {
   Provider: React.ComponentType<{ children: React.ReactNode }>;
 }
+
+const createRoleLink = () => setContext((request: GraphQLRequest, previousContext: any) => {
+  // Get the role from the operation's context passed in the hook options
+  const role = previousContext?.role; // Correctly access context via the second argument
+  debug(`roleLink: Role from context: ${role}`);
+  if (role) {
+    return {
+      headers: {
+        ...previousContext.headers, // Spread existing headers
+        'X-Hasura-Role': role,
+      },
+    };
+  }
+  // If no role is provided in the context, don't add the header
+  return {};
+});
 
 /**
  * Create Apollo Client
@@ -50,88 +70,91 @@ export function createApolloClient(options: ApolloOptions = {}) {
   debug('apollo', '🔌 Creating Apollo client with endpoint:', url);
   
   
-  // HTTP connection without authorization
-  const publicHttpLink = new HttpLink({
+  // --- NEW: Link to set Hasura Role Header ---
+  const roleLink = createRoleLink();
+  // --- END NEW ---
+  
+  // --- Existing Links ---
+  // Create base HttpLink (no auth here initially)
+  const baseHttpLink = new HttpLink({
     uri: url,
     fetch,
   });
+
+  // Create link for adding auth (JWT or Admin Secret)
+  const authHeaderLink = setContext((_, { headers }) => {
+    // Return the headers to the context so httpLink can read them
+     if (token) {
+         debug('apollo', '🔒 Using JWT token for Authorization header');
+         return {
+             headers: {
+                 ...headers,
+                 Authorization: `Bearer ${token}`,
+             }
+         }
+     } else if (secret) {
+          debug('apollo', '🔑 Using Admin Secret for x-hasura-admin-secret header');
+         return {
+             headers: {
+                 ...headers,
+                'x-hasura-admin-secret': secret,
+             }
+         }
+     }
+     debug('apollo', '🔓 Sending request without authentication headers');
+     return { headers };
+  });
   
-  // Create auth link with JWT token
-  const authLink = token
-    ? setContext((_: any, { headers }: { headers?: Record<string, string> }) => {
-        return {
-          headers: {
-            ...headers,
-            Authorization: `Bearer ${token}`,
-          }
-        };
-      })
-    : ApolloLink.from([]);
+  // Chain the links: roleLink -> authHeaderLink -> baseHttpLink
+  const httpLink = ApolloLink.from([roleLink, authHeaderLink, baseHttpLink]);
+  // --- End Existing Links Modification ---
   
-  // Choose link based on token or secret availability
-  let httpLink;
-  if (token) {
-    // If token provided, use it for authorization
-    httpLink = ApolloLink.from([authLink, publicHttpLink]);
-  } else if (secret) {
-    // If no token but admin secret exists, use it
-    httpLink = new HttpLink({
-      uri: url,
-      fetch,
-      headers: {
-        'x-hasura-admin-secret': secret || ''
-      }
-    });;
-  } else {
-    // If neither token nor secret, use public access
-    httpLink = publicHttpLink;
-  }
-  
-  // Create link splitter for queries
-  let splitLink = httpLink;
-  
-  // If WebSocket connection needed and we're in browser
+  // --- WebSocket Link Setup (Remains largely the same) ---
+  let link = httpLink; // Start with the combined HTTP link
+
   if (ws && isClient) {
-    const wsEndpoint = url.replace('http', 'ws').replace('https', 'wss');
+    const wsEndpoint = url.replace('http', 'ws').replace('https://', 'wss');
+    debug('apollo', '🔌 Setting up WebSocket link for:', wsEndpoint);
     
-    // Configure connection parameters
-    const connectionParams: { headers?: Record<string, string> } = {};
-    
+    // Connection params are static here based on initial token/secret
+    const connectionParams: Record<string, any> = {}; 
     if (token) {
-      // If token provided, use it for WebSocket authorization
-      connectionParams.headers = {
-        Authorization: `Bearer ${token}`,
-      };
+        debug('apollo', '🔒 Using JWT token for WS connectionParams');
+        // Standard way for graphql-ws
+        connectionParams.headers = { Authorization: `Bearer ${token}` }; 
+        // Some older setups might use 'Authorization': `Bearer ${token}` directly
     } else if (secret) {
-      // If no token but admin secret exists, use it
-      connectionParams.headers = {
-        'x-hasura-admin-secret': secret,
-      };
+        debug('apollo', '🔑 Using Admin Secret for WS connectionParams');
+        connectionParams.headers = { 'x-hasura-admin-secret': secret };
+    } else {
+        debug('apollo', '🔓 WebSocket connection without specific auth params');
     }
-    
-    // Create WebSocket client
+
     const wsLink = new GraphQLWsLink(graphqlWSClient({
       url: wsEndpoint,
-      connectionParams: () => connectionParams
+      connectionParams, // Pass static params
+      // Note: Dynamically changing headers per subscription via context
+      // is not standard in GraphQLWsLink. The roleLink above won't affect this.
     }));
-    
-    // Split requests: WebSocket for subscriptions, HTTP for others
-    splitLink = split(
-      ({ query }: any) => {
+
+    // Split based on operation type
+    link = split(
+      ({ query }) => {
         const definition = getMainDefinition(query);
         return (
           definition.kind === 'OperationDefinition' &&
           definition.operation === 'subscription'
         );
       },
-      wsLink,
-      httpLink
+      wsLink, // Use wsLink for subscriptions
+      httpLink // Use httpLink (with roleLink and authHeaderLink) for query/mutation
     );
   }
-  
-  // Create Apollo Client
+  // --- End WebSocket Setup ---
+
+  // Create Apollo Client with the final composed link
   const apolloClient: ApolloClientWithProvider = new ApolloClient({
-    link: splitLink,
+    link: link, // Use the potentially split link
     cache: new InMemoryCache(),
     defaultOptions: {
       watchQuery: {
@@ -197,6 +220,10 @@ export async function checkConnection(client = getClient()): Promise<boolean> {
   
   return !!(result.data?.__schema?.queryType?.name);
 }
+
+const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
+  // Handle errors
+});
 
 export default {
   createApolloClient,

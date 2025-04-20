@@ -19,6 +19,7 @@ import pckg from "@/package.json"
 import { HasuraCard } from "@/components/hasura/card"
 import { ProxyCard } from "@/components/proxy/card"
 import { ApolloCard } from "@/components/apollo/card"
+import { CredentialsSignInCard } from "@/components/auth/credentials-signin-card"
 import { SessionCard } from "@/components/auth/session-card"
 import { AuthActionsCard } from "@/components/auth/auth-actions-card"
 
@@ -58,7 +59,8 @@ export default async function Page() {
             <HasuraCard/>
             <ProxyCard/>
             <ApolloCard/>
-            <AuthActionsCard/>
+            <CredentialsSignInCard />
+            <AuthActionsCard />
             <SessionCard serverSession={session}/>
           </div>
           <div className="grid auto-rows-min gap-4 md:grid-cols-3">

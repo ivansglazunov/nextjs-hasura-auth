@@ -4,45 +4,39 @@ This document describes the `Client` class and associated React hooks provided i
 
 ## Purpose
 
-The goal is to offer a convenient and consistent way to perform common GraphQL operations (select, insert, update, delete, subscribe) against Hasura, both directly via class methods and reactively via hooks in components.
+The goal is to offer convenient and consistent React hooks (`useQuery`, `useSubscription`, `useMutation`, and aliases) for performing common GraphQL operations (select, insert, update, delete, subscribe) against Hasura.
 
 ## Key Features
 
-*   **Unified Interface:** Provides a single `Client` class instance that takes an `ApolloClient` and exposes methods like `select`, `insert`, `update`, `delete`, and `subscribe`.
 *   **Automatic Query Generation:** Internally uses the `Generator` function (`lib/generator.ts`) to build the necessary GraphQL query/mutation/subscription strings and variables based on the provided options.
-*   **Direct Execution:** Class methods directly execute the generated operations using the provided `ApolloClient` instance.
-*   **React Hooks Integration:** Offers hooks (`useQuery`, `useSubscription`, and aliases `useSelect`, `useSubscribe`) that leverage the same generation logic but integrate seamlessly with React's component lifecycle and Apollo's state management.
-*   **Context-Aware Hooks:** Hooks automatically find the `ApolloClient` from the context (`ApolloProvider`) but can also accept an explicit client instance.
-*   **Error Handling:** Class methods throw `ApolloError` on failure, while hooks return the error in the result object (`{ error }`), consistent with Apollo Client patterns.
+*   **React Hooks Integration:** Offers hooks (`useQuery`, `useSubscription`, `useMutation` and aliases `useSelect`, `useSubscribe`) that leverage the same generation logic but integrate seamlessly with React's component lifecycle and Apollo's state management.
+*   **Context-Aware Hooks:** Hooks automatically find the `ApolloClient` from the context (`ApolloProvider`).
+*   **Apollo Options Passthrough:** Allows passing standard Apollo Client hook options (like `skip`, `onCompleted`, `onError`, `fetchPolicy`, `context`, etc.) directly to the underlying Apollo hooks.
+*   **Role Selection:** Supports passing a `role` ('user', 'me', 'admin') via the `hookOptions` to automatically set the `X-Hasura-Role` header for queries and mutations (via the Apollo Link configured in `lib/apollo.tsx`).
+*   **Error Handling:** Hooks return the error in the result object (`{ error }`), consistent with Apollo Client patterns.
 
 <details>
 <summary>Core Exports (`lib/client.tsx`)</summary>
 
-*   `Client` (Class):
-    *   `new Client(apolloClient: ApolloClient<any>)`: Constructor requires an initialized Apollo Client instance.
-    *   `async select<TData = any>(options: Omit<GenerateOptions, 'operation'>): Promise<TData>`: Executes a query.
-    *   `async insert<TData = any>(options: Omit<GenerateOptions, 'operation'>): Promise<TData>`: Executes an insert mutation.
-    *   `async update<TData = any>(options: Omit<GenerateOptions, 'operation'>): Promise<TData>`: Executes an update mutation.
-    *   `async delete<TData = any>(options: Omit<GenerateOptions, 'operation'>): Promise<TData>`: Executes a delete mutation.
-    *   `subscribe<TData = any, TVariables = OperationVariables>(options: Omit<GenerateOptions, 'operation'>): Observable<FetchResult<TData>>`: Initiates a subscription, returning an Apollo Observable.
-*   `useClient(providedClient?: ApolloClient<any> | null): ApolloClient<any>`: Hook to retrieve the Apollo Client instance (prefers provided, falls back to context, throws if none).
-*   `useQuery<TData = any>(options: Omit<GenerateOptions, 'operation'>, providedClient?: ApolloClient<any> | null, hookOptions?: Omit<UseQueryOptions, ...>): HookResult<TData>`: Hook to perform a query.
+*   `useClient(): ApolloClient<any>`: Hook to retrieve the Apollo Client instance from context.
+*   `ClientQueryHookOptions`, `ClientSubscriptionHookOptions`, `ClientMutationHookOptions` (Interfaces): Define the structure for the optional `hookOptions` argument, including standard Apollo options and the custom `role`.
+*   `useQuery<TData, TVariables>(generateOptions, hookOptions?: ClientQueryHookOptions)`: Hook to perform a query.
 *   `useSelect`: Alias for `useQuery`.
-*   `useSubscription<TData = any>(options: Omit<GenerateOptions, 'operation'>, providedClient?: ApolloClient<any> | null, hookOptions?: Omit<UseSubscriptionOptions, ...>): HookResult<TData>`: Hook to perform a subscription.
+*   `useSubscription<TData, TVariables>(generateOptions, hookOptions?: ClientSubscriptionHookOptions)`: Hook to perform a subscription.
 *   `useSubscribe`: Alias for `useSubscription`.
-*   `HookResult<TData>` (Interface): Defines the return structure for `useQuery` and `useSubscription`, including `loading`, `data`, `error`, `generatedQuery`, `generatedVariables`, and other Apollo hook return values.
+*   `useMutation<TData, TVariables>(generateOptions, hookOptions?: ClientMutationHookOptions): [mutateFn, MutationResult]` Hook to prepare a mutation.
 
 </details>
 
 ## Usage
 
-### Client-Side (React Components - Recommended Usage with Hooks)
+### React Components (Hooks)
 
-This is the primary intended use case for the hooks. Ensure your application is wrapped in `ApolloProvider` (as shown in `APOLLO.md` setup).
+This is the primary intended use case. Ensure your application is wrapped in `ApolloProvider` (as shown in `APOLLO.md` setup).
 
 ```typescript
 import React from 'react';
-import { useSelect, useSubscribe } from '@/lib/client'; // Adjust path
+import { useSelect, useSubscribe, useMutation } from '@/lib/client'; // Adjust path
 import { useSession } from 'next-auth/react'; // Example: to get user ID
 
 function UserProfile() {
@@ -53,9 +47,12 @@ function UserProfile() {
   const { loading, error, data, refetch } = useSelect<{ users_by_pk: any }>({
     table: 'users',
     pk_columns: { id: userId },
-    returning: ['id', 'name', 'email'], // Generator options
-  }, null, { // No provided client needed (uses context), pass Apollo hook options
-    skip: !userId, // Example Apollo hook option: skip if no userId
+    returning: ['id', 'name', 'email', 'email_verified', 'image'], // Specify fields
+  }, {
+    role: 'me', // Use 'me' role to get full data
+    skip: !userId, // Example: Skip if no userId
+    fetchPolicy: 'cache-and-network', // Example: Set fetch policy
+    onCompleted: (d) => console.log("My profile data:", d)
   });
 
   if (loading) return <p>Loading profile...</p>;
@@ -75,9 +72,10 @@ function OnlineUsers() {
   // Use the useSubscribe (useSubscription) hook
   const { loading, error, data } = useSubscribe<{ users: any[] }>({
     table: 'users',
-    // Example: Add a where clause if needed, e.g., { where: { is_online: {_eq: true} } }
+    where: { name: { _neq: 'Test User' } }, // Example where clause
     returning: ['id', 'name'], // Generator options
-    order_by: { name: 'asc' },
+  }, {
+    onError: (err) => console.error("Subscription error:", err)
   });
 
   if (loading) return <p>Loading online users...</p>;
@@ -94,15 +92,45 @@ function OnlineUsers() {
     </div>
   );
 }
+
+function AddUserButton() {
+  // Use the useMutation hook
+  const [addUser, { loading: mutationLoading, error: mutationError }] = useMutation<{
+    insert_users_one: { id: string }
+  }>(
+  {
+    operation: 'insert', // MUST specify operation for mutation
+    table: 'users',
+    object: { name: 'New User', email: `new-${Date.now()}@example.com` },
+    returning: ['id']
+  },
+  { // Hook options
+    onCompleted: (data) => {
+      console.log('User added:', data.insert_users_one.id);
+      // Optionally refetch queries here
+    },
+    onError: (err) => {
+      console.error('Failed to add user:', err);
+    }
+  }
+  );
+
+  return (
+    <button onClick={() => addUser()} disabled={mutationLoading}>
+      {mutationLoading ? 'Adding...' : 'Add New User'}
+      {mutationError && <p>Error: {mutationError.message}</p>}
+    </button>
+  );
+}
 ```
 
-### Server-Side or Direct Usage (Class Methods)
+### Server-Side Usage
 
-Use the `Client` class when you need to perform operations outside of React components (e.g., in API routes, server components, scripts) or when you want more direct control.
+For server-side operations (API routes, server components, scripts), you typically create an Apollo Client instance directly (often using the admin secret) and use its standard methods (`client.query`, `client.mutate`). You can still use the `generate` function from `lib/generator.ts` to build the query/mutation document and variables if desired.
 
 ```typescript
 import { createApolloClient } from '@/lib/apollo'; // Your Apollo client setup
-import { Client } from '@/lib/client'; // Import the Client class
+import generate from '@/lib/generator'; // Import the Generator
 import { ApolloError } from '@apollo/client';
 
 async function updateUserEmail(userId: string, newEmail: string) {
@@ -112,16 +140,23 @@ async function updateUserEmail(userId: string, newEmail: string) {
     // No WebSocket needed for mutations
   });
 
-  // 2. Instantiate your Client class
-  const client = new Client(apolloAdminClient);
+  // 2. Generate the mutation
+  const { query: mutationGql, variables } = generate({
+    operation: 'update',
+    table: 'users',
+    pk_columns: { id: userId },
+    _set: { email: newEmail },
+    returning: ['id', 'email'],
+  });
 
   try {
-    // 3. Call the desired method with generator options
-    const result = await client.update<{ update_users_by_pk: { id: string; email: string } }>({
-      table: 'users',
-      pk_columns: { id: userId },
-      _set: { email: newEmail },
-      returning: ['id', 'email'],
+    // 3. Execute using the Apollo Client directly
+    const { data: result } = await apolloAdminClient.mutate<{
+      update_users_by_pk: { id: string; email: string }
+    }>({ // APOLLO CLIENT OPTIONS
+      mutation: mutationGql,
+      variables,
+      context: { role: 'admin' } // Example: Set role for server-side mutation
     });
 
     if (result?.update_users_by_pk) {
@@ -149,8 +184,9 @@ async function updateUserEmail(userId: string, newEmail: string) {
 ## Important Considerations
 
 *   **ApolloProvider:** The hooks (`useQuery`, `useSubscription`, etc.) rely on an `ApolloProvider` wrapping your component tree to access the Apollo Client instance via context. Ensure this is set up correctly (see `APOLLO.md`).
-*   **Dependencies:** The `Client` class and hooks depend on `@apollo/client`, `react`, `lib/generator`, and `lib/debug`.
-*   **Generator Options:** The `options` passed to the class methods and hooks are directly used by the `Generator` function. Refer to `GENERATOR.md` for details on available options (`table`, `where`, `returning`, `pk_columns`, `_set`, `object`, `objects`, `limit`, `offset`, `order_by`, etc.). The `operation` key is handled internally.
+*   **Dependencies:** The hooks depend on `@apollo/client`, `react`, `lib/generator`, and `lib/debug`.
+*   **Generator Options:** The `generateOptions` passed to the hooks are directly used by the `Generator` function. Refer to `GENERATOR.md` for details. For `useMutation`, the `operation` key (`insert`, `update`, or `delete`) **must** be included in `generateOptions`.
+*   **Hook Options:** The optional `hookOptions` argument accepts standard Apollo Client hook options (like `skip`, `onCompleted`, `fetchPolicy`, `context`) relevant to the specific hook (`useQuery`, `useSubscription`, `useMutation`), plus the custom `role` option.
 *   **Error Handling:** Remember that class methods throw errors directly, requiring `try...catch` blocks for handling. Hooks return errors via the `error` property in their result object.
-*   **Memoization (Hooks):** The hooks `useQuery` and `useSubscription` memoize the generated query and variables based on the `options` object. Ensure the `options` object reference is stable between renders if you don't want the query to be regenerated unnecessarily (e.g., use `useMemo` for the options object itself if constructed dynamically within the component).
-*   **Subscription Cleanup:** Apollo Client's `useSubscription` hook handles the cleanup of the WebSocket subscription automatically when the component unmounts. When using the `client.subscribe()` method directly, you are responsible for managing the subscription lifecycle and calling `.unsubscribe()` on the returned Observable when needed. 
+*   **Memoization (Hooks):** The hooks memoize the generated query and variables based on the `generateOptions` object. Ensure this object reference is stable between renders if you don't want the query to be regenerated unnecessarily (e.g., use `useMemo` for the `generateOptions` object itself if constructed dynamically within the component).
+*   **Subscription Cleanup:** Apollo Client's `useSubscription` hook handles the cleanup of the WebSocket subscription automatically when the component unmounts. 
