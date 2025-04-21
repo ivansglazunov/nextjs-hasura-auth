@@ -234,7 +234,17 @@ export function useCreateApolloClient(options: ApolloOptions) {
   return useMemo(() => createApolloClient(options), [options]);
 }
 
-const CHECK_CONNECTION = gql`
+export const CHECK_CONNECTION_SUBSCRIPTION = gql`
+subscription CheckConnection {
+  __schema {
+    queryType {
+      name
+    }
+  }
+}
+`;
+
+export const CHECK_CONNECTION_QUERY = gql`
 query CheckConnection {
   __schema {
     queryType {
@@ -249,7 +259,7 @@ query CheckConnection {
  * @returns {Promise<boolean>} True if connection is successful
  */
 export async function checkConnection(client = getClient()): Promise<boolean> {
-  const result = await client.query({ query: CHECK_CONNECTION });
+  const result = await client.query({ query: CHECK_CONNECTION_QUERY });
   
   return !!(result.data?.__schema?.queryType?.name);
 }

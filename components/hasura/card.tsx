@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from "react"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -22,10 +23,15 @@ import {
 } from "@/components/ui/select"
 import { Status } from "../nha/status"
 import { useCheckConnection } from "@/lib/hooks/useCheckConnection"
+import { useQuery } from 'nextjs-hasura-auth'
+import Debug from '@/lib/debug'
+
+type StatusType = 'connecting' | 'connected' | 'error'
+const debug = Debug('hasura-card')
 
 export function HasuraCard(props: any) {
   const connectionStatus = useCheckConnection();
-  
+
   return (
     <Card {...props}>
       <CardHeader>
@@ -37,12 +43,7 @@ export function HasuraCard(props: any) {
           <CardDescription>Public</CardDescription>
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="NEXT_PUBLIC_HASURA_GRAPHQL_URL">NEXT_PUBLIC_HASURA_GRAPHQL_URL</Label>
-            <Input id="NEXT_PUBLIC_HASURA_GRAPHQL_URL" disabled value={process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL} className={process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL ? 'border-neutral-50' : 'border-red-700'}/>
-          </div>
-          <Label>Tables</Label>
-          <div className="flex flex-col space-y-1.5">
-            <Label>users <Status status={connectionStatus} /></Label>
-            <Label>accounts <Status status={connectionStatus} /></Label>
+            <Input id="NEXT_PUBLIC_HASURA_GRAPHQL_URL" disabled value={process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL ?? 'Not Set'} className={process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL ? '' : 'border-red-700'}/>
           </div>
         </div>
       </CardContent>

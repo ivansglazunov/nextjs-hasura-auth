@@ -6,3 +6,4 @@ export * from './hasura';
 export * from './auth';
 export * from './client';
 export * from './jwt';
+export * from './graphql-proxy';
