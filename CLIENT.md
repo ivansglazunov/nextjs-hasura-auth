@@ -65,11 +65,54 @@ async function addNewUser(email: string, name: string) {
   }
 }
 
-// Other methods (update, delete, subscribe) follow a similar pattern:
-// await client.update({ table: '...', pk_columns: { ... }, _set: { ... }, role: '...' });
-// await client.delete({ table: '...', pk_columns: { ... }, role: '...' });
-// const subscriptionObservable = client.subscribe({ table: '...', where: { ... }, role: '...' });
-```
+// Example: Update data
+async function updateUserEmail(userId: string, newEmail: string) {
+  try {
+    const result = await client.update<{ update_users_by_pk: { id: string } }>({
+      table: 'users',
+      pk_columns: { id: userId }, // Or use 'where' for more complex updates
+      _set: { email: newEmail }, // Fields to update
+      returning: ['id'],
+      role: 'admin' // Specify role if needed
+    });
+    console.log('Updated user:', result?.update_users_by_pk?.id);
+  } catch (error) {
+    console.error('Failed to update user:', error);
+  }
+}
+
+// Example: Delete data
+async function deleteUser(userId: string) {
+  try {
+    const result = await client.delete<{ delete_users_by_pk: { id: string } }>({
+      table: 'users',
+      pk_columns: { id: userId }, // Or use 'where' for bulk deletes
+      returning: ['id'],
+      role: 'admin' // Specify role if needed
+    });
+    console.log('Deleted user:', result?.delete_users_by_pk?.id);
+  } catch (error) {
+    console.error('Failed to delete user:', error);
+  }
+}
+
+// Example: Subscribe (returns an Observable)
+function subscribeToUserChanges(userId: string) {
+  const subscriptionObservable = client.subscribe<{ users_by_pk: any }>({
+    table: 'users',
+    pk_columns: { id: userId },
+    returning: ['name', 'updated_at'],
+    role: 'me' // Role for subscription might be handled at connection time
+  });
+
+  const subscription = subscriptionObservable.subscribe({
+    next: (data) => console.log('User updated:', data.data?.users_by_pk),
+    error: (err) => console.error('Subscription error:', err),
+  });
+
+  // To unsubscribe later: subscription.unsubscribe();
+  return subscription; 
+}
 
 ### `Client` Class Methods
 
@@ -138,6 +181,55 @@ function AddUserButton() {
   );
 }
 
+// --- Example: Using useClient() to call Client methods directly --- 
+import { useClient } from './client'; 
+
+function UpdateSelfNameButton() {
+  const { data: session } = useSession();
+  const client = useClient(); // Get the Client instance from context
+  const [newName, setNewName] = React.useState('');
+  const [isUpdating, setIsUpdating] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const handleUpdate = async () => {
+    if (!session?.user?.id || !newName || !client) return;
+    setIsUpdating(true);
+    setError(null);
+    try {
+      await client.update({
+        table: 'users',
+        // Use 'me' role to ensure only own record is updated based on Hasura permissions
+        role: 'me', 
+        where: { id: { _eq: session.user.id } }, // Explicitly target user ID
+        _set: { name: newName },
+      });
+      console.log('Name updated successfully!');
+      setNewName(''); 
+    } catch (updateError: any) {
+      console.error('Failed to update name:', updateError);
+      setError(updateError.message || 'Update failed');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <div>
+      <input 
+        type="text" 
+        value={newName}
+        onChange={(e) => setNewName(e.target.value)}
+        placeholder="New name for yourself"
+      />
+      <button onClick={handleUpdate} disabled={isUpdating || !newName}>
+        {isUpdating ? 'Updating...' : 'Update My Name (via useClient)'}
+      </button>
+      {error && <p style={{color: 'red'}}>{error}</p>}
+    </div>
+  );
+}
+// --- End useClient example --- 
+
 // useSubscribe, useUpdate, useDelete follow the same pattern:
 // useSubscribe({ table: '...', ... }, { role: '...', ... });
 // useUpdate({ table: '...', pk_columns: {...}, _set: {...} }, { role: '...', ... });
@@ -168,7 +260,12 @@ function AddUserButton() {
 
 *   **ApolloProvider:** Hooks rely on `ApolloProvider` in the component tree.
 *   **Generator Options:** Refer to `GENERATOR.md` for details on `GenerateOptions`.
-*   **Role Setting:** The `role` passed in options is added to the Apollo operation's `context`. The `roleLink` configured in `lib/apollo.tsx` reads this context to set the `X-Hasura-Role` header for HTTP requests. WebSocket role handling is typically managed at connection time.
+*   **Role Setting:** 
+    *   The `role` passed in options is added to the Apollo operation's `context`. The `roleLink` configured in `lib/apollo.tsx` reads this context to set the `X-Hasura-Role` header for HTTP requests. WebSocket role handling is typically managed at connection time.
+    *   **Understanding Roles (`user` vs `me`):** 
+        *   A standard role like `'user'` defines a general set of permissions for logged-in users.
+        *   The special role `'me'` is commonly used in Hasura permissions that depend on the `X-Hasura-User-Id` session variable. This allows you to define rules like "users can only select/update/delete *their own* records". Passing `{ role: 'me' }` tells Hasura to evaluate these specific user-ID-based permissions.
+        *   Always ensure your Hasura permissions are configured correctly for the roles you intend to use (`user`, `me`, `admin`, `anonymous`, etc.).
 *   **Dependencies:** Depends on `@apollo/client`, `react`, `lib/generator`, `lib/debug`, and `ts-essentials`.
 *   **Memoization (Hooks):** Hooks memoize generated queries based on `generateOptions`. Ensure this object is stable between renders if needed (e.g., use `React.useMemo`).
 *   **Subscription Cleanup:** Apollo Client's `useSubscription` hook handles WebSocket cleanup automatically on unmount. 

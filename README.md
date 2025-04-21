@@ -25,11 +25,11 @@ See [`CLIENT.md`](CLIENT.md) for details on the `Client` class and React hooks t
 *   [x] **Unified Apollo Client:** A configured Apollo Client instance handles both authenticated HTTP requests (via the proxy) and direct, authenticated WebSocket connections for subscriptions.
 *   [x] **Dynamic Query Generator:** A versatile query generator (`lib/generator.ts`) allows dynamic creation of GraphQL operations based on options and schema, suitable for client/server use.
 *   [x] **WebSocket Authentication:** Real-time subscriptions connect directly to Hasura via WebSockets, authenticated using the user's session JWT.
-*   [x] **Generated Client Wrapper:** A `Client` class and associated React hooks (`useQuery`, `useSubscription`) that combine the Generator and Apollo Client for simplified data fetching and mutations (`lib/client.tsx`).
+*   [x] **Generated Client Wrapper:** A `Client` class and associated React hooks (`useQuery`, `useSubscription`, `useMutation`, plus aliases `useSelect`, `useInsert`, `useUpdate`, `useDelete`) that combine the Generator and Apollo Client for simplified data fetching and mutations (`lib/client.tsx`).
+*   [x] **Advanced Convenience Hooks:** Aliases `useInsert`, `useUpdate`, `useDelete` built on top of `useMutation` are available for streamlined CRUD operations.
 
 **Planned / Future Ideas:**
 
-*   [ ] **Advanced Convenience Hooks:** Potentially create a more advanced `useCRUD` hook/class built on top of the existing `Client` or hooks for even more streamlined common CRUD operations in components.
 *   [ ] **Multi-Platform Builds:** Native builders for Android, iOS, MacOS, Windows, Linux, Oculus (e.g., using Tauri, Capacitor, or Electron).
 *   [ ] **Unique Environment Builders:** Specific builds for Chrome Extensions, Firefox Extensions, and VSCode Extensions (including custom UI elements).
 *   [ ] Additional Authentication Providers (OAuth: Google, GitHub, etc.).

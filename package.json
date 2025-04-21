@@ -1,7 +1,7 @@
 {
   "name": "nextjs-hasura-auth",
   "shortName": "nha",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "engines": {
     "node": "22.14"
   },
