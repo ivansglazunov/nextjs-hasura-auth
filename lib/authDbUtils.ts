@@ -1,3 +1,5 @@
+"use server";
+
 import bcrypt from 'bcrypt';
 import { ApolloError } from '@apollo/client'; // Import ApolloError
 import { Client } from 'hasyx'; // Use the path alias

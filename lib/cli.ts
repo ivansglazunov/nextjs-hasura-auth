@@ -4,13 +4,11 @@ import { Command } from 'commander';
 import fs from 'fs-extra';
 import path from 'path';
 import spawn from 'cross-spawn';
-import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
 
-// Helper to get __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const require = createRequire(import.meta.url);
+// Use CommonJS globals __filename and __dirname
+// const __filename = fileURLToPath(import.meta.url); // No longer needed
+// const __dirname = path.dirname(__filename); // Use global __dirname
+// const require = createRequire(import.meta.url); // No longer needed
 
 // --- Templates --- (Store template content or paths here)
 // It's better to load these from actual files for maintainability
