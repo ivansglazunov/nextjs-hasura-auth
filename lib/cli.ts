@@ -50,23 +50,23 @@ program
 
     const filesToCreateOrReplace = {
       // API Routes (will overwrite)
-      'app/api/auth/[...nextauth]/route.ts': 'api/auth/[...nextauth]/route.ts.template',
-      'app/api/auth/[...nextauth]/options.ts': 'api/auth/[...nextauth]/options.ts.template',
-      'app/api/auth/verify/route.ts': 'api/auth/verify/route.ts.template',
-      'app/api/graphql/route.ts': 'api/graphql/route.ts.template',
+      'app/api/auth/[...nextauth]/route.ts': 'api/auth/[...nextauth]/route.ts',
+      'app/api/auth/[...nextauth]/options.ts': 'api/auth/[...nextauth]/options.ts',
+      'app/api/auth/verify/route.ts': 'api/auth/verify/route.ts',
+      'app/api/graphql/route.ts': 'api/graphql/route.ts',
       // Server file for WS handling (will overwrite)
-      'server.js': 'server.js.template',
+      'server.js': 'server.js',
     };
 
     const filesToCreateIfNotExists = {
       // Basic Next.js structure (won't overwrite)
-      'app/layout.tsx': 'app/layout.tsx.template',
-      'app/page.tsx': 'app/page.tsx.template',
-      'app/globals.css': 'app/globals.css.template',
-      'app/favicon.ico': 'app/favicon.ico.template', // Need binary template handling or skip
+      'app/layout.tsx': 'app/layout.tsx',
+      'app/page.tsx': 'app/page.tsx',
+      'app/globals.css': 'app/globals.css',
+      'app/favicon.ico': 'app/favicon.ico', // Need binary template handling or skip
       // Config files (won't overwrite)
-      '.gitignore': 'gitignore.template',
-      '.npmignore': 'npmignore.template',
+      '.gitignore': '.gitignore',
+      '.npmignore': '.npmignore',
     };
 
     // Ensure directories exist
