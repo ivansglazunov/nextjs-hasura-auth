@@ -11,7 +11,8 @@ const adminApolloClient = createApolloClient({
 });
 
 // Import the factory function and the specific credentials provider
-import { AppCredentialsProvider, createAuthOptions } from 'hasyx';
+import { createAuthOptions } from 'hasyx/lib/auth-options';
+import { AppCredentialsProvider } from 'hasyx/lib/credentials';
 const authOptions: NextAuthOptions = createAuthOptions([
   AppCredentialsProvider,
 ]);

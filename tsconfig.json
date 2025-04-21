@@ -21,7 +21,7 @@
     "paths": {
       "@/*": ["./*"],
       "hasyx": ["./lib/index.ts"],
-      "hasyx/*": ["./lib/*"]
+      "hasyx/*": ["./*"]
     },
     "types": ["jest", "@testing-library/jest-dom"]
   },

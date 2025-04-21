@@ -81,12 +81,12 @@ export function ProxyCard(props: any) {
 
     const { loading: queryLoading, error: queryError, data: queryData } = useQuery(
       CHECK_CONNECTION_QUERY,
-      { client: proxyClient, fetchPolicy: 'network-only' }
+      useMemo(() => ({ client: proxyClient, fetchPolicy: 'network-only' }), [])
     )
 
     const { loading: subLoading, error: subError, data: subData } = useSubscription(
       CHECK_CONNECTION_SUBSCRIPTION,
-      { client: proxyClient }
+      useMemo(() => ({ client: proxyClient }), [])
     )
 
     useEffect(() => {
