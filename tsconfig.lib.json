@@ -6,9 +6,10 @@
     "noEmit": false,
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "es2015",
+    "target": "es2016",
+    "jsx": "react-jsx",
     "types": ["node", "jest"]
   },
-  "include": ["lib/**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts", "dist"]
+  "include": ["lib/**/*.ts", "lib/**/*.tsx"],
+  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx", "dist"]
 } 

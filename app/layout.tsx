@@ -12,6 +12,7 @@ function ApolloWrapper({ children }: { children: React.ReactNode }) {
   
   // Create Apollo Client using the token from the session if it exists
   const client = useCreateApolloClient(useMemo(() => ({
+    url: '/api/graphql',
     token: session?.accessToken, // Pass Hasura token from session
     ws: true // Enable WebSocket support
   }), [session]));

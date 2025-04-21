@@ -1,11 +1,237 @@
-import { gql, DocumentNode, QueryHookOptions as ApolloQueryHookOptions, SubscriptionHookOptions as ApolloSubscriptionHookOptions, MutationHookOptions as ApolloMutationHookOptions, MutationTuple, QueryResult, SubscriptionResult, OperationVariables, ApolloError, ApolloCache, DefaultContext, FetchPolicy, WatchQueryFetchPolicy, WatchQueryOptions } from '@apollo/client';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import {
+  gql,
+  DocumentNode,
+  QueryHookOptions as ApolloQueryHookOptions,
+  SubscriptionHookOptions as ApolloSubscriptionHookOptions,
+  MutationHookOptions as ApolloMutationHookOptions,
+  MutationTuple,
+  QueryResult,
+  SubscriptionResult,
+  OperationVariables,
+  ApolloError,
+  ApolloCache,
+  DefaultContext,
+  FetchPolicy,
+  WatchQueryFetchPolicy,
+  WatchQueryOptions,
+  ApolloClient,
+  NormalizedCacheObject,
+  ApolloQueryResult,
+  FetchResult,
+  Observable,
+  getApolloContext
+} from '@apollo/client';
+import { useMemo, useCallback, useContext } from 'react';
 import { useApolloClient, useQuery as useApolloQuery, useSubscription as useApolloSubscription, useMutation as useApolloMutation } from '@apollo/client';
 import Debug from './debug';
 import generate, { GenerateOptions, GenerateResult } from './generator';
 import { DeepPartial } from 'ts-essentials';
 
-const debug = Debug('client');
+const debug = Debug('nha:client');
+
+// --- Client Class ---
+
+// Options for Client class methods, extending GenerateOptions and adding role
+interface ClientMethodOptions extends Omit<GenerateOptions, 'operation'> {
+  role?: string;
+}
+
+export class Client {
+  private apolloClient: ApolloClient<NormalizedCacheObject>;
+  private generate: typeof generate;
+
+  constructor(apolloClient: ApolloClient<NormalizedCacheObject>) {
+    if (!apolloClient) {
+      throw new Error('❌ ApolloClient instance must be provided to the Client constructor.');
+    }
+    this.apolloClient = apolloClient;
+    this.generate = generate; // Use the imported generator function
+    debug('Client class initialized with ApolloClient instance.');
+  }
+
+  /**
+   * Executes a GraphQL query (select operation).
+   * @param options - Options for generating the query, including an optional `role`.
+   * @returns Promise resolving with the query result data.
+   * @throws ApolloError if the query fails or returns GraphQL errors.
+   */
+  async select<TData = any>(options: ClientMethodOptions): Promise<TData> {
+    const { role, ...genOptions } = options; // Extract role
+    debug('Executing select with options:', genOptions, 'Role:', role);
+    const generated = this.generate({ ...genOptions, operation: 'query' });
+    try {
+      const result: ApolloQueryResult<TData> = await this.apolloClient.query({
+        query: generated.query,
+        variables: generated.variables,
+        fetchPolicy: 'network-only', // Ensure fresh data for direct calls
+        context: role ? { role } : undefined, // Pass role in context
+      });
+
+      if (result.errors) {
+        debug('GraphQL errors during select:', result.errors);
+        throw new ApolloError({ graphQLErrors: result.errors });
+      }
+      debug('Select successful, returning data.');
+      return result.data;
+    } catch (error) {
+      debug('Error during select:', error);
+      throw error; // Re-throw original error (could be ApolloError or network error)
+    }
+  }
+
+  /**
+   * Executes a GraphQL insert mutation.
+   * @param options - Options for generating the mutation, including an optional `role`.
+   * @returns Promise resolving with the mutation result data.
+   * @throws ApolloError if the mutation fails or returns GraphQL errors.
+   */
+  async insert<TData = any>(options: ClientMethodOptions): Promise<TData> {
+    const { role, ...genOptions } = options; // Extract role
+    debug('Executing insert with options:', genOptions, 'Role:', role);
+    const generated = this.generate({ ...genOptions, operation: 'insert' });
+    try {
+      const result: FetchResult<TData> = await this.apolloClient.mutate({
+        mutation: generated.query,
+        variables: generated.variables,
+        context: role ? { role } : undefined, // Pass role in context
+      });
+
+      if (result.errors) {
+        debug('GraphQL errors during insert:', result.errors);
+        throw new ApolloError({ graphQLErrors: result.errors });
+      }
+      // Check if data exists, otherwise return an empty object or handle as needed
+      const returnData = result.data ?? ({} as TData);
+      debug('Insert successful, returning data.');
+      return returnData;
+    } catch (error) {
+      debug('Error during insert:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Executes a GraphQL update mutation.
+   * @param options - Options for generating the mutation, including an optional `role`.
+   * @returns Promise resolving with the mutation result data.
+   * @throws ApolloError if the mutation fails or returns GraphQL errors.
+   */
+  async update<TData = any>(options: ClientMethodOptions): Promise<TData> {
+    const { role, ...genOptions } = options; // Extract role
+    debug('Executing update with options:', genOptions, 'Role:', role);
+    const generated = this.generate({ ...genOptions, operation: 'update' });
+    try {
+      const result: FetchResult<TData> = await this.apolloClient.mutate({
+        mutation: generated.query,
+        variables: generated.variables,
+        context: role ? { role } : undefined, // Pass role in context
+      });
+
+      if (result.errors) {
+        debug('GraphQL errors during update:', result.errors);
+        throw new ApolloError({ graphQLErrors: result.errors });
+      }
+      const returnData = result.data ?? ({} as TData);
+      debug('Update successful, returning data.');
+      return returnData;
+    } catch (error) {
+      debug('Error during update:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Executes a GraphQL delete mutation.
+   * @param options - Options for generating the mutation, including an optional `role`.
+   * @returns Promise resolving with the mutation result data.
+   * @throws ApolloError if the mutation fails or returns GraphQL errors.
+   */
+  async delete<TData = any>(options: ClientMethodOptions): Promise<TData> {
+    const { role, ...genOptions } = options; // Extract role
+    debug('Executing delete with options:', genOptions, 'Role:', role);
+    const generated = this.generate({ ...genOptions, operation: 'delete' });
+    try {
+      const result: FetchResult<TData> = await this.apolloClient.mutate({
+        mutation: generated.query,
+        variables: generated.variables,
+        context: role ? { role } : undefined, // Pass role in context
+      });
+
+      if (result.errors) {
+        debug('GraphQL errors during delete:', result.errors);
+        throw new ApolloError({ graphQLErrors: result.errors });
+      }
+      const returnData = result.data ?? ({} as TData);
+      debug('Delete successful, returning data.');
+      return returnData;
+    } catch (error) {
+      debug('Error during delete:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Initiates a GraphQL subscription.
+   * Note: Role support via context might not work for WebSockets depending on Apollo Link setup.
+   * Role is typically set during WebSocket connection establishment.
+   * @param options - Options for generating the subscription, including an optional `role`.
+   * @returns An Observable for the subscription results.
+   */
+  subscribe<TData = any, TVariables extends OperationVariables = OperationVariables>(
+    options: ClientMethodOptions
+  ): Observable<FetchResult<TData>> {
+    const { role, ...genOptions } = options; // Extract role
+    debug('Initiating subscribe with options:', genOptions, 'Role:', role);
+    const generated = this.generate({ ...genOptions, operation: 'subscription' });
+    return this.apolloClient.subscribe<TData, TVariables>({
+      query: generated.query,
+      variables: generated.variables as TVariables,
+      context: role ? { role } : undefined, // Pass role, effectiveness depends on link chain
+    });
+  }
+
+  useSubscription<TData = any, TVariables extends OperationVariables = OperationVariables>(
+    // First arg: Generator options (table, returning, where, etc.)
+    generateOptions: ClientGeneratorOptions,
+    // Second arg: Hook options (Apollo options + role)
+    hookOptions?: SubscriptionHookOptions<TData, TVariables> & { variables?: TVariables } // Allow variables here for subscription
+  ): SubscriptionResult<TData, TVariables> {
+    return useSubscription(generateOptions, useMemo(() => ({ ...hookOptions, client: this.apolloClient }), [hookOptions]));
+  };
+
+  useQuery<TData = any, TVariables extends OperationVariables = OperationVariables>(
+    // First arg: Generator options (table, returning, where, etc.)
+    generateOptions: ClientGeneratorOptions,
+    // Second arg: Hook options (Apollo options + role)
+    hookOptions?: QueryHookOptions<TData, TVariables> & { variables?: TVariables } // Allow variables here for query
+  ): QueryResult<TData, TVariables> {
+    return useQuery(generateOptions, useMemo(() => ({ ...hookOptions, client: this.apolloClient }), [hookOptions]));
+  }
+}
+
+// --- React Hooks ---
+
+/**
+ * Hook to get the Apollo Client instance.
+ * Prefers the explicitly provided client, falls back to context, throws if none found.
+ * @param providedClient - An optional ApolloClient instance.
+ * @returns The ApolloClient instance.
+ * @throws Error if no client is found.
+ */
+export function useClient(providedClient?: ApolloClient<any> | null): Client {
+  const ApolloContext = getApolloContext();
+  const contextValue = useContext(ApolloContext);
+  const contextClient = contextValue?.client;
+  const client = providedClient ?? contextClient;
+
+  if (!client) {
+    throw new Error(
+      '❌ useClient: No ApolloClient instance found. Provide one directly or ensure the component is wrapped in an ApolloProvider.'
+    );
+  }
+
+  return useMemo(() => new Client(client), [client]);
+}
 
 // Custom Hook Options extending Apollo's, adding our 'role' context
 type BaseHookOptions = {
@@ -19,7 +245,7 @@ type SubscriptionHookOptions<TData, TVariables extends OperationVariables> = Bas
 // Add 'extends OperationVariables' constraint
 type MutationHookOptions<TData, TVariables extends OperationVariables> = BaseHookOptions & Omit<ApolloMutationHookOptions<TData, TVariables>, 'mutation' | 'variables' | 'context'>;
 
-// Helper to extract Apollo options and context
+// Helper to extract Apollo options and context for HOOKS
 // Adjusted to not expect variables in mutation options directly
 function prepareHookArgs<TData, TVariables extends OperationVariables>(
     options?: QueryHookOptions<TData, TVariables> | SubscriptionHookOptions<TData, TVariables> | MutationHookOptions<TData, TVariables>,
@@ -71,7 +297,7 @@ export function useQuery<TData = any, TVariables extends OperationVariables = Op
   const result = useApolloQuery<TData, TVariables>(query, {
     client, // Pass the client explicitly if needed by useApolloQuery, though usually context is enough
     variables: combinedVariables,
-    context,
+    context, // Pass role via context
     ...apolloOptions,
   });
 
@@ -86,7 +312,8 @@ export function useSubscription<TData = any, TVariables extends OperationVariabl
   // Second arg: Hook options (Apollo options + role)
   hookOptions?: SubscriptionHookOptions<TData, TVariables> & { variables?: TVariables } // Allow variables here for subscription
 ): SubscriptionResult<TData, TVariables> {
-  const client = useApolloClient(); // Use client from context
+  const apolloClient = useApolloClient(); // Use client from context
+  const client = hookOptions?.client ?? apolloClient;
 
   // Generate subscription using the imported 'generate' function
   const { query: subscriptionString, variables: generatedVariables, varCounter } = useMemo(() => generate({
@@ -133,7 +360,8 @@ export function useMutation<TData = any, TVariables extends OperationVariables =
   // Second arg: Hook options (Apollo options + role)
   hookOptions?: MutationHookOptions<TData, TVariables>
 ): MutationTuple<TData, TVariables> {
-  const client = useApolloClient(); // Use client from context
+  const apolloClient = useApolloClient(); // Use client from context
+  const client = hookOptions?.client ?? apolloClient;
 
   // Validate that operation is insert/update/delete
   if (!['insert', 'update', 'delete'].includes(generateOptions.operation)) {
@@ -196,7 +424,7 @@ export function useMutation<TData = any, TVariables extends OperationVariables =
   return [wrappedMutate, result];
 }
 
-// Aliases for convenience
+// Aliases for convenience (Hooks)
 export const useSelect = useQuery;
 export const useInsert = (genOpts: Omit<GenerateOptions, 'operation'>, hookOpts?: MutationHookOptions<any, any>) =>
     useMutation({ operation: 'insert', ...genOpts }, hookOpts);

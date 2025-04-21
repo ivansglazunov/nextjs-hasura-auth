@@ -1,6 +1,7 @@
 import { ApolloClient, InMemoryCache, HttpLink, split, ApolloLink, gql, ApolloProvider, createHttpLink, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { getMainDefinition } from '@apollo/client/utilities';
+// Restore GraphQLWsLink imports
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient as graphqlWSClient } from 'graphql-ws';
 import fetch from 'cross-fetch';
@@ -9,7 +10,8 @@ import { ContextSetter } from '@apollo/client/link/context';
 import { GraphQLRequest } from '@apollo/client/core';
 import { useMemo } from 'react';
 import { getJwtSecret } from './jwt';
-import { WebSocketLink } from '@apollo/client/link/ws'; // Deprecated, consider migrating
+// Remove deprecated WebSocketLink import
+// import { WebSocketLink } from '@apollo/client/link/ws'; 
 import { onError } from '@apollo/client/link/error';
 
 // Create a debug logger for this module
@@ -112,35 +114,64 @@ export function createApolloClient(options: ApolloOptions = {}) {
   // --- WebSocket Link Setup (Remains largely the same) ---
   let link = httpLink; // Start with the combined HTTP link
 
-  if (ws && isClient) {
-    const wsEndpoint = url.replace('http', 'ws').replace('https://', 'wss');
-    debug('apollo', '🔌 Setting up WebSocket link for:', wsEndpoint);
-    
-    // Connection params are static here based on initial token/secret
-    const connectionParams: Record<string, any> = {}; 
-    if (token) {
-        debug('apollo', '🔒 Using JWT token for WS connectionParams');
-        // Standard way for graphql-ws
-        connectionParams.headers = { Authorization: `Bearer ${token}` }; 
-        // Some older setups might use 'Authorization': `Bearer ${token}` directly
-    } else if (secret) {
-        debug('apollo', '🔑 Using Admin Secret for WS connectionParams');
-        connectionParams.headers = { 'x-hasura-admin-secret': secret };
-    } else {
-        debug('apollo', '🔓 WebSocket connection without specific auth params');
-    }
+  // --- Debugging WS Link Creation ---
+  debug('apollo', `🚀 Checking WS setup: ws=${ws}, isClient=${isClient}`); 
 
+  if (ws && isClient) {
+    debug('apollo', '✅ Entering WS Link creation block.'); // Log entry
+    const wsEndpoint = url.replace('http', 'ws').replace('https://', 'wss');
+    debug('apollo', '🔌 Setting up GraphQLWsLink for:', wsEndpoint);
+    
+    // --- Restore GraphQLWsLink --- 
     const wsLink = new GraphQLWsLink(graphqlWSClient({
       url: wsEndpoint,
-      connectionParams, // Pass static params
+      connectionParams: async () => { 
+        debug('apollo', '⚙️ Evaluating connectionParams function...');
+        const params: Record<string, any> = {};
+        if (token) {
+          debug('apollo', '🔒 Using JWT token for WS connectionParams (from function)');
+          params.headers = { Authorization: `Bearer ${token}` };
+        } else if (secret) {
+          debug('apollo', '🔑 Using Admin Secret for WS connectionParams (from function)');
+          params.headers = { 'x-hasura-admin-secret': secret };
+        } else {
+          debug('apollo', '🔓 WebSocket connection without specific auth params (from function)');
+        }
+        debug('apollo', '⚙️ connectionParams function returning:', params);
+        return params;
+      },
       // Note: Dynamically changing headers per subscription via context
       // is not standard in GraphQLWsLink. The roleLink above won't affect this.
+      // --- Add event handlers for diagnostics ---
+      on: {
+        connected: (socket) => debug('apollo', '🔗 [graphql-ws] WebSocket connected:', socket),
+        ping: (received) => debug('apollo', `➡️ [graphql-ws] Ping ${received ? 'received' : 'sent'}`),
+        pong: (received) => debug('apollo', `⬅️ [graphql-ws] Pong ${received ? 'received' : 'sent'}`),
+        error: (err) => debug('apollo', '❌ [graphql-ws] WebSocket error:', err),
+        closed: (event) => debug('apollo', '🚪 [graphql-ws] WebSocket closed:', event),
+      }
+      // --- End event handlers ---
     }));
+
+    /* --- Remove Deprecated WebSocketLink --- 
+    const wsLink = new WebSocketLink({ 
+      uri: wsEndpoint,
+      options: {
+        reconnect: true,
+        connectionParams: connectionParams, // Pass prepared headers here
+        // Note: Timeout options might be needed depending on env
+      }
+    });
+    debug('apollo', '🔗 DEPRECATED WebSocketLink created.');
+    */
 
     // Split based on operation type
     link = split(
       ({ query }) => {
         const definition = getMainDefinition(query);
+        const isSubscription = definition.kind === 'OperationDefinition' &&
+                               definition.operation === 'subscription';
+        debug('apollo', `🔗 Split link decision: isSubscription=${isSubscription}`);
         return (
           definition.kind === 'OperationDefinition' &&
           definition.operation === 'subscription'
@@ -149,6 +180,8 @@ export function createApolloClient(options: ApolloOptions = {}) {
       wsLink, // Use wsLink for subscriptions
       httpLink // Use httpLink (with roleLink and authHeaderLink) for query/mutation
     );
+  } else {
+    debug('apollo', '❌ Skipping WS Link creation.', { ws, isClient });
   }
   // --- End WebSocket Setup ---
 

@@ -20,10 +20,11 @@
     "test:build": "jest build.test.ts",
     "postinstall": "npm run ws -- -y",
     "ws": "npx --yes next-ws-cli@latest patch",
-    "nha:migrate": "tsx ./migrations/nha/up.ts",
+    "nha:migrate": "tsx ./migrations/nha/up.ts; npm run hasura:schema; npm run hasura:types",
     "nha:unmigrate": "tsx ./migrations/nha/down.ts",
     "hasura:schema": "tsx ./lib/hasura-schema.ts",
-    "codegen": "graphql-codegen --config codegen.ts"
+    "hasura:types": "graphql-codegen --config codegen.ts",
+    "publish": "npm run hasura:schema; npm run hasura:types; npm run build; npm publish"
   },
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",

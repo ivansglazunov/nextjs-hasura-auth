@@ -47,8 +47,41 @@ const tablesToUntrack = [
   }
 ];
 
+// Метаданные для удаления разрешений anonymous
+const permissionsToDropAnonymous = [
+  {
+    type: 'pg_drop_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'users' },
+      role: 'anonymous'
+    }
+  },
+  {
+    type: 'pg_drop_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'accounts' },
+      role: 'anonymous'
+    }
+  }
+];
+
 async function dropMetadata() {
-  debug('🧹 Untracking tables users and accounts...');
+  debug('🧹 Dropping permissions and untracking tables...');
+
+  // --- NEW: Drop anonymous permissions first ---
+  debug('  🗑️ Dropping anonymous permissions...');
+  for (const dropRequest of permissionsToDropAnonymous) {
+    const perm = `${dropRequest.args.role} on ${dropRequest.args.table.schema}.${dropRequest.args.table.name}`;
+    debug(`     Dropping select permission for ${perm}...`);
+    await hasura.v1(dropRequest);
+    // Note: hasura.v1 handles 'not found' messages internally
+  }
+  debug('  ✅ Anonymous permissions dropped.');
+  // --- END NEW ---
+
+  debug('  🗑️ Untracking tables users and accounts...');
   for (const untrackRequest of tablesToUntrack) {
     const tableName = `${untrackRequest.args.table.schema}.${untrackRequest.args.table.name}`;
     debug(`  📝 Untracking table ${tableName}...`);

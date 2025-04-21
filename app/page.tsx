@@ -22,6 +22,7 @@ import { ApolloCard } from "@/components/apollo/card"
 import { CredentialsSignInCard } from "@/components/auth/credentials-signin-card"
 import { SessionCard } from "@/components/auth/session-card"
 import { AuthActionsCard } from "@/components/auth/auth-actions-card"
+import { UsersCard } from "@/components/users/users-card"
 
 // Imports for getting server-side session
 import { getServerSession } from "next-auth/next"
@@ -62,6 +63,7 @@ export default async function Page() {
             <CredentialsSignInCard />
             <AuthActionsCard />
             <SessionCard serverSession={session}/>
+            <UsersCard />
           </div>
           <div className="grid auto-rows-min gap-4 md:grid-cols-3">
             <div className="aspect-video rounded-xl bg-muted/50" />

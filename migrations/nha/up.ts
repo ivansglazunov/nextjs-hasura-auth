@@ -164,6 +164,38 @@ const adminPermissions = [
   }
 ];
 
+// --- NEW: Anonymous Permissions Definition ---
+
+const anonymousPermissions = [
+  {
+    type: 'pg_create_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'users' },
+      role: 'anonymous',
+      permission: {
+        columns: ['id', 'created_at', 'updated_at'],
+        filter: {} // Allow access to all rows
+      },
+      comment: 'Anonymous users can see basic user info'
+    }
+  },
+  {
+    type: 'pg_create_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'accounts' },
+      role: 'anonymous',
+      permission: {
+        columns: ['id', 'created_at'],
+        filter: {} // Allow access to all rows
+      },
+      comment: 'Anonymous users can see basic account info'
+    }
+  }
+];
+
+// --- END NEW ---
 
 async function applySQLSchema() {
   debug('🔧 Applying SQL schema...');
@@ -224,6 +256,16 @@ async function applyPermissions() {
      // Note: hasura.v1 handles 'already defined' messages internally
   }
   debug('  ✅ Admin permissions applied.');
+
+  // --- NEW: Apply anonymous permissions ---
+  debug('  📝 Applying anonymous permissions...');
+  for (const permission of anonymousPermissions) {
+     debug(`     Applying ${permission.args.role}.${permission.args.table.name}...`);
+     await hasura.v1(permission);
+     // Note: hasura.v1 handles 'already defined' messages internally
+  }
+  debug('  ✅ Anonymous permissions applied.');
+  // --- END NEW ---
 
   debug('✅ Permissions successfully applied.');
 }

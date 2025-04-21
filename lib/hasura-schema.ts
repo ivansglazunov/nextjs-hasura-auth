@@ -5,7 +5,6 @@ import fs from 'fs';
 import path from 'path';
 import { IntrospectionQuery, getIntrospectionQuery } from 'graphql'; // Use standard introspection query function
 
-// Загружаем переменные окружения из корневого .env
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const HASURA_GRAPHQL_URL = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
@@ -46,13 +45,6 @@ async function fetchSchema() {
         throw new Error('Некорректный ответ от сервера Hasura. Отсутствует data.__schema.');
     }
 
-
-    // Структурируем схему для совместимости с генератором (опционально, можно просто сохранить __schema)
-    // Пока оставим простую структуру, аналогичную schema.js, но только с __schema
-    // const structuredSchema = {
-    //   __schema: response.data.data.__schema
-    // };
-    // Для начала сохраним полный результат интроспекции, codegen его поймет
     const introspectionResult = response.data; 
 
     console.log(`💾 Сохранение схемы в ${OUTPUT_PATH}...`);
