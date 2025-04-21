@@ -12,7 +12,7 @@ import spawn from 'cross-spawn';
 
 // --- Templates --- (Store template content or paths here)
 // It's better to load these from actual files for maintainability
-const templatesDir = path.resolve(__dirname, '../templates'); // Assuming templates are in dist/../templates
+const templatesDir = path.resolve(__dirname, '../../'); // Assuming templates are in dist/../templates
 
 const getTemplateContent = (fileName: string): string => {
   const filePath = path.join(templatesDir, fileName);
@@ -54,8 +54,6 @@ program
       'app/api/auth/[...nextauth]/options.ts': 'api/auth/[...nextauth]/options.ts',
       'app/api/auth/verify/route.ts': 'api/auth/verify/route.ts',
       'app/api/graphql/route.ts': 'api/graphql/route.ts',
-      // Server file for WS handling (will overwrite)
-      'server.js': 'server.js',
     };
 
     const filesToCreateIfNotExists = {
@@ -139,9 +137,9 @@ program
   .command('dev')
   .description('Starts the Next.js development server with WebSocket support.')
   .action(() => {
-    console.log('🚀 Starting development server (using custom server.js)...');
-    // We run the custom server which internally starts Next.js in dev mode
-    const result = spawn.sync('node', ['server.js'], {
+    console.log('🚀 Starting development server (using next dev)...');
+    // Run next dev directly
+    const result = spawn.sync('npx', ['next', 'dev'], {
       stdio: 'inherit', // Show output in console
       cwd: findProjectRoot(),
     });
@@ -181,12 +179,13 @@ program
   .command('start')
   .description('Starts the Next.js production server (uses custom server.js).')
   .action(() => {
-    console.log('🛰️ Starting production server (using custom server.js)...');
-    // Run the custom server in production mode
-     const result = spawn.sync('node', ['server.js'], {
+    console.log('🛰️ Starting production server (using next start)...');
+    // Run next start directly
+     const result = spawn.sync('npx', ['next', 'start'], {
       stdio: 'inherit',
       cwd: findProjectRoot(),
-      env: { ...process.env, NODE_ENV: 'production' }, // Set NODE_ENV
+      // NODE_ENV should be set by 'next start' automatically
+      // env: { ...process.env, NODE_ENV: 'production' }, 
     });
     if (result.error) {
       console.error('❌ Failed to start production server:', result.error);
