@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { verifyVerificationToken } from '@/lib/tokenUtils';
-import { Client, createApolloClient } from 'nextjs-hasura-auth';
+import { Client, createApolloClient } from 'hasyx';
 import Debug from '@/lib/debug';
 
 const debug = Debug('api:auth:verify');

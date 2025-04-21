@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Status } from "../nha/status"
 import { useCheckConnection } from "@/lib/hooks/useCheckConnection"
-import { useQuery } from 'nextjs-hasura-auth'
+import { useQuery } from 'hasyx'
 import Debug from '@/lib/debug'
 
 type StatusType = 'connecting' | 'connected' | 'error'

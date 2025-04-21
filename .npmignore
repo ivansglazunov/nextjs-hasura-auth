@@ -45,7 +45,6 @@ next-env.d.ts
 *.experiment.*
 
 # src input
-app/
 components/
 lib/
 pages/

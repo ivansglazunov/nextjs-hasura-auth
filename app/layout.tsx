@@ -1,8 +1,8 @@
 'use client'; // Layout must be client-side due to providers
 
 import { ThemeProvider } from "@/components/theme-provider";
-import { useCreateApolloClient } from 'nextjs-hasura-auth'; // Our client creation function
-import { SessionProvider, useSession } from "next-auth/react"; // Import SessionProvider and useSession
+import { useCreateApolloClient, useSession } from 'hasyx'; // Our client creation function
+import { SessionProvider } from "next-auth/react"; // Import SessionProvider and useSession
 import { useMemo } from "react";
 import "./globals.css";
 

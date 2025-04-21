@@ -7,7 +7,7 @@ This file provides the `useCreateApolloClient` hook, a crucial part of the libra
 A React hook to create and memoize an Apollo Client instance configured for the Hasura backend.
 
 ```tsx
-import { useCreateApolloClient } from 'nextjs-hasura-auth';
+import { useCreateApolloClient } from 'hasyx';
 
 function MyComponent() {
   // Create client for HTTP only

@@ -1,10 +1,12 @@
-# Next.js Hasura Authentication Boilerplate
+# HASYX - Next.js Hasura Authentication Ecosystem Solution
 
 This project provides a robust starting point for building applications using Next.js (App Router), Hasura, and strong authentication patterns. It features JWT-based authentication with NextAuth.js, a secure GraphQL proxy to Hasura, direct WebSocket support for subscriptions, and a powerful dynamic query generator.
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-%F0%9F%9A%80-brightgreen)](https://hasyx.vercel.app/)
 [![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md) [![Apollo Client Documentation](https://img.shields.io/badge/Apollo%20Client%20Docs-MD-orange)](APOLLO.md)
 [![Authentication Helpers Documentation](https://img.shields.io/badge/Auth%20Helpers%20Docs-MD-green)](AUTH.md) [![Hasura Admin Client Documentation](https://img.shields.io/badge/Hasura%20Client%20Docs-MD-purple)](HASURA.md)
 [![Generated Client Documentation](https://img.shields.io/badge/Generated%20Client%20Docs-MD-cyan)](CLIENT.md)
+[![GraphQL Proxy Documentation](https://img.shields.io/badge/GraphQL%20Proxy%20Docs-MD-yellow)](GRAPHQL-PROXY.md)
 
 See [`GENERATOR.md`](GENERATOR.md) for detailed documentation on the dynamic GraphQL query generator, which simplifies creating queries, mutations, and subscriptions based on your Hasura schema.
 
@@ -32,7 +34,7 @@ See [`CLIENT.md`](CLIENT.md) for details on the `Client` class and React hooks t
 
 *   [ ] **Multi-Platform Builds:** Native builders for Android, iOS, MacOS, Windows, Linux, Oculus (e.g., using Tauri, Capacitor, or Electron).
 *   [ ] **Unique Environment Builders:** Specific builds for Chrome Extensions, Firefox Extensions, and VSCode Extensions (including custom UI elements).
-*   [ ] Additional Authentication Providers (OAuth: Google, GitHub, etc.).
+*   [ ] Additional Authentication Providers (OAuth: Google, GitHub, etc.) and Email/Password provider.
 *   [ ] Role-based access control examples.
 *   [ ] Advanced caching strategies.
 *   [ ] Comprehensive end-to-end testing setup for UI and hooks.
@@ -108,12 +110,12 @@ Interaction with the Hasura GraphQL Engine is handled in two primary ways:
 
 1.  **Install the package:**
     ```bash
-    npm install nextjs-hasura-auth
+    npm install hasyx
     ```
 
 2.  **Import the package:**
     ```ts
-    import { ... } from 'nextjs-hasura-auth';
+    import { ... } from 'hasyx';
     ```
 
 

@@ -75,8 +75,8 @@ The primary use case for this class is in automation scripts like database migra
 // migrations/nha/up.ts (Simplified Example)
 import dotenv from 'dotenv';
 import path from 'path';
-import { Hasura } from '../../lib/hasura';
-import Debug from '../../lib/debug';
+import { Hasura } from 'hasyx';
+import Debug from 'debug';
 
 const debug = Debug('nha:migration:up');
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -155,8 +155,8 @@ up();
 // migrations/nha/down.ts (Simplified Example)
 import dotenv from 'dotenv';
 import path from 'path';
-import { Hasura } from '../../lib/hasura';
-import Debug from '../../lib/debug';
+import { Hasura } from 'hasyx';
+import Debug from 'debug';
 
 const debug = Debug('nha:migration:down');
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });

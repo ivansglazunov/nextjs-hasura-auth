@@ -20,8 +20,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "nextjs-hasura-auth": ["./lib/index.ts"],
-      "nextjs-hasura-auth/*": ["./lib/*"]
+      "hasyx": ["./lib/index.ts"],
+      "hasyx/*": ["./lib/*"]
     },
     "types": ["jest", "@testing-library/jest-dom"]
   },

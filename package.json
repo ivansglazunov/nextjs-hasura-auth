@@ -1,13 +1,13 @@
 {
-  "name": "nextjs-hasura-auth",
-  "shortName": "nha",
-  "version": "0.1.5",
+  "name": "hasyx",
+  "version": "0.1.6",
+  "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ivansglazunov/nextjs-hasura-auth.git"
+    "url": "https://github.com/ivansglazunov/hasyx.git"
   },
   "scripts": {
     "dev": "next dev --turbopack",
@@ -24,7 +24,7 @@
     "nha:unmigrate": "tsx ./migrations/nha/down.ts",
     "hasura:schema": "tsx ./lib/hasura-schema.ts",
     "hasura:types": "graphql-codegen --config codegen.ts",
-    "publish": "npm run hasura:schema; npm run hasura:types; npm run build; npm publish"
+    "npm-publish": "npm run hasura:schema; npm run hasura:types; npm run build; npm publish"
   },
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
@@ -116,6 +116,8 @@
     "@testing-library/jest-dom": "^6.4.0",
     "@testing-library/react": "^15.0.0",
     "@testing-library/react-hooks": "^8.0.1",
+    "@types/cross-spawn": "^6.0.6",
+    "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.17.30",
     "@types/react": "^19",

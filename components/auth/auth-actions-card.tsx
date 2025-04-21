@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Github, LogIn, LogOut, MailCheck, MailWarning, Loader2 } from "lucide-react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import Image from 'next/image';
 import React from "react";
-import { useSubscription } from 'nextjs-hasura-auth';
+import { useSession, useSubscription } from 'hasyx';
 
 // Import provider icons (assuming they exist)
 // import GoogleIcon from '@/public/icons/google.svg';

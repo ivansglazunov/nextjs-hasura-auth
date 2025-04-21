@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { IncomingMessage } from "http";
 import Debug from '@/lib/debug';
 import { getToken, JWT } from 'next-auth/jwt';
+import { useSession as useSessionNextAuth } from "next-auth/react";
 import { v4 as uuidv4 } from 'uuid';
 import WebSocket from "ws";
 const debug = Debug('auth');
@@ -135,4 +136,33 @@ export function WsClientsManager(route: string = '') {
       return clients.get(clientId);
     }
   };
+}
+
+export interface Session {
+  user?: {
+    name?: string;
+    email: string;
+    image?: string | null;
+    id?: string;
+    emailVerified?: string | null;
+  },
+  accessToken?: string;
+  provider?: string;
+  hasuraClaims?: {
+    "x-hasura-allowed-roles"?: string[];
+    "x-hasura-default-role"?: string;
+    "x-hasura-user-id"?: string;
+  };
+  error?: any;
+}
+
+export interface SessionData {
+  data?: Session;
+  status: 'authenticated' | 'unauthenticated' | 'loading';
+  update: (data?: any) => Promise<Session | null>;
+}
+
+export function useSession(): SessionData {
+  const sessionData = useSessionNextAuth();
+  return sessionData as SessionData;
 }

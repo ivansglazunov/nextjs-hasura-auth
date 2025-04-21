@@ -5,7 +5,7 @@ import pckg from '../package.json'; // Using relative path
 export type DebuggerFunction = (...args: any[]) => void;
 
 // Initialize root debugger using package name
-const rootDebug = _debug(pckg.shortName || pckg.name);
+const rootDebug = _debug(pckg.name);
 
 /**
  * Debug utility factory.

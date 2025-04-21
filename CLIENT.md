@@ -4,8 +4,12 @@ This document describes the `Client` class and associated React hooks provided i
 
 ## Core Components
 
-1.  **`Client` Class:** For direct use, typically server-side or outside React components. Requires an `ApolloClient` instance during construction.
-2.  **React Hooks (`useQuery`, `useSubscription`, `useMutation` and aliases):** For use within React components. Automatically use the `ApolloClient` from context.
+1.  **`Client` Class:** For direct use, typically server-side or outside React components. Requires an `ApolloClient` instance during construction. Offers `.select()`, `.insert()`, `.update()`, `.delete()`, and `.subscribe()` methods.
+2.  **React Hooks (`useQuery`, `useSubscription`, `useMutation`, `useClient`):** 
+    *   `useQuery` / `useSelect` (alias): For fetching data.
+    *   `useSubscription` / `useSubscribe` (alias): For real-time data.
+    *   `useMutation`: For insert, update, or delete operations.
+    *   `useClient`: Hook to get an instance of the `Client` class within a component, allowing direct calls to `.insert()`, `.update()`, `.delete()`, etc.
 
 ## Key Features (Both Class & Hooks)
 
@@ -131,15 +135,15 @@ Intended for use within React components. Hooks require an `ApolloProvider` high
 
 ```typescript
 import React from 'react';
-// Use specific hook names or aliases
-import { useQuery, useSubscription, useMutation, useSelect, useSubscribe, useInsert, useUpdate, useDelete } from './client'; // Adjust path
+// Import available hooks
+import { useQuery, useSubscription, useMutation, useClient, useSelect, useSubscribe } from './client'; // Adjust path
 import { useSession } from 'next-auth/react';
 
+// --- Example: Using useSelect (alias for useQuery) --- 
 function UserProfile() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
-  // Use the useSelect (useQuery) hook
   const { loading, error, data, refetch } = useSelect<{ users_by_pk: any }>(
     { // Generator Options (1st argument)
       table: 'users',
@@ -153,40 +157,38 @@ function UserProfile() {
       onCompleted: (d) => console.log("My profile data:", d?.users_by_pk)
     }
   );
-
-  // ... render based on loading, error, data
+  // ... render based on loading, error, data ...
 }
 
-function AddUserButton() {
-  const [addUser, { loading: mutationLoading, error: mutationError }] = useInsert(
-    { // Generator Options (1st argument for alias)
+// --- Example: Using useMutation --- 
+function AddUserButtonWithMutationHook() {
+  // useMutation requires 'operation' in the first argument
+  const [addUser, { loading, error: mutationError }] = useMutation(
+    { // Generator Options (1st argument)
+      operation: 'insert',
       table: 'users',
-      object: { name: 'New Hook User', email: `hook-${Date.now()}@example.com` },
+      object: { name: 'New Mutation User', email: `mutation-${Date.now()}@example.com` },
       returning: ['id']
     },
-    { // Hook Options (2nd argument for alias)
-      role: 'admin', // <--- Pass role here
+    { // Hook Options (2nd argument)
+      role: 'admin', 
       onCompleted: (data) => console.log('User added:', data?.insert_users_one?.id),
       onError: (err) => console.error('Failed to add user:', err),
-      // Refetch queries after mutation if needed
-      // refetchQueries: [{ query: GET_ALL_USERS }] 
     }
   );
 
   return (
-    <button onClick={() => addUser()} disabled={mutationLoading}>
-      {mutationLoading ? 'Adding...' : 'Add User (Admin Role)'}
+    <button onClick={() => addUser()} disabled={loading}>
+      {loading ? 'Adding...' : 'Add User (useMutation)'}
       {mutationError && <p>Error: {mutationError.message}</p>}
     </button>
   );
 }
 
-// --- Example: Using useClient() to call Client methods directly --- 
-import { useClient } from './client'; 
-
+// --- Example: Using useClient() for mutations/actions --- 
 function UpdateSelfNameButton() {
   const { data: session } = useSession();
-  const client = useClient(); // Get the Client instance from context
+  const client = useClient(); // Get the Client instance
   const [newName, setNewName] = React.useState('');
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -196,11 +198,11 @@ function UpdateSelfNameButton() {
     setIsUpdating(true);
     setError(null);
     try {
+      // Call the .update() method on the client instance
       await client.update({
         table: 'users',
-        // Use 'me' role to ensure only own record is updated based on Hasura permissions
-        role: 'me', 
-        where: { id: { _eq: session.user.id } }, // Explicitly target user ID
+        role: 'me',
+        where: { id: { _eq: session.user.id } },
         _set: { name: newName },
       });
       console.log('Name updated successfully!');
@@ -212,7 +214,7 @@ function UpdateSelfNameButton() {
       setIsUpdating(false);
     }
   };
-
+  // ... render input and button ... 
   return (
     <div>
       <input 
@@ -228,30 +230,38 @@ function UpdateSelfNameButton() {
     </div>
   );
 }
-// --- End useClient example --- 
 
-// useSubscribe, useUpdate, useDelete follow the same pattern:
-// useSubscribe({ table: '...', ... }, { role: '...', ... });
-// useUpdate({ table: '...', pk_columns: {...}, _set: {...} }, { role: '...', ... });
-// useDelete({ table: '...', pk_columns: {...} }, { role: '...', ... });
+// --- Example: Using useSubscription (or useSubscribe alias) ---
+function OnlineUsersList() {
+    const { loading, error, data } = useSubscribe<{ users: {id: string, name: string}[] }>(
+        { // Generator options
+            table: 'users',
+            where: { last_seen: { _gte: new Date(Date.now() - 5 * 60 * 1000).toISOString() } }, // Example: online in last 5 mins
+            returning: ['id', 'name']
+        },
+        { // Hook options
+            // role: 'user' // Or appropriate role
+        }
+    );
+    // ... render list based on loading, error, data ...
+}
+
 ```
 
 ### Available Hooks
 
-*   `useClient(providedClient?: ApolloClient<any> | null): ApolloClient<any>`: Hook to get the Apollo Client instance (falls back to context).
+*   `useClient(providedClient?: ApolloClient<any> | null): Client`: Hook to get an instance of the `Client` class.
 *   `useQuery<TData, TVariables>(generateOptions, hookOptions)`: Core query hook.
 *   `useSubscription<TData, TVariables>(generateOptions, hookOptions)`: Core subscription hook.
 *   `useMutation<TData, TVariables>(generateOptions, hookOptions): [mutateFn, MutationResult]`: Core mutation hook (requires `operation` in `generateOptions`).
 *   **Aliases:**
     *   `useSelect`: Alias for `useQuery`.
     *   `useSubscribe`: Alias for `useSubscription`.
-    *   `useInsert`: Alias for `useMutation` (automatically sets `operation: 'insert'`).
-    *   `useUpdate`: Alias for `useMutation` (automatically sets `operation: 'update'`).
-    *   `useDelete`: Alias for `useMutation` (automatically sets `operation: 'delete'`).
+    *   ~~`useInsert`~~, ~~`useUpdate`~~, ~~`useDelete`~~: *These aliases are NOT currently implemented. Use `useMutation` or `useClient` instead.* 
 
 **Hook Arguments:**
 
-1.  `generateOptions`: An object matching `Omit<GenerateOptions, 'operation'>` (for aliases) or `GenerateOptions` (for `useMutation`). Defines *what* data to operate on (table, fields, conditions).
+1.  `generateOptions`: An object matching `Omit<GenerateOptions, 'operation'>` (for `useQuery`/`useSubscription` and aliases) or `GenerateOptions` (for `useMutation`). Defines *what* data to operate on.
 2.  `hookOptions` (Optional): An object containing:
     *   `role?: string`: The Hasura role to use for the request.
     *   Any other valid options for the underlying Apollo hook (`useQuery`, `useSubscription`, `useMutation`), like `variables`, `skip`, `onCompleted`, `onError`, `fetchPolicy`, etc. *except* `query`, `mutation`, or `context` (which are handled internally).

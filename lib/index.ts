@@ -7,3 +7,5 @@ export * from './auth';
 export * from './client';
 export * from './jwt';
 export * from './graphql-proxy';
+export * from './credentials';
+export * from './auth-options';

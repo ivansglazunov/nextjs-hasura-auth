@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { ApolloError } from '@apollo/client'; // Import ApolloError
-import { Client } from 'nextjs-hasura-auth'; // Use the path alias
+import { Client } from 'hasyx'; // Use the path alias
 import Debug from './debug';
 import { User as NextAuthUser } from 'next-auth'; // For typing
 import { Account as NextAuthAccount } from 'next-auth'; // For typing
