@@ -28,7 +28,11 @@ export function AuthActionsCard(props: React.HTMLAttributes<HTMLDivElement>) {
       table: 'users',
       where: { id: { _eq: userId } }, // Subscribe only if userId exists
       returning: ['email_verified'], // Only need verification status
-    }, 
+    },
+    {
+      role: 'me',
+      skip: !userId,
+    }
   );
 
   const emailVerified = subData?.users?.[0]?.email_verified;

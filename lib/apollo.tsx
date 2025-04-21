@@ -234,16 +234,6 @@ export function useCreateApolloClient(options: ApolloOptions) {
   return useMemo(() => createApolloClient(options), [options]);
 }
 
-export const CHECK_CONNECTION_SUBSCRIPTION = gql`
-subscription CheckConnection {
-  __schema {
-    queryType {
-      name
-    }
-  }
-}
-`;
-
 export const CHECK_CONNECTION_QUERY = gql`
 query CheckConnection {
   __schema {
