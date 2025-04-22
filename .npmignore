@@ -47,14 +47,21 @@ next-env.d.ts
 # hasyx
 lib/*.ts
 lib/*.tsx
+!lib/*.d.ts
 lib/**/*.ts
 lib/**/*.tsx
+!lib/**/*.d.ts
 migrations/**/*.ts
+!migrations/**/*.d.ts
 components/*.ts
 components/*.tsx
+!components/**/*.d.ts
 components/**/*.ts
 components/**/*.tsx
+!components/**/*.d.ts
 hooks/*.ts
 hooks/*.tsx
+!hooks/*.d.ts
 hooks/**/*.ts
 hooks/**/*.tsx
+!hooks/**/*.d.ts
