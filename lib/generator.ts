@@ -1,12 +1,42 @@
-// @ts-ignore
-import introspectionResult from '../public/hasura-schema.json'; // Импортируем результат интроспекции
+import fs from 'fs'; // Add fs import
+import path from 'path'; // Add path import
 import Debug from './debug';
 import { gql, DocumentNode } from '@apollo/client/core';
-
-// Импортируем базовые сгенерированные типы
-import type { Query_Root, Mutation_Root, Subscription_Root } from '../types/hasura-types'; // Путь к сгенерированным типам
+import type { Query_Root, Mutation_Root, Subscription_Root } from '../types/hasura-types';
 
 const debug = Debug('apollo:generator');
+
+// --- Dynamic Schema Loading ---
+let schema: any; // Define schema variable
+
+try {
+    // Determine project root based on current working directory
+    const projectRoot = process.cwd(); // Assumes CWD is project root when CLI runs
+    const schemaPath = path.join(projectRoot, 'public', 'hasura-schema.json');
+    debug(`Dynamically loading schema from: ${schemaPath}`);
+
+    if (!fs.existsSync(schemaPath)) {
+        throw new Error(`Schema file not found at expected location: ${schemaPath}. Run 'npx hasyx schema' first in your project root.`);
+    }
+
+    const schemaContent = fs.readFileSync(schemaPath, 'utf-8');
+    const introspectionResult = JSON.parse(schemaContent);
+
+    // Add basic validation
+    if (!introspectionResult || !introspectionResult.data || !introspectionResult.data.__schema) {
+        throw new Error(`Invalid introspection result format in ${schemaPath}. Expected { data: { __schema: { ... } } }`);
+    }
+    schema = introspectionResult.data.__schema;
+    debug(`Successfully loaded and parsed schema from ${schemaPath}`);
+
+} catch (error: any) {
+    console.error("❌ CRITICAL ERROR: Failed to load or parse hasura-schema.json.", error);
+    // Optionally re-throw or exit, depending on desired behavior if schema is missing
+    // For now, let it proceed, Generator() will throw if schema is invalid
+    schema = null; // Ensure Generator receives null or throws later
+}
+// --- End Dynamic Schema Loading ---
+
 
 // Types for options and return value
 export type GenerateOperation = 'query' | 'subscription' | 'insert' | 'update' | 'delete';
@@ -36,13 +66,6 @@ export interface GenerateResult {
   variables: Record<string, any>;
   varCounter: number;
 }
-
-// Получаем объект __schema из импортированного результата
-// Добавляем базовую проверку
-if (!introspectionResult.data || !introspectionResult.data.__schema) {
-    throw new Error('❌ Invalid introspection result format. Expected { data: { __schema: { ... } } }');
-}
-const schema = introspectionResult.data.__schema;
 
 // --- Вспомогательная функция для разбора типа GraphQL ---
 // Рекурсивно разбирает тип (обрабатывая NON_NULL и LIST) и возвращает базовое имя и флаги
@@ -81,9 +104,15 @@ function getTypeInfo(type: any): { name: string | null; kind: string; isList: bo
 // --- ---
 
 export function Generator(schema: any) { // Принимаем __schema объект
+  // --- Validation moved here ---
   if (!schema || !schema.queryType || !schema.types) {
-    throw new Error('❌ Invalid schema format. Expected standard introspection __schema object.');
+    // Throw a more specific error if dynamic loading failed earlier
+    if (schema === null) {
+        throw new Error('❌ CRITICAL: Schema could not be loaded dynamically. See previous error.');
+    }
+    throw new Error('❌ Invalid schema format passed to Generator. Expected standard introspection __schema object.');
   }
+  // --- End validation ---
 
   const queryRootName = schema.queryType.name;
   const mutationRootName = schema.mutationType?.name; // Может отсутствовать
@@ -575,5 +604,5 @@ export function Generator(schema: any) { // Принимаем __schema объе
   };
 }
 
-// Экспортируем Generator с уже загруженной схемой
-export default Generator(schema); 
+// Экспортируем Generator с уже загруженной схемой (или null/undefined if loading failed)
+export default Generator(schema);
