@@ -357,9 +357,9 @@ program
     const projectRoot = findProjectRoot();
     let success = true;
 
-    // Step 1: Run hasura-schema.ts
+    // Step 1: Run hasura-schema
     console.log('\n📄 Running hasura-schema script...');
-    const schemaResult = spawn.sync('npx', ['tsx', './lib/hasura-schema.ts'], {
+    const schemaResult = spawn.sync('node', ['./node_modules/hasyx/lib/hasura-schema.js'], {
       stdio: 'inherit',
       cwd: projectRoot,
     });
@@ -377,7 +377,7 @@ program
     // Step 2: Run graphql-codegen (only if step 1 succeeded)
     if (success) {
       console.log('\n⌨️ Running GraphQL codegen...');
-      const codegenResult = spawn.sync('npx', ['graphql-codegen', '--config', './lib/hasura-types.ts'], {
+      const codegenResult = spawn.sync('npx', ['graphql-codegen', '--config', './node_modules/hasyx/lib/hasura-types.js'], {
         stdio: 'inherit',
         cwd: projectRoot,
       });

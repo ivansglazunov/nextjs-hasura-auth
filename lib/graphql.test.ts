@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'; // For unique emails
 import { Subscription } from 'zen-observable-ts'; // For handling subscription cleanup
 
 // Load environment variables from root .env
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config();
 
 import { createApolloClient } from './apollo'; // Client creator from lib
 import { hashPassword } from './authDbUtils'; // For user creation

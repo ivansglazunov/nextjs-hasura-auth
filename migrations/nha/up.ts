@@ -7,7 +7,7 @@ import Debug from '../../lib/debug';
 const debug = Debug('nha:migration:up');
 
 // Загружаем переменные окружения из корневого .env файла
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config();
 
 // Валидация происходит внутри конструктора Hasura
 const hasura = new Hasura({

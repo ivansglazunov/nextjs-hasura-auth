@@ -15,7 +15,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // Load environment variables (e.g., from root .env)
-dotenv.config({ path: path.resolve(__dirname, '../../.env') }); 
+dotenv.config(); 
 
 const hasura = new Hasura({
   url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!, // Required: Hasura GraphQL endpoint URL
@@ -79,7 +79,7 @@ import { Hasura } from 'hasyx';
 import Debug from 'debug';
 
 const debug = Debug('nha:migration:up');
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config();
 
 const hasura = new Hasura({
   url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
@@ -159,7 +159,7 @@ import { Hasura } from 'hasyx';
 import Debug from 'debug';
 
 const debug = Debug('nha:migration:down');
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config();
 
 const hasura = new Hasura({
   url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,

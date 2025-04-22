@@ -11,7 +11,7 @@ import dotenv from 'dotenv'; // To load .env for client creation
 import path from 'path';
 
 // Load .env variables for integration tests
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config();
 
 // Initialize the actual Debugger instance
 const debug = Debug('apollo:generator-test');
