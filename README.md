@@ -18,6 +18,7 @@ See [`HASURA.md`](HASURA.md) for details on the Hasura Admin API client used for
 
 See [`CLIENT.md`](CLIENT.md) for details on the `Client` class and React hooks that combine the Generator and Apollo Client for easy data operations.
 
+See [`GRAPHQL-PROXY.md`](GRAPHQL-PROXY.md) for details on the GraphQL proxy mechanism implemented in `lib/graphql-proxy.ts` and exposed via the API route `app/api/graphql/route.ts`.
 ## ✨ Features Checklist
 
 **Implemented:**

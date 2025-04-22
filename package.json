@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -30,9 +30,14 @@
   "types": "dist/lib/index.d.ts",
   "files": [
     "dist",
+    "app",
     "README.md",
     "GENERATOR.md",
-    "APOLLO.md"
+    "APOLLO.md",
+    "AUTH.md",
+    "CLIENT.md",
+    "HASURA.md",
+    "GRAPHQL-PROXY.md"
   ],
   "dependencies": {
     "@apollo/client": "^3.13.8",

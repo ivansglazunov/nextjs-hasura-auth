@@ -50,10 +50,10 @@ program
 
     const filesToCreateOrReplace = {
       // API Routes (will overwrite)
-      'app/api/auth/[...nextauth]/route.ts': 'api/auth/[...nextauth]/route.ts',
-      'app/api/auth/[...nextauth]/options.ts': 'api/auth/[...nextauth]/options.ts',
-      'app/api/auth/verify/route.ts': 'api/auth/verify/route.ts',
-      'app/api/graphql/route.ts': 'api/graphql/route.ts',
+      'app/api/auth/[...nextauth]/route.ts': 'app/api/auth/[...nextauth]/route.ts',
+      'app/api/auth/[...nextauth]/options.ts': 'app/api/auth/[...nextauth]/options.ts',
+      'app/api/auth/verify/route.ts': 'app/api/auth/verify/route.ts',
+      'app/api/graphql/route.ts': 'app/api/graphql/route.ts',
     };
 
     const filesToCreateIfNotExists = {
