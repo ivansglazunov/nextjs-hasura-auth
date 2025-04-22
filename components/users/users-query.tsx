@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "hasyx/components/ui/card";
 import { useQuery } from 'hasyx'; 
 import { Loader2, Terminal } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import Debug from '@/lib/debug';
+import { Alert, AlertDescription, AlertTitle } from "hasyx/components/ui/alert";
+import Debug from 'hasyx/lib/debug';
 
 const debug = Debug('users-query');
 

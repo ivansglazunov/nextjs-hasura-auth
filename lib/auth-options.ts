@@ -3,9 +3,9 @@ import { JWT as DefaultJWT } from 'next-auth/jwt';
 import GoogleProvider from 'next-auth/providers/google';
 import YandexProvider from 'next-auth/providers/yandex';
 import { Client, createApolloClient } from 'hasyx'; // Import from generated package
-import { getOrCreateUserAndAccount, HasuraUser } from '@/lib/authDbUtils'; 
-import Debug from '@/lib/debug';
-import { generateJWT as generateHasuraJWT } from '@/lib/jwt'; 
+import { getOrCreateUserAndAccount, HasuraUser } from 'hasyx/lib/authDbUtils'; 
+import Debug from 'hasyx/lib/debug';
+import { generateJWT as generateHasuraJWT } from 'hasyx/lib/jwt'; 
 
 // Ensure type augmentation is applied globally (can be in a separate .d.ts file or here)
 import 'next-auth';

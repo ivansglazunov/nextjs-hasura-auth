@@ -1,9 +1,9 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { Client, createApolloClient } from 'hasyx'; // Import from generated package
-import { comparePassword, HasuraUser, hashPassword } from '@/lib/authDbUtils';
-import Debug from '@/lib/debug';
-import { sendVerificationEmail } from '@/lib/email';
-import { generateVerificationToken } from '@/lib/tokenUtils';
+import { comparePassword, HasuraUser, hashPassword } from 'hasyx/lib/authDbUtils';
+import Debug from 'hasyx/lib/debug';
+import { sendVerificationEmail } from 'hasyx/lib/email';
+import { generateVerificationToken } from 'hasyx/lib/tokenUtils';
 import type { User as NextAuthUser } from 'next-auth';
 
 const debug = Debug('auth:credentials');

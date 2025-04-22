@@ -1,9 +1,9 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "hasyx/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "hasyx/components/ui/card";
+import { Input } from "hasyx/components/ui/input";
+import { Label } from "hasyx/components/ui/label";
 import { KeyRound } from "lucide-react";
 import { signIn } from "next-auth/react";
 import React, { useState } from "react";

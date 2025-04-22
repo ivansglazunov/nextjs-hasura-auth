@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
-import Debug from '@/lib/debug';
+import Debug from 'hasyx/lib/debug';
 import { getNextAuthSecret } from './jwt'; // Reuse the hashed NEXTAUTH_SECRET for simplicity
 
 const debug = Debug('tokenUtils');

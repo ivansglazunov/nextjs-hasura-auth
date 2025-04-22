@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs components
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "hasyx/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "hasyx/components/ui/tabs"; // Import Tabs components
 import { UsersQuery } from './users-query'; // Import the query component
 import { UsersSubscription } from './users-subscription'; // Import the subscription component
-import Debug from '@/lib/debug';
+import Debug from 'hasyx/lib/debug';
 
 const debug = Debug('users-card');
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react';
-import { Button } from "@/components/ui/button"
+import { Button } from "hasyx/components/ui/button"
 import { Check, Clipboard } from 'lucide-react';
 
 interface CodeBlockProps {

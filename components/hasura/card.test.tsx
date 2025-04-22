@@ -1,10 +1,10 @@
 import React from 'react';
-import { render, screen } from '@/lib/test-utils';
+import { render, screen } from 'hasyx/lib/test-utils';
 import { HasuraCard } from './card';
-import { useCheckConnection } from '@/lib/hooks/useCheckConnection';
+import { useCheckConnection } from 'hasyx/lib/hooks/useCheckConnection';
 
 // Mock the useCheckConnection hook
-jest.mock('@/lib/hooks/useCheckConnection');
+jest.mock('hasyx/lib/hooks/useCheckConnection');
 
 describe('HasuraCard component', () => {
   beforeEach(() => {

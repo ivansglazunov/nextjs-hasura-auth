@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { IncomingMessage } from "http";
-import Debug from '@/lib/debug';
+import Debug from 'hasyx/lib/debug';
 import { getToken, JWT } from 'next-auth/jwt';
 import { useSession as useSessionNextAuth } from "next-auth/react";
 import { v4 as uuidv4 } from 'uuid';

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { checkConnection, getClient } from '../apollo';
-import Debug from '@/lib/debug';
+import Debug from 'hasyx/lib/debug';
 
 // Create a debug logger for this module
 const debug = Debug('hooks:connection');

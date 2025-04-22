@@ -1,8 +1,8 @@
 'use client';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CodeBlock } from '@/components/code-block';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "hasyx/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "hasyx/components/ui/card";
+import { CodeBlock } from 'hasyx/components/code-block';
 import { GetAuthStatus } from "./get-auth-status";
 import { SocketAuthStatus } from "./socket-auth-status";
 import { Session } from "next-auth";

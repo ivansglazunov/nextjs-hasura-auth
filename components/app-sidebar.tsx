@@ -1,7 +1,7 @@
 import * as React from "react"
 
-import { SearchForm } from "@/components/search-form"
-import { VersionSwitcher } from "@/components/version-switcher"
+import { SearchForm } from "hasyx/components/search-form"
+import { VersionSwitcher } from "hasyx/components/version-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -13,8 +13,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import pckg from "@/package.json"
+} from "hasyx/components/ui/sidebar"
+import pckg from "hasyx/package.json"
 
 // This is sample data.
 const data = {

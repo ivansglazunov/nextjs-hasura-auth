@@ -12,7 +12,7 @@ import spawn from 'cross-spawn';
 
 // --- Templates --- (Store template content or paths here)
 // It's better to load these from actual files for maintainability
-const templatesDir = path.resolve(__dirname, '../../'); // Assuming templates are in dist/../templates
+const templatesDir = path.resolve(__dirname, '../'); // Assuming templates are in dist/../templates
 
 const getTemplateContent = (fileName: string): string => {
   const filePath = path.join(templatesDir, fileName);

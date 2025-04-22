@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "hasyx/components/app-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,26 +6,26 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "hasyx/components/ui/breadcrumb"
+import { Separator } from "hasyx/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "hasyx/components/ui/sidebar"
 
-import pckg from "@/package.json"
+import pckg from "hasyx/package.json"
 
-import { HasuraCard } from "@/components/hasura/card"
-import { ProxyCard } from "@/components/proxy/card"
-import { CredentialsSignInCard } from "@/components/auth/credentials-signin-card"
-import { SessionCard } from "@/components/auth/session-card"
-import { AuthActionsCard } from "@/components/auth/auth-actions-card"
-import { UsersCard } from "@/components/users/users-card"
+import { HasuraCard } from "hasyx/components/hasura/card"
+import { ProxyCard } from "hasyx/components/proxy/card"
+import { CredentialsSignInCard } from "hasyx/components/auth/credentials-signin-card"
+import { SessionCard } from "hasyx/components/auth/session-card"
+import { AuthActionsCard } from "hasyx/components/auth/auth-actions-card"
+import { UsersCard } from "hasyx/components/users/users-card"
 
 // Imports for getting server-side session
 import { getServerSession } from "next-auth/next"
-import authOptions from "@/app/api/auth/[...nextauth]/options" 
+import authOptions from "hasyx/app/api/auth/[...nextauth]/options" 
 import { Session } from "next-auth" // Import Session type
 
 // Now this is an async server component

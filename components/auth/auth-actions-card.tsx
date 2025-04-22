@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Button } from "hasyx/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "hasyx/components/ui/card";
+import { Label } from "hasyx/components/ui/label";
 import { Github, LogIn, LogOut, MailCheck, MailWarning, Loader2 } from "lucide-react";
 import { signIn, signOut } from "next-auth/react";
 import Image from 'next/image';
@@ -10,8 +10,8 @@ import React from "react";
 import { useSession, useSubscription } from 'hasyx';
 
 // Import provider icons (assuming they exist)
-// import GoogleIcon from '@/public/icons/google.svg';
-// import YandexIcon from '@/public/icons/yandex.svg';
+// import GoogleIcon from 'hasyx/public/icons/google.svg';
+// import YandexIcon from 'hasyx/public/icons/yandex.svg';
 
 export function AuthActionsCard(props: React.HTMLAttributes<HTMLDivElement>) {
   const { data: session, status } = useSession();

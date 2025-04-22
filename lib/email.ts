@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import Debug from '@/lib/debug';
+import Debug from 'hasyx/lib/debug';
 
 const debug = Debug('email');
 

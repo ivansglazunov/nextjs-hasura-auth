@@ -8,14 +8,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "hasyx/components/ui/dropdown-menu"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "hasyx/components/ui/sidebar"
 
-import pckg from "@/package.json"
+import pckg from "hasyx/package.json"
 
 export function VersionSwitcher({
   versions,

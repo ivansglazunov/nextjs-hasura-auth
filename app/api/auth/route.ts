@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTokenFromRequest, WsClientsManager } from 'hasyx';
-import Debug from '@/lib/debug';
+import Debug from 'hasyx/lib/debug';
 import http from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
 

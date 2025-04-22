@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify, jwtDecrypt, type JWTPayload } from 'jose';
-import Debug from '@/lib/debug';
+import Debug from 'hasyx/lib/debug';
 // crypto.subtle is globally available in Node >= 15, browsers, and edge runtimes.
 // No explicit import needed for it, but Node's 'crypto' might be needed for other things if used elsewhere.
 // import crypto from 'crypto'; // We don't need the Node-specific module anymore for hashing.

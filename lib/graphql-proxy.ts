@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import http from 'http';
 import ws, { WebSocket, WebSocketServer } from 'ws';
 import { getToken } from 'next-auth/jwt';
-import Debug from '@/lib/debug';
-import { generateJWT } from '@/lib/jwt';
+import Debug from 'hasyx/lib/debug';
+import { generateJWT } from 'hasyx/lib/jwt';
 
 const debugGraphql = Debug('graphql:proxy');
 

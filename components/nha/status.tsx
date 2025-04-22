@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from "@/components/ui/button"
+import { Button } from "hasyx/components/ui/button"
 import { Check, Loader2, X } from "lucide-react"
 
 type StatusProps = {

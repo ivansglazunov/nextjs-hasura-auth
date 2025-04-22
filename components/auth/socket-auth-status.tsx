@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Status } from '@/components/nha/status';
-import { CodeBlock } from '@/components/code-block';
-import Debug from '@/lib/debug';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "hasyx/components/ui/card";
+import { Label } from "hasyx/components/ui/label";
+import { Status } from 'hasyx/components/nha/status';
+import { CodeBlock } from 'hasyx/components/code-block';
+import Debug from 'hasyx/lib/debug';
 
 const debug = Debug('auth:socket-status');
 

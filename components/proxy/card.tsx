@@ -5,9 +5,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import Debug from '@/lib/debug';
+} from "hasyx/components/ui/card";
+import { Label } from "hasyx/components/ui/label";
+import Debug from 'hasyx/lib/debug';
 import { gql, useQuery, useSubscription } from '@apollo/client';
 import { useEffect, useState } from "react";
 import { Status } from "../nha/status";
