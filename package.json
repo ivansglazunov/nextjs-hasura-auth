@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -37,7 +37,9 @@
     "AUTH.md",
     "CLIENT.md",
     "HASURA.md",
-    "GRAPHQL-PROXY.md"
+    "GRAPHQL-PROXY.md",
+    ".gitignore",
+    ".npmignore"
   ],
   "dependencies": {
     "@apollo/client": "^3.13.8",
