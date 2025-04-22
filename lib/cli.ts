@@ -380,7 +380,7 @@ program
     // Step 1: Run hasura-schema.ts using tsx
     console.log('\n📄 Running hasura-schema script...');
     // Path to the script within the installed package
-    const schemaScriptPath = path.join('node_modules', 'hasyx', 'lib', 'hasura-schema.ts');
+    const schemaScriptPath = path.join('node_modules', 'hasyx', 'lib', 'hasura-schema.js');
     const schemaResult = spawn.sync('npx', ['tsx', schemaScriptPath], {
       stdio: 'inherit',
       cwd: projectRoot, // Execute from project root
@@ -400,7 +400,7 @@ program
     if (success) {
       console.log('\n⌨️ Running GraphQL codegen...');
       // Path to the config file within the installed package
-      const codegenConfigPath = path.join('node_modules', 'hasyx', 'lib', 'hasura-types.ts');
+      const codegenConfigPath = path.join('node_modules', 'hasyx', 'lib', 'hasura-types.js');
       const codegenResult = spawn.sync('npx', ['graphql-codegen', '--config', codegenConfigPath], {
         stdio: 'inherit',
         cwd: projectRoot, // Execute from project root
