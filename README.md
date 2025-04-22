@@ -1,6 +1,6 @@
 # HASYX - Next.js Hasura Authentication Ecosystem Solution
 
-This project provides a robust starting point for building applications using Next.js (App Router), Hasura, and strong authentication patterns. It features JWT-based authentication with NextAuth.js, a secure GraphQL proxy to Hasura, direct WebSocket support for subscriptions, and a powerful dynamic query generator.
+Hasyx provides a robust starting point and a set of tools for building applications using Next.js (App Router), Hasura, and strong authentication patterns. It simplifies setup with JWT-based authentication via NextAuth.js, a secure GraphQL proxy to Hasura, direct WebSocket support for subscriptions, and a powerful dynamic query generator.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-%F0%9F%9A%80-brightgreen)](https://hasyx.vercel.app/)
 [![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md) [![Apollo Client Documentation](https://img.shields.io/badge/Apollo%20Client%20Docs-MD-orange)](APOLLO.md)
@@ -8,19 +8,20 @@ This project provides a robust starting point for building applications using Ne
 [![Generated Client Documentation](https://img.shields.io/badge/Generated%20Client%20Docs-MD-cyan)](CLIENT.md)
 [![GraphQL Proxy Documentation](https://img.shields.io/badge/GraphQL%20Proxy%20Docs-MD-yellow)](GRAPHQL-PROXY.md)
 
-See [`GENERATOR.md`](GENERATOR.md) for detailed documentation on the dynamic GraphQL query generator, which simplifies creating queries, mutations, and subscriptions based on your Hasura schema.
-
-See [`APOLLO.md`](APOLLO.md) for details on the configured Apollo Client instance and how it handles authenticated requests and subscriptions.
-
-See [`AUTH.md`](AUTH.md) for documentation on WebSocket and request authentication helpers.
-
-See [`HASURA.md`](HASURA.md) for details on the Hasura Admin API client used for migrations.
-
-See [`CLIENT.md`](CLIENT.md) for details on the `Client` class and React hooks that combine the Generator and Apollo Client for easy data operations.
-
-See [`GRAPHQL-PROXY.md`](GRAPHQL-PROXY.md) for details on the GraphQL proxy mechanism implemented in `lib/graphql-proxy.ts` and exposed via the API route `app/api/graphql/route.ts`.
-
 ## Technologies Used
+
+Hasyx takes responsibility for:
+
+*   Setting up a universal, ws/serverless compatible Next.js environment.
+*   Proxying client connections to Hasura through `/api/graphql`, eliminating the need to expose Hasura JWTs to the client and relying solely on NextAuth.js for authorization.
+*   Providing access via both the native ApolloClient and a custom [`Client`](CLIENT.md) class for interacting with Hasura.
+*   A fully configured NextAuth.js integration supporting multiple authentication methods (including Credentials, Google, Yandex, with others like GitHub planned).
+*   Maintaining backward compatibility for UI components under `hasyx/components/ui/*` (generated via shadcn/ui) to minimize refactoring needs in downstream projects.
+*   Ensuring seamless compatibility between Vercel deployments and Hasura Cloud/Server.
+*   Structuring the `./lib/**` directory so its contents can be directly imported as if from an npm package, allowing the project to function as both a standalone application and a reusable library.
+*   Pre-configuring Jest for TypeScript testing of files within the `./lib` directory.
+*   Integrating Resend for sending email verification messages (when `RESEND_API_KEY` is set).
+*   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
 
 Applying best development practices from the listed ecosystems, we have combined these libraries into a single framework for rapid deployment.
 
@@ -79,200 +80,305 @@ Applying best development practices from the listed ecosystems, we have combined
   </tr>
 </table>
 
-## ✨ Features Checklist
+## 🚀 Quick Start
 
-**Implemented:**
+Get your Next.js project integrated with Hasura and authentication in minutes!
 
-*   [x] **Secure Hasura Proxy:** An integrated API route acts as a proxy to Hasura, securely handling requests using the user's session JWT while hiding the Hasura Admin Secret from the client.
-*   [x] **Credentials Authentication:** User authentication implemented using NextAuth.js with a login/password (Credentials) provider.
-*   [x] **Unified Apollo Client:** A configured Apollo Client instance handles both authenticated HTTP requests (via the proxy) and direct, authenticated WebSocket connections for subscriptions.
-*   [x] **Dynamic Query Generator:** A versatile query generator (`lib/generator.ts`) allows dynamic creation of GraphQL operations based on options and schema, suitable for client/server use.
-*   [x] **WebSocket Authentication:** Real-time subscriptions connect directly to Hasura via WebSockets, authenticated using the user's session JWT.
-*   [x] **Generated Client Wrapper:** A `Client` class and associated React hooks (`useQuery`, `useSubscription`, `useMutation`, plus aliases `useSelect`, `useInsert`, `useUpdate`, `useDelete`) that combine the Generator and Apollo Client for simplified data fetching and mutations (`lib/client.tsx`).
-*   [x] **Advanced Convenience Hooks:** Aliases `useInsert`, `useUpdate`, `useDelete` built on top of `useMutation` are available for streamlined CRUD operations.
+1.  **Install Hasyx:**
+    ```bash
+    npm install hasyx
+    # or
+    yarn add hasyx
+    # or
+    pnpm add hasyx
+    ```
 
-**Planned / Future Ideas:**
+2.  **Initialize Hasyx:**
+    Run the init command in your project root. This will set up necessary API routes, configurations, and patch your Next.js project for WebSocket support.
+    ```bash
+    npx hasyx init
+    ```
+    See the `init` command documentation below for details on created files.
 
-*   [ ] **Multi-Platform Builds:** Native builders for Android, iOS, MacOS, Windows, Linux, Oculus (e.g., using Tauri, Capacitor, or Electron).
-*   [ ] **Unique Environment Builders:** Specific builds for Chrome Extensions, Firefox Extensions, and VSCode Extensions (including custom UI elements).
-*   [ ] Additional Authentication Providers (OAuth: Google, GitHub, etc.) and Email/Password provider.
-*   [ ] Role-based access control examples.
-*   [ ] Advanced caching strategies.
-*   [ ] Comprehensive end-to-end testing setup for UI and hooks.
+3.  **Configure Environment Variables:**
+    Create a `.env` file in your project root (or configure environment variables in your deployment platform). Fill in the necessary details for Hasura, NextAuth, and any OAuth providers you plan to use. See the "Environment Variables" section below for a full example and detailed setup instructions.
 
-## 🚀 Core Concepts
+4.  **Setup Database & Schema:**
+    *   Create your database tables and relationships. You can adapt the example migrations in the `hasyx` package under `migrations/nha/` ([up.ts](./migrations/nha/up.ts), [down.ts](./migrations/nha/down.ts)). Place your migration scripts in a `migrations/<your_migration_name>/` directory in your project root.
+    *   Apply migrations: `npx hasyx migrate`
+    *   Generate Hasura schema JSON and TypeScript types: `npx hasyx schema`
 
-### 1. Authentication (NextAuth.js)
+5.  **Easy configure ColorMode, Session and Apollo with HasyxProvider:**
+    Wrap your application layout (e.g., `app/layout.tsx`) with the Apollo Provider.
+    ```tsx
+    'use client'; // Layout must be client-side due to providers
 
-*   Uses `NextAuth.js` for handling authentication flow.
-*   Configured with the **Credentials provider** for email/password login (see `pages/api/auth/[...nextauth].ts` or `app/api/auth/[...nextauth]/route.ts`).
-*   Manages sessions using **JWT**. The JWT contains essential user information and Hasura claims.
-*   Provides standard pages/routes for login, logout, and potentially signup.
+    import { HasyxProvider } from "hasyx";
+    import "./globals.css";
 
-### 2. Hasura Integration
+    export default function RootLayout({ children }: { children: React.ReactNode }) {
+      return (
+        <>
+          <html lang="en" suppressHydrationWarning>
+            <head />
+            <body>
+              <HasyxProvider>
+                {children}
+              </HasyxProvider>
+            </body>
+          </html>
+        </>
+      )
+    }
+    ```
 
-Interaction with the Hasura GraphQL Engine is handled in two primary ways:
+6.  **Use Hasyx Client for Data:**
+    Fetch, mutate, and subscribe to your Hasura data using Hasyx hooks and the Client class, which leverage a powerful query generator.
+    ```tsx
+    import { useClient, useQuery, useSubscription } from 'hasyx';
 
-*   **HTTP Requests (Queries/Mutations via Proxy):**
-    *   Client-side GraphQL queries and mutations are sent to a Next.js API route (`/api/graphql-proxy` or similar).
-    *   This proxy route retrieves the user's JWT from their session.
-    *   It then forwards the GraphQL request to the actual Hasura endpoint (`HASURA_GRAPHQL_URL`).
-    *   Crucially, the proxy uses the **`HASURA_ADMIN_SECRET`** to communicate with Hasura but includes the user's details (like `x-hasura-user-id`, `x-hasura-default-role` derived from the JWT) as session variables in the request headers.
-    *   This ensures Hasura applies the correct permissions for the logged-in user while keeping the powerful `admin_secret` completely hidden from the browser.
-*   **WebSocket Connections (Subscriptions):**
-    *   For real-time data via GraphQL Subscriptions, the client establishes a direct WebSocket connection to the Hasura endpoint (`wss://...`).
-    *   Authentication for the WebSocket connection is handled by passing the user's session JWT within the `connectionParams`. Hasura verifies this token to authorize the subscription.
-    *   The `components/auth/SocketAuthStatus.tsx` component likely demonstrates checking the status of this authenticated connection.
+    function MyComponent() {
+      // Get the Hasyx client instance
+      const client = useClient();
 
-### 3. Apollo Client
+      // Fetch users
+      const { data: usersData, loading: usersLoading, error: usersError } = useQuery({
+        table: 'users',
+        returning: ['id', 'name', 'email'],
+        where: { name: { _ilike: '%a%' } },
+        limit: 10,
+      });
 
-*   A pre-configured Apollo Client instance (`lib/apolloClient.ts` or similar) is set up to manage GraphQL data fetching.
-*   It intelligently handles both:
-    *   **HTTP Link:** Points to the Next.js GraphQL proxy (`/api/graphql-proxy`) for queries and mutations.
-    *   **WebSocket Link:** Connects directly to Hasura's WebSocket endpoint for subscriptions, including logic to pass the authentication token.
-*   The client can be used both client-side (with React hooks) and server-side (for SSR/SSG data fetching).
+      // Subscribe to user changes (using the hook)
+      const { data: subData, loading: subLoading } = useSubscription({
+        table: 'users',
+        returning: ['id', 'name'],
+        limit: 5,
+        order_by: { created_at: 'desc' }
+      });
 
-### 4. Dynamic Query Generation (`GENERATOR.md`)
+      return <div onClick={async () => {
+        const result = await client.insert<{ insert_users_one: { id: string } }>({
+          table: 'users',
+          // Generator syntax for variables is used directly in client methods
+          objects: [{ name: 'New User', email: 'new@example.com' }],
+          returning: ['id'] // Return the ID of the new user
+        });
+        // Similarly, you can use:
+        // await client.update({ table: 'users', where: { id: { _eq: userId } }, _set: { name: 'Updated Name' } });
+        // await client.delete({ table: 'users', where: { id: { _eq: userId } } });
+        // await client.select({ table: 'posts', returning: ['id', 'title'] });
+      }}>
+      
+      // ... render your component using the fetched/subscribed data ...
+    }
+    ```
+    Refer to [`GENERATOR.md`](GENERATOR.md) and [`CLIENT.md`](CLIENT.md) for detailed syntax.
 
-*   The core `Generator` function in `lib/generator.ts` allows you to build complex GraphQL operations dynamically based on a simple options object and your `public/hasura-schema.json`.
-*   This avoids writing lengthy GraphQL query strings manually.
-*   See [`GENERATOR.md`](GENERATOR.md) for full usage details and examples.
-*   *Convenience hooks (like `useQuery`, `useSubscription`, `useCRUD`) are planned to further simplify using the generator within React components.*
+7.  **Run Development Server:**
+    ```bash
+    npx hasyx dev
+    ```
 
-## 📁 Project Structure (Key Directories)
+## ⚙️ CLI Commands
+
+Hasyx provides a CLI tool (run via `npx hasyx <command>`) to simplify common tasks:
+
+---
+
+### `init`
+
+Initializes Hasyx in your Next.js project. It copies necessary API routes, configuration files, and applies the `next-ws` patch for WebSocket support.
+
+```bash
+npx hasyx init
+```
+
+**File Operations:**
+
+*   🔄 = Overwrites the file if it exists.
+*   ✨ = Creates the file only if it does not exist.
 
 ```
 .
-├── app/                  # Next.js App Router (Pages, Layouts, API Routes)
-│   ├── api/              # API routes (e.g., auth, graphql-proxy)
-│   └── (main)/           # Main application pages/routes
-├── components/           # Shared React components
-│   ├── auth/             # Authentication-related components
-│   └── ui/               # UI primitives (likely shadcn/ui)
-├── lib/                  # Core logic, utilities, client configurations
-│   ├── apolloClient.ts   # Apollo Client setup
-│   ├── auth.ts           # Authentication utilities/configs
-│   ├── generator.ts      # GraphQL Query Generator
-│   ├── debug.ts          # Debug utility
-│   └── ...
-├── public/               # Static assets
-│   ├── hasura-schema.json # Hasura GraphQL schema (for Generator)
-├── styles/               # Global styles
-├── .env                  # Environment variables (Gitignored)
-├── GENERATOR.md          # Query Generator Documentation
-├── next.config.js        # Next.js configuration
-├── package.json          # Project dependencies and scripts
-└── tsconfig.json         # TypeScript configuration
+├── .github/
+│   └── workflows/
+│       ├── 🔄 npm-publish.yml  # Example CI/CD for publishing (if you fork Hasyx)
+│       └── 🔄 test.yml          # Example CI for running tests (if you fork Hasyx)
+├── app/
+│   ├── ✨ layout.tsx
+│   ├── ✨ page.tsx
+│   ├── ✨ globals.css
+│   ├── ✨ favicon.ico
+│   └── api/
+│       ├── auth/
+│       │   ├── [...nextauth]/
+│       │   │   ├── 🔄 route.ts
+│       │   │   └── 🔄 options.ts
+│       │   └── verify/
+│       │       └── 🔄 route.ts     # (Likely for email verification)
+│       └── graphql/
+│           └── 🔄 route.ts         # Hasyx GraphQL Proxy
+├── ✨ .gitignore
+├── ✨ .npmignore
+└── ✨ .npmrc
+```
+*Note: GitHub workflow files are copied as examples and might need adjustment for your specific repository.*
+
+---
+
+### `dev`
+
+Starts the Next.js development server (`next dev`).
+
+```bash
+npx hasyx dev
 ```
 
-## 🛠️ Getting Started
+---
 
-### As package
+### `build`
 
-1.  **Install the package:**
-    ```bash
-    npm install hasyx
-    ```
+Builds your Next.js application for production (`next build`).
 
-2.  **Import the package:**
-    ```ts
-    import { ... } from 'hasyx';
-    ```
+```bash
+npx hasyx build
+```
 
+---
 
-### As boilerplate
+### `start`
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd <repository-directory>
-    git remote add <your-project-name> <your-project-url>
-    git push <your-project-name> main
-    ```
+Starts the Next.js production server (`next start`). Requires a previous `build`.
 
-    Sync updates from the original repository:
-    ```bash
-    git fetch origin
-    git checkout main
-    git merge origin/main
-    # solve conflicts
-    git push origin main
-    ```
+```bash
+npx hasyx start
+```
 
-2.  **Install dependencies:**
-    ```bash
-    npm ci
-    ```
+---
 
-3.  **Set up Environment Variables:**
-    Create a `.env` file in the root directory and add the following variables:
+### `migrate`
 
-    > Create Hasura instance in [Hasura Cloud](https://hasura.io/cloud) or [Hasura Self-Hosted](https://hasura.io/docs/latest/graphql/core/deployment/hasura-cli/hasura-cli-install/)
+Finds and executes `up.ts` migration scripts located in subdirectories of `./migrations` (e.g., `./migrations/001_users/up.ts`, `./migrations/002_posts/up.ts`) in alphabetical order of the subdirectories.
 
-    ```env
-    # Hasura Configuration
-    NEXT_PUBLIC_HASURA_GRAPHQL_ENDPOINT="<your-hasura-graphql-url>" # e.g., https://your-project.hasura.app/v1/graphql
-    NEXT_PUBLIC_HASURA_WS_ENDPOINT="<your-hasura-websocket-url>" # e.g., wss://your-project.hasura.app/v1/graphql
-    HASURA_ADMIN_SECRET="<your-hasura-admin-secret>"
+```bash
+npx hasyx migrate
+```
+It uses `npx tsx` to run the scripts. Ensure your migration scripts handle database connections and operations correctly. See [`migrations/nha/up.ts`](./migrations/nha/up.ts) for an example.
 
-    # NextAuth.js Configuration
-    NEXTAUTH_URL="<your-deployment-url>" # e.g., http://localhost:3000 for local dev
-    NEXTAUTH_SECRET="<generate-a-strong-secret>" # Generate with: openssl rand -base64 32
+---
 
-    # Other (if needed by your setup)
-    # DATABASE_URL="..."
-    ```
-    *   Replace `<...>` with your actual Hasura credentials and secrets.
-    *   Ensure `NEXTAUTH_URL` points to your application's base URL.
+### `unmigrate`
 
-4.  **Update Hasura Schema:**
-    Make sure the `public/hasura-schema.json` file in the root is up-to-date with your Hasura instance's schema. You might need to fetch this from Hasura if you've made changes.
+Finds and executes `down.ts` migration scripts located in subdirectories of `./migrations` in **reverse** alphabetical order of the subdirectories.
 
-5.  **Run the development server:**
-    ```bash
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    ```
+```bash
+npx hasyx unmigrate
+```
+It uses `npx tsx` to run the scripts. See [`migrations/nha/down.ts`](./migrations/nha/down.ts) for an example.
 
-6.  Open [http://localhost:3000](http://localhost:3000) (or your `NEXTAUTH_URL`) in your browser.
+---
 
-7. Configure Google OAuth
-    - Go to [Google Cloud Console](https://console.cloud.google.com/)
-    - Create a new project
-    - Enable Google OAuth API
-    - Create credentials
-    - Add `http://localhost:3000/api/auth/callback/google` as a redirect URI
-    - Copy the client ID and client secret
-    - Add them to the `.env` file or vercel environment variables
-    ```env
-    GOOGLE_CLIENT_ID="<your-google-client-id>"
-    GOOGLE_CLIENT_SECRET="<your-google-client-secret>"
-    ```
+### `schema`
 
-8. Configure Yandex OAuth
-    - Go to [Yandex Cloud Console](https://oauth.yandex.com/client/new)
-    - Create a new application
-    - Add `http://localhost:3000/api/auth/callback/yandex` as a redirect URI
-    - Copy the client ID and client secret
-    - Add them to the `.env` file or vercel environment variables
-    ```env
-    YANDEX_CLIENT_ID="<your-yandex-client-id>"
-    YANDEX_CLIENT_SECRET="<your-yandex-client-secret>"  
-    ```
+Generates the Hasura GraphQL schema and corresponding TypeScript types for use with the query generator and client hooks. It performs two steps:
+1. Runs a script (internally `lib/hasura-schema.ts`) to fetch the introspection schema from your Hasura instance (`NEXT_PUBLIC_HASURA_GRAPHQL_URL`) and saves it to `./public/hasura-schema.json` in your project.
+2. Runs `graphql-codegen` using the configuration (internally `lib/hasura-types.ts`) to generate TypeScript definitions based on the fetched schema, saving them to `./types/hasura-types.d.ts` in your project.
 
-9. Configure Vercel
-    - Go to [Vercel](https://vercel.com/)
-    - Create a new project
-    - Add vercel environment variables from `.env` file
-    - Deploy the project
+```bash
+npx hasyx schema
+```
+Run this command whenever your Hasura database structure (tables, columns, relationships) changes.
 
-## Environment Variables Summary
+---
 
-*   `NEXT_PUBLIC_HASURA_GRAPHQL_ENDPOINT`: Public URL for Hasura GraphQL HTTP endpoint.
-*   `NEXT_PUBLIC_HASURA_WS_ENDPOINT`: Public URL for Hasura GraphQL WebSocket endpoint.
-*   `HASURA_ADMIN_SECRET`: Your Hasura admin secret (kept server-side).
-*   `NEXTAUTH_URL`: The canonical URL of your Next.js application.
-*   `NEXTAUTH_SECRET`: A secret key used by NextAuth.js to sign JWTs, etc.
+## 🔑 Environment Variables
+
+Configure Hasyx features by setting environment variables. Create a `.env` file in your project root or set them in your deployment environment. Features requiring specific variables (like OAuth providers or email sending) are automatically activated when the corresponding variables are set.
+
+**Example `.env` File:**
+
+```env
+# ===== Hasura Configuration =====
+# Required: URL of your Hasura GraphQL endpoint
+NEXT_PUBLIC_HASURA_GRAPHQL_URL=https://your-project.hasura.app/v1/graphql
+# Required for migrations, schema generation, and potentially backend operations if not using JWT auth for them.
+HASURA_ADMIN_SECRET=your_strong_hasura_admin_secret
+# Required if using JWT authentication mode with Hasura. MUST match Hasura's config.
+HASURA_JWT_SECRET={"type":"HS256","key":"your_32_byte_or_longer_secret_key_for_hs256"}
+
+# ===== NextAuth.js Configuration =====
+# Required: The canonical URL of your deployment. Use http://localhost:3000 for local dev.
+NEXTAUTH_URL=http://localhost:3000
+# Required: A strong secret for signing tokens, CSRF protection, etc.
+NEXTAUTH_SECRET=your_super_secret_nextauth_key_32_chars_or_more
+
+# ===== OAuth Providers (Optional - Enable by setting credentials) =====
+# --- Google ---
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# --- Yandex ---
+YANDEX_CLIENT_ID=your_yandex_client_id
+YANDEX_CLIENT_SECRET=your_yandex_client_secret
+
+# ===== Email Provider (Optional - For passwordless or verification) =====
+# Required if using EmailProvider or email features (like verification if implemented)
+RESEND_API_KEY=re_your_resend_api_key
+
+# ===== Other =====
+# NODE_ENV=development # Usually set automatically by Node/Next.js
+# NEXT_PUBLIC_BUILD_TARGET=server # Specific Hasyx build target setting (if needed)
+```
+
+### Configuration Details
+
+#### Hasura (`NEXT_PUBLIC_HASURA_GRAPHQL_URL`, `HASURA_ADMIN_SECRET`, `HASURA_JWT_SECRET`)
+
+*   `NEXT_PUBLIC_HASURA_GRAPHQL_URL`: The **required** public endpoint for your Hasura instance. Hasyx uses this for client-side requests (via the proxy) and schema generation.
+*   `HASURA_ADMIN_SECRET`: **Required** for running migrations (`npx hasyx migrate`/`unmigrate`) and schema generation (`npx hasyx schema`) as these operations need admin privileges. It's also used by the GraphQL proxy *if* you configure the proxy to use the admin secret instead of forwarding user JWTs (not the default Hasyx setup). **Keep this secret secure and never expose it to the client.**
+*   `HASURA_JWT_SECRET`: **Required** if your Hasura instance is configured to use JWT authentication mode. This variable must contain the *exact* same JWT configuration (type and key) as set in your Hasura environment variables. Hasyx uses this internally to generate Hasura-compatible JWTs based on the NextAuth session.
+
+    *   **Migrations:** Define your database changes in `up.ts` and rollbacks in `down.ts` files within `./migrations/<name>/` directories (see [example up](./migrations/nha/up.ts), [example down](./migrations/nha/down.ts)). Run `npx hasyx migrate` to apply or `npx hasyx unmigrate` to revert.
+    *   **Schema Updates:** After changing your database structure (and running migrations), update the local schema representation and types by running `npx hasyx schema`.
+
+#### NextAuth.js (`NEXTAUTH_URL`, `NEXTAUTH_SECRET`)
+
+*   `NEXTAUTH_URL`: **Required** by NextAuth.js, especially for OAuth redirects and email links. Set it to your application's canonical base URL (e.g., `http://localhost:3000` locally, `https://yourdomain.com` in production).
+*   `NEXTAUTH_SECRET`: **Required** for securing sessions, signing JWTs, and CSRF protection. Generate a strong, random string (at least 32 characters). You can use `openssl rand -base64 32` to generate one.
+
+#### OAuth Providers (`GOOGLE_*`, `YANDEX_*`, etc.)
+
+*   OAuth providers are automatically enabled in the NextAuth configuration provided by `hasyx init` if their corresponding `CLIENT_ID` and `CLIENT_SECRET` environment variables are set.
+*   **Google:**
+    1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+    2. Create a project or select an existing one.
+    3. Go to "APIs & Services" > "Credentials".
+    4. Create "OAuth client ID", select "Web application".
+    5. Add Authorized JavaScript origins (e.g., `http://localhost:3000`).
+    6. Add Authorized redirect URIs: `YOUR_NEXTAUTH_URL/api/auth/callback/google` (e.g., `http://localhost:3000/api/auth/callback/google`).
+    7. Copy the Client ID and Client Secret into your `.env`.
+*   **Yandex:**
+    1. Go to the [Yandex OAuth Console](https://oauth.yandex.com/client/new).
+    2. Register a new application.
+    3. Choose "Web services".
+    4. Add the Redirect URI: `YOUR_NEXTAUTH_URL/api/auth/callback/yandex` (e.g., `http://localhost:3000/api/auth/callback/yandex`).
+    5. Grant necessary permissions (e.g., access to email, profile info).
+    6. Copy the ID and Password (Client Secret) into your `.env`.
+
+#### Email Provider (`RESEND_API_KEY`)
+
+*   If you plan to use features requiring email (like passwordless sign-in via the Email provider, or potentially email verification flows), you need to configure an email sending service.
+*   Hasyx example setup might include integration with [Resend](https://resend.com).
+*   If `RESEND_API_KEY` is set, related email functionality might be enabled.
+    1. Sign up for Resend.
+    2. Create an API Key in your Resend dashboard.
+    3. Add the key to your `.env`.
+
+## Contributing
+
+Contributions are welcome! Please see [`CONTRIBUTING.md`](CONTRIBUTING.md) for details on how to set up the development environment, run tests, and submit pull requests.
+
+## License
+
+(Add your license info here, e.g., MIT License) 

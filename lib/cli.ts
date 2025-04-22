@@ -141,6 +141,13 @@ program
       '.gitignore': '.gitignore',
       '.npmignore': '.npmignore',
       '.npmrc': '.npmrc',
+      'jest.config.js': 'jest.config.js',
+      'jest.setup.js': 'jest.setup.js',
+      'next.config.ts': 'next.config.ts',
+      'postcss.config.mjs': 'postcss.config.mjs',
+      'components.json': 'components.json',
+      'tsconfig.json': 'tsconfig.json',
+      'tsconfig.lib.json': 'tsconfig.lib.json',
     };
 
     // Ensure directories exist
@@ -352,16 +359,31 @@ program
 program
   .command('schema')
   .description('Generate Hasura schema files and GraphQL types.')
-  .action(() => {
+  .action(async () => {
     console.log('🧬 Generating Hasura schema and types...');
     const projectRoot = findProjectRoot();
     let success = true;
 
-    // Step 1: Run hasura-schema
+    // Ensure required directories exist in the project root
+    const publicDir = path.join(projectRoot, 'public');
+    const typesDir = path.join(projectRoot, 'types');
+    try {
+        console.log(` memastikan direktori: ${publicDir}`);
+        await fs.ensureDir(publicDir);
+        console.log(` memastikan direktori: ${typesDir}`);
+        await fs.ensureDir(typesDir);
+    } catch (err) {
+        console.error(`❌ Failed to ensure directories exist: ${err}`);
+        process.exit(1);
+    }
+
+    // Step 1: Run hasura-schema.ts using tsx
     console.log('\n📄 Running hasura-schema script...');
-    const schemaResult = spawn.sync('node', ['./node_modules/hasyx/lib/hasura-schema.js'], {
+    // Path to the script within the installed package
+    const schemaScriptPath = path.join('node_modules', 'hasyx', 'lib', 'hasura-schema.ts');
+    const schemaResult = spawn.sync('npx', ['tsx', schemaScriptPath], {
       stdio: 'inherit',
-      cwd: projectRoot,
+      cwd: projectRoot, // Execute from project root
     });
 
     if (schemaResult.error) {
@@ -377,9 +399,11 @@ program
     // Step 2: Run graphql-codegen (only if step 1 succeeded)
     if (success) {
       console.log('\n⌨️ Running GraphQL codegen...');
-      const codegenResult = spawn.sync('npx', ['graphql-codegen', '--config', './node_modules/hasyx/lib/hasura-types.js'], {
+      // Path to the config file within the installed package
+      const codegenConfigPath = path.join('node_modules', 'hasyx', 'lib', 'hasura-types.ts');
+      const codegenResult = spawn.sync('npx', ['graphql-codegen', '--config', codegenConfigPath], {
         stdio: 'inherit',
-        cwd: projectRoot,
+        cwd: projectRoot, // Execute from project root
       });
 
       if (codegenResult.error) {

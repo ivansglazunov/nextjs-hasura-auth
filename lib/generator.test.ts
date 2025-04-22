@@ -966,6 +966,3 @@ describe('Generator Integration Tests', () => {
     });
 
 });
-
-// Final log from the original file
-console.log('\n✨ Generator test file finished execution.'); 

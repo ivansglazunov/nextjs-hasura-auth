@@ -16,6 +16,8 @@ import { Client } from './client'; // Import the class we want to test
 import { GenerateOptions } from './generator'; // For typing options
 import Debug from './debug';
 
+const debug = Debug('client:test');
+
 // --- Test Configuration --- 
 const PROXY_GRAPHQL_URL = 'http://localhost:3000/api/graphql'; // Assuming default Next.js port
 const HASURA_URL = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
@@ -70,9 +72,9 @@ beforeAll(async () => {
     if (!testUserId) {
       throw new Error('Failed to create test user.');
     }
-    console.log(`Test user created: ${testUserId} (${testUserEmail})`);
+    debug(`Test user created: ${testUserId} (${testUserEmail})`);
   } catch (error: any) {
-    console.error("Error creating test user:", error.message);
+    debug("Error creating test user:", error.message);
     throw error;
   }
 });
@@ -91,9 +93,9 @@ afterAll(async () => {
         mutation: DELETE_USER,
         variables: { id: testUserId },
       });
-      console.log(`Test user deleted: ${testUserId}`);
+      debug(`Test user deleted: ${testUserId}`);
     } catch (error: any) {
-      console.error("Error deleting test user:", error.message);
+      debug("Error deleting test user:", error.message);
     }
   }
 });
@@ -203,7 +205,7 @@ describe('/api/graphql Proxy Integration Tests', () => {
               variables: { id: testUserId!, name: newName } 
           });
         } catch (err: any) { 
-            console.error("Error updating user during test:", err.message); 
+            debug("Error updating user during test:", err.message); 
         }
       });
 
