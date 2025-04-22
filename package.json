@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -30,6 +30,12 @@
   "types": "lib/index.d.ts",
   "files": [
     "app",
+    "components",
+    "hooks",
+    "lib",
+    "migrations",
+    "public",
+    "types",
     "README.md",
     "GENERATOR.md",
     "APOLLO.md",
