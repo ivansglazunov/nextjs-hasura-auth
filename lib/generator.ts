@@ -4,7 +4,7 @@ import Debug from './debug';
 import { gql, DocumentNode } from '@apollo/client/core';
 
 // Импортируем базовые сгенерированные типы
-import type { Query_Root, Mutation_Root, Subscription_Root } from '../types/hasura-codegen'; // Путь к сгенерированным типам
+import type { Query_Root, Mutation_Root, Subscription_Root } from '../types/hasura-types'; // Путь к сгенерированным типам
 
 const debug = Debug('apollo:generator');
 
