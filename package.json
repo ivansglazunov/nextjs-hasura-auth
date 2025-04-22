@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -26,10 +26,9 @@
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
     "npm-publish": "npm run build; npm publish"
   },
-  "main": "dist/lib/index.js",
-  "types": "dist/lib/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "files": [
-    "dist",
     "app",
     "components",
     "hooks",
