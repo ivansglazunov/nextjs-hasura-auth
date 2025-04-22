@@ -214,7 +214,7 @@ program
 
     // --- NEW: Run next-ws patch ---
     console.log('🩹 Applying next-ws patch...');
-    const patchResult = spawn.sync('npx', ['--yes', 'next-ws-cli@latest', 'patch'], {
+    const patchResult = spawn.sync('npx', ['--yes', 'next-ws-cli@latest', 'patch', '-y'], {
         stdio: 'inherit',
         cwd: projectRoot,
     });

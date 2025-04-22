@@ -19,6 +19,66 @@ See [`HASURA.md`](HASURA.md) for details on the Hasura Admin API client used for
 See [`CLIENT.md`](CLIENT.md) for details on the `Client` class and React hooks that combine the Generator and Apollo Client for easy data operations.
 
 See [`GRAPHQL-PROXY.md`](GRAPHQL-PROXY.md) for details on the GraphQL proxy mechanism implemented in `lib/graphql-proxy.ts` and exposed via the API route `app/api/graphql/route.ts`.
+
+## Technologies Used
+
+Applying best development practices from the listed ecosystems, we have combined these libraries into a single framework for rapid deployment.
+
+<table width="100%">
+  <tr> <!-- Row 1: 6 logos -->
+    <td align="center">
+      <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer">
+        <img src="./public/nextjs.svg" height="70" alt="Next.js Logo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://hasura.io" target="_blank" rel="noopener noreferrer">
+        <img src="./public/hasura.svg" height="70" alt="Hasura Logo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.apollographql.com" target="_blank" rel="noopener noreferrer">
+        <img src="./public/apollo.svg" height="70" alt="Apollo GraphQL Logo">
+      </a>
+    </td>
+     <td align="center">
+      <a href="https://next-auth.js.org" target="_blank" rel="noopener noreferrer">
+        <img src="./public/next-auth.png" height="70" alt="next-auth Logo">
+      </a>
+    </td>
+    <td align="center">
+     <a href="https://ui.shadcn.com" target="_blank" rel="noopener noreferrer">
+        <img src="./public/shadcn.png" height="70" alt="Shadcn/ui Logo">
+     </a>
+   </td>
+   <td align="center">
+      <a href="https://vercel.com" target="_blank" rel="noopener noreferrer">
+        <img src="./public/vercel.svg" height="70" alt="Vercel Logo">
+     </a>
+   </td>
+  </tr>
+  <tr> <!-- Row 2: Remaining logos + empty cells -->
+    <td align="center">
+       <a href="https://jestjs.io" target="_blank" rel="noopener noreferrer">
+         <img src="./public/jest.webp" height="70" alt="Jest Logo">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://capacitorjs.com" target="_blank" rel="noopener noreferrer">
+        <img src="./public/capacitor.png" height="70" alt="Capacitor Logo">
+      </a>
+    </td>
+     <td align="center">
+       <a href="https://resend.com" target="_blank" rel="noopener noreferrer">
+         <img src="./public/resend.webp" height="70" alt="Resend Logo">
+       </a>
+     </td>
+     <td align="center"></td> <!-- Empty cell -->
+     <td align="center"></td> <!-- Empty cell -->
+     <td align="center"></td> <!-- Empty cell -->
+  </tr>
+</table>
+
 ## ✨ Features Checklist
 
 **Implemented:**

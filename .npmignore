@@ -45,9 +45,16 @@ next-env.d.ts
 *.experiment.*
 
 # hasyx
+lib/*.ts
+lib/*.tsx
 lib/**/*.ts
 lib/**/*.tsx
 migrations/**/*.ts
+components/*.ts
+components/*.tsx
+components/**/*.ts
 components/**/*.tsx
+hooks/*.ts
+hooks/*.tsx
 hooks/**/*.ts
 hooks/**/*.tsx
