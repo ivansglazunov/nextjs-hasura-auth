@@ -24,7 +24,7 @@
     "nha:unmigrate": "tsx ./migrations/nha/down.ts",
     "hasura:schema": "tsx ./lib/hasura-schema.ts",
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
-    "npm-publish": "npm run hasura:schema; npm run hasura:types; npm run build; npm publish"
+    "npm-publish": "npm run build; npm publish"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
