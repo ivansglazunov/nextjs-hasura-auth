@@ -54,4 +54,4 @@ const config: CodegenConfig = {
   }
 };
 
-export default config; 
+module.exports = config;
