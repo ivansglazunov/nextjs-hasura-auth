@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { IntrospectionQuery, getIntrospectionQuery } from 'graphql'; // Use standard introspection query function
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config();
 
 const HASURA_GRAPHQL_URL = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;

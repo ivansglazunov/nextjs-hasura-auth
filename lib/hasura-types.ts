@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // Загружаем переменные окружения (путь к .env файлу)
-dotenv.config({ path: path.resolve(__dirname, './.env') });
+dotenv.config();
 
 const config: CodegenConfig = {
   overwrite: true,
