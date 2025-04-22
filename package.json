@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -28,24 +28,6 @@
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "files": [
-    "app",
-    "components",
-    "hooks",
-    "lib",
-    "migrations",
-    "public",
-    "types",
-    "README.md",
-    "GENERATOR.md",
-    "APOLLO.md",
-    "AUTH.md",
-    "CLIENT.md",
-    "HASURA.md",
-    "GRAPHQL-PROXY.md",
-    ".gitignore",
-    ".npmignore"
-  ],
   "dependencies": {
     "@apollo/client": "^3.13.8",
     "@auth/core": "^0.38.0",
