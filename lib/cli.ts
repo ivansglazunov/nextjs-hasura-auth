@@ -49,6 +49,9 @@ program
     const targetDir = projectRoot;
 
     const filesToCreateOrReplace = {
+      // GitHub Actions (will overwrite)
+      '.github/workflows/npm-publish.yml': '.github/workflows/npm-publish.yml',
+      '.github/workflows/test.yml': '.github/workflows/test.yml',
       // API Routes (will overwrite)
       'app/api/auth/[...nextauth]/route.ts': 'app/api/auth/[...nextauth]/route.ts',
       'app/api/auth/[...nextauth]/options.ts': 'app/api/auth/[...nextauth]/options.ts',
@@ -65,6 +68,7 @@ program
       // Config files (won't overwrite)
       '.gitignore': '.gitignore',
       '.npmignore': '.npmignore',
+      '.npmrc': '.npmrc',
     };
 
     // Ensure directories exist
