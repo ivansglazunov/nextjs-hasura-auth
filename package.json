@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "npm run build:lib && next build",
-    "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json",
+    "build:lib": "tsc -p tsconfig.lib.json",
     "build:next": "next build --turbopack",
     "start": "next start --turbopack",
     "lint": "next lint --turbopack",
@@ -26,10 +26,9 @@
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
     "npm-publish": "npm run hasura:schema; npm run hasura:types; npm run build; npm publish"
   },
-  "main": "dist/lib/index.js",
-  "types": "dist/lib/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "files": [
-    "dist",
     "app",
     "README.md",
     "GENERATOR.md",
@@ -143,6 +142,6 @@
   "devDependencies": {
   },
   "bin": {
-    "hasyx": "./dist/lib/cli.js"
+    "hasyx": "./lib/cli.js"
   }
 }

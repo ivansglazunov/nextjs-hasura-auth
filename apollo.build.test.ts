@@ -14,7 +14,7 @@ describe('Apollo client build', () => {
 
   test('should be able to import the built Apollo client', () => {
     // Import from the built dist directory
-    const { createApolloClient, getClient } = require('./dist/lib/apollo');
+    const { createApolloClient, getClient } = require('./lib/apollo');
     
     expect(createApolloClient).toBeDefined();
     expect(typeof createApolloClient).toBe('function');
@@ -25,7 +25,7 @@ describe('Apollo client build', () => {
 
   test('should create a working client from the built module', () => {
     // Import from the built dist directory
-    const { createApolloClient } = require('./dist/lib/apollo');
+    const { createApolloClient } = require('./lib/apollo');
     
     const client = createApolloClient();
     expect(client).toBeDefined();

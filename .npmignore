@@ -44,7 +44,10 @@ next-env.d.ts
 *.temp
 *.experiment.*
 
-# src input
-components/
-lib/
-pages/
+# hasyx
+lib/**/*.ts
+lib/**/*.tsx
+migrations/**/*.ts
+components/**/*.tsx
+hooks/**/*.ts
+hooks/**/*.tsx
