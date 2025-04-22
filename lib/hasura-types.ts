@@ -23,7 +23,7 @@ const config: CodegenConfig = {
   documents: undefined, // Мы не используем отдельные .graphql файлы для операций
   generates: {
     // Путь к файлу, куда будут сгенерированы типы
-    'types/hasura-codegen.d.ts': {
+    'types/hasura-types.d.ts': {
       plugins: ['typescript'], // Используем базовый плагин typescript
       config: {
         // Настройки плагина typescript (можно добавить позже по необходимости)
@@ -45,7 +45,7 @@ const config: CodegenConfig = {
     //   documents: 'src/**/*.graphql', // Если бы у нас были .graphql файлы
     //   plugins: ['typescript-operations'],
     //   presetConfig: {
-    //     typesPath: './hasura-codegen.d.ts', // Ссылка на базовые типы
+    //     typesPath: './hasura-types.d.ts', // Ссылка на базовые типы
     //   },
     // },
   },

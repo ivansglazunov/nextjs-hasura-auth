@@ -1,7 +1,9 @@
 name: npm-publish
 
 on:
-  workflow_dispatch: # Allows manual triggering from the GitHub Actions UI
+  push:
+    branches:
+      - main # Trigger on push to the main branch
 
 jobs:
   publish:
@@ -19,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: npm ci # Use ci for more reliable installs in CI
 
-      - name: Run npm publish script
+      - name: Run npm publish script (will fail if version exists)
         run: npm run npm-publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # Pass the token for npm authentication 
