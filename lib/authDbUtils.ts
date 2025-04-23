@@ -2,7 +2,7 @@
 
 import bcrypt from 'bcrypt';
 import { ApolloError } from '@apollo/client'; // Import ApolloError
-import { Client } from 'hasyx'; // Use the path alias
+import { Hasyx } from 'hasyx'; // Use the path alias
 import Debug from './debug';
 import { User as NextAuthUser } from 'next-auth'; // For typing
 import { Account as NextAuthAccount } from 'next-auth'; // For typing
@@ -60,7 +60,7 @@ export interface HasuraUser { // Export interface for use in options.ts
  * Finds or creates a user and their associated account based on provider information.
  * This function handles the core logic of linking OAuth/Credentials logins to Hasura users.
  *
- * @param client The initialized NHA Client instance.
+ * @param hasyx The initialized NHA Client instance.
  * @param provider The OAuth provider name (e.g., 'google', 'credentials').
  * @param providerAccountId The user's unique ID from the provider.
  * @param profile Optional profile information from the provider (name, email, image).
@@ -68,7 +68,7 @@ export interface HasuraUser { // Export interface for use in options.ts
  * @throws Error if user/account processing fails.
  */
 export async function getOrCreateUserAndAccount(
-  client: Client,
+  hasyx: Hasyx,
   provider: string,
   providerAccountId: string,
   profile?: UserProfileFromProvider | null
@@ -78,7 +78,7 @@ export async function getOrCreateUserAndAccount(
   // --- 1. Try to find the account --- 
   let existingUser: HasuraUser | null = null;
   try {
-    const accountResult = await client.select<{ accounts: Array<{ user: HasuraUser }> }>({
+    const accountResult = await hasyx.select<{ accounts: Array<{ user: HasuraUser }> }>({
       table: 'accounts',
       where: {
         provider: { _eq: provider },
@@ -94,7 +94,7 @@ export async function getOrCreateUserAndAccount(
       existingUser = accountResult.accounts[0].user;
       debug(`Found existing account for ${provider}:${providerAccountId}. User ID: ${existingUser.id}`);
       // Optionally update user profile info (name, image) from provider here if desired
-      // await client.update({ table: 'users', pk_columns: { id: existingUser.id }, _set: { name: profile.name, image: profile.image } });
+      // await hasyx.update({ table: 'users', pk_columns: { id: existingUser.id }, _set: { name: profile.name, image: profile.image } });
       return existingUser;
     }
   } catch (error) {
@@ -109,7 +109,7 @@ export async function getOrCreateUserAndAccount(
   // For credentials, we find the user first in the `authorize` function.
   if (profile?.email && provider !== 'credentials') { // Avoid linking for credentials here
     try {
-      const userByEmailResult = await client.select<{ users: HasuraUser[] }>({
+      const userByEmailResult = await hasyx.select<{ users: HasuraUser[] }>({
         table: 'users',
         where: { email: { _eq: profile.email } },
         returning: ['id', 'name', 'email', 'email_verified', 'image', 'password', 'created_at', 'updated_at', 'is_admin', 'hasura_role'], // Removed extra backslashes
@@ -120,7 +120,7 @@ export async function getOrCreateUserAndAccount(
         existingUser = userByEmailResult.users[0];
         debug(`Found existing user by email ${profile.email}. User ID: ${existingUser.id}. Linking account.`);
         // Link account to this existing user
-        await client.insert<{ insert_accounts_one: { id: string } }>({
+        await hasyx.insert<{ insert_accounts_one: { id: string } }>({
           table: 'accounts',
           object: {
             user_id: existingUser.id,
@@ -138,7 +138,7 @@ export async function getOrCreateUserAndAccount(
       if (error instanceof ApolloError && error.message.includes('Uniqueness violation')) {
         debug(`Account ${provider}:${providerAccountId} likely already linked during concurrent request. Attempting to refetch.`);
         // Retry finding the account, as it might have been created concurrently
-         return getOrCreateUserAndAccount(client, provider, providerAccountId, profile);
+         return getOrCreateUserAndAccount(hasyx, provider, providerAccountId, profile);
       } else {
          debug(`Error searching for user by email ${profile.email} or linking account:`, error);
          throw new Error(`Failed to process user by email or link account: ${(error as Error).message}`);
@@ -161,7 +161,7 @@ export async function getOrCreateUserAndAccount(
     };
 
     // For credentials, the user is created *after* email verification, but we handle it here for OAuth
-    const newUserResult = await client.insert<{ insert_users_one: HasuraUser }>({
+    const newUserResult = await hasyx.insert<{ insert_users_one: HasuraUser }>({
       table: 'users',
       object: newUserInput,
       // Return all fields needed for the session/JWT
@@ -175,7 +175,7 @@ export async function getOrCreateUserAndAccount(
     debug(`New user created with ID: ${newUser.id}`);
 
     // Now create the account linked to the new user
-    await client.insert<{ insert_accounts_one: { id: string } }>({
+    await hasyx.insert<{ insert_accounts_one: { id: string } }>({
       table: 'accounts',
       object: {
         user_id: newUser.id,
@@ -196,7 +196,7 @@ export async function getOrCreateUserAndAccount(
         debug(`User with email ${profile?.email} likely already exists. Attempting to find and link.`);
         // If user creation failed due to duplicate email, retry finding by email and linking account
         if (profile?.email && provider !== 'credentials') {
-            return getOrCreateUserAndAccount(client, provider, providerAccountId, profile);
+            return getOrCreateUserAndAccount(hasyx, provider, providerAccountId, profile);
         }
     }
     throw new Error(`Failed to create new user/account: ${(error as Error).message}`);

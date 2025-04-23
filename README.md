@@ -5,7 +5,7 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-%F0%9F%9A%80-brightgreen)](https://hasyx.vercel.app/)
 [![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md) [![Apollo Client Documentation](https://img.shields.io/badge/Apollo%20Client%20Docs-MD-orange)](APOLLO.md)
 [![Authentication Helpers Documentation](https://img.shields.io/badge/Auth%20Helpers%20Docs-MD-green)](AUTH.md) [![Hasura Admin Client Documentation](https://img.shields.io/badge/Hasura%20Client%20Docs-MD-purple)](HASURA.md)
-[![Generated Client Documentation](https://img.shields.io/badge/Generated%20Client%20Docs-MD-cyan)](CLIENT.md)
+[![Generated Client Documentation](https://img.shields.io/badge/Generated%20Hasyx%20Docs-MD-cyan)](HASYX.md)
 [![GraphQL Proxy Documentation](https://img.shields.io/badge/GraphQL%20Proxy%20Docs-MD-yellow)](GRAPHQL-PROXY.md)
 
 ## Technologies Used
@@ -14,7 +14,7 @@ Hasyx takes responsibility for:
 
 *   Setting up a universal, ws/serverless compatible Next.js environment.
 *   Proxying client connections to Hasura through `/api/graphql`, eliminating the need to expose Hasura JWTs to the client and relying solely on NextAuth.js for authorization.
-*   Providing access via both the native ApolloClient and a custom [`Client`](CLIENT.md) class for interacting with Hasura.
+*   Providing access via both the native ApolloClient and a custom [`Hasyx`](HASYX.md) class for interacting with Hasura.
 *   A fully configured NextAuth.js integration supporting multiple authentication methods (including Credentials, Google, Yandex, with others like GitHub planned).
 *   Maintaining backward compatibility for UI components under `hasyx/components/ui/*` (generated via shadcn/ui) to minimize refactoring needs in downstream projects.
 *   Ensuring seamless compatibility between Vercel deployments and Hasura Cloud/Server.
@@ -173,7 +173,7 @@ Get your Next.js project integrated with Hasura and authentication in minutes!
       // ... render your component using the fetched/subscribed data ...
     }
     ```
-    Refer to [`GENERATOR.md`](GENERATOR.md) and [`CLIENT.md`](CLIENT.md) for detailed syntax.
+    Refer to [`GENERATOR.md`](GENERATOR.md) and [`HASYX.md`](HASYX.md) for detailed syntax.
 
 7.  **Run Development Server:**
     ```bash

@@ -9,14 +9,17 @@ import { Subscription } from 'zen-observable-ts'; // For handling subscription c
 // Load environment variables from root .env
 dotenv.config();
 
-import { createApolloClient } from './apollo'; // Client creator from lib
-import { useSelect, useSubscribe } from './client'; // Hooks to test
+import { createApolloClient, HasyxApolloClient } from './apollo'; // Client creator from lib
+import { useSelect, useSubscribe, Hasyx } from './hasyx'; // Hooks to test
 import { hashPassword } from './authDbUtils'; // For user creation
-import { Client } from './client'; // Import the class we want to test
-import { GenerateOptions } from './generator'; // For typing options
+import { GenerateOptions, Generator } from './generator'; // For typing options
 import Debug from './debug';
 
-const debug = Debug('client:test');
+import schema from '../public/hasura-schema.json'; // Import the schema
+
+const generate = Generator(schema);
+
+const debug = Debug('hasyx:test');
 
 // --- Test Configuration --- 
 const PROXY_GRAPHQL_URL = 'http://localhost:3000/api/graphql'; // Assuming default Next.js port
@@ -219,7 +222,7 @@ describe('/api/graphql Proxy Integration Tests', () => {
 
 describe('Client Class Integration Tests', () => {
     let adminApolloClient: ApolloClient<any>;
-    let client: Client; // Instance of the class under test
+    let hasyx: Hasyx; // Instance of the class under test
 
     // Setup: Create Apollo client and test users before all tests
     beforeAll(async () => {
@@ -233,7 +236,7 @@ describe('Client Class Integration Tests', () => {
                 secret: ADMIN_SECRET,
                 ws: true, // Enable WS for subscribe tests
             });
-            client = new Client(adminApolloClient); // Initialize our Client class
+            hasyx = new Hasyx(adminApolloClient as HasyxApolloClient, generate); // Initialize our Client class
 
             // --- Pre-emptive Cleanup --- 
             Debug(`  🧼 Attempting pre-emptive cleanup for email: ${testUserEmail}`);
@@ -258,7 +261,7 @@ describe('Client Class Integration Tests', () => {
 
             // Helper function for insertion (using the Client class itself!)
             const insertUser = async (email: string, name: string): Promise<string> => {
-                const result = await client.insert<{ insert_users_one: { id: string } }>({
+                const result = await hasyx.insert<{ insert_users_one: { id: string } }>({
                     table: 'users',
                     object: { email, name, hasura_role: "user", email_verified: new Date().toISOString() }, // Assume verified for tests
                     returning: ['id'],
@@ -341,7 +344,7 @@ describe('Client Class Integration Tests', () => {
     it('should select data using client.select with admin role (implicitly)', async () => {
         Debug('\n🧪 Testing client.select (admin role - default for setup)');
         expect(testUserId).toBeTruthy();
-        const result = await client.select<{ users_by_pk: any }>({ // Using _by_pk for single result
+        const result = await hasyx.select<{ users_by_pk: any }>({ // Using _by_pk for single result
             table: 'users',
             pk_columns: { id: testUserId! }, // Use non-null assertion
             returning: ['id', 'email', 'name', 'hasura_role']
@@ -363,7 +366,7 @@ describe('Client Class Integration Tests', () => {
         // This test assumes 'user' role cannot see 'email' of other users based on permissions
         // It will FAIL if permissions allow users to see emails.
         try {
-            const result = await client.select<{ users_by_pk: any }>({ 
+            const result = await hasyx.select<{ users_by_pk: any }>({ 
                 table: 'users',
                 pk_columns: { id: testUserId! },
                 returning: ['id', 'email', 'name'], // Requesting email
@@ -390,7 +393,7 @@ describe('Client Class Integration Tests', () => {
         Debug('\n🧪 Testing client.select (error case - invalid field)');
         expect(testUserId).toBeTruthy();
         await expect(
-            client.select({ 
+            hasyx.select({ 
                 table: 'users',
                 pk_columns: { id: testUserId! },
                 returning: ['id', 'non_existent_field'] // Invalid field
@@ -403,7 +406,7 @@ describe('Client Class Integration Tests', () => {
         Debug('\n🧪 Testing client.update');
         expect(testUserId).toBeTruthy();
         const newName = `Client Updated User ${uuidv4()}`;
-        const result = await client.update<{ update_users_by_pk: { id: string, name: string } }>({ 
+        const result = await hasyx.update<{ update_users_by_pk: { id: string, name: string } }>({ 
             table: 'users',
             pk_columns: { id: testUserId! },
             _set: { name: newName },
@@ -414,7 +417,7 @@ describe('Client Class Integration Tests', () => {
         expect(result.update_users_by_pk.name).toBe(newName);
 
         // Verify update
-        const verifyResult = await client.select<{ users_by_pk: any }>({ 
+        const verifyResult = await hasyx.select<{ users_by_pk: any }>({ 
             table: 'users',
             pk_columns: { id: testUserId! },
             returning: ['name']
@@ -426,7 +429,7 @@ describe('Client Class Integration Tests', () => {
     it('should delete data using client.delete', async () => {
         Debug('\n🧪 Testing client.delete');
         expect(testUserId).toBeTruthy(); // We'll delete user now
-        const result = await client.delete<{ delete_users_by_pk: { id: string, email: string } }>({ 
+        const result = await hasyx.delete<{ delete_users_by_pk: { id: string, email: string } }>({ 
             table: 'users',
             pk_columns: { id: testUserId! },
             returning: ['id', 'email']
@@ -435,7 +438,7 @@ describe('Client Class Integration Tests', () => {
         expect(result.delete_users_by_pk.email).toBe(testUserEmail);
 
         // Verify deletion
-        const verifyResult = await client.select<{ users_by_pk: any }>({ 
+        const verifyResult = await hasyx.select<{ users_by_pk: any }>({ 
             table: 'users',
             pk_columns: { id: testUserId! }, // Should fail as testUserId is null now
             returning: ['id']

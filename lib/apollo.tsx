@@ -13,6 +13,7 @@ import { getJwtSecret } from './jwt';
 // Remove deprecated WebSocketLink import
 // import { WebSocketLink } from '@apollo/client/link/ws'; 
 import { onError } from '@apollo/client/link/error';
+import { Generate } from './generator';
 
 // Create a debug logger for this module
 const debug = Debug('apollo');
@@ -27,8 +28,9 @@ export interface ApolloOptions {
   secret?: string;
 }
 
-export interface ApolloClientWithProvider extends ApolloClient<any> {
+export interface HasyxApolloClient extends ApolloClient<any> {
   Provider: React.ComponentType<{ children: React.ReactNode }>;
+  hasyxGenerator: Generate;
 }
 
 const createRoleLink = () => setContext((request: GraphQLRequest, previousContext: any) => {
@@ -186,7 +188,7 @@ export function createApolloClient(options: ApolloOptions = {}) {
   // --- End WebSocket Setup ---
 
   // Create Apollo Client with the final composed link
-  const apolloClient: ApolloClientWithProvider = new ApolloClient({
+  const apolloClient: HasyxApolloClient = new ApolloClient({
     link: link, // Use the potentially split link
     cache: new InMemoryCache(),
     defaultOptions: {
@@ -202,7 +204,7 @@ export function createApolloClient(options: ApolloOptions = {}) {
         errorPolicy: 'all',
       },
     }
-  }) as ApolloClientWithProvider;
+  }) as HasyxApolloClient;
 
   apolloClient.Provider = function Provider({ children }: { children: React.ReactNode }) {
     return <ApolloProvider client={apolloClient}>{children}</ApolloProvider>;

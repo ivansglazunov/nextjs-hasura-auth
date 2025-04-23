@@ -9,8 +9,12 @@ dotenv.config();
 
 import { createApolloClient } from './apollo'; // Client creator from lib
 import { hashPassword } from './authDbUtils'; // For user creation
-import { Client } from './client'; // Import the Client class
+import { Hasyx } from './hasyx'; // Import the Client class
 import Debug from './debug'; // Import Debug
+import { Generator } from './generator'; // Import the Generator function
+import schema from '../public/hasura-schema.json'; // Import the schema
+
+const generate = Generator(schema);
 
 // --- Test Configuration --- 
 const PROXY_GRAPHQL_URL = 'http://localhost:3000/api/graphql'; // Assuming default Next.js port
@@ -124,7 +128,7 @@ describe('/api/graphql Proxy Integration Tests (using Client class)', () => {
       // No token/secret here - proxy handles auth downstream
     });
     // Initialize our Client class with the proxy ApolloClient
-    proxyClient = new Client(apolloProxy);
+    proxyClient = new Client(apolloProxy, generate);
     Debug('✅ Proxy Client initialized.');
   });
 

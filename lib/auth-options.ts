@@ -2,7 +2,7 @@ import { NextAuthOptions, User as NextAuthUser, Session as DefaultSession, Profi
 import { JWT as DefaultJWT } from 'next-auth/jwt';
 import GoogleProvider from 'next-auth/providers/google';
 import YandexProvider from 'next-auth/providers/yandex';
-import { Client, createApolloClient } from 'hasyx'; // Import from generated package
+import { Hasyx, createApolloClient, Generate } from 'hasyx'; // Import from generated package
 import { getOrCreateUserAndAccount, HasuraUser } from 'hasyx/lib/authDbUtils'; 
 import Debug from 'hasyx/lib/debug';
 import { generateJWT as generateHasuraJWT } from 'hasyx/lib/jwt'; 
@@ -37,7 +37,6 @@ declare module 'next-auth/jwt' {
 const adminApolloClient = createApolloClient({
   secret: process.env.HASURA_ADMIN_SECRET!,
 });
-const client = new Client(adminApolloClient);
 
 // Define base OAuth providers here
 export const baseProviders = [
@@ -54,7 +53,7 @@ export const baseProviders = [
 
 // Function to create the main AuthOptions object
 // Takes an array of additional providers to merge
-export function createAuthOptions(additionalProviders: any[] = []): NextAuthOptions {
+export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx): NextAuthOptions {
   debug('Creating AuthOptions...');
   return {
     providers: [

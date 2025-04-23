@@ -1,15 +1,16 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { verifyVerificationToken } from 'hasyx/lib/tokenUtils';
-import { Client, createApolloClient } from 'hasyx';
+import { Hasyx, createApolloClient, Generator } from 'hasyx';
 import Debug from 'hasyx/lib/debug';
+
+import schema from '../../../../public/hasura-schema.json';
 
 const debug = Debug('api:auth:verify');
 
 // Initialize NHA Client with admin secret for backend operations
-const adminApolloClient = createApolloClient({
+const client = new Hasyx(createApolloClient({
   secret: process.env.HASURA_ADMIN_SECRET!,
-});
-const client = new Client(adminApolloClient);
+}), Generator(schema));
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

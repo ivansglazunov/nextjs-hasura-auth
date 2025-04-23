@@ -1,20 +1,20 @@
-import { Client, createApolloClient } from 'hasyx'; // Import Client and apollo creator
+import { Hasyx, createApolloClient, Generator } from 'hasyx'; // Import Client and apollo creator
 import { NextAuthOptions } from 'next-auth';
 
-// Correct approach for Type Augmentation
 import 'next-auth';
 import 'next-auth/jwt';
 
-// Initialize NHA Client with admin secret for backend operations
-const adminApolloClient = createApolloClient({
-  secret: process.env.HASURA_ADMIN_SECRET!,
-});
-
-// Import the factory function and the specific credentials provider
 import { createAuthOptions } from 'hasyx/lib/auth-options';
 import { AppCredentialsProvider } from 'hasyx/lib/credentials';
+
+import schema from '../../../../public/hasura-schema.json';
+
+const client = new Hasyx(createApolloClient({
+  secret: process.env.HASURA_ADMIN_SECRET!,
+}), Generator(schema));
+
 const authOptions: NextAuthOptions = createAuthOptions([
-  AppCredentialsProvider,
-]);
+  AppCredentialsProvider(client),
+], client);
 
 export default authOptions;

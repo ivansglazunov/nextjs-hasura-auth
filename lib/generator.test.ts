@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { gql, ApolloClient, NormalizedCacheObject, FetchResult } from '@apollo/client/core'; // Import gql
 import { GenerateOptions, GenerateResult } from './generator'; // Import types
-import GeneratorFunction from './generator'; // Import the default export (the ready-to-use function)
+import { Generator } from './generator'; // Import the default export (the ready-to-use function)
 // @ts-ignore
 // import schema from '../public/hasura-schema.json'; // Assuming schema.json is in the same directory
 import introspectionResult from '../public/hasura-schema.json'; // Import the full result
@@ -9,6 +9,8 @@ import Debug from './debug'; // Import the actual Debug function
 import { createApolloClient } from './apollo'; // Import apollo client creator
 import dotenv from 'dotenv'; // To load .env for client creation
 import path from 'path';
+
+import schema from '../public/hasura-schema.json';
 
 // Load .env variables for integration tests
 dotenv.config();
@@ -23,7 +25,7 @@ const debug = Debug('apollo:generator-test');
 // Use the default export which is already configured with the schema
 // Initialize the generator
 // const generate = Generator(schema);
-const generate = GeneratorFunction;
+const generate = Generator(schema);
 
 // Helper function to compare query strings (ignoring whitespace)
 function normalizeString(str: string | undefined): string {

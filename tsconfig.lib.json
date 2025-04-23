@@ -8,7 +8,12 @@
     "moduleResolution": "node",
     "target": "es2016",
     "jsx": "react-jsx",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "paths": {
+      "@/*": ["./*"],
+      "hasyx": ["./lib/index.ts"],
+      "hasyx/*": ["./*"]
+    },
   },
   "include": ["lib/**/*.ts", "lib/**/*.tsx", "components/**/*.ts", "components/**/*.tsx", "hooks/**/*.ts", "hooks/**/*.tsx"],
   "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx"]

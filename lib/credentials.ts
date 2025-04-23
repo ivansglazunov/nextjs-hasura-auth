@@ -1,5 +1,5 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { Client, createApolloClient } from 'hasyx'; // Import from generated package
+import { Hasyx, createApolloClient } from 'hasyx'; // Import from generated package
 import { comparePassword, HasuraUser, hashPassword } from 'hasyx/lib/authDbUtils';
 import Debug from 'hasyx/lib/debug';
 import { sendVerificationEmail } from 'hasyx/lib/email';
@@ -8,15 +8,8 @@ import type { User as NextAuthUser } from 'next-auth';
 
 const debug = Debug('auth:credentials');
 
-// Initialize NHA Client with admin secret for backend operations
-// This client is needed within the authorize function
-const adminApolloClient = createApolloClient({
-  secret: process.env.HASURA_ADMIN_SECRET!,
-});
-const client = new Client(adminApolloClient);
-
 // Define and export the Credentials Provider configuration
-export const AppCredentialsProvider = CredentialsProvider({
+export const AppCredentialsProvider = (client: Hasyx) => CredentialsProvider({
   name: 'Credentials',
   credentials: {
     email: { label: "Email", type: "email", placeholder: "user@example.com" },

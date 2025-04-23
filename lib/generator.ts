@@ -1,45 +1,12 @@
-import fs from 'fs'; // Add fs import
-import path from 'path'; // Add path import
+import { DocumentNode, gql } from '@apollo/client/core';
 import Debug from './debug';
-import { gql, DocumentNode } from '@apollo/client/core';
-import type { Query_Root, Mutation_Root, Subscription_Root } from '../types/hasura-types';
 
 const debug = Debug('apollo:generator');
 
-// --- Dynamic Schema Loading ---
-let schema: any; // Define schema variable
-
-try {
-    // Determine project root based on current working directory
-    const projectRoot = process.cwd(); // Assumes CWD is project root when CLI runs
-    const schemaPath = path.join(projectRoot, 'public', 'hasura-schema.json');
-    debug(`Dynamically loading schema from: ${schemaPath}`);
-
-    if (!fs.existsSync(schemaPath)) {
-        throw new Error(`Schema file not found at expected location: ${schemaPath}. Run 'npx hasyx schema' first in your project root.`);
-    }
-
-    const schemaContent = fs.readFileSync(schemaPath, 'utf-8');
-    const introspectionResult = JSON.parse(schemaContent);
-
-    // Add basic validation
-    if (!introspectionResult || !introspectionResult.data || !introspectionResult.data.__schema) {
-        throw new Error(`Invalid introspection result format in ${schemaPath}. Expected { data: { __schema: { ... } } }`);
-    }
-    schema = introspectionResult.data.__schema;
-    debug(`Successfully loaded and parsed schema from ${schemaPath}`);
-
-} catch (error: any) {
-    console.error("❌ CRITICAL ERROR: Failed to load or parse hasura-schema.json.", error);
-    // Optionally re-throw or exit, depending on desired behavior if schema is missing
-    // For now, let it proceed, Generator() will throw if schema is invalid
-    schema = null; // Ensure Generator receives null or throws later
-}
-// --- End Dynamic Schema Loading ---
-
-
 // Types for options and return value
 export type GenerateOperation = 'query' | 'subscription' | 'insert' | 'update' | 'delete';
+
+export type Generate = (opts: GenerateOptions) => GenerateResult;
 
 export interface GenerateOptions {
   operation: GenerateOperation;
@@ -103,25 +70,28 @@ function getTypeInfo(type: any): { name: string | null; kind: string; isList: bo
 }
 // --- ---
 
-export function Generator(schema: any) { // Принимаем __schema объект
+export function Generator(schema: any): Generate { // Принимаем __schema объект
+  const _schema = schema?.data?.__schema || schema?.__schema || schema;
+
   // --- Validation moved here ---
-  if (!schema || !schema.queryType || !schema.types) {
+  if (!_schema || !_schema.queryType || !_schema.types) {
     // Throw a more specific error if dynamic loading failed earlier
-    if (schema === null) {
+    if (_schema === null) {
         throw new Error('❌ CRITICAL: Schema could not be loaded dynamically. See previous error.');
     }
+    debug('schema', _schema);
     throw new Error('❌ Invalid schema format passed to Generator. Expected standard introspection __schema object.');
   }
   // --- End validation ---
 
-  const queryRootName = schema.queryType.name;
-  const mutationRootName = schema.mutationType?.name; // Может отсутствовать
-  const subscriptionRootName = schema.subscriptionType?.name; // Может отсутствовать
+  const queryRootName = _schema.queryType.name;
+  const mutationRootName = _schema.mutationType?.name; // Может отсутствовать
+  const subscriptionRootName = _schema.subscriptionType?.name; // Может отсутствовать
 
   // Находим детальные описания корневых типов
-  const queryRoot = schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === queryRootName);
-  const mutationRoot = mutationRootName ? schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === mutationRootName) : null;
-  const subscriptionRoot = subscriptionRootName ? schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === subscriptionRootName) : null;
+  const queryRoot = _schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === queryRootName);
+  const mutationRoot = mutationRootName ? _schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === mutationRootName) : null;
+  const subscriptionRoot = subscriptionRootName ? _schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === subscriptionRootName) : null;
 
   if (!queryRoot) {
       throw new Error('❌ Query root type description not found in schema types.');
@@ -313,7 +283,7 @@ export function Generator(schema: any) { // Принимаем __schema объе
     // Helper to find type details from schema by name
     const findTypeDetails = (typeName: string | null) => {
         if (!typeName) return null;
-        return schema.types.find((t: any) => t.name === typeName && (t.kind === 'OBJECT' || t.kind === 'INTERFACE'));
+        return _schema.types.find((t: any) => t.name === typeName && (t.kind === 'OBJECT' || t.kind === 'INTERFACE'));
     };
 
     // Recursive function to process fields
@@ -605,4 +575,3 @@ export function Generator(schema: any) { // Принимаем __schema объе
 }
 
 // Экспортируем Generator с уже загруженной схемой (или null/undefined if loading failed)
-export default Generator(schema);
