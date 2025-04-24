@@ -28,6 +28,8 @@ import { getServerSession } from "next-auth/next"
 import authOptions from "@/app/api/auth/[...nextauth]/options" 
 import { Session } from "next-auth" // Import Session type
 
+import sidebar from "@/app/sidebar"
+
 // Now this is an async server component
 export default async function Page() {
   // Get session on the server
@@ -35,7 +37,7 @@ export default async function Page() {
 
   return (
     <SidebarProvider>
-      <AppSidebar activeUrl={'/'} />
+      <AppSidebar activeUrl={'/'} data={sidebar} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />

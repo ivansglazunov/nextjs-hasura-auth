@@ -1,7 +1,7 @@
 import pckg from "hasyx/package.json"
 import { SidebarData } from "hasyx/components/app-sidebar"
 
-export const sidebarData: SidebarData = {
+export const sidebar: SidebarData = {
   versions: [pckg.version],
   navMain: [
     {
@@ -16,3 +16,5 @@ export const sidebarData: SidebarData = {
     },
   ],
 };
+
+export default sidebar;
