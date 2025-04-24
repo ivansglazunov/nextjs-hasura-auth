@@ -2,6 +2,7 @@
 
 import { HasyxProvider } from "hasyx";
 import "@/app/globals.css";
+import "hasyx/lib/styles.css";
 import { Generator } from "hasyx";
 import schema from "../public/hasura-schema.json";
 
