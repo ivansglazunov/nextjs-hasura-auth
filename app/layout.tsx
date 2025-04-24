@@ -1,7 +1,7 @@
 'use client'; // Layout must be client-side due to providers
 
 import { HasyxProvider } from "hasyx";
-import "./globals.css";
+import "@/app/globals.css";
 import { Generator } from "hasyx";
 import schema from "../public/hasura-schema.json";
 

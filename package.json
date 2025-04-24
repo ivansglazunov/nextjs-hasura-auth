@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.43",
+  "version": "0.1.44",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -11,8 +11,9 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npm run build:lib && next build",
+    "build": "npm run build:lib && npm run build:css && next build",
     "build:lib": "tsc -p tsconfig.lib.json",
+    "build:css": "tailwindcss -i ./app/globals.css -o ./lib/styles.css",
     "unbuild:lib": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -print -delete",
     "build:next": "next build --turbopack",
     "start": "next start --turbopack",
@@ -69,6 +70,7 @@
     "@radix-ui/react-tooltip": "^1.2.0",
     "@swc/core": "^1.11.21",
     "@swc/jest": "^0.2.37",
+    "@tailwindcss/cli": "^4.1.4",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.4.0",
     "@testing-library/react": "^15.0.0",
@@ -117,7 +119,7 @@
     "resend": "^4.3.0",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.1.4",
     "ts-essentials": "^10.0.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
