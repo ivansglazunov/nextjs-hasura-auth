@@ -1,13 +1,7 @@
 'use client'
 
-import { AframeProvider } from '@/lib/aframe';
-// import 'aframe'; // REMOVED static import
-// Важно: Используйте '*' импорт, если стандартный не работает с вашей версией
-// import * as aframeReact from 'aframe-react';
-// const { Entity, Scene } = aframeReact;
-// ИЛИ попробуйте именованный импорт, но он может не сработать из-за старости пакета
-// @ts-ignore
-import { Entity, Scene } from 'aframe-react';
+// Import our forked components
+import { AframeProvider, AframeEntity as Entity, AframeScene as Scene } from '@/lib/aframe'; // Use the aliased exports
 import React from 'react'; // Import React and useEffect
 
 
