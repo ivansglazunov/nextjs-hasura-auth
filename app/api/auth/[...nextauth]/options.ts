@@ -14,7 +14,7 @@ const client = new Hasyx(createApolloClient({
 }), Generator(schema));
 
 const authOptions: NextAuthOptions = createAuthOptions([
-  AppCredentialsProvider(client),
+  AppCredentialsProvider({ hasyx: client }),
 ], client);
 
 export default authOptions;
