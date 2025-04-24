@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "hasyx/components/ui/select"
-import { Status } from "../nha/status"
+import { Status } from "../hasyx/status"
 import { useCheckConnection } from "hasyx/lib/hooks/useCheckConnection"
 import { useQuery } from 'hasyx'
 import Debug from 'hasyx/lib/debug'

@@ -4,7 +4,7 @@ import { Hasura } from '../../lib/hasura'; // Путь относительно 
 import Debug from '../../lib/debug';
 
 // Инициализация debug
-const debug = Debug('nha:migration:up');
+const debug = Debug('migration:up');
 
 // Загружаем переменные окружения из корневого .env файла
 dotenv.config();

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "hasyx/components/ui/card";
 import { Label } from "hasyx/components/ui/label";
-import { Status } from 'hasyx/components/nha/status';
+import { Status } from '@/components/hasyx/status';
 import { CodeBlock } from 'hasyx/components/code-block';
 import Debug from 'hasyx/lib/debug';
 

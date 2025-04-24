@@ -29,7 +29,7 @@ import { HasyxApolloClient } from './apollo';
 import Debug from './debug';
 import { GenerateOptions } from './generator';
 
-const debug = Debug('nha:client');
+const debug = Debug('client');
 
 interface ClientMethodOptions extends Omit<GenerateOptions, 'operation'> {
   role?: string;

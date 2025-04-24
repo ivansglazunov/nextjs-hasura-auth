@@ -104,7 +104,7 @@ Get your Next.js project integrated with Hasura and authentication in minutes!
     Create a `.env` file in your project root (or configure environment variables in your deployment platform). Fill in the necessary details for Hasura, NextAuth, and any OAuth providers you plan to use. See the "Environment Variables" section below for a full example and detailed setup instructions.
 
 4.  **Setup Database & Schema:**
-    *   Create your database tables and relationships. You can adapt the example migrations in the `hasyx` package under `migrations/nha/` ([up.ts](./migrations/nha/up.ts), [down.ts](./migrations/nha/down.ts)). Place your migration scripts in a `migrations/<your_migration_name>/` directory in your project root.
+    *   Create your database tables and relationships. You can adapt the example migrations in the `hasyx` package under `migrations/hasyx/` ([up.ts](./migrations/hasyx/up.ts), [down.ts](./migrations/hasyx/down.ts)). Place your migration scripts in a `migrations/<your_migration_name>/` directory in your project root.
     *   Apply migrations: `npx hasyx migrate`
     *   Generate Hasura schema JSON and TypeScript types: `npx hasyx schema`
 
@@ -264,7 +264,7 @@ Finds and executes `up.ts` migration scripts located in subdirectories of `./mig
 ```bash
 npx hasyx migrate
 ```
-It uses `npx tsx` to run the scripts. Ensure your migration scripts handle database connections and operations correctly. See [`migrations/nha/up.ts`](./migrations/nha/up.ts) for an example.
+It uses `npx tsx` to run the scripts. Ensure your migration scripts handle database connections and operations correctly. See [`migrations/hasyx/up.ts`](./migrations/hasyx/up.ts) for an example.
 
 ---
 
@@ -275,7 +275,7 @@ Finds and executes `down.ts` migration scripts located in subdirectories of `./m
 ```bash
 npx hasyx unmigrate
 ```
-It uses `npx tsx` to run the scripts. See [`migrations/nha/down.ts`](./migrations/nha/down.ts) for an example.
+It uses `npx tsx` to run the scripts. See [`migrations/hasyx/down.ts`](./migrations/hasyx/down.ts) for an example.
 
 ---
 
@@ -339,7 +339,7 @@ RESEND_API_KEY=re_your_resend_api_key
 *   `HASURA_ADMIN_SECRET`: **Required** for running migrations (`npx hasyx migrate`/`unmigrate`) and schema generation (`npx hasyx schema`) as these operations need admin privileges. It's also used by the GraphQL proxy *if* you configure the proxy to use the admin secret instead of forwarding user JWTs (not the default Hasyx setup). **Keep this secret secure and never expose it to the client.**
 *   `HASURA_JWT_SECRET`: **Required** if your Hasura instance is configured to use JWT authentication mode. This variable must contain the *exact* same JWT configuration (type and key) as set in your Hasura environment variables. Hasyx uses this internally to generate Hasura-compatible JWTs based on the NextAuth session.
 
-    *   **Migrations:** Define your database changes in `up.ts` and rollbacks in `down.ts` files within `./migrations/<name>/` directories (see [example up](./migrations/nha/up.ts), [example down](./migrations/nha/down.ts)). Run `npx hasyx migrate` to apply or `npx hasyx unmigrate` to revert.
+    *   **Migrations:** Define your database changes in `up.ts` and rollbacks in `down.ts` files within `./migrations/<name>/` directories (see [example up](./migrations/hasyx/up.ts), [example down](./migrations/hasyx/down.ts)). Run `npx hasyx migrate` to apply or `npx hasyx unmigrate` to revert.
     *   **Schema Updates:** After changing your database structure (and running migrations), update the local schema representation and types by running `npx hasyx schema`.
 
 #### NextAuth.js (`NEXTAUTH_URL`, `NEXTAUTH_SECRET`)

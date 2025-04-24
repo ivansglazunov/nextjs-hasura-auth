@@ -1,4 +1,4 @@
-import CredentialsProvider from 'next-auth/providers/credentials';
+import CredentialsProvider, { CredentialsConfig } from 'next-auth/providers/credentials';
 import { Hasyx, createApolloClient } from 'hasyx'; // Import from generated package
 import { comparePassword, HasuraUser, hashPassword } from 'hasyx/lib/authDbUtils';
 import Debug from 'hasyx/lib/debug';
@@ -9,12 +9,18 @@ import type { User as NextAuthUser } from 'next-auth';
 const debug = Debug('auth:credentials');
 
 // Define and export the Credentials Provider configuration
-export const AppCredentialsProvider = (client: Hasyx) => CredentialsProvider({
-  name: 'Credentials',
-  credentials: {
+export const AppCredentialsProvider = ({
+  hasyx,
+  credentials = {
     email: { label: "Email", type: "email", placeholder: "user@example.com" },
     password: { label: "Password", type: "password" }
   },
+}: {
+  hasyx: Hasyx;
+  credentials?: any;
+}) => CredentialsProvider({
+  name: 'Credentials',
+  credentials,
   async authorize(credentials, req): Promise<NextAuthUser | null> {
     debug('Authorize attempt for email:', credentials?.email);
     if (!credentials?.email || !credentials?.password) {
@@ -28,7 +34,7 @@ export const AppCredentialsProvider = (client: Hasyx) => CredentialsProvider({
     try {
       // 1. Find user by email
       debug(`Searching for user with email: ${email}`);
-      const userResult = await client.select<{ users: HasuraUser[] }>({
+      const userResult = await hasyx.select<{ users: HasuraUser[] }>({
         table: 'users',
         where: { email: { _eq: email } },
         returning: ['id', 'name', 'email', 'email_verified', 'image', 'password', 'is_admin', 'hasura_role']
@@ -78,7 +84,7 @@ export const AppCredentialsProvider = (client: Hasyx) => CredentialsProvider({
         const name = email.split('@')[0]; // Use name from email part
 
         // Create User
-        const newUserResult = await client.insert<{ insert_users_one: { id: string } }>({
+        const newUserResult = await hasyx.insert<{ insert_users_one: { id: string } }>({
           table: 'users',
           object: {
             email: email,
@@ -94,7 +100,7 @@ export const AppCredentialsProvider = (client: Hasyx) => CredentialsProvider({
         debug(`New user created with ID: ${userId}`);
 
         // Create Account Link
-        await client.insert<{ insert_accounts_one: { id: string } }>({
+        await hasyx.insert<{ insert_accounts_one: { id: string } }>({
           table: 'accounts',
           object: {
             user_id: userId,

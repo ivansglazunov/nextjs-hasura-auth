@@ -10,7 +10,7 @@ import { Label } from "hasyx/components/ui/label";
 import Debug from 'hasyx/lib/debug';
 import { gql, useQuery, useSubscription } from '@apollo/client';
 import { useEffect, useState } from "react";
-import { Status } from "../nha/status";
+import { Status } from "../hasyx/status";
 
 const debug = Debug('proxy-card');
 

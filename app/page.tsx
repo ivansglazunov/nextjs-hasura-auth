@@ -25,7 +25,7 @@ import { UsersCard } from "hasyx/components/users/users-card"
 
 // Imports for getting server-side session
 import { getServerSession } from "next-auth/next"
-import authOptions from "hasyx/app/api/auth/[...nextauth]/options" 
+import authOptions from "@/app/api/auth/[...nextauth]/options" 
 import { Session } from "next-auth" // Import Session type
 
 // Now this is an async server component

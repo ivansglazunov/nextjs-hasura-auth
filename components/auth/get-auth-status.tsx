@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "hasyx/components/ui/card";
 import { Label } from "hasyx/components/ui/label";
-import { Status } from 'hasyx/components/nha/status';
+import { Status } from 'hasyx/components/hasyx/status';
 import { CodeBlock } from 'hasyx/components/code-block';
 import { Button } from '../ui/button';
 import { RefreshCw } from 'lucide-react';

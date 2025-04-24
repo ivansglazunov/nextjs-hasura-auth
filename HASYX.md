@@ -29,13 +29,14 @@ Ideal for server-side logic (API routes, server components, scripts) where you m
 import { ApolloClient } from '@apollo/client';
 import { Hasyx } from './hasyx'; // Adjust path
 import { createApolloClient } from './apollo'; // Your Apollo client setup
+import schema from './public/hasura-schema.json'; // From root of project, generated with `npx hasyx schema`
 
 // Example: Instantiate with an admin client
 // Note: For simplicity, assuming TData and TOptions types are broadly compatible or generics are handled correctly.
 const apolloAdminClient: ApolloClient<any> = createApolloClient({
   secret: process.env.HASURA_ADMIN_SECRET,
 });
-const client = new Hasyx(apolloAdminClient);
+const client = new Hasyx(apolloAdminClient, Generator(schema));
 
 // Example: Select data with a specific role
 async function getUserProfile(userId: string) {

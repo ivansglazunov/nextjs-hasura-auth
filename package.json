@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.38",
+  "version": "0.1.39",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -13,6 +13,7 @@
     "dev": "next dev --turbopack",
     "build": "npm run build:lib && next build",
     "build:lib": "tsc -p tsconfig.lib.json",
+    "unbuild:lib": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -print -delete",
     "build:next": "next build --turbopack",
     "start": "next start --turbopack",
     "lint": "next lint --turbopack",
@@ -20,8 +21,8 @@
     "test:build": "jest build.test.ts",
     "postinstall": "npm run ws -- -y",
     "ws": "npx --yes next-ws-cli@latest patch -y",
-    "nha:migrate": "tsx ./migrations/nha/up.ts; npm run hasura:schema; npm run hasura:types",
-    "nha:unmigrate": "tsx ./migrations/nha/down.ts",
+    "hasyx:migrate": "tsx ./migrations/hasyx/up.ts; npm run hasura:schema; npm run hasura:types",
+    "hasyx:unmigrate": "tsx ./migrations/hasyx/down.ts",
     "hasura:schema": "tsx ./lib/hasura-schema.ts",
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
     "npm-publish": "npm run build; npm publish"
