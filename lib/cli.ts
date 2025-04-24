@@ -178,6 +178,7 @@ program
 
     const filesToCreateIfNotExists = {
       // Basic Next.js structure (won't overwrite)
+      'app/sidebar.ts': 'app/sidebar.ts',
       'app/layout.tsx': 'app/layout.tsx',
       'app/page.tsx': 'app/page.tsx',
       'app/globals.css': 'app/globals.css',
