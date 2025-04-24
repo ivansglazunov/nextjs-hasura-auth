@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Update the user's email_verified status in Hasura
-    const updateResult = await client.update<{ update_users_by_pk: { id: string } | null }>({ // Use client here
+    const updateResult = await client.update({ // Use client here
       table: 'users',
       pk_columns: { id: userId }, // Use pk_columns for _by_pk update
       _set: {
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Check if the update actually happened
-    if (updateResult?.update_users_by_pk?.id === userId) {
+    if (updateResult?.id === userId) {
         debug('User email verified successfully in database for ID: %s', userId);
         // Redirect to the home page after successful verification
         return NextResponse.redirect(new URL('/', request.url)); 

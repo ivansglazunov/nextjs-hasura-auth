@@ -119,12 +119,12 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
         let isAdmin = false;
         try {
           // Fetch latest user data for roles/status
-          const userResult = await client.select<{ users_by_pk: HasuraUser | null }>({
+          const userResult = await client.select({
               table: 'users',
               pk_columns: { id: userId }, 
               returning: ['id', 'email_verified', 'is_admin', 'hasura_role']
           });
-          const currentUserData = userResult?.users_by_pk;
+          const currentUserData = userResult;
           if (currentUserData) {
             latestRole = currentUserData.hasura_role ?? 'user';
             isAdmin = currentUserData.is_admin ?? false;

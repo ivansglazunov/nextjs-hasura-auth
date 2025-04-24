@@ -78,7 +78,7 @@ export async function getOrCreateUserAndAccount(
   // --- 1. Try to find the account --- 
   let existingUser: HasuraUser | null = null;
   try {
-    const accountResult = await hasyx.select<{ accounts: Array<{ user: HasuraUser }> }>({
+    const accountResult = await hasyx.select({
       table: 'accounts',
       where: {
         provider: { _eq: provider },
@@ -90,12 +90,12 @@ export async function getOrCreateUserAndAccount(
       limit: 1, // Optimization: we only need one
     });
 
-    if (accountResult?.accounts?.length > 0 && accountResult.accounts[0].user) {
-      existingUser = accountResult.accounts[0].user;
-      debug(`Found existing account for ${provider}:${providerAccountId}. User ID: ${existingUser.id}`);
+    if (accountResult?.length > 0 && accountResult?.[0]?.user) {
+      existingUser = accountResult?.[0]?.user;
+      debug(`Found existing account for ${provider}:${providerAccountId}. User ID: ${existingUser?.id}`);
       // Optionally update user profile info (name, image) from provider here if desired
       // await hasyx.update({ table: 'users', pk_columns: { id: existingUser.id }, _set: { name: profile.name, image: profile.image } });
-      return existingUser;
+      return existingUser as HasuraUser;
     }
   } catch (error) {
     debug(`Error searching for account ${provider}:${providerAccountId}:`, error);
@@ -109,29 +109,29 @@ export async function getOrCreateUserAndAccount(
   // For credentials, we find the user first in the `authorize` function.
   if (profile?.email && provider !== 'credentials') { // Avoid linking for credentials here
     try {
-      const userByEmailResult = await hasyx.select<{ users: HasuraUser[] }>({
+      const userByEmailResult = await hasyx.select({
         table: 'users',
         where: { email: { _eq: profile.email } },
         returning: ['id', 'name', 'email', 'email_verified', 'image', 'password', 'created_at', 'updated_at', 'is_admin', 'hasura_role'], // Removed extra backslashes
         limit: 1,
       });
 
-      if (userByEmailResult?.users?.length > 0) {
-        existingUser = userByEmailResult.users[0];
-        debug(`Found existing user by email ${profile.email}. User ID: ${existingUser.id}. Linking account.`);
+      if (userByEmailResult?.length > 0) {
+        existingUser = userByEmailResult?.[0];
+        debug(`Found existing user by email ${profile.email}. User ID: ${existingUser?.id}. Linking account.`);
         // Link account to this existing user
-        await hasyx.insert<{ insert_accounts_one: { id: string } }>({
+        await hasyx.insert({
           table: 'accounts',
           object: {
-            user_id: existingUser.id,
+            user_id: existingUser?.id,
             provider: provider,
             provider_account_id: providerAccountId,
             type: provider === 'credentials' ? 'credentials' : 'oauth', // Set type based on provider
           },
           returning: ['id'], // Removed extra backslashes
         });
-        debug(`Account ${provider}:${providerAccountId} linked to user ${existingUser.id}.`);
-        return existingUser;
+        debug(`Account ${provider}:${providerAccountId} linked to user ${existingUser?.id}.`);
+        return existingUser as HasuraUser;
       }
     } catch (error) {
       // Handle potential duplicate account insertion error gracefully if needed
@@ -161,21 +161,21 @@ export async function getOrCreateUserAndAccount(
     };
 
     // For credentials, the user is created *after* email verification, but we handle it here for OAuth
-    const newUserResult = await hasyx.insert<{ insert_users_one: HasuraUser }>({
+    const newUserResult = await hasyx.insert({
       table: 'users',
       object: newUserInput,
       // Return all fields needed for the session/JWT
       returning: ['id', 'name', 'email', 'email_verified', 'image', 'password', 'created_at', 'updated_at', 'is_admin', 'hasura_role'], // Removed extra backslashes
     });
 
-    if (!newUserResult?.insert_users_one?.id) {
+    if (!newUserResult?.id) {
       throw new Error('Failed to create new user or retrieve its ID.');
     }
-    const newUser = newUserResult.insert_users_one;
+    const newUser = newUserResult;
     debug(`New user created with ID: ${newUser.id}`);
 
     // Now create the account linked to the new user
-    await hasyx.insert<{ insert_accounts_one: { id: string } }>({
+    await hasyx.insert({
       table: 'accounts',
       object: {
         user_id: newUser.id,

@@ -130,7 +130,7 @@ describe('/api/graphql Proxy Integration Tests', () => {
       );
 
       // Correctly apply generic type to useSelect inside the callback
-      const { result } = renderHook(() => useSelect<TestUserData>(
+      const { result } = renderHook(() => useSelect(
         { // Generator Options
           table: 'users',
           pk_columns: { id: testUserId! },
@@ -147,10 +147,10 @@ describe('/api/graphql Proxy Integration Tests', () => {
 
       // Check if data is fetched correctly
       expect(result.current.data).toBeDefined();
-      expect(result.current.data?.users_by_pk).toBeDefined();
-      expect(result.current.data?.users_by_pk?.id).toBe(testUserId);
-      expect(result.current.data?.users_by_pk?.email).toBe(testUserEmail);
-      expect(result.current.data?.users_by_pk?.name).toBe(testUserName);
+      expect(result.current.data).toBeDefined();
+      expect(result.current.data?.id).toBe(testUserId);
+      expect(result.current.data?.email).toBe(testUserEmail);
+      expect(result.current.data?.name).toBe(testUserName);
     });
   });
 
@@ -270,7 +270,7 @@ describe('Client Class Integration Tests', () => {
 
       // Helper function for insertion (using the Client class itself!)
       const insertUser = async (email: string, name: string): Promise<string> => {
-        const result = await hasyx.insert<{ id: string }>({ // Generic is the user object
+        const result = await hasyx.insert({ // Generic is the user object
           table: 'users',
           object: { email, name, hasura_role: "user", email_verified: new Date().toISOString() }, // Assume verified for tests
           returning: ['id'],
@@ -379,18 +379,18 @@ describe('Client Class Integration Tests', () => {
     // This test assumes 'user' role cannot see 'email' of other users based on permissions
     // It will FAIL if permissions allow users to see emails.
     try {
-      const result = await hasyx.select<{ users_by_pk: any }>({
+      const result = await hasyx.select({
         table: 'users',
         pk_columns: { id: testUserId! },
         returning: ['id', 'email', 'name'], // Requesting email
         role: 'user' // <<< Requesting as 'user' role
       });
       // If the query succeeded but email is null/undefined due to permissions
-      expect(result?.users_by_pk).toBeDefined();
-      expect(result.users_by_pk.id).toBe(testUserId);
+      expect(result).toBeDefined();
+      expect(result.id).toBe(testUserId);
       // Assert that email IS NOT returned for user role (permission dependent)
-      expect(result.users_by_pk.email).toBeUndefined();
-      expect(result.users_by_pk.name).toBe(testUserName);
+      expect(result.email).toBeUndefined();
+      expect(result.name).toBe(testUserName);
       debug("  ✅ client.select with role='user' returned expected limited data.");
     } catch (error: any) {
       // OR Assert that the query itself throws a permission error
@@ -464,7 +464,7 @@ describe('Client Class Integration Tests', () => {
     if (insertedId) {
       debug(`  👤 Inserted single user: ${insertedId}`);
       // Verify insertion
-      const verifyResult = await hasyx.select<{ id: string }>({
+      const verifyResult = await hasyx.select({
         table: 'users',
         pk_columns: { id: insertedId },
         returning: ['id']
@@ -487,7 +487,7 @@ describe('Client Class Integration Tests', () => {
       returning: { id: string; email: string }[];
     };
 
-    const result = await hasyx.insert<BulkInsertResult>({
+    const result = await hasyx.insert({
       table: 'users',
       objects: [
         { email: bulkEmail1, name: "Bulk 1" },
@@ -499,16 +499,16 @@ describe('Client Class Integration Tests', () => {
     expect(result).toBeDefined(); // Expect the bulk result object
     expect(result.affected_rows).toBe(2);
     expect(result.returning).toHaveLength(2);
-    expect(result.returning.map(r => r.email)).toEqual(expect.arrayContaining([bulkEmail1, bulkEmail2]));
+    expect(result.returning.map((r: any) => r.email)).toEqual(expect.arrayContaining([bulkEmail1, bulkEmail2]));
 
-    const insertedIds = result.returning.map(r => r.id);
+    const insertedIds = result.returning.map((r: any) => r.id);
     expect(insertedIds[0]).toBeTruthy();
     expect(insertedIds[1]).toBeTruthy();
 
     if (insertedIds.length > 0) {
       debug(`  👤 Inserted bulk users: ${insertedIds.join(', ')}`);
       // Verify insertion (check one)
-      const verifyResult = await hasyx.select<{ id: string }>({
+      const verifyResult = await hasyx.select({
         table: 'users',
         pk_columns: { id: insertedIds[0] },
         returning: ['id']
@@ -527,7 +527,7 @@ describe('Client Class Integration Tests', () => {
     // Create a user specifically for this delete test to avoid conflicts
     const deleteEmail = `client-delete-${uuidv4()}@example.com`;
     const deleteName = "Client Delete Test";
-    const userToDelete = await hasyx.insert<{ id: string }>({
+    const userToDelete = await hasyx.insert({
       table: 'users',
       object: { email: deleteEmail, name: deleteName },
       returning: ['id']
@@ -539,7 +539,7 @@ describe('Client Class Integration Tests', () => {
     // Remove from cleanup list if it was added by insertUser helper
     userIdsToCleanUp = userIdsToCleanUp.filter(id => id !== userToDeleteId);
 
-    const result = await hasyx.delete<{ id: string, email: string }>({ // Generic for the returned deleted user object
+    const result = await hasyx.delete({ // Generic for the returned deleted user object
       table: 'users',
       pk_columns: { id: userToDeleteId },
       returning: ['id', 'email']
@@ -604,8 +604,8 @@ describe('Client Class Integration Tests', () => {
 
         apolloSubscription = observable.subscribe({
           next: (userData) => { // Result is now the unwrapped userData 
-            debug(`  📬 Subscription received data: ${JSON.stringify(userData)}`); 
-             // --- Add check for initial undefined state --- 
+            debug(`  📬 Subscription received data: ${JSON.stringify(userData)}`);
+            // --- Add check for initial undefined state --- 
             // if (!userData || userData.name === undefined) { 
             //     debug('  ⏩ Received initial/incomplete subscription data, skipping check...');
             //     return; // Wait for the next update with the name
@@ -614,14 +614,14 @@ describe('Client Class Integration Tests', () => {
             if (userData) {
               updatesReceived.push(userData);
               debug(`  📊 Update ${updatesReceived.length} received:`, userData);
- 
+
               // After receiving the first update (initial data)
               if (updatesReceived.length === 1) {
                 expect(userData.name).toBe(subName); // Check the name from the first received data
                 debug('  ✅ client.subscribe received initial data correctly.');
                 apolloSubscription?.unsubscribe(); // Clean up subscription
                 done(); // Signal test completion immediately after first check
- 
+
                 // --- Temporarily commented out update logic ---
                 // const newSubName = `Client Sub Updated ${uuidv4()}`;
                 // debug(`  ✏️ Triggering update for user ${subUserId} to name: ${newSubName}`);
@@ -639,7 +639,7 @@ describe('Client Class Integration Tests', () => {
                 //   }
                 // })();
               }
- 
+
               // --- Temporarily commented out second update check ---
               // if (updatesReceived.length === expectedUpdates) {
               //   expect(updatesReceived[1].name).toMatch(/^Client Sub Updated/);
@@ -692,9 +692,9 @@ describe('Client Class Integration Tests', () => {
         debug(`  ❌ Unexpected error inserting duplicate name user: ${JSON.stringify(insertResult.errors)}`);
         throw new Error("Failed to insert user with duplicate name for distinct_on test");
       } else {
-          tempUserId = insertResult.data?.insert_users_one?.id;
-          debug(`  👤 Created temporary user with duplicate name: ${tempUserId}`);
-          if (tempUserId) userIdsToCleanUp.push(tempUserId); // Add to cleanup IF created
+        tempUserId = insertResult.data?.insert_users_one?.id;
+        debug(`  👤 Created temporary user with duplicate name: ${tempUserId}`);
+        if (tempUserId) userIdsToCleanUp.push(tempUserId); // Add to cleanup IF created
       }
     } catch (e: any) {
       // Catch potential errors if the mutation itself fails beyond constraint violation
@@ -708,7 +708,7 @@ describe('Client Class Integration Tests', () => {
       table: 'users',
       distinct_on: ['name'], // Get unique names
       // Where clause to select based on the names we care about
-      where: { name: { _in: [testUserName, testUser2Name] } }, 
+      where: { name: { _in: [testUserName, testUser2Name] } },
       order_by: [{ name: 'asc' }, { created_at: 'asc' }], // Need order for distinct (name first)
       returning: ['id', 'name'] // Return name to verify
     };

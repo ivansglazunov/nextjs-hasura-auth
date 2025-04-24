@@ -158,7 +158,7 @@ Get your Next.js project integrated with Hasura and authentication in minutes!
       });
 
       return <div onClick={async () => {
-        const result = await client.insert<{ insert_users_one: { id: string } }>({
+        const result = await client.insert({
           table: 'users',
           // Generator syntax for variables is used directly in client methods
           objects: [{ name: 'New User', email: 'new@example.com' }],

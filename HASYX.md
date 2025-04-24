@@ -153,7 +153,7 @@ function UserProfile() {
   const { data: session } = useSession()
   const userId = session?.user?.id;
 
-  const { loading, error, data, refetch } = useSelect<{ users_by_pk: any }>( // Specify TData
+  const { loading, error, data, refetch } = useSelect( // Specify TData
     { // Generator Options (1st argument - HasyxMethodOptions)
       table: 'users',
       pk_columns: { id: userId },
@@ -163,13 +163,13 @@ function UserProfile() {
       role: 'me', // <--- Pass role here
       skip: !userId,
       fetchPolicy: 'cache-and-network',
-      onCompleted: (d) => console.log("My profile data:", d?.users_by_pk)
+      onCompleted: (d) => console.log("My profile data:", d)
       // ... other Apollo useQuery options
     }
   );
   
   // Data Access Example (Hooks return wrapped data):
-  const userProfile = data?.users_by_pk; // Extract the data
+  const userProfile = data; // Extract the data
   console.log("User profile from hook:", userProfile);
   
   // ... render based on loading, error, data ...

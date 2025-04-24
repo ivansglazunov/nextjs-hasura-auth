@@ -34,16 +34,16 @@ export const AppCredentialsProvider = ({
     try {
       // 1. Find user by email
       debug(`Searching for user with email: ${email}`);
-      const userResult = await hasyx.select<{ users: HasuraUser[] }>({
+      const userResult = await hasyx.select({
         table: 'users',
         where: { email: { _eq: email } },
         returning: ['id', 'name', 'email', 'email_verified', 'image', 'password', 'is_admin', 'hasura_role']
       });
 
       // --- Scenario 1: User FOUND --- 
-      if (userResult?.users?.length > 0) {
-        const user = userResult.users[0];
-        debug(`User found: ${user.id}`);
+      if (userResult?.length > 0) {
+        const user = userResult?.[0];
+        debug(`User found: ${user?.id}`);
 
         if (!user.password) {
           debug('User found but has no password hash:', email);
@@ -84,7 +84,7 @@ export const AppCredentialsProvider = ({
         const name = email.split('@')[0]; // Use name from email part
 
         // Create User
-        const newUserResult = await hasyx.insert<{ insert_users_one: { id: string } }>({
+        const newUserResult = await hasyx.insert({
           table: 'users',
           object: {
             email: email,
@@ -95,12 +95,12 @@ export const AppCredentialsProvider = ({
           },
           returning: ['id'],
         });
-        const userId = newUserResult?.insert_users_one?.id;
+        const userId = newUserResult?.id;
         if (!userId) throw new Error('Failed to create new user.');
         debug(`New user created with ID: ${userId}`);
 
         // Create Account Link
-        await hasyx.insert<{ insert_accounts_one: { id: string } }>({
+        await hasyx.insert({
           table: 'accounts',
           object: {
             user_id: userId,

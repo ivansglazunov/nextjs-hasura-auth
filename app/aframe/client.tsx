@@ -23,17 +23,15 @@ export default function AframeClient() {
   };
 
   return (<>
-    {/* Ensure A-Frame can run on the client */}
     <AframeProvider>
-      <Scene embedded style={sceneStyle} renderer="alpha: true; colorManagement: true;"> 
-        {/* White background - REMOVED */}
-        {/* <a-sky color="#FFFFFF"></a-sky> */}
-
-        {/* Black box on the floor */}
+      <Scene
+        embedded style={sceneStyle} renderer="alpha: true; colorManagement: true;"
+        webxr="requiredFeatures: local-floor; optionalFeatures: anchors, hit-test, dom-overlay, bounded-floor;" // Request AR features
+        vr-mode-ui="enterAREnabled: true" // Ensure AR button is enabled
+      >
         {/* @ts-ignore */}
         <Entity geometry={{ primitive: 'box' }} material={{ color: 'black' }} position={{ x: 0, y: 0.5, z: -3 }} />
 
-        {/* Basic Camera & Cursor - Можно оставить Entity или использовать a-camera */}
         {/* @ts-ignore */}
         <Entity primitive="a-camera">
           {/* @ts-ignore */}

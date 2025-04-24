@@ -144,7 +144,7 @@ describe('/api/graphql Proxy Integration Tests (using Hasyx class)', () => {
     expect(testUserId).toBeTruthy();
 
     try {
-      const data = await proxyClient.select<TestUserData>({ // Use client.select
+      const data = await proxyClient.select({ // Use client.select
         table: 'users',
         pk_columns: { id: testUserId! },
         returning: ['id', 'email', 'name'],
@@ -153,10 +153,9 @@ describe('/api/graphql Proxy Integration Tests (using Hasyx class)', () => {
 
       Debug(`  📊 Received data: ${JSON.stringify(data)}`);
       expect(data).toBeDefined();
-      expect(data.users_by_pk).toBeDefined();
-      expect(data.users_by_pk?.id).toBe(testUserId);
-      expect(data.users_by_pk?.email).toBe(testUserEmail);
-      expect(data.users_by_pk?.name).toBe(testUserName);
+      expect(data?.id).toBe(testUserId);
+      expect(data?.email).toBe(testUserEmail);
+      expect(data?.name).toBe(testUserName);
       Debug('  ✅ client.select via proxy successful.');
 
     } catch (error) {
