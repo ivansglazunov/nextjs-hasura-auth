@@ -7,9 +7,9 @@ import { Subscription } from 'zen-observable-ts'; // For handling subscription c
 // Load environment variables from root .env
 dotenv.config();
 
-import { createApolloClient } from './apollo'; // Client creator from lib
+import { createApolloClient } from './apollo'; // Hasyx creator from lib
 import { hashPassword } from './authDbUtils'; // For user creation
-import { Hasyx } from './hasyx'; // Import the Client class
+import { Hasyx } from './hasyx'; // Import the Hasyx class
 import Debug from './debug'; // Import Debug
 import { Generator } from './generator'; // Import the Generator function
 import schema from '../public/hasura-schema.json'; // Import the schema
@@ -43,7 +43,7 @@ interface UpdateUserData {
   } | null;
 }
 
-// --- Helper: Admin Client (Direct Hasura Connection) --- 
+// --- Helper: Admin Hasyx (Direct Hasura Connection) --- 
 let adminClient: ApolloClient<any>;
 
 beforeAll(async () => {
@@ -112,11 +112,11 @@ afterAll(async () => {
 
 
 // --- Test Suite: /api/graphql Proxy --- 
-describe('/api/graphql Proxy Integration Tests (using Client class)', () => {
-  let proxyClient: Client; // Use the Client class for proxy interactions
+describe('/api/graphql Proxy Integration Tests (using Hasyx class)', () => {
+  let proxyClient: Hasyx; // Use the Hasyx class for proxy interactions
 
   beforeAll(() => {
-    Debug('🔧 Initializing Client class instance pointing to proxy...');
+    Debug('🔧 Initializing Hasyx class instance pointing to proxy...');
     if (!testUserId) {
         // This should ideally not happen due to the outer describe check, but good practice
         throw new Error("Cannot initialize proxy client - test user ID not available.");
@@ -127,9 +127,9 @@ describe('/api/graphql Proxy Integration Tests (using Client class)', () => {
       ws: true, // Enable WS for subscription tests
       // No token/secret here - proxy handles auth downstream
     });
-    // Initialize our Client class with the proxy ApolloClient
-    proxyClient = new Client(apolloProxy, generate);
-    Debug('✅ Proxy Client initialized.');
+    // Initialize our Hasyx class with the proxy ApolloClient
+    proxyClient = new Hasyx(apolloProxy, generate);
+    Debug('✅ Proxy Hasyx initialized.');
   });
 
   // Skip all tests in this suite if user setup failed
@@ -189,7 +189,7 @@ describe('/api/graphql Proxy Integration Tests (using Client class)', () => {
     }, 25000); // Timeout for the entire test
 
     subscription = observable.subscribe({
-      next: (result: FetchResult<TestUserData>) => {
+      next: (result: any) => {
         Debug(`  📬 Proxy Subscription received data: ${JSON.stringify(result.data)}`);
         if (result.errors) {
            Debug(`  ❌ Proxy Subscription GraphQL errors: ${JSON.stringify(result.errors)}`);

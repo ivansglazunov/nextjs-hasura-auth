@@ -612,6 +612,42 @@ describe('GraphQL Query Generator Unit Tests', () => {
     debug('✅ Appending relations (alias, where, limit) via returning object passed');
   });
 
+  it('Test 14: Should generate a query with distinct_on correctly', () => {
+    debug('\n📝 Test 14: Query with distinct_on');
+    const options: GenerateOptions = {
+      operation: 'query',
+      table: 'users',
+      distinct_on: ['email'], // Distinct based on email
+      where: { is_admin: { _eq: false } },
+      order_by: [{ email: 'asc' }, { created_at: 'desc' }], // Order by distinct column first
+      returning: ['id', 'name', 'email']
+    };
+    const result = generate(options);
+
+    // Note: The type for distinct_on ($v1) should ideally be [users_select_column!]
+    // We assume the generator correctly infers this for now.
+    const expectedQuery = `
+      query QueryUsers($v1: [users_select_column!], $v2: [users_order_by!], $v3: users_bool_exp) {
+        users(distinct_on: $v1, order_by: $v2, where: $v3) {
+          id
+          name
+          email
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: ['email'],
+      v2: [{ email: 'asc' }, { created_at: 'desc' }],
+      v3: { is_admin: { _eq: false } },
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    expect(result.queryName).toBe('users'); // Check queryName
+    debug('✅ Query with distinct_on passed');
+  });
+
 }); // End describe block
 
 // =============================================

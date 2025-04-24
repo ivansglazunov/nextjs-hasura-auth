@@ -14,26 +14,19 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "hasyx/components/ui/sidebar"
-import pckg from "hasyx/package.json"
 
-// This is sample data.
-const data = {
-  versions: [pckg.version],
-  navMain: [
-    {
-      title: "Core",
-      url: "#",
-      items: [
-        {
-          title: "Diagnostics",
-          url: "/",
-        },
-      ],
-    },
-  ],
+export interface SidebarItem {
+  title: string;
+  url: string;
+  items?: SidebarItem[];
 }
 
-export function AppSidebar({ activeUrl }: { activeUrl: string }) {
+export interface SidebarData {
+  versions: string[];
+  navMain: SidebarItem[];
+}
+
+export function AppSidebar({ activeUrl, data }: { activeUrl: string, data: SidebarData }) {
   return (
     <Sidebar>
       <SidebarHeader>
@@ -50,7 +43,7 @@ export function AppSidebar({ activeUrl }: { activeUrl: string }) {
             <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {item.items.map((item) => (
+                {item?.items?.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={item.url === activeUrl || item.url === activeUrl + "/"}>
                       <a href={item.url}>{item.title}</a>

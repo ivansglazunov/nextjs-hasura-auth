@@ -3,7 +3,7 @@ import { useSession } from './auth'; // Our client creation function
 import { ThemeProvider } from "hasyx/components/theme-provider";
 import { SessionProvider } from "next-auth/react"; // Import SessionProvider and useSession
 import { useMemo } from "react";
-import { Generate } from "./generator";
+import { Generate, GenerateOptions, GenerateResult } from "./generator";
 
 import {
   ApolloError,
@@ -27,7 +27,6 @@ import {
 import { useCallback, useContext } from 'react';
 import { HasyxApolloClient } from './apollo';
 import Debug from './debug';
-import { GenerateOptions } from './generator';
 
 const debug = Debug('client');
 
@@ -51,15 +50,15 @@ export class Hasyx {
   /**
    * Executes a GraphQL query (select operation).
    * @param options - Options for generating the query, including an optional `role`.
-   * @returns Promise resolving with the query result data.
+   * @returns Promise resolving with the query result data (unwrapped from the top-level key, e.g., the array or single object), except for aggregate queries which return the full `{ aggregate, nodes }` structure.
    * @throws ApolloError if the query fails or returns GraphQL errors.
    */
   async select<TData = any>(options: ClientMethodOptions): Promise<TData> {
     const { role, ...genOptions } = options; // Extract role
     debug('Executing select with options:', genOptions, 'Role:', role);
-    const generated = this.generate({ ...genOptions, operation: 'query' });
+    const generated: GenerateResult = this.generate({ ...genOptions, operation: 'query' });
     try {
-      const result: ApolloQueryResult<TData> = await this.apolloClient.query({
+      const result: ApolloQueryResult<any> = await this.apolloClient.query({ // Use any for intermediate result
         query: generated.query,
         variables: generated.variables,
         fetchPolicy: 'network-only', // Ensure fresh data for direct calls
@@ -70,8 +69,19 @@ export class Hasyx {
         debug('GraphQL errors during select:', result.errors);
         throw new ApolloError({ graphQLErrors: result.errors });
       }
-      debug('Select successful, returning data.');
-      return result.data;
+      debug('Select successful, raw data:', result.data);
+
+      // --- Data Extraction Logic ---
+      // Keep full structure for aggregate queries
+      if (genOptions.aggregate) {
+          return result.data as TData;
+      }
+      // Extract data using the queryName from generator
+      const extractedData = result.data?.[generated.queryName] ?? null;
+      debug('Select extracted data:', extractedData);
+      return extractedData as TData;
+      // --- End Extraction Logic ---
+
     } catch (error) {
       debug('Error during select:', error);
       throw error; // Re-throw original error (could be ApolloError or network error)
@@ -81,15 +91,15 @@ export class Hasyx {
   /**
    * Executes a GraphQL insert mutation.
    * @param options - Options for generating the mutation, including an optional `role`.
-   * @returns Promise resolving with the mutation result data.
+   * @returns Promise resolving with the mutation result data. For single inserts (`insert_table_one`), returns the inserted object. For bulk inserts, returns the full `{ affected_rows, returning }` object.
    * @throws ApolloError if the mutation fails or returns GraphQL errors.
    */
   async insert<TData = any>(options: ClientMethodOptions): Promise<TData> {
     const { role, ...genOptions } = options; // Extract role
     debug('Executing insert with options:', genOptions, 'Role:', role);
-    const generated = this.generate({ ...genOptions, operation: 'insert' });
+    const generated: GenerateResult = this.generate({ ...genOptions, operation: 'insert' });
     try {
-      const result: FetchResult<TData> = await this.apolloClient.mutate({
+      const result: FetchResult<any> = await this.apolloClient.mutate({ // Use any for intermediate result
         mutation: generated.query,
         variables: generated.variables,
         context: role ? { role } : undefined, // Pass role in context
@@ -99,10 +109,24 @@ export class Hasyx {
         debug('GraphQL errors during insert:', result.errors);
         throw new ApolloError({ graphQLErrors: result.errors });
       }
-      // Check if data exists, otherwise return an empty object or handle as needed
-      const returnData = result.data ?? ({} as TData);
-      debug('Insert successful, returning data.');
-      return returnData;
+      const rawData = result.data ?? {};
+      debug('Insert successful, raw data:', rawData);
+
+      // --- Data Extraction Logic ---
+      // Keep full structure for bulk inserts (returning { affected_rows, returning }) 
+      // Check if it looks like a bulk response based on queryName AND presence of affected_rows/returning
+      const isBulkInsert = !generated.queryName.endsWith('_one') && ('affected_rows' in rawData || 'returning' in rawData);
+      if (isBulkInsert) {
+          debug('Insert identified as bulk, returning full data object.');
+          return rawData as TData;
+      } else {
+          // Extract data for single inserts (insert_table_one returns the object directly)
+          const extractedData = rawData?.[generated.queryName] ?? null;
+          debug('Insert identified as single, returning extracted data:', extractedData);
+          return extractedData as TData;
+      }
+      // --- End Extraction Logic ---
+
     } catch (error) {
       debug('Error during insert:', error);
       throw error;
@@ -112,15 +136,15 @@ export class Hasyx {
   /**
    * Executes a GraphQL update mutation.
    * @param options - Options for generating the mutation, including an optional `role`.
-   * @returns Promise resolving with the mutation result data.
+   * @returns Promise resolving with the mutation result data. For `_by_pk` updates, returns the updated object. For bulk updates (using `where`), returns the full `{ affected_rows, returning }` object.
    * @throws ApolloError if the mutation fails or returns GraphQL errors.
    */
   async update<TData = any>(options: ClientMethodOptions): Promise<TData> {
     const { role, ...genOptions } = options; // Extract role
     debug('Executing update with options:', genOptions, 'Role:', role);
-    const generated = this.generate({ ...genOptions, operation: 'update' });
+    const generated: GenerateResult = this.generate({ ...genOptions, operation: 'update' });
     try {
-      const result: FetchResult<TData> = await this.apolloClient.mutate({
+      const result: FetchResult<any> = await this.apolloClient.mutate({ // Use any for intermediate result
         mutation: generated.query,
         variables: generated.variables,
         context: role ? { role } : undefined, // Pass role in context
@@ -130,9 +154,23 @@ export class Hasyx {
         debug('GraphQL errors during update:', result.errors);
         throw new ApolloError({ graphQLErrors: result.errors });
       }
-      const returnData = result.data ?? ({} as TData);
-      debug('Update successful, returning data.');
-      return returnData;
+      const rawData = result.data ?? {};
+      debug('Update successful, raw data:', rawData);
+
+      // --- Data Extraction Logic ---
+      // Keep full structure for bulk updates (returning { affected_rows, returning })
+      const isBulkUpdate = !generated.queryName.endsWith('_by_pk') && ('affected_rows' in rawData || 'returning' in rawData);
+      if (isBulkUpdate) {
+          debug('Update identified as bulk, returning full data object.');
+          return rawData as TData;
+      } else {
+          // Extract data for single updates (update_table_by_pk returns the object directly)
+          const extractedData = rawData?.[generated.queryName] ?? null;
+          debug('Update identified as single (_by_pk), returning extracted data:', extractedData);
+          return extractedData as TData;
+      }
+      // --- End Extraction Logic ---
+
     } catch (error) {
       debug('Error during update:', error);
       throw error;
@@ -142,15 +180,15 @@ export class Hasyx {
   /**
    * Executes a GraphQL delete mutation.
    * @param options - Options for generating the mutation, including an optional `role`.
-   * @returns Promise resolving with the mutation result data.
+   * @returns Promise resolving with the mutation result data. For `_by_pk` deletes, returns the deleted object. For bulk deletes (using `where`), returns the full `{ affected_rows, returning }` object.
    * @throws ApolloError if the mutation fails or returns GraphQL errors.
    */
   async delete<TData = any>(options: ClientMethodOptions): Promise<TData> {
     const { role, ...genOptions } = options; // Extract role
     debug('Executing delete with options:', genOptions, 'Role:', role);
-    const generated = this.generate({ ...genOptions, operation: 'delete' });
+    const generated: GenerateResult = this.generate({ ...genOptions, operation: 'delete' });
     try {
-      const result: FetchResult<TData> = await this.apolloClient.mutate({
+      const result: FetchResult<any> = await this.apolloClient.mutate({ // Use any for intermediate result
         mutation: generated.query,
         variables: generated.variables,
         context: role ? { role } : undefined, // Pass role in context
@@ -160,9 +198,23 @@ export class Hasyx {
         debug('GraphQL errors during delete:', result.errors);
         throw new ApolloError({ graphQLErrors: result.errors });
       }
-      const returnData = result.data ?? ({} as TData);
-      debug('Delete successful, returning data.');
-      return returnData;
+      const rawData = result.data ?? {};
+      debug('Delete successful, raw data:', rawData);
+
+      // --- Data Extraction Logic ---
+      // Keep full structure for bulk deletes (returning { affected_rows, returning })
+      const isBulkDelete = !generated.queryName.endsWith('_by_pk') && ('affected_rows' in rawData || 'returning' in rawData);
+      if (isBulkDelete) {
+          debug('Delete identified as bulk, returning full data object.');
+          return rawData as TData;
+      } else {
+          // Extract data for single deletes (delete_table_by_pk returns the object directly)
+          const extractedData = rawData?.[generated.queryName] ?? null;
+          debug('Delete identified as single (_by_pk), returning extracted data:', extractedData);
+          return extractedData as TData;
+      }
+      // --- End Extraction Logic ---
+
     } catch (error) {
       debug('Error during delete:', error);
       throw error;
@@ -174,18 +226,80 @@ export class Hasyx {
    * Note: Role support via context might not work for WebSockets depending on Apollo Link setup.
    * Role is typically set during WebSocket connection establishment.
    * @param options - Options for generating the subscription, including an optional `role`.
-   * @returns An Observable for the subscription results.
+   * @returns An Observable for the subscription results, emitting the unwrapped data directly (e.g., the array or single object), except for aggregate subscriptions which emit the full `{ aggregate, nodes }` structure.
    */
   subscribe<TData = any, TVariables extends OperationVariables = OperationVariables>(
     options: ClientMethodOptions
-  ): Observable<FetchResult<TData>> {
+  ): Observable<TData> {
     const { role, ...genOptions } = options; // Extract role
     debug('Initiating subscribe with options:', genOptions, 'Role:', role);
-    const generated = this.generate({ ...genOptions, operation: 'subscription' });
-    return this.apolloClient.subscribe<TData, TVariables>({
-      query: generated.query,
-      variables: generated.variables as TVariables,
-      context: role ? { role } : undefined, // Pass role, effectiveness depends on link chain
+    const generated: GenerateResult = this.generate({ ...genOptions, operation: 'subscription' });
+
+    // Create a new Observable to wrap the Apollo subscription
+    return new Observable<TData>(observer => {
+      // Subscribe to the actual Apollo client subscription
+      const apolloSubscription = this.apolloClient.subscribe<any, TVariables>({ // Use <any> for raw FetchResult
+        query: generated.query,
+        variables: generated.variables as TVariables,
+        context: role ? { role } : undefined,
+      }).subscribe({
+        next: (result: FetchResult<any>) => {
+          if (result.errors) {
+            debug('GraphQL errors during subscription:', result.errors);
+            // Forward ApolloError to the observer
+            observer.error(new ApolloError({ graphQLErrors: result.errors }));
+            return;
+          }
+          const rawData = result.data ?? null; // Use null if no data
+          debug('Subscription received raw data:', JSON.stringify(rawData));
+          debug('Subscription expected queryName:', generated.queryName);
+
+          // --- Data Extraction Logic ---
+          let extractedData: TData;
+          // Keep full structure for aggregate queries
+          if (genOptions.aggregate) {
+            debug('Subscription is aggregate, returning raw data.');
+            extractedData = rawData as TData;
+          } else {
+            // Extract data using the queryName from generator
+            extractedData = rawData?.[generated.queryName] ?? null;
+            // Fallback: If queryName extraction failed, try using the base table name
+            if (!extractedData && rawData?.[genOptions.table]) {
+                debug(`Subscription extracted data using queryName ('${generated.queryName}') failed, falling back to base table name ('${genOptions.table}').`);
+                extractedData = rawData[genOptions.table];
+                 // For _by_pk subscriptions returning an array with one item under the base table name
+                 if (generated.queryName.endsWith('_by_pk') && Array.isArray(extractedData) && extractedData.length === 1) {
+                     debug(`Subscription fallback found array for _by_pk, extracting first element.`);
+                     extractedData = extractedData[0];
+                 } else if (generated.queryName.endsWith('_by_pk') && Array.isArray(extractedData) && extractedData.length === 0) {
+                     debug(`Subscription fallback found empty array for _by_pk, setting to null.`);
+                     extractedData = null as TData; // Cast null to TData
+                 } else {
+                  debug('Subscription extracted data using queryName:', JSON.stringify(extractedData));
+                 }
+            } else {
+              debug('Subscription extracted data using queryName:', JSON.stringify(extractedData));
+            }
+          }
+          debug('Subscription emitting final extracted data:', JSON.stringify(extractedData));
+          observer.next(extractedData); // Emit the extracted data
+          // --- End Extraction Logic ---
+        },
+        error: (error) => {
+          debug('Error during subscription:', error);
+          observer.error(error); // Forward the error
+        },
+        complete: () => {
+          debug('Subscription completed.');
+          observer.complete(); // Forward the completion
+        },
+      });
+
+      // Return the unsubscribe function
+      return () => {
+        debug('Unsubscribing from Apollo subscription.');
+        apolloSubscription.unsubscribe();
+      };
     });
   }
 
@@ -259,24 +373,25 @@ function prepareHookArgs<TData, TVariables extends OperationVariables>(
 }
 
 // Type for the first argument of the hooks (Generator options)
-// Omitting 'operation' as it's implied by the hook used
+// This now correctly inherits from GenerateOptions (including distinct_on)
+// Omitting 'operation' as it's implied by the hook used or passed explicitly to useMutation
 type ClientGeneratorOptions = Omit<GenerateOptions, 'operation'>;
 
-// Standalone Hooks
+// Standalone Hooks using the context client
 export function useQuery<TData = any, TVariables extends OperationVariables = OperationVariables>(
   // First arg: Generator options (table, returning, where, etc.)
-  generateOptions: ClientGeneratorOptions,
+  generateOptions: ClientGeneratorOptions, // Uses the updated type
   // Second arg: Hook options (Apollo options + role)
   hookOptions?: QueryHookOptions<TData, TVariables> & { variables?: TVariables } // Allow variables here for query
 ): QueryResult<TData, TVariables> {
   const apolloClient = useApolloClient(); // Use client from context
   const client = (hookOptions?.client ?? apolloClient) as HasyxApolloClient;
-  if (!client?.hasyxGenerator) throw new Error(`❌ useClient: No client?.hasyxGenerator found.`);
+  if (!client?.hasyxGenerator) throw new Error(`❌ useQuery: No client?.hasyxGenerator found.`);
   // Generate query using the imported 'generate' function
-  const { query: queryString, variables: generatedVariables, varCounter } = useMemo(() => client.hasyxGenerator({
+  const { query: queryString, variables: generatedVariables, queryName } = useMemo(() => client.hasyxGenerator({
     operation: 'query', // Specify operation type
     ...generateOptions
-  }), [generateOptions]);
+  }), [client.hasyxGenerator, generateOptions]); // Add client.hasyxGenerator to dependencies
 
   // Ensure gql receives a string
   const query: DocumentNode = useMemo(() => gql`${queryString}`, [queryString]);
@@ -288,7 +403,7 @@ export function useQuery<TData = any, TVariables extends OperationVariables = Op
   // Prepare arguments for the actual Apollo hook
   const { context, apolloOptions } = prepareHookArgs(hookOptions, false);
 
-  const operationName = query.definitions[0]?.kind === 'OperationDefinition' ? query.definitions[0].name?.value || 'UnnamedQuery' : 'UnnamedQuery';
+  const operationName = query.definitions[0]?.kind === 'OperationDefinition' ? query.definitions[0].name?.value : queryName || 'UnnamedQuery'; // Use queryName as fallback
   debug(`Executing query ${operationName}`, { query: queryString, variables: combinedVariables, context, options: apolloOptions });
 
   const result = useApolloQuery<TData, TVariables>(query, {
@@ -305,19 +420,19 @@ export function useQuery<TData = any, TVariables extends OperationVariables = Op
 
 export function useSubscription<TData = any, TVariables extends OperationVariables = OperationVariables>(
   // First arg: Generator options (table, returning, where, etc.)
-  generateOptions: ClientGeneratorOptions,
+  generateOptions: ClientGeneratorOptions, // Uses the updated type
   // Second arg: Hook options (Apollo options + role)
   hookOptions?: SubscriptionHookOptions<TData, TVariables> & { variables?: TVariables } // Allow variables here for subscription
 ): SubscriptionResult<TData, TVariables> {
   const apolloClient = useApolloClient(); // Use client from context
   const client = (hookOptions?.client ?? apolloClient) as HasyxApolloClient;
-  if (!client?.hasyxGenerator) throw new Error(`❌ useClient: No client?.hasyxGenerator found.`);
+  if (!client?.hasyxGenerator) throw new Error(`❌ useSubscription: No client?.hasyxGenerator found.`);
 
   // Generate subscription using the imported 'generate' function
-  const { query: subscriptionString, variables: generatedVariables, varCounter } = useMemo(() => client.hasyxGenerator({
+  const { query: subscriptionString, variables: generatedVariables, queryName } = useMemo(() => client.hasyxGenerator({
     operation: 'subscription', // Specify operation type
     ...generateOptions
-  }), [generateOptions]);
+  }), [client.hasyxGenerator, generateOptions]); // Add client.hasyxGenerator to dependencies
 
   // Ensure gql receives a string
   const subscription: DocumentNode = useMemo(() => gql`${subscriptionString}`, [subscriptionString]);
@@ -329,7 +444,7 @@ export function useSubscription<TData = any, TVariables extends OperationVariabl
   // Prepare arguments for the actual Apollo hook
   const { context, apolloOptions } = prepareHookArgs(hookOptions, false);
 
-  const operationName = subscription.definitions[0]?.kind === 'OperationDefinition' ? subscription.definitions[0].name?.value || 'UnnamedSub' : 'UnnamedSub';
+  const operationName = subscription.definitions[0]?.kind === 'OperationDefinition' ? subscription.definitions[0].name?.value : queryName || 'UnnamedSub'; // Use queryName as fallback
 
   // Note: WebSocketLink in apollo.tsx might not support dynamic context/role per subscription easily.
   // The role set via context here primarily affects the initial HTTP request if applicable,
@@ -365,11 +480,11 @@ export function useMutation<TData = any, TVariables extends OperationVariables =
   if (!['insert', 'update', 'delete'].includes(generateOptions.operation)) {
       throw new Error(`useMutation hook requires operation to be 'insert', 'update', or 'delete' in generateOptions.`);
   }
-  if (!client?.hasyxGenerator) throw new Error(`❌ useClient: No client?.hasyxGenerator found.`);
+  if (!client?.hasyxGenerator) throw new Error(`❌ useMutation: No client?.hasyxGenerator found.`);
 
   // Generate mutation using the imported 'generate' function
   // Variables from generateOptions are the *base* for the mutation
-  const { query: mutationString, variables: baseVariables, varCounter } = useMemo(() => client.hasyxGenerator(generateOptions), [generateOptions]);
+  const { query: mutationString, variables: baseVariables, queryName } = useMemo(() => client.hasyxGenerator(generateOptions), [client.hasyxGenerator, generateOptions]); // Add client.hasyxGenerator to dependencies
 
   // Ensure gql receives a string
   const mutation: DocumentNode = useMemo(() => gql`${mutationString}`, [mutationString]);
@@ -378,7 +493,7 @@ export function useMutation<TData = any, TVariables extends OperationVariables =
   // Variables are NOT prepared here, they are passed to the mutate function
   const { context, apolloOptions } = prepareHookArgs(hookOptions, true); // Pass true for isMutation
 
-  const operationName = mutation.definitions[0]?.kind === 'OperationDefinition' ? mutation.definitions[0].name?.value || 'UnnamedMutation' : 'UnnamedMutation';
+  const operationName = mutation.definitions[0]?.kind === 'OperationDefinition' ? mutation.definitions[0].name?.value : queryName || 'UnnamedMutation'; // Use queryName as fallback
   debug(`Preparing mutation ${operationName}`, { query: mutationString, context, options: apolloOptions, baseVariables });
 
   // Explicitly cast apolloOptions to the correct type expected by useApolloMutation
@@ -398,17 +513,19 @@ export function useMutation<TData = any, TVariables extends OperationVariables =
     // Combine base variables from generator with variables passed to this specific mutate call
     // Cast the combined object to TVariables
     const finalVariables = { ...baseVariables, ...mutateOptions?.variables } as TVariables;
+    const operationContext = mutateOptions?.context || context; // Use context from mutate call or default
 
     debug(`Executing mutation ${operationName}`, {
         variables: finalVariables,
-        context: mutateOptions?.context || context, // Use context from mutate call or default
+        context: operationContext, // Use combined context
         optimisticResponse: mutateOptions?.optimisticResponse,
         update: !!mutateOptions?.update,
       });
     try {
         // Pass final combined variables to the actual mutate function
         const mutationResult = await mutate({ ...mutateOptions, variables: finalVariables });
-        debug(`Mutation ${operationName} success`, { data: mutationResult.data });
+        debug(`Mutation ${operationName} success`, { data: mutationResult.data }); // Log returned data
+        // We don't modify the returned result here for hooks
         return mutationResult;
     } catch(error) {
         debug(`Mutation ${operationName} error`, { error });
@@ -418,7 +535,7 @@ export function useMutation<TData = any, TVariables extends OperationVariables =
   }, [mutate, operationName, context, baseVariables]); // Include baseVariables in dependency array
 
 
-  debug(`Mutation ${operationName} hook state`, { loading: result.loading, error: result.error, data: result.data });
+  // debug(`Mutation ${operationName} hook state`, { loading: result.loading, error: result.error, data: result.data }); // Keep this commented or remove, potentially noisy
 
   return [wrappedMutate, result];
 }

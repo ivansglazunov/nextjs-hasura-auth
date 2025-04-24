@@ -72,6 +72,8 @@ The `generate` function accepts an object with the following properties:
     *   Type: `Record<string, any>`
 *   `varCounter`: (Optional) Initial counter for variable naming (e.g., `$v1`, `$v2`). Defaults to 1.
     *   Type: `number`
+*   `distinct_on`: (Optional) For `query` and `subscription` operations. An array of column names (strings or ideally the generated `Enum_select_column` type) to retrieve unique rows based on these columns. Requires `order_by` to include the distinct columns first.
+    *   Type: `string[] | ReadonlyArray<string>`
 </details>
 
 ## Examples
@@ -93,6 +95,7 @@ The `generate` function accepts an object with the following properties:
 *   [11. Delete Mutation by Primary Key](#11-delete-mutation-by-primary-key)
 *   [12. Delete Mutation by `where` Condition](#12-delete-mutation-by-where-condition)
 *   [13. Subscription](#13-subscription)
+*   [14. Query with `distinct_on`](#14-query-with-distinct_on)
 
 
 ### 1. Advanced Nested Query (Appending to Defaults)
@@ -665,6 +668,51 @@ subscription SubscriptionUsers($v1: users_bool_exp) {
       "_eq": true
     }
   }
+}
+```
+</details>
+
+### 14. Query with `distinct_on`
+
+```typescript
+import type { users_select_column } from '../types/hasura-types'; // Import enum if using strict types
+
+const options: GenerateOptions = {
+  operation: 'query',
+  table: 'users',
+  distinct_on: ['email'], // Or use enum: [users_select_column.Email]
+  where: { is_admin: { _eq: false } },
+  order_by: [{ email: 'asc' }, { created_at: 'desc' }], // Important: Order by distinct columns first
+  returning: ['id', 'name', 'email']
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: [users_select_column!], $v2: users_bool_exp, $v3: [users_order_by!]) {
+  users(distinct_on: $v1, where: $v2, order_by: $v3) {
+    id
+    name
+    email
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": ["email"],
+  "v2": { "is_admin": { "_eq": false } },
+  "v3": [
+    { "email": "asc" },
+    { "created_at": "desc" }
+  ]
 }
 ```
 </details> 

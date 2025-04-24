@@ -15,6 +15,7 @@ export interface GenerateOptions {
   // Allow array, object (for appending), or string (legacy split)
   returning?: (string | Record<string, any>)[] | Record<string, any> | string; 
   aggregate?: Record<string, any>;
+  distinct_on?: string[] | ReadonlyArray<string>; // Added distinct_on (use string[] for now)
   object?: Record<string, any>;
   objects?: Record<string, any>[];
   pk_columns?: Record<string, any>;
@@ -32,6 +33,7 @@ export interface GenerateResult {
   query: DocumentNode;
   variables: Record<string, any>;
   varCounter: number;
+  queryName: string; // Added queryName
 }
 
 // --- Вспомогательная функция для разбора типа GraphQL ---
@@ -110,6 +112,7 @@ export function Generator(schema: any): Generate { // Принимаем __schem
     const returning = opts.returning || null;
     const aggregate = opts.aggregate || null;
     const fragments = opts.fragments || [];
+    const distinctOn = opts.distinct_on || null; // Get distinct_on
 
     const validOperations: GenerateOperation[] = ['query', 'subscription', 'insert', 'update', 'delete'];
     if (!validOperations.includes(operation)) {
@@ -149,12 +152,13 @@ export function Generator(schema: any): Generate { // Принимаем __schem
     if (isAggregate) {
         targetFieldName = `${table}${aggregateSuffix}`;
     } else if (opts.pk_columns) {
-        if (operation === 'query') {
-             targetFieldName = `${table}${pkSuffix}`;
-        isByPkOperation = true;
-        } else if (['update', 'delete'].includes(operation)) {
-             targetFieldName = `${mutationPrefix}${table}${pkSuffix}`;
-        isByPkOperation = true;
+        isByPkOperation = true; // Mark as by_pk operation
+        if (operation === 'query' || operation === 'subscription') {
+            targetFieldName = `${table}${pkSuffix}`;
+        } else if (operation === 'update') {
+            targetFieldName = `${mutationPrefix}${table}${pkSuffix}`;
+        } else if (operation === 'delete') {
+            targetFieldName = `${mutationPrefix}${table}${pkSuffix}`;
         }
         // pk_columns не влияет на insert
     } else if (operation === 'insert' && opts.object && !opts.objects) {
@@ -181,10 +185,11 @@ export function Generator(schema: any): Generate { // Принимаем __schem
          // Fallback для случая, когда _by_pk/aggregate/etc не найдены, но базовый запрос есть
          const fallbackQueryInfo = rootFields.find(f => f.name === table);
          if (fallbackQueryInfo && ['query', 'subscription'].includes(operation) && !isAggregate && !isByPkOperation) {
-             console.warn(`[generator] ⚠️ Exact field "${targetFieldName}" not found, using fallback "${table}" in ${rootType.name}`);
+             // Используем debug вместо console.warn
+             debug(`[generator] ⚠️ Exact field "%s" not found, using fallback "%s" in %s`, targetFieldName, table, rootType.name);
              targetFieldName = table; // Используем базовое имя
              // queryInfo = fallbackQueryInfo; // Переприсваиваем для дальнейшего использования
-             throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}"`); // Упадем здесь, если все равно не нашли
+              throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}" after fallback`); // Упадем здесь, если все равно не нашли
          } else {
              throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}"`);
          }
@@ -243,33 +248,52 @@ export function Generator(schema: any): Generate { // Принимаем __schem
              if (queryName.endsWith('_one')) {
             value = opts.object;
              } else {
-                 value = [opts.object];
-                 if (!queryInfo.args.find((a: any) => a.name === 'objects')) {
-                      debug(`Passing single 'object' to bulk operation "%s" which might expect 'objects' array.`, queryName);
-                      const objectsArgDef = queryInfo.args.find((a: any) => a.name === 'objects');
-                       if (objectsArgDef) {
-                           addArgument('objects', value, objectsArgDef);
-                       } else {
-                           console.error(`[generator] Cannot determine correct argument ('object' or 'objects') for "${queryName}".`);
-                       }
-                       return;
-                 } else if(queryInfo.args.find((a: any) => a.name === 'object')) {
-                       return; 
+                 // Логика для случая, когда передан object, но ожидается objects или object
+                 value = [opts.object]; // По умолчанию делаем массивом
+                 const expectsObjects = queryInfo.args.find((a: any) => a.name === 'objects');
+                 const expectsObject = queryInfo.args.find((a: any) => a.name === 'object');
+
+                 if (expectsObjects && !expectsObject) {
+                     // Явно ожидает objects, передаем массив
+                     addArgument('objects', value, expectsObjects);
+                     return; // Аргумент добавлен, выходим
+                 } else if (!expectsObjects && expectsObject) {
+                      // Явно ожидает object (не _one суффикс, странно, но допустим)
+                      // В этом случае addArgument ниже обработает 'object'
+                      value = opts.object; // Вернем как было
+                 } else if (expectsObjects && expectsObject) {
+                     // Имеет оба, но insert_one не было. Вероятно, ошибка схемы или нестандартная мутация.
+                     // Предупредим и попробуем угадать objects
+                     debug(`[generator] Ambiguous arguments for "${queryName}": both 'object' and 'objects' found. Defaulting to 'objects' with single item array.`);
+                     addArgument('objects', value, expectsObjects);
+                     return;
                  } else {
-                      const objectsArgDef = queryInfo.args.find((a: any) => a.name === 'objects');
-                       if (objectsArgDef) {
-                            addArgument('objects', value, objectsArgDef);
-                       }
-                        return; 
+                     // Не ожидает ни object, ни objects. Очень странно. Предупредим.
+                     debug(`[generator] Neither 'object' nor 'objects' argument found for "${queryName}" but object/objects provided in options.`);
+                     // Не будем добавлять аргумент
+                     return;
                  }
              }
         } else if (isByPkOperation && opts.pk_columns && opts.pk_columns[argName] !== undefined) {
              value = opts.pk_columns[argName];
+        } else if (argName === 'distinct_on' && distinctOn && ['query', 'subscription'].includes(operation)) {
+            // --- Handle distinct_on ---
+            value = distinctOn;
+             // We need the argument definition for distinct_on to get its type
+             const distinctOnArgDef = queryInfo.args.find((a: any) => a.name === 'distinct_on');
+             if (distinctOnArgDef) {
+                addArgument(argName, value, distinctOnArgDef);
+             } else {
+                 debug(`[generator] 'distinct_on' provided in options, but field "${queryName}" does not accept it according to the schema.`);
+             }
+             // --- End handle distinct_on ---
         } else if (opts[argName as keyof GenerateOptions] !== undefined) {
+             // Handle general arguments like limit, offset, where, order_by
              value = opts[argName as keyof GenerateOptions];
         }
 
-        if (value !== undefined) {
+        // Add argument if value is defined and it wasn't handled specifically above (like distinct_on)
+        if (value !== undefined && !processedArgs.has(argName)) {
             addArgument(argName, value, argDef);
         }
     });
@@ -563,7 +587,8 @@ export function Generator(schema: any): Generate { // Принимаем __schem
           queryString: queryStr,
           query: gqlQuery,
           variables,
-          varCounter
+          varCounter,
+          queryName // Return queryName
         };
     } catch (error: any) {
          console.error("❌ Error parsing GraphQL query:", error.message);

@@ -41,14 +41,14 @@ const client = new Hasyx(apolloAdminClient, Generator(schema));
 // Example: Select data with a specific role
 async function getUserProfile(userId: string) {
   try {
-    const userData = await client.select<{ users_by_pk: any }>({ // Specify TData
+    const userData = await client.select({ // Specify TData
       table: 'users',
       pk_columns: { id: userId },
       returning: ['id', 'name', 'email'],
       role: 'admin' // Pass role in options object (TOptions)
     });
-    console.log('User Data:', userData.users_by_pk);
-    return userData.users_by_pk;
+    console.log('User Data:', userData);
+    return userData;
   } catch (error) {
     console.error('Failed to fetch user:', error)
     // Handle error (e.g., check if ApolloError)
@@ -56,55 +56,60 @@ async function getUserProfile(userId: string) {
 }
 
 // Example: Insert data
-async function addNewUser(email: string, name: string) {
+async function addNewUser(email: string, name: string): Promise<string | undefined> {
   try {
-    const result = await client.insert<{ insert_users_one: { id: string } }>({ // Specify TData
+    // TData should be the type of the *returned* user object for insert_one
+    const insertedUser = await client.insert({
       table: 'users',
       object: { email, name, hasura_role: 'user' }, // Data to insert
       returning: ['id'],
       // role: 'some_role' // Optionally specify role if needed for insert
     });
-    console.log('Inserted user ID:', result.insert_users_one.id);
-    return result.insert_users_one.id;
+    console.log('Inserted user ID:', insertedUser.id);
+    return insertedUser.id;
   } catch (error) {
     console.error('Failed to insert user:', error);
+    return undefined;
   }
 }
 
 // Example: Update data
 async function updateUserEmail(userId: string, newEmail: string) {
   try {
-    const result = await client.update<{ update_users_by_pk: { id: string } }>({ // Specify TData
+    // TData is the updated user object for _by_pk
+    const updatedUser = await client.update({ 
       table: 'users',
       pk_columns: { id: userId }, // Or use 'where' for more complex updates
       _set: { email: newEmail }, // Fields to update
       returning: ['id'],
       role: 'admin' // Specify role if needed
     });
-    console.log('Updated user:', result?.update_users_by_pk?.id);
+    console.log('Updated user:', updatedUser?.id);
   } catch (error) {
     console.error('Failed to update user:', error);
   }
 }
 
 // Example: Delete data
+// Returns the deleted user object for _by_pk
 async function deleteUser(userId: string) {
   try {
-    const result = await client.delete<{ delete_users_by_pk: { id: string } }>({ // Specify TData
+    const deletedUser = await client.delete({ 
       table: 'users',
       pk_columns: { id: userId }, // Or use 'where' for bulk deletes
       returning: ['id'],
       role: 'admin' // Specify role if needed
     });
-    console.log('Deleted user:', result?.delete_users_by_pk?.id);
+    console.log('Deleted user:', deletedUser?.id);
   } catch (error) {
     console.error('Failed to delete user:', error);
   }
 }
 
 // Example: Subscribe (returns an Observable)
-function subscribeToUserChanges(userId: string) {
-  const subscriptionObservable = client.subscribe<{ users_by_pk: any }>({ // Specify TData
+function subscribeToUserChanges(userId: string): Observable<any> | null {
+  // Specify TData as the expected unwrapped type (e.g., User)
+  const subscriptionObservable = client.subscribe<{ id: string, name: string, updated_at: string }>({ 
     table: 'users',
     pk_columns: { id: userId },
     returning: ['name', 'updated_at'],
@@ -112,12 +117,13 @@ function subscribeToUserChanges(userId: string) {
   });
 
   const subscription = subscriptionObservable.subscribe({
-    next: (data) => console.log('User updated:', data.data?.users_by_pk),
+    // Note: The observable now emits the unwrapped data directly
+    next: (userData) => console.log('User updated:', userData),
     error: (err) => console.error('Subscription error:', err),
   });
 
   // To unsubscribe later: subscription.unsubscribe();
-  return subscription; 
+  return subscriptionObservable; // Return the observable itself for potential chaining/further use
 }
 ```
 
@@ -161,6 +167,11 @@ function UserProfile() {
       // ... other Apollo useQuery options
     }
   );
+  
+  // Data Access Example (Hooks return wrapped data):
+  const userProfile = data?.users_by_pk; // Extract the data
+  console.log("User profile from hook:", userProfile);
+  
   // ... render based on loading, error, data ...
 }
 
@@ -286,4 +297,6 @@ function OnlineUsersList() {
         *   Always ensure your Hasura permissions are configured correctly for the roles you intend to use (`user`, `me`, `admin`, `anonymous`, etc.).
 *   **Dependencies:** Depends on `@apollo/client`, `react`, `lib/generator`, `lib/debug`, and `ts-essentials`.
 *   **Memoization (Hooks):** Hooks memoize generated queries based on `generateOptions`. Ensure this object is stable between renders if needed (e.g., use `React.useMemo`).
-*   **Subscription Cleanup:** Apollo Client's `useSubscription` hook handles WebSocket cleanup automatically on unmount. 
+*   **Subscription Cleanup:** Apollo Client's `useSubscription` hook handles WebSocket cleanup automatically on unmount.
+*   **Class Method Return Values:** Methods like `select`, `insert`, `update`, `delete` now return the *unwrapped* data where applicable (e.g., `User[]` or `User` object). For bulk mutations or aggregate queries, they return the standard Hasura response structure (`{ affected_rows, returning }` or `{ aggregate, nodes }`). Ensure the generic `TData` type matches the expected return value.
+*   **Hook Return Values:** Hooks (`useQuery`, `useMutation`, etc.) return the standard Apollo Client result objects. The actual data is nested within the `data` property (e.g., `result.data.users` or `result.data.insert_users_one`). 
