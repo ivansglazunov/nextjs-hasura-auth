@@ -24,4 +24,16 @@ jobs:
       - name: Run npm publish script (will fail if version exists)
         run: npm run npm-publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # Pass the token for npm authentication 
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NEXT_PUBLIC_HASURA_GRAPHQL_URL: ${{secrets.NEXT_PUBLIC_HASURA_GRAPHQL_URL}}
+          HASURA_ADMIN_SECRET: ${{secrets.HASURA_ADMIN_SECRET}}
+          HASURA_JWT_SECRET: ${{secrets.HASURA_JWT_SECRET}}
+          NEXTAUTH_URL: ${{secrets.NEXTAUTH_URL}}
+          NEXTAUTH_SECRET: ${{secrets.NEXTAUTH_SECRET}}
+          GOOGLE_CLIENT_ID: ${{secrets.GOOGLE_CLIENT_ID}}
+          GOOGLE_CLIENT_SECRET: ${{secrets.GOOGLE_CLIENT_SECRET}}
+          YANDEX_CLIENT_ID: ${{secrets.YANDEX_CLIENT_ID}}
+          YANDEX_CLIENT_SECRET: ${{secrets.YANDEX_CLIENT_SECRET}}
+          RESEND_API_KEY: ${{secrets.RESEND_API_KEY}}
+          NODE_ENV: ${{secrets.NODE_ENV}}
+          NEXT_PUBLIC_BUILD_TARGET: ${{secrets.NEXT_PUBLIC_BUILD_TARGET}}
