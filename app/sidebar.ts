@@ -1,5 +1,14 @@
 import pckg from "hasyx/package.json"
 import { SidebarData } from "hasyx/components/app-sidebar"
+import {
+  CircleDollarSign,
+  Home,
+  Settings,
+  ShoppingBag,
+  User,
+  LogOut,
+  Box,
+} from "lucide-react"
 
 export const sidebar: SidebarData = {
   versions: [pckg.version],
@@ -11,6 +20,10 @@ export const sidebar: SidebarData = {
         {
           title: "Diagnostics",
           url: "/",
+        },
+        {
+          title: "A-Frame",
+          url: "/aframe",
         },
       ],
     },

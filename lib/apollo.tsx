@@ -58,7 +58,7 @@ const createRoleLink = () => setContext((request: GraphQLRequest, previousContex
  * @param {string} options.secret - Admin secret for Hasura
  * @returns {ApolloClient} Apollo Client
  */
-export function createApolloClient(options: ApolloOptions = {}) {
+export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClient {
   // Default values
   const { 
     url = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL,
@@ -210,7 +210,7 @@ export function createApolloClient(options: ApolloOptions = {}) {
     return <ApolloProvider client={apolloClient}>{children}</ApolloProvider>;
   }
 
-  return apolloClient;
+  return apolloClient as HasyxApolloClient;
 }
 
 // Default client instance
