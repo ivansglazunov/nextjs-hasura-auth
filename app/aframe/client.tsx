@@ -1,26 +1,18 @@
 'use client'
 
-import 'aframe';
+import { AframeProvider } from '@/lib/aframe';
+// import 'aframe'; // REMOVED static import
 // Важно: Используйте '*' импорт, если стандартный не работает с вашей версией
 // import * as aframeReact from 'aframe-react';
 // const { Entity, Scene } = aframeReact;
 // ИЛИ попробуйте именованный импорт, но он может не сработать из-за старости пакета
 // @ts-ignore
 import { Entity, Scene } from 'aframe-react';
-import React from 'react'; // Import React
+import React from 'react'; // Import React and useEffect
 
 
 // This page needs to be a client component for A-Frame
 export default function AframeClient() {
-  // Стили для контейнера сцены, чтобы она занимала доступное пространство
-  const sceneContainerStyle: React.CSSProperties = {
-    position: 'relative', // Нужно для абсолютного позиционирования сцены внутри
-    flexGrow: 1,          // Занимает все доступное вертикальное пространство
-    width: '100%',
-    height: 'calc(100vh - 4rem)', // Пример: высота viewport минус высота хедера
-    overflow: 'hidden',    // Предотвратить лишние скроллы
-  };
-
   const sceneStyle: React.CSSProperties = {
     position: 'absolute',
     top: 0,
@@ -30,11 +22,9 @@ export default function AframeClient() {
     zIndex: 0, // Убедитесь, что сцена не перекрывает UI
   };
 
-
   return (<>
     {/* Ensure A-Frame can run on the client */}
-    {typeof window !== 'undefined' && (
-      // @ts-ignore - Игнорируем возможные ошибки типов из старой библиотеки
+    <AframeProvider>
       <Scene embedded style={sceneStyle} renderer="alpha: true; colorManagement: true;"> 
         {/* White background - REMOVED */}
         {/* <a-sky color="#FFFFFF"></a-sky> */}
@@ -50,6 +40,6 @@ export default function AframeClient() {
           <Entity primitive="a-cursor" />
         </Entity>
       </Scene>
-    )}
+    </AframeProvider>
   </>)
 }

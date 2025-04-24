@@ -28,17 +28,8 @@ export default function AframePage() {
     width: '100%',
     height: 'calc(100vh - 4rem)', // Пример: высота viewport минус высота хедера
     overflow: 'hidden',    // Предотвратить лишние скроллы
+    backgroundColor: 'white',
   };
-
-  const sceneStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    zIndex: 0, // Убедитесь, что сцена не перекрывает UI
-  };
-
 
   return (
     <SidebarProvider>
