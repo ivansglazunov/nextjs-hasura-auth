@@ -36,7 +36,7 @@ This is particularly useful when setting up a WebSocket server (e.g., using `nex
 ```typescript
 // app/api/ws/route.ts (or similar WebSocket server setup)
 import { NextRequest } from 'next/server';
-import { WsClientsManager } from '@/lib/auth'; // Adjust path as needed
+import { WsClientsManager } from 'hasyx'; // Adjust path as needed
 import { WebSocket } from 'ws'; // or from your WebSocket library
 
 // Initialize the manager (can be done globally or per route)

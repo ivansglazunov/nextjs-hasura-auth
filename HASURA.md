@@ -10,7 +10,7 @@ The `Hasura` class provides a structured way to send requests to the Hasura Meta
 <summary>Core Class & Methods (`lib/hasura.ts`)</summary>
 
 ```typescript
-import { Hasura } from '@/lib/hasura'; // Adjust path
+import { Hasura } from 'hasyx'; // Adjust path
 import dotenv from 'dotenv';
 import path from 'path';
 
