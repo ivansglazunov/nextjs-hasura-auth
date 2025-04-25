@@ -33,7 +33,7 @@ export async function getTokenFromRequest(request: NextRequest): Promise<JWT | n
   debug('Attempting to get token from request...');
 
   // 1. Check Authorization header
-  const authHeader = request.headers.get('authorization');
+  const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.substring(7); // Remove 'Bearer '
     debug('Found Bearer token in Authorization header.');
