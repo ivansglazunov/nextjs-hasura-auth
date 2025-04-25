@@ -1,16 +1,15 @@
 /**
  * @jest-environment node
  */
-import { Hasyx } from './hasyx';
-import { createApolloClient } from './apollo';
-import { Generator } from './generator';
-import { testAuthorize } from './auth'; // Import the function to test
-import { hashPassword } from './authDbUtils';
-import schema from '../public/hasura-schema.json';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
+import schema from '../public/hasura-schema.json';
+import { createApolloClient } from './apollo';
+import { testAuthorize } from './auth'; // Import the function to test
+import { hashPassword } from './authDbUtils';
 import Debug from './debug';
-import axios from 'axios'; // Import axios for isAxiosError check
+import { Generator } from './generator';
+import { Hasyx } from './hasyx';
 
 dotenv.config(); // Load .env variables
 
