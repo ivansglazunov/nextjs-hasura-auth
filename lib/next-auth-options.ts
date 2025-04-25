@@ -1,11 +1,13 @@
-import { Hasyx, createApolloClient, Generator } from 'hasyx'; // Import Client and apollo creator
+import { Hasyx } from './hasyx'; // Import Client and apollo creator
+import { createApolloClient } from './apollo';
+import { Generator } from './generator';
 import { NextAuthOptions } from 'next-auth';
 
 import 'next-auth';
 import 'next-auth/jwt';
 
-import { createAuthOptions } from 'hasyx/lib/auth-options';
-import { AppCredentialsProvider } from 'hasyx/lib/credentials';
+import { createAuthOptions } from './auth-options';
+import { AppCredentialsProvider } from './credentials';
 
 import schema from '../public/hasura-schema.json';
 

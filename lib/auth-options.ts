@@ -1,12 +1,12 @@
-import { NextAuthOptions, User as NextAuthUser, Session as DefaultSession, Profile, Account } from 'next-auth';
+import { getOrCreateUserAndAccount, HasuraUser } from 'hasyx/lib/authDbUtils';
+import Debug from 'hasyx/lib/debug';
+import { Session as DefaultSession, NextAuthOptions, User as NextAuthUser } from 'next-auth';
 import { JWT as DefaultJWT } from 'next-auth/jwt';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import YandexProvider from 'next-auth/providers/yandex';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import { Hasyx, createApolloClient, Generate } from 'hasyx'; // Import from generated package
-import { getOrCreateUserAndAccount, HasuraUser } from 'hasyx/lib/authDbUtils'; 
-import Debug from 'hasyx/lib/debug';
-import { generateJWT as generateHasuraJWT } from 'hasyx/lib/jwt'; 
+import { createApolloClient } from './apollo'; // Import from generated package
+import { Hasyx } from './hasyx'; // Import from generated package
 
 // Ensure type augmentation is applied globally (can be in a separate .d.ts file or here)
 import 'next-auth';

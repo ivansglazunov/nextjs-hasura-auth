@@ -2,7 +2,7 @@
 
 import bcrypt from 'bcrypt';
 import { ApolloError } from '@apollo/client'; // Import ApolloError
-import { Hasyx } from 'hasyx'; // Use the path alias
+import { Hasyx } from './hasyx'; // Use the path alias
 import Debug from './debug';
 import { User as NextAuthUser } from 'next-auth'; // For typing
 import { Account as NextAuthAccount } from 'next-auth'; // For typing
