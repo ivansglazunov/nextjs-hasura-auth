@@ -18,6 +18,7 @@ import {
 } from "hasyx/components/ui/sidebar";
 import pckg from "hasyx/package.json";
 import AframeClient from './client';
+import { AframeProvider } from '@/lib/aframe';
 
 // This page needs to be a client component for A-Frame
 export default function AframePage() {
@@ -55,7 +56,9 @@ export default function AframePage() {
         </header>
         {/* A-Frame Scene Container - Применяем стили */}
         <div style={sceneContainerStyle}>
-          <AframeClient />
+          <AframeProvider>
+            <AframeClient />
+          </AframeProvider>
         </div>
       </SidebarInset>
     </SidebarProvider>

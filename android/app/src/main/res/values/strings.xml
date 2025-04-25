@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">hasyx</string>
+    <string name="title_activity_main">hasyx</string>
+    <string name="package_name">com.hasyx.app</string>
+    <string name="custom_url_scheme">com.hasyx.app</string>
+</resources>

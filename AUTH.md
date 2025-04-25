@@ -163,7 +163,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   return res.status(200).json({ message: `Hello user ${userId}` });
 }
 */
+
+## Test Authentication Helper
+
+### `testAuthorize` (Development & Testing Only)
+
+This utility is specifically designed for development and testing environments to authenticate as any user without going through the normal authentication flow.
+
+> ⚠️ **SECURITY WARNING**: This feature is automatically disabled in production environments. The TEST_TOKEN environment variable should **never** be set in production.
+
+**Prerequisites:**
+
+* Environment Variable: `TEST_TOKEN` - Must be set to enable test authentication
+* Environment Variable: `NEXTAUTH_SECRET` - Required for JWT signing
+* Non-production environment
+
+**Purpose:**
+
+The `testAuthorize` function allows developers to:
+* Authenticate as any existing user by providing their user ID
+* Get properly authenticated API clients (axios, apollo, hasyx)
+* Test protected routes and features without manual login
+
+**Usage Example:**
+
+```typescript
+import { testAuthorize } from '@/lib/auth';
+
+// In a test or development script:
+async function testProtectedFeature() {
+  // Authenticate as user with ID "user_id_here"
+  const { axios, apollo, hasyx } = await testAuthorize('user_id_here');
+  
+  // These clients are now authenticated as the specified user
+  const response = await axios.get('/api/protected-route');
+  console.log('Protected data:', response.data);
+  
+  // Make GraphQL queries as the authenticated user
+  const result = await apollo.query({
+    query: YOUR_GRAPHQL_QUERY
+  });
+}
 ```
+
+**How It Works:**
+
+1. Verifies the environment allows test authentication
+2. Fetches the user data from the database using the provided user ID
+3. Generates a valid JWT with proper Hasura claims
+4. Creates and returns authenticated client instances
+
+**Security Considerations:**
+
+* Only enable `TEST_TOKEN` in local development or controlled test environments
+* Never commit `.env` files containing your `TEST_TOKEN` value
+* The functionality has built-in safeguards to prevent production use
 
 ## Dependencies
 

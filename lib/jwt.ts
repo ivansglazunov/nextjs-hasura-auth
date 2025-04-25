@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify, jwtDecrypt, type JWTPayload } from 'jose';
-import Debug from 'hasyx/lib/debug';
+import Debug from './debug';
+import jwt from 'jsonwebtoken';
 // crypto.subtle is globally available in Node >= 15, browsers, and edge runtimes.
 // No explicit import needed for it, but Node's 'crypto' might be needed for other things if used elsewhere.
 // import crypto from 'crypto'; // We don't need the Node-specific module anymore for hashing.
@@ -92,26 +93,55 @@ export const generateJWT = async (
     if (!userId) {
       throw new Error('User ID is undefined for generateJWT');
     }
-    const secret = getJwtSecret();
-    const { expiresIn = '1h' } = options;
+    
+    // Get the JWT configuration
+    const secretKey = process.env.HASURA_JWT_SECRET || '{"type":"HS256","key":"your-secret-key"}';
+    let secret: string;
+    let algorithm: string = 'HS256';
+    
+    try {
+      const jwtConfig = typeof secretKey === 'string' ? JSON.parse(secretKey) : secretKey;
+      secret = jwtConfig.key;
+      algorithm = jwtConfig.type || 'HS256';
+      if (!secret) {
+        throw new Error('JWT key not found in configuration');
+      }
+    } catch (e) {
+      secret = secretKey as string;
+    }
+    
+    // Create the Hasura claims
     const hasuraClaims = {
       'x-hasura-allowed-roles': ['user', 'anonymous', 'me'],
       'x-hasura-default-role': 'user',
       'x-hasura-user-id': userId,
       ...additionalClaims
     };
-    const token = await new SignJWT({
+    
+    // Create the payload
+    const payload = {
       sub: userId,
       'https://hasura.io/jwt/claims': hasuraClaims
-    })
-      .setProtectedHeader({ alg: getJwtAlgorithm(), typ: 'JWT' })
-      .setIssuedAt()
-      .setExpirationTime(expiresIn)
-      .sign(secret);
-    debug('JWT (JWS) token successfully created using jose');
+    };
+    
+    // Use jsonwebtoken to sign
+    const { expiresIn = '1h' } = options;
+    
+    // Fix the way we pass the algorithm to match jsonwebtoken expectations
+    // @ts-ignore
+    const token = jwt.sign(
+      payload, 
+      secret, 
+      { 
+        algorithm: algorithm as "HS256" | "RS256" | "ES256" | "PS256", // Specify valid algorithms
+        expiresIn 
+      }
+    );
+    
+    debug('JWT token successfully created using jsonwebtoken');
     return token;
   } catch (error) {
-    debug('Error generating JWT (JWS) with jose:', error);
+    debug('Error generating JWT:', error);
     throw error;
   }
 };

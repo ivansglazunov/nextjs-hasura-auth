@@ -2,6 +2,7 @@ import { NextAuthOptions, User as NextAuthUser, Session as DefaultSession, Profi
 import { JWT as DefaultJWT } from 'next-auth/jwt';
 import GoogleProvider from 'next-auth/providers/google';
 import YandexProvider from 'next-auth/providers/yandex';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { Hasyx, createApolloClient, Generate } from 'hasyx'; // Import from generated package
 import { getOrCreateUserAndAccount, HasuraUser } from 'hasyx/lib/authDbUtils'; 
 import Debug from 'hasyx/lib/debug';
@@ -55,11 +56,77 @@ export const baseProviders = [
 // Takes an array of additional providers to merge
 export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx): NextAuthOptions {
   debug('Creating AuthOptions...');
-  return {
-    providers: [
+
+  // Define the Test Token Provider configuration conditionally
+  const testTokenProvider = 
+    process.env.NODE_ENV !== 'production' && process.env.TEST_TOKEN 
+    ? CredentialsProvider({
+        id: 'test-token', 
+        name: 'Test Token Auth', 
+        credentials: {
+          userId: { label: "User ID", type: "text", placeholder: "user-uuid-to-impersonate" },
+          token: { label: "Test Token", type: "password" }
+        },
+        async authorize(credentials, req): Promise<NextAuthUser | null> {
+          const debugTest = Debug('auth:test-token'); // Specific debug instance
+          debugTest('Test Token authorize attempt for userId:', credentials?.userId);
+
+          const testTokenFromEnv = process.env.TEST_TOKEN;
+
+          if (!testTokenFromEnv) {
+            debugTest('TEST_TOKEN environment variable is not set. Denying.');
+            throw new Error('Test token configuration is missing.');
+          }
+          if (!credentials?.userId || !credentials?.token) {
+            debugTest('Missing userId or token in credentials.');
+            return null; 
+          }
+          if (credentials.token !== testTokenFromEnv) {
+            debugTest('Provided token does not match TEST_TOKEN.');
+            return null; 
+          }
+
+          const userId = credentials.userId;
+          debugTest(`Test token matched. Attempting to authenticate user: ${userId}`);
+
+          try {
+            const userResult = await client.select<any>({
+              table: 'users',
+              pk_columns: { id: userId },
+              returning: ['id', 'name', 'email', 'image'] // Fetch fields for NextAuthUser
+            });
+
+            if (!userResult || !userResult.id) {
+              debugTest(`User not found in database with ID: ${userId}`);
+              return null;
+            }
+
+            debugTest(`Successfully authenticated user ${userId} via test token.`);
+            // Return object matching NextAuthUser (id, name, email, image)
+            return {
+              id: userResult.id,
+              name: userResult.name,
+              email: userResult.email,
+              image: userResult.image,
+            };
+          } catch (error: any) {
+            debugTest(`Error fetching user ${userId} during test token auth:`, error);
+            return null;
+          }
+        }
+      })
+    : null; // Set to null if not in dev/test or TEST_TOKEN is missing
+
+  const allProviders = [
       ...baseProviders,
       ...additionalProviders,
-    ],
+      ...(testTokenProvider ? [testTokenProvider] : []), // Add test provider only if defined
+    ];
+
+  debug('Final list of auth providers:', allProviders.map(p => p.id));
+
+  return {
+    providers: allProviders,
     session: {
       strategy: 'jwt',
     },

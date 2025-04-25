@@ -1,11 +1,18 @@
 import { NextRequest } from "next/server";
 import { IncomingMessage } from "http";
-import Debug from 'hasyx/lib/debug';
+import Debug from './debug';
 import { getToken, JWT } from 'next-auth/jwt';
 import { useSession as useSessionNextAuth } from "next-auth/react";
 import { v4 as uuidv4 } from 'uuid';
 import WebSocket from "ws";
+import { Hasyx, createApolloClient, Generator, HasyxApolloClient } from 'hasyx';
+import { generateJWT as generateHasuraJWT } from './jwt';
+import schema from '../public/hasura-schema.json';
+import { AxiosInstance } from 'axios';
+import axios from 'axios';
+
 const debug = Debug('auth');
+const generate = Generator(schema);
 
 export async function getTokenFromRequest(request: NextRequest) {
   const secureCookie = request.url.startsWith('https');
@@ -165,4 +172,115 @@ export interface SessionData {
 export function useSession(): SessionData {
   const sessionData = useSessionNextAuth();
   return sessionData as SessionData;
+}
+
+/**
+ * Authorizes a client as a specific user for testing purposes.
+ * WARNING: Only use in non-production environments and ensure TEST_TOKEN is set.
+ * Generates a JWT for the specified user and returns configured clients.
+ *
+ * @param userId - The UUID of the user to authorize as.
+ * @returns An object containing configured axios, apollo, and hasyx instances.
+ * @throws Error if not in dev/test, TEST_TOKEN is missing, NEXTAUTH_SECRET is missing, or user is not found.
+ */
+export async function testAuthorize(userId: string): Promise<{ axios: AxiosInstance, apollo: HasyxApolloClient, hasyx: Hasyx }> {
+  const testAuthorizeDebug = Debug('auth:testAuthorize');
+  testAuthorizeDebug(`Attempting test authorization for userId: ${userId}`);
+
+  // Security Checks
+  if (process.env.NODE_ENV === 'production') {
+    testAuthorizeDebug('Attempted to use testAuthorize in production. Denying.');
+    throw new Error('Test authorization is disabled in production.');
+  }
+  if (!process.env.TEST_TOKEN) {
+    testAuthorizeDebug('TEST_TOKEN environment variable is not set. Denying.');
+    throw new Error('TEST_TOKEN environment variable is not set.');
+  }
+  if (!process.env.NEXTAUTH_SECRET) {
+    testAuthorizeDebug('NEXTAUTH_SECRET environment variable is not set. Denying.');
+    throw new Error('NEXTAUTH_SECRET environment variable is not set.');
+  }
+
+  // Create a temporary admin Hasyx client to fetch user data
+  // This assumes the function runs in a context with admin access to Hasura
+  const adminApollo = createApolloClient({
+    secret: process.env.HASURA_ADMIN_SECRET!,
+    ws: false, // No WS needed just to fetch user data
+  });
+  const adminHasyx = new Hasyx(adminApollo, generate);
+
+  let userData: any;
+  try {
+    testAuthorizeDebug(`Fetching user data for ${userId} using admin client...`);
+    userData = await adminHasyx.select({
+      table: 'users',
+      pk_columns: { id: userId },
+      // Fetch fields needed for Hasura claims
+      returning: ['id', 'hasura_role', 'is_admin']
+    });
+
+    if (!userData || !userData.id) {
+      testAuthorizeDebug(`User not found in database with ID: ${userId}`);
+      throw new Error(`User not found with ID: ${userId}`);
+    }
+    testAuthorizeDebug(`User data fetched:`, userData);
+
+  } catch (error: any) {
+    testAuthorizeDebug(`Error fetching user ${userId}:`, error);
+    throw new Error(`Failed to fetch user data for ${userId}: ${error.message}`);
+  }
+
+  // Generate Hasura claims based on fetched data
+  const latestRole = userData.hasura_role ?? 'user';
+  const isAdmin = userData.is_admin ?? false;
+  const allowedRoles = [latestRole, 'me'];
+  if (isAdmin) allowedRoles.push('admin');
+  if (latestRole !== 'anonymous') allowedRoles.push('anonymous');
+  const uniqueAllowedRoles = [...new Set(allowedRoles)];
+
+  const hasuraClaims = {
+    'x-hasura-allowed-roles': uniqueAllowedRoles,
+    'x-hasura-default-role': latestRole,
+    'x-hasura-user-id': userId,
+  };
+  testAuthorizeDebug(`Generated Hasura claims for JWT:`, hasuraClaims);
+
+  // Generate the JWT
+  let jwt: string;
+  try {
+    jwt = await generateHasuraJWT(userId, hasuraClaims);
+    testAuthorizeDebug(`Generated JWT successfully.`);
+  } catch (jwtError: any) {
+    testAuthorizeDebug(`Error generating JWT:`, jwtError);
+    throw new Error(`Failed to generate JWT: ${jwtError.message}`);
+  }
+
+  // Create Axios instance
+  const axiosInstance = axios.create({
+    // Configure baseURL if needed, e.g., pointing to your Next.js API
+    // baseURL: 'http://localhost:3000/api', 
+    headers: {
+      'Authorization': `Bearer ${jwt}`,
+      'Content-Type': 'application/json',
+    }
+  });
+  
+  // Ensure headers are set in defaults as well for compatibility with testing
+  axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
+  
+  testAuthorizeDebug(`Axios instance created with Authorization header.`);
+
+  // Create Apollo Client instance
+  // Note: createApolloClient uses /api/graphql by default if no url is provided
+  const apolloInstance = createApolloClient({
+    token: jwt,
+    ws: true, // Or false, depending on test needs
+  });
+  testAuthorizeDebug(`Apollo client instance created with token.`);
+
+  // Create Hasyx instance
+  const hasyxInstance = new Hasyx(apolloInstance, generate);
+  testAuthorizeDebug(`Hasyx instance created.`);
+
+  return { axios: axiosInstance, apollo: apolloInstance, hasyx: hasyxInstance };
 }

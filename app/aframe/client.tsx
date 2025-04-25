@@ -1,12 +1,18 @@
 'use client'
 
+// Import A-Frame statically
+import 'aframe';
+
 // Import our forked components
-import { AframeProvider, AframeEntity as Entity, AframeScene as Scene } from '@/lib/aframe'; // Use the aliased exports
-import React from 'react'; // Import React and useEffect
+import { AframeEntity as Entity, AframeScene as Scene } from '@/lib/aframe'; // Use the aliased exports
+import React, { useEffect, useRef } from 'react'; // Restore imports
 
 
 // This page needs to be a client component for A-Frame
 export default function AframeClient() {
+  const sceneRef = useRef<any>(null); // Use 'any' for now to bypass type issues
+  const logSent = useRef(false); // Флаг, чтобы отправить только один раз
+
   const sceneStyle: React.CSSProperties = {
     position: 'absolute',
     top: 0,
@@ -16,22 +22,64 @@ export default function AframeClient() {
     zIndex: 0, // Убедитесь, что сцена не перекрывает UI
   };
 
-  return (<>
-    <AframeProvider>
-      <Scene
-        embedded style={sceneStyle} renderer="alpha: true; colorManagement: true;"
-        webxr="requiredFeatures: local-floor; optionalFeatures: anchors, hit-test, dom-overlay, bounded-floor;" // Request AR features
-        vr-mode-ui="enterAREnabled: true" // Ensure AR button is enabled
-      >
-        {/* @ts-ignore */}
-        <Entity geometry={{ primitive: 'box' }} material={{ color: 'black' }} position={{ x: 0, y: 0.5, z: -3 }} />
+  // Effect to set up event listener and log after scene is loaded
+  useEffect(() => {
+    const sceneEl = sceneRef.current as any; // Cast to any to access addEventListener easily
 
+    // Function to handle the logging logic
+    const handleSceneLoad = () => {
+      if (sceneEl && !logSent.current) {
+        const sceneOuterHtml = sceneEl.outerHTML;
+        logSent.current = true; // Ставим флаг
+
+        // Log the HTML directly to the console
+        console.log("--- A-Frame Scene Loaded outerHTML ---");
+        console.log(sceneOuterHtml);
+        console.log("--- End A-Frame Scene Loaded outerHTML ---");
+      } else if (!sceneEl) {
+          console.error("Scene element not found when 'loaded' event fired.");
+      }
+    };
+
+    if (sceneEl) {
+        // Check if the scene is already loaded (might happen with fast loading/re-renders)
+        if (sceneEl.hasLoaded) {
+            console.log("Scene already loaded, logging immediately.");
+            handleSceneLoad();
+        } else {
+            console.log("Adding 'loaded' event listener to the scene.");
+            sceneEl.addEventListener('loaded', handleSceneLoad);
+        }
+    } else {
+        console.error("Scene element ref is not available on initial mount to add listener.");
+    }
+
+    // Cleanup function to remove the event listener
+    return () => {
+      if (sceneEl) {
+        console.log("Removing 'loaded' event listener from the scene.");
+        sceneEl.removeEventListener('loaded', handleSceneLoad);
+      }
+    };
+  }, []); // Empty dependency array ensures this runs only once on mount to set up listener
+
+  // Render the scene once A-Frame is loaded
+  return (<>
+    <Scene
+      id="my-aframe-scene" // Добавляем ID для рефа
+      ref={(el) => { sceneRef.current = el; }} // Ensure ref callback returns void
+      embedded style={sceneStyle} renderer="alpha: true; colorManagement: true;"
+      webxr="requiredFeatures: local-floor; optionalFeatures: anchors, hit-test, dom-overlay, bounded-floor;" // Request AR features
+      vr-mode-ui="enterAREnabled: true" // Ensure AR button is enabled
+    >
+      {/* @ts-ignore */}
+      <Entity geometry={{ primitive: 'box' }} material={{ color: 'black' }} position={{ x: 0, y: 0.5, z: -3 }} />
+
+      {/* @ts-ignore */}
+      <Entity primitive="a-camera">
         {/* @ts-ignore */}
-        <Entity primitive="a-camera">
-          {/* @ts-ignore */}
-          <Entity primitive="a-cursor" />
-        </Entity>
-      </Scene>
-    </AframeProvider>
+        <Entity primitive="a-cursor" />
+      </Entity>
+    </Scene>
   </>)
 }

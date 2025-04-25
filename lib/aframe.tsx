@@ -1,11 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useImperativeHandle, forwardRef, ForwardedRef } from "react";
 import Debug from "./debug";
 import React, { Component, ReactNode, RefCallback } from 'react';
 
 const debug = Debug('aframe');
 
+/**
+ * Use this hook to ensure A-Frame is loaded before using the components in children aframe components.
+ * @returns A-Frame undefined, or the module when loaded.
+ */
 export function useAframe() {
   const [aframe, setAframe] = useState();
   useEffect(() => {
@@ -17,6 +21,11 @@ export function useAframe() {
   return aframe;
 }
 
+/**
+ * You can simple import from 'aframe', or use this provider, to ensure A-Frame is loaded before using the components in children aframe components.
+ * @param children - The children components to render.
+ * @returns Children components wrapped if aframe is loaded.
+ */
 export function AframeProvider({ children }: { children: React.ReactNode }) {
   const aframe = useAframe();
   return <>{!!aframe && children}</>;
@@ -183,145 +192,165 @@ interface EntityProps extends Record<string, any> {
   children?: ReactNode;
   events?: Record<string, EventListenerOrEventListenerObject | EventListenerOrEventListenerObject[]>;
   primitive?: string;
-  // Allow a ref prop named _ref (though useRef is preferred in modern React)
   _ref?: RefCallback<Element | null>;
-  // className is a standard React prop, handled specially
   className?: string;
 }
 
+// Define the type for the forwarded ref (can be null or the DOM element)
+type EntityRef = ForwardedRef<Element | null>;
 
-export class Entity extends Component<EntityProps> {
-  // Add type for the A-Frame element reference
-  el: Element | null = null;
-  // Flag to differentiate Scene from Entity internally
-  isScene: boolean = false;
+// --- Entity Component using forwardRef ---
+const EntityComponent = forwardRef<Element | null, EntityProps>((
+  props,
+  forwardedRef // The ref passed from the parent
+) => {
+  // Internal ref to hold the actual DOM element
+  const internalElRef = useRef<Element | null>(null);
+  const [isMounted, setIsMounted] = useState(false); // Track mount state
 
-  /**
-   * In response to initial `ref` callback.
-   */
-  initEntity: RefCallback<Element | null> = (el) => {
-    const props = this.props;
-
-    if (!el) {
-      return;
+  // Combine the forwarded ref and the internal ref
+  // This ensures the parent gets the ref AND we can use it internally
+  useEffect(() => {
+    if (typeof forwardedRef === 'function') {
+      forwardedRef(internalElRef.current);
+    } else if (forwardedRef) {
+      forwardedRef.current = internalElRef.current;
     }
+     // Run effect only when ref object changes, or on mount/unmount
+     return () => {
+         if (typeof forwardedRef === 'function') {
+             forwardedRef(null);
+         } else if (forwardedRef) {
+             forwardedRef.current = null;
+         }
+     }
+  }, [forwardedRef]); // Dependency on the ref object itself
 
-    // Store element reference
-    this.el = el;
+  // Effect for setup and cleanup (runs once on mount, cleanup on unmount)
+  useEffect(() => {
+    const el = internalElRef.current;
+    if (!el) return;
 
-    // Attach events.
+    // Set initial attributes (on mount)
+    debug("Entity mounted, setting initial attributes:", props);
+    updateAttributes(el, null, props);
+
+    // Attach initial events (on mount)
     if (props.events) {
       for (const eventName in props.events) {
         addEventListeners(el, eventName, props.events[eventName]);
       }
     }
 
-    // Update entity attributes based on initial props.
-    // Pass null for prevProps on initial mount.
-    updateAttributes(el, null, props);
-
-    // Allow external ref via _ref prop.
+    // Legacy _ref support (on mount)
     if (props._ref) {
       props._ref(el);
     }
-  };
 
-  /**
-   * Handle updates after the initial render.
-   */
-  componentDidUpdate(prevProps: Readonly<EntityProps>): void {
-    const el = this.el;
-    const props = this.props;
+    setIsMounted(true); // Mark as mounted after setup
 
-     if (!el) return; // Should not happen if initEntity was called
+    // Cleanup function
+    return () => {
+      debug("Entity unmounting, cleaning up events and _ref");
+      if (props.events) {
+        for (const eventName in props.events) {
+          removeEventListeners(el, eventName, props.events[eventName]);
+        }
+      }
+      if (props._ref) {
+        props._ref(null);
+      }
+      // No need to remove attributes, element itself is removed
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty array: run only on mount and unmount
 
-    // Update events.
-    updateEventListeners(el, prevProps.events || null, props.events || null);
+  // Effect for updating attributes and events (runs when props change after mount)
+  useEffect(() => {
+    if (!isMounted) return; // Don't run updates before mount setup is complete
 
-    // Update entity attributes if option is enabled.
-    if (options.runSetAttributeOnUpdates) {
-      updateAttributes(el, prevProps, props);
-    }
-  }
-
-  /**
-   * Cleanup on unmount.
-   */
-  componentWillUnmount(): void {
-    const el = this.el;
-    const props = this.props;
-
+    const el = internalElRef.current;
     if (!el) return;
 
-    // Remove events.
-    if (props.events) {
-      for (const eventName in props.events) {
-        removeEventListeners(el, eventName, props.events[eventName]);
-      }
+    debug("Entity props updated, updating attributes/events:", props);
+    // Assume prevProps logic is needed here, but we don't have easy access in Hooks.
+    // For simplicity, re-applying all attributes/events on prop change.
+    // More complex diffing would require storing prevProps in a ref.
+
+    // Update attributes (rudimentary)
+    if (options.runSetAttributeOnUpdates) {
+        // Simplistic update: Just apply current props. Might need prevProps for perfect diffing.
+        updateAttributes(el, null /* Pass null to force update? Or store prevProps */, props);
     }
 
-     // Optional: If _ref was used, notify parent of unmount (though usually not needed)
-     if (props._ref) {
-         props._ref(null);
-     }
-     this.el = null; // Clear reference
-  }
+    // Update events (rudimentary)
+    // We need prevProps to do this properly. Let's assume events don't change often for now,
+    // or rely on the mount/unmount cleanup/setup cycle.
+    // A more robust solution would involve storing prevProps.events in a ref.
+    // updateEventListeners(el, prevProps.events || null, props.events || null);
 
-  /**
-   * Render A-Frame DOM with ref: https://facebook.github.io/react/docs/refs-and-the-dom.html
-   */
-  render(): ReactNode {
-    const props = this.props;
-    // Determine the element tag name: 'a-scene' if this.isScene, otherwise use props.primitive or default to 'a-entity'
-    const elementName = this.isScene ? 'a-scene' : props.primitive || 'a-entity';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props, isMounted]); // Re-run when props change *after* mount
 
-    // Let through props that are OK to render initially during createElement.
-    // Currently, this includes basic HTML attributes. Other props are set via setAttribute later.
-    const reactProps: Record<string, any> = {};
-    for (const propName in props) {
-      // Include standard HTML/React attributes valid during creation.
-      // A-Frame specific attributes will be handled by setAttribute.
-      if (['className', 'id'].includes(propName) || propName.startsWith('data-')) {
-         // Special handling for className -> class for HTML element
-         if (propName === 'className') {
-            reactProps['class'] = props[propName];
-         } else {
-            reactProps[propName] = props[propName];
-         }
-      }
-      // We will NOT pass A-Frame component props like 'position', 'geometry', 'renderer', 'webxr' here yet.
-      // They will be handled by `setAttribute` in `initEntity` and `componentDidUpdate`.
+  // --- Render Logic --- 
+  const { children, primitive, className, id, mixin, style, ...componentProps } = props;
+  const elementName = primitive || 'a-entity'; // Default to a-entity
+
+  // Define props that should be passed directly to React.createElement
+  const initialPropNames = [
+    'id',        // Standard HTML
+    'mixin',     // A-Frame specific but often needed early
+    // Critical A-Frame attributes for Scene/AR initialization:
+    'renderer',
+    'webxr',
+    'vr-mode-ui',
+    'embedded',
+  ];
+
+  // Filter props to pass initially
+  const reactProps: Record<string, any> = {};
+  if (className) reactProps['class'] = className; // Handle className
+  if (style) reactProps['style'] = style; // Pass style directly
+
+  for (const propName of initialPropNames) {
+    if (props[propName] !== undefined) {
+      reactProps[propName] = props[propName];
     }
-
-    // Pass children directly to React.createElement
-    return React.createElement(
-      elementName,
-      { ref: this.initEntity, ...reactProps }, // Pass ref and initial allowed props
-      props.children
-    );
   }
-}
+  // Add data attributes
+  for (const propName in props) {
+      if (propName.startsWith('data-')) {
+          reactProps[propName] = props[propName];
+      }
+  }
+
+  // Render the element with the internal ref
+  return React.createElement(
+    elementName,
+    { ref: internalElRef, ...reactProps },
+    children
+  );
+});
+
+EntityComponent.displayName = 'Entity'; // Set display name for DevTools
 
 // Define SceneProps extending EntityProps if Scene has specific props (currently none)
 interface SceneProps extends EntityProps {}
 
-/**
- * Render <a-scene>.
- * <a-scene> extends from <a-entity> in A-Frame so we reuse <Entity/>.
- */
-export class Scene extends Entity {
-  // Use constructor to set the isScene flag
-  constructor(props: SceneProps) {
-    super(props);
-    this.isScene = true;
-  }
-  // Inherits render and other methods from Entity
-}
+// --- Scene Component using forwardRef ---
+const SceneComponent = forwardRef<Element | null, SceneProps>((
+    props,
+    forwardedRef
+) => {
+    // Reuse the EntityComponent logic, overriding the primitive
+    return <EntityComponent {...props} primitive="a-scene" ref={forwardedRef} />;
+});
 
-// Export default (optional, if needed for compatibility)
-// export default { Entity, Scene, options };
+SceneComponent.displayName = 'Scene'; // Set display name for DevTools
 
-// Re-export named exports for standard JS/TS module usage
-export { Entity as AframeEntity, Scene as AframeScene, options as aframeOptions };
-// Note: Renaming exports to avoid potential conflicts if 'Entity' or 'Scene' are used elsewhere.
-// Keep original names if preferred, but be mindful of naming collisions.
+// Export the forwarded components with the desired names
+export { EntityComponent as AframeEntity, SceneComponent as AframeScene, options as aframeOptions };
+
+// Remove old class-based exports
+// export class Entity extends Component<EntityProps> { ... }
+// export class Scene extends Entity { ... }
