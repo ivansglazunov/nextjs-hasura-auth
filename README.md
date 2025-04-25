@@ -1,4 +1,8 @@
-# HASYX - Next.js Hasura Authentication Ecosystem Solution
+# Hasyx = Next.js + Hasura + auth + client + building
+
+<div align="center">
+  <img src="./public/logo.svg" height="200" alt="Next.js Logo">
+</div>
 
 Hasyx provides a robust starting point and a set of tools for building applications using Next.js (App Router), Hasura, and strong authentication patterns. It simplifies setup with JWT-based authentication via NextAuth.js, a secure GraphQL proxy to Hasura, direct WebSocket support for subscriptions, and a powerful dynamic query generator.
 

@@ -19,38 +19,59 @@ const generate = Generator(schema);
 /**
  * Extracts the JWT payload from a NextRequest.
  * 
- * It first checks the 'Authorization: Bearer <token>' header.
- * If a valid Bearer token is found and verified, its payload is returned.
- * 
- * If the header is missing or the token is invalid, it falls back to checking
- * the standard NextAuth.js session cookies (__Secure-next-auth.session-token
- * or next-auth.session-token) using `next-auth/jwt.getToken`.
+ * It tries to find a token in the following order:
+ * 1. 'Authorization: Bearer <token>' header
+ * 2. URL query parameter 'auth_token=<token>'
+ * 3. Next-auth session cookies
  *
  * @param {NextRequest} request - The incoming Next.js request object.
- * @returns {Promise<JWT | null>} A promise that resolves to the decoded JWT payload (from either Bearer token or cookie) or null if no valid token is found.
+ * @returns {Promise<JWT | null>} A promise that resolves to the decoded JWT payload or null if no valid token is found.
  */
 export async function getTokenFromRequest(request: NextRequest): Promise<JWT | null> {
   debug('Attempting to get token from request...');
 
   // 1. Check Authorization header
   const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+  debug('Authorization header value:', authHeader); // Log the raw header value
+
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.substring(7); // Remove 'Bearer '
     debug('Found Bearer token in Authorization header.');
     try {
+      debug('Attempting to verify Bearer token...'); // Log before verification
       const payload = await verifyJWT(token);
       debug('Successfully verified Bearer token. Returning payload.');
       // We might need to adapt the payload structure slightly if verifyJWT 
       // returns a different shape than next-auth getToken
       return payload as JWT; // Cast or map fields if necessary
     } catch (error) {
-      debug('Bearer token verification failed:', error);
-      // Fall through to check cookies if Bearer token is invalid
+      debug('Bearer token verification failed:', error); // Log the specific verification error
+      // Fall through to check other methods
     } 
   }
 
-  // 2. Fallback to checking NextAuth cookies
-  debug('No valid Bearer token found or header missing. Checking cookies...');
+  // 2. Check URL query parameter 'auth_token'
+  try {
+    const url = new URL(request.url);
+    const urlToken = url.searchParams.get('auth_token');
+    if (urlToken) {
+      debug('Found token in URL query parameter (auth_token)');
+      try {
+        const payload = await verifyJWT(urlToken);
+        debug('Successfully verified URL token. Returning payload.');
+        return payload as JWT;
+      } catch (urlTokenError) {
+        debug('URL token verification failed:', urlTokenError);
+        // Fall through to check cookies
+      }
+    }
+  } catch (urlError) {
+    debug('Error parsing URL or accessing query parameters:', urlError);
+    // Fall through to check cookies
+  }
+
+  // 3. Fallback to checking NextAuth cookies
+  debug('No valid Bearer token or URL token found. Checking cookies...');
   const secureCookie = request.url.startsWith('https');
   const cookieName = secureCookie 
     ? '__Secure-next-auth.session-token' 
@@ -60,19 +81,19 @@ export async function getTokenFromRequest(request: NextRequest): Promise<JWT | n
   try {
     const tokenFromCookie = await getToken({
       req: request as any, // Cast to any to satisfy getToken, NextRequest works
-      secret: process.env.NEXTAUTH_SECRET!,
+      secret: process.env.NEXTAUTH_SECRET!, // Ensure secret is loaded
       cookieName: cookieName,
     });
 
     if (tokenFromCookie) {
-      debug('Found valid token in cookie.');
+      debug('Found valid token in cookie:', tokenFromCookie); // Log the cookie token
       return tokenFromCookie;
     } else {
       debug('No token found in cookies either.');
       return null;
     }
   } catch (cookieError) {
-    debug('Error processing token from cookie:', cookieError);
+    debug('Error processing token from cookie:', cookieError); // Log cookie processing error
     return null;
   }
 }
