@@ -4,15 +4,15 @@ import Debug from 'hasyx/lib/debug';
 const debug = Debug('email');
 
 const resendApiKey = process.env.RESEND_API_KEY;
-const nextAuthUrl = process.env.NEXTAUTH_URL; // Base URL for verification links
+const nextAuthUrl = process.env.NEXT_PUBLIC_BASE_URL; // Base URL for verification links
 
 if (!resendApiKey) {
     console.warn('⚠️ RESEND_API_KEY environment variable is not set. Email sending will be disabled.');
     debug('Resend API key not found.');
 }
 if (!nextAuthUrl) {
-     console.warn('⚠️ NEXTAUTH_URL environment variable is not set. Verification links might be incorrect.');
-    debug('NEXTAUTH_URL not found.');
+     console.warn('⚠️ NEXT_PUBLIC_BASE_URL environment variable is not set. Verification links might be incorrect.');
+    debug('NEXT_PUBLIC_BASE_URL not found.');
 }
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;

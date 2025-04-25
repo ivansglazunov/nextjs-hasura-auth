@@ -313,7 +313,7 @@ HASURA_JWT_SECRET={"type":"HS256","key":"your_32_byte_or_longer_secret_key_for_h
 
 # ===== NextAuth.js Configuration =====
 # Required: The canonical URL of your deployment. Use http://localhost:3000 for local dev.
-NEXTAUTH_URL=http://localhost:3000
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
 # Required: A strong secret for signing tokens, CSRF protection, etc.
 NEXTAUTH_SECRET=your_super_secret_nextauth_key_32_chars_or_more
 
@@ -346,9 +346,9 @@ RESEND_API_KEY=re_your_resend_api_key
     *   **Migrations:** Define your database changes in `up.ts` and rollbacks in `down.ts` files within `./migrations/<name>/` directories (see [example up](./migrations/hasyx/up.ts), [example down](./migrations/hasyx/down.ts)). Run `npx hasyx migrate` to apply or `npx hasyx unmigrate` to revert.
     *   **Schema Updates:** After changing your database structure (and running migrations), update the local schema representation and types by running `npx hasyx schema`.
 
-#### NextAuth.js (`NEXTAUTH_URL`, `NEXTAUTH_SECRET`)
+#### NextAuth.js (`NEXT_PUBLIC_BASE_URL`, `NEXTAUTH_SECRET`)
 
-*   `NEXTAUTH_URL`: **Required** by NextAuth.js, especially for OAuth redirects and email links. Set it to your application's canonical base URL (e.g., `http://localhost:3000` locally, `https://yourdomain.com` in production).
+*   `NEXT_PUBLIC_BASE_URL`: **Required** by NextAuth.js, especially for OAuth redirects and email links. Set it to your application's canonical base URL (e.g., `http://localhost:3000` locally, `https://yourdomain.com` in production).
 *   `NEXTAUTH_SECRET`: **Required** for securing sessions, signing JWTs, and CSRF protection. Generate a strong, random string (at least 32 characters). You can use `openssl rand -base64 32` to generate one.
 
 #### OAuth Providers (`GOOGLE_*`, `YANDEX_*`, etc.)
@@ -360,13 +360,13 @@ RESEND_API_KEY=re_your_resend_api_key
     3. Go to "APIs & Services" > "Credentials".
     4. Create "OAuth client ID", select "Web application".
     5. Add Authorized JavaScript origins (e.g., `http://localhost:3000`).
-    6. Add Authorized redirect URIs: `YOUR_NEXTAUTH_URL/api/auth/callback/google` (e.g., `http://localhost:3000/api/auth/callback/google`).
+    6. Add Authorized redirect URIs: `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/google` (e.g., `http://localhost:3000/api/auth/callback/google`).
     7. Copy the Client ID and Client Secret into your `.env`.
 *   **Yandex:**
     1. Go to the [Yandex OAuth Console](https://oauth.yandex.com/client/new).
     2. Register a new application.
     3. Choose "Web services".
-    4. Add the Redirect URI: `YOUR_NEXTAUTH_URL/api/auth/callback/yandex` (e.g., `http://localhost:3000/api/auth/callback/yandex`).
+    4. Add the Redirect URI: `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/yandex` (e.g., `http://localhost:3000/api/auth/callback/yandex`).
     5. Grant necessary permissions (e.g., access to email, profile info).
     6. Copy the ID and Password (Client Secret) into your `.env`.
 
