@@ -1,7 +1,9 @@
 /**
  * @jest-environment node
  */
-import { Hasyx, createApolloClient, Generator } from 'hasyx';
+import { Hasyx } from './hasyx';
+import { createApolloClient } from './apollo';
+import { Generator } from './generator';
 import { testAuthorize } from './auth'; // Import the function to test
 import { hashPassword } from './authDbUtils';
 import schema from '../public/hasura-schema.json';
