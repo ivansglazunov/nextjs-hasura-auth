@@ -107,35 +107,49 @@ export async function SOCKET(client: WebSocket, request: Request, server: any) {
 }
 ```
 
-### `getTokenFromRequest` (HTTP Request Token Retrieval)
+### `getTokenFromRequest` (HTTP/WebSocket Token Retrieval)
 
-Use this in API Routes or potentially Server Components (if you can access the `NextRequest`) to get the decoded JWT payload for the currently logged-in user.
+Use this in API Routes, Server Components, or WebSocket connection handlers to get the decoded JWT payload for the currently logged-in user.
+
+**Key Features:**
+
+*   **Header Check:** First checks the `Authorization: Bearer <token>` header.
+*   **Cookie Fallback:** If no valid Bearer token is found, it checks `next-auth` session cookies.
+*   **Verification:** Validates Bearer tokens using `verifyJWT` (from `lib/jwt.ts`).
+*   **Cookie Decoding:** Uses `next-auth/jwt.getToken` for cookie-based tokens.
 
 **Prerequisites:**
 
-*   `next-auth` is configured and working.
-*   `NEXTAUTH_SECRET` environment variable is set.
+*   `next-auth` is configured and working (for cookie fallback).
+*   `NEXTAUTH_SECRET` environment variable is set (for cookie decoding).
+*   `HASURA_JWT_SECRET` environment variable is set (for Bearer token verification via `verifyJWT`).
 
 **Example (in a Next.js API Route):**
 
 ```typescript
-// pages/api/my-protected-route.ts (or app/api/.../route.ts)
-import { NextApiRequest, NextApiResponse } from 'next';
-import { NextRequest, NextResponse } from 'next/server'; // Use NextRequest for App Router
+// app/api/my-route/route.ts
+import { NextRequest, NextResponse } from 'next/server';
 import { getTokenFromRequest } from '@/lib/auth'; // Adjust path
 
-// Example for App Router (using NextRequest)
 export async function GET(request: NextRequest) {
+  // This will check Bearer token first, then cookie
   const token = await getTokenFromRequest(request);
 
   if (!token) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  // Token contains the decoded JWT payload (including Hasura claims if configured)
+  // Token contains the decoded JWT payload
   console.log('Decoded token:', token);
   const userId = token.sub; // Standard JWT subject, often the user ID
-  const hasuraClaims = token['https://hasura.io/jwt/claims'];
+
+  // Check if the token has Hasura claims (might be present if it came from Bearer)
+  const hasuraClaims = token['https://hasura.io/jwt/claims']; 
+  if (hasuraClaims) {
+      console.log('Hasura Claims:', hasuraClaims);
+  } else {
+      console.log('Token likely from session cookie, no specific Hasura claims embedded.');
+  }
 
   // Proceed with logic for authenticated user...
   return NextResponse.json({ 
@@ -143,26 +157,7 @@ export async function GET(request: NextRequest) {
     yourToken: token 
   });
 }
-
-// Example for Pages Router (using NextApiRequest)
-// Note: getTokenFromRequest expects NextRequest, so direct use is harder.
-// It's often easier to use next-auth's built-in `getToken` here.
-/*
-import { getToken } from 'next-auth/jwt';
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-
-  if (!token) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-
-  console.log('Decoded token:', token);
-  const userId = token.sub;
-
-  return res.status(200).json({ message: `Hello user ${userId}` });
-}
-*/
+```
 
 ## Test Authentication Helper
 
@@ -222,7 +217,9 @@ async function testProtectedFeature() {
 ## Dependencies
 
 *   `next-auth` (specifically session cookies and `next-auth/jwt` for decoding)
+*   `jose` (used internally by `lib/jwt.ts` for token verification)
 *   `uuid` (for generating client IDs in `WsClientsManager`)
 *   `ws` (or your chosen WebSocket library, for the `WebSocket` type hint)
 *   `debug` (for logging)
-*   Environment Variable: `NEXTAUTH_SECRET` 
+*   Environment Variable: `NEXTAUTH_SECRET`
+*   Environment Variable: `HASURA_JWT_SECRET` (for Bearer token verification) 
