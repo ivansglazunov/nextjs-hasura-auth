@@ -55,6 +55,9 @@ lib/**/*.js
 lib/**/*.d.ts
 migrations/**/*.js
 migrations/**/*.d.ts
+/client
+
+# Capacitor
 
 ios/App/build
 ios/App/Pods

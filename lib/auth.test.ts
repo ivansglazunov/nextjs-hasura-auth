@@ -5,6 +5,7 @@ import schema from '../public/hasura-schema.json';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import Debug from './debug';
+import axios from 'axios'; // Import axios for isAxiosError check
 
 dotenv.config(); // Load .env variables
 
@@ -89,6 +90,53 @@ describe('testAuthorize Function', () => {
     
     // Skip the actual data fetching test since permissions might not allow access
     debug(`🎉 JWT authentication test passed - Authorization header is correctly set`);
+  });
+
+  it('should allow authenticated axios client to GET /api/auth', async () => {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('Skipping testAuthorize GET /api/auth test in production environment.');
+      return; // Skip test in production
+    }
+    expect(testUserId).not.toBeNull();
+
+    debug(`Calling testAuthorize for user: ${testUserId} to test GET /api/auth`);
+    const { axios } = await testAuthorize(testUserId!); // Only need axios for this test
+
+    try {
+      // Make GET request to the relative path /api/auth
+      // This assumes the test runner or environment handles resolving this path
+      // to the running application instance or a mocked endpoint.
+      debug('Making GET request to /api/auth...');
+      const response = await axios.get('/api/auth');
+
+      debug(`GET /api/auth response status: ${response.status}`);
+      debug(`GET /api/auth response data:`, response.data);
+
+      expect(response.status).toBe(200);
+      expect(response.data).toBeDefined();
+      expect(response.data.authenticated).toBe(true);
+      expect(response.data.token).toBeDefined();
+      // The /api/auth route returns the token payload directly (without accessToken)
+      // The user ID is typically in the 'sub' property of the token payload
+      expect(response.data.token.sub).toBe(testUserId);
+      // Optionally check other fields if needed
+      // expect(response.data.token.email).toBe(testUserEmail);
+
+      debug(`✅ Successfully verified GET /api/auth with authenticated client.`);
+
+    } catch (error: any) {
+      debug(`❌ Error during GET /api/auth test:`, error.response?.data || error.message);
+      // Improve error reporting if Axios request fails
+      if (axios.isAxiosError(error)) {
+        console.error('Axios Error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          headers: error.response?.headers,
+          config: error.config,
+        });
+      }
+      throw error; // Re-throw to fail the test
+    }
   });
 
   it('should throw error if user ID does not exist', async () => {

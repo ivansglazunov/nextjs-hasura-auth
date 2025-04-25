@@ -6,6 +6,9 @@ import WebSocket, { WebSocketServer } from 'ws';
 
 const debug = Debug('api:auth');
 
+// For static export (Capacitor)
+export const dynamic = 'force-static';
+
 export async function GET(request: NextRequest) {
   debug('GET /api/auth: Getting authorization status...');
   try {
@@ -23,6 +26,10 @@ export async function GET(request: NextRequest) {
     debug('GET /api/auth: Error getting token:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+}
+
+export function POST(request: NextRequest) {
+  return NextResponse.json({ message: 'API route for static builds' });
 }
 
 const clients = WsClientsManager('/api/auth');

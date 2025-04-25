@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.50",
+  "version": "0.1.51",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -16,6 +16,9 @@
     "build:css": "tailwindcss -i ./app/globals.css -o ./lib/styles.css",
     "unbuild:lib": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -print -delete",
     "build:next": "next build --turbopack",
+    "build:client": "node build-client.mjs",
+    "build:android": "npm run build:client && npx cap sync android",
+    "build:ios": "npm run build:client && npx cap sync ios",
     "start": "next start --turbopack",
     "lint": "next lint --turbopack",
     "test": "jest",
@@ -146,6 +149,7 @@
     "hasyx": "./lib/cli.js"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.2.0"
+    "@capacitor/cli": "^7.2.0",
+    "cross-env": "^7.0.3"
   }
 }

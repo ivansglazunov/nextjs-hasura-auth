@@ -7,29 +7,35 @@ import schema from '../../../../public/hasura-schema.json';
 
 const debug = Debug('api:auth:verify');
 
+// Add force-static for Capacitor exports
+export const dynamic = 'force-static';
+
+// For static export, we need to avoid using request.url
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
 // Initialize NHA Client with admin secret for backend operations
 const client = new Hasyx(createApolloClient({
   secret: process.env.HASURA_ADMIN_SECRET!,
 }), Generator(schema));
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const token = searchParams.get('token');
+  // Use searchParams from request directly for static export compatibility
+  const token = request.nextUrl.searchParams.get('token');
 
   debug('Received verification request with token: %s', token ? 'present' : 'missing');
 
   if (!token) {
     debug('Verification failed: No token provided.');
-    // Redirect to an error page or show an error message
-    return NextResponse.redirect(new URL('/auth/error?error=Verification token missing.', request.url));
+    // Redirect to an error page using absolute URL
+    return NextResponse.redirect(`${BASE_URL}/auth/error?error=Verification token missing.`);
   }
 
   const verificationResult = await verifyVerificationToken(token);
 
   if (!verificationResult || !verificationResult.userId) {
     debug('Verification failed: Invalid or expired token.');
-    // Redirect to an error page or show an error message
-    return NextResponse.redirect(new URL('/auth/error?error=Invalid or expired verification link.', request.url));
+    // Redirect to an error page using absolute URL
+    return NextResponse.redirect(`${BASE_URL}/auth/error?error=Invalid or expired verification link.`);
   }
 
   const userId = verificationResult.userId;
@@ -50,17 +56,17 @@ export async function GET(request: NextRequest) {
     if (updateResult?.id === userId) {
         debug('User email verified successfully in database for ID: %s', userId);
         // Redirect to the home page after successful verification
-        return NextResponse.redirect(new URL('/', request.url)); 
+        return NextResponse.redirect(`${BASE_URL}/`); 
     } else {
         debug('Database update failed for verification, user ID: %s. User might not exist or update failed.', userId);
          // This case is less likely if the token was valid, but handle defensively
-        return NextResponse.redirect(new URL('/auth/error?error=Failed to update verification status.', request.url));
+        return NextResponse.redirect(`${BASE_URL}/auth/error?error=Failed to update verification status.`);
     }
 
   } catch (error: any) {
     debug('Error updating user verification status in database for ID %s: %s', userId, error.message);
     console.error('Database error during verification:', error);
     // Redirect to a generic error page
-    return NextResponse.redirect(new URL('/auth/error?error=Database error during verification.', request.url));
+    return NextResponse.redirect(`${BASE_URL}/auth/error?error=Database error during verification.`);
   }
 } 

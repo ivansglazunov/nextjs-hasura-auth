@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,12 +23,31 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "hasyx": ["./lib/index.ts"],
-      "hasyx/*": ["./*"]
+      "@/*": [
+        "./*"
+      ],
+      "hasyx": [
+        "./lib/index.ts"
+      ],
+      "hasyx/*": [
+        "./*"
+      ]
     },
-    "types": ["jest", "@testing-library/jest-dom"]
+    "types": [
+      "jest",
+      "@testing-library/jest-dom"
+    ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "types/**/*.d.ts"],
-  "exclude": ["node_modules", "**/*.temp"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    "types/**/*.d.ts",
+    "client/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.temp"
+  ]
 }

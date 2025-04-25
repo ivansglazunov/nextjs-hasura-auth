@@ -25,7 +25,7 @@ import { UsersCard } from "hasyx/components/users/users-card"
 
 // Imports for getting server-side session
 import { getServerSession } from "next-auth/next"
-import authOptions from "@/app/api/auth/[...nextauth]/options" 
+import authOptions from "@/lib/next-auth-options" 
 import { Session } from "next-auth" // Import Session type
 
 import sidebar from "@/app/sidebar"

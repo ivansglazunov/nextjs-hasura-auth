@@ -299,6 +299,10 @@ Configure Hasyx features by setting environment variables. Create a `.env` file 
 **Example `.env` File:**
 
 ```env
+# ===== Test Configuration =====
+# For testAuthorize() function in AUTH.md
+TEST_TOKEN=anything
+
 # ===== Hasura Configuration =====
 # Required: URL of your Hasura GraphQL endpoint
 NEXT_PUBLIC_HASURA_GRAPHQL_URL=https://your-project.hasura.app/v1/graphql

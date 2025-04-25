@@ -64,3 +64,6 @@ export default function AframePage() {
     </SidebarProvider>
   )
 }
+
+// For static export (Capacitor)
+export const dynamic = 'force-static';
