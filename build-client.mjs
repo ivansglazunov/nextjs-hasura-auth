@@ -11,8 +11,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Paths
 const apiDir = path.join(__dirname, 'app', 'api');
 const backupDir = path.join(__dirname, 'app', '_api_backup');
-const pageFile = path.join(__dirname, 'app', 'page.tsx');
-const pageBackup = path.join(__dirname, 'app', 'page.tsx.bak');
+// const pageFile = path.join(__dirname, 'app', 'page.tsx'); // No longer needed
+// const pageBackup = path.join(__dirname, 'app', 'page.tsx.bak'); // No longer needed
 
 // Function to execute shell commands
 async function runCommand(command) {
@@ -28,62 +28,6 @@ async function runCommand(command) {
   }
 }
 
-// Create a simple static page for the client build
-function createSimpleHomePage() {
-  const staticPage = `
-// Static home page for Capacitor build
-'use client';
-
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import Link from 'next/link';
-
-// For static export (Capacitor)
-export const dynamic = 'force-static';
-
-export default function StaticHomePage() {
-  const router = useRouter();
-  
-  // Automatically redirect to A-Frame page
-  useEffect(() => {
-    router.push('/aframe');
-  }, [router]);
-  
-  return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100vh',
-      padding: '2rem'
-    }}>
-      <h1>Welcome to Hasyx Mobile</h1>
-      <p>Loading A-Frame experience...</p>
-      <Link href="/aframe" style={{
-        marginTop: '2rem',
-        padding: '1rem 2rem',
-        backgroundColor: '#4F46E5',
-        color: 'white',
-        borderRadius: '0.5rem',
-        textDecoration: 'none',
-        fontWeight: 'bold'
-      }}>
-        Go to A-Frame
-      </Link>
-    </div>
-  );
-}`;
-
-  // Backup existing page.tsx if it exists
-  if (fs.existsSync(pageFile)) {
-    fs.copyFileSync(pageFile, pageBackup);
-  }
-  
-  // Create new static page
-  fs.writeFileSync(pageFile, staticPage);
-  console.log('✅ Created simple static home page for client build.');
-}
 
 // Main function
 async function buildClient() {
@@ -117,23 +61,25 @@ async function buildClient() {
     console.log('⚠️ API directory not found, skipping backup.');
   }
   
-  // Step 3: Create simple static home page
-  console.log('🔄 Creating simple static home page...');
-  createSimpleHomePage();
+  // Step 3: Create simple static home page - REMOVED
+  // console.log('🔄 Creating simple static home page...');
+  // createSimpleHomePage();
   
-  // Step 4: Run Next.js build
+  // Step 4: Run Next.js build (Now Step 3)
   console.log('🔨 Running Next.js build...');
   const buildSuccess = await runCommand('cross-env NODE_ENV=production next build');
   
-  // Step 5: Restore files
+  // Step 5: Restore files (Now Step 4)
   console.log('🔄 Restoring original files...');
   
-  // Restore home page
+  // Restore home page - REMOVED
+  /*
   if (fs.existsSync(pageBackup)) {
     fs.copyFileSync(pageBackup, pageFile);
     fs.unlinkSync(pageBackup);
     console.log('✅ Original home page restored.');
   }
+  */
   
   // Restore API directory
   if (fs.existsSync(path.join(backupDir, 'api'))) {
@@ -152,7 +98,7 @@ async function buildClient() {
       fs.rmSync(backupDir, { recursive: true, force: true });
     } catch (err) {
       console.error('❌ Error restoring API directory:', err);
-      if (buildSuccess) process.exit(1);
+      if (buildSuccess) process.exit(1); // Exit if build succeeded but restore failed
     }
   }
   

@@ -12,6 +12,7 @@ import { generateJWT as generateHasuraJWT, verifyJWT } from './jwt';
 import schema from '../public/hasura-schema.json';
 import { AxiosInstance } from 'axios';
 import axios from 'axios';
+import { JWTPayload } from 'jose';
 
 const debug = Debug('auth');
 const generate = Generator(schema);
@@ -32,42 +33,59 @@ export async function getTokenFromRequest(request: NextRequest): Promise<JWT | n
 
   // 1. Check Authorization header
   const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
-  debug('Authorization header value:', authHeader); // Log the raw header value
+  debug('Authorization header value:', authHeader ? authHeader.substring(0, 15) + '...' : 'null'); // Log safely
 
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.substring(7); // Remove 'Bearer '
     debug('Found Bearer token in Authorization header.');
     try {
-      debug('Attempting to verify Bearer token...'); // Log before verification
-      const payload = await verifyJWT(token);
-      debug('Successfully verified Bearer token. Returning payload.');
-      // We might need to adapt the payload structure slightly if verifyJWT 
-      // returns a different shape than next-auth getToken
-      return payload as JWT; // Cast or map fields if necessary
+      debug('Attempting to verify Bearer token...'); 
+      const payload: JWTPayload = await verifyJWT(token);
+      debug('Successfully verified Bearer token.');
+      // --- CONSTRUCT JWT FROM PAYLOAD ---
+      const constructedJwt: JWT = {
+        sub: payload.sub, // Standard JWT subject
+        userId: payload.sub, // Our custom field
+        // Map Hasura claims if they exist
+        "https://hasura.io/jwt/claims": payload['https://hasura.io/jwt/claims'] as Record<string, any> | undefined,
+        provider: 'bearer', // Indicate source
+        // Add other fields from payload if necessary/available and expected in JWT type
+        // iat: payload.iat,
+        // exp: payload.exp,
+      };
+      debug('Constructed JWT from Bearer payload:', constructedJwt);
+      return constructedJwt;
+      // --- END CONSTRUCTION ---
     } catch (error) {
-      debug('Bearer token verification failed:', error); // Log the specific verification error
-      // Fall through to check other methods
+      debug('Bearer token verification failed:', error); 
     } 
   }
 
-  // 2. Check URL query parameter 'auth_token'
+  // 2. Check URL query parameter 'auth_token' (Consider removing if not needed)
   try {
-    // Use request.nextUrl which is already parsed in Next.js
     const urlToken = request.nextUrl.searchParams.get('auth_token');
     if (urlToken) {
       debug('Found token in URL query parameter (auth_token)');
       try {
-        const payload = await verifyJWT(urlToken);
-        debug('Successfully verified URL token. Returning payload.');
-        return payload as JWT;
+        const payload: JWTPayload = await verifyJWT(urlToken);
+        debug('Successfully verified URL token.');
+        // --- CONSTRUCT JWT FROM PAYLOAD ---
+        const constructedJwt: JWT = {
+          sub: payload.sub,
+          userId: payload.sub,
+          "https://hasura.io/jwt/claims": payload['https://hasura.io/jwt/claims'] as Record<string, any> | undefined,
+          provider: 'url', // Indicate source
+          // Add other fields as needed
+        };
+        debug('Constructed JWT from URL payload:', constructedJwt);
+        return constructedJwt;
+        // --- END CONSTRUCTION ---
       } catch (urlTokenError) {
         debug('URL token verification failed:', urlTokenError);
-        // Fall through to check cookies
       }
     }
   } catch (urlError) {
     debug('Error accessing URL parameters:', urlError);
-    // Fall through to check cookies
   }
 
   // 3. Fallback to checking NextAuth cookies

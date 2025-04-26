@@ -94,20 +94,12 @@ export const generateJWT = async (
       throw new Error('User ID is undefined for generateJWT');
     }
     
-    // Get the JWT configuration
-    const secretKey = process.env.HASURA_JWT_SECRET || '{"type":"HS256","key":"your-secret-key"}';
-    let secret: string;
-    let algorithm: string = 'HS256';
-    
-    try {
-      const jwtConfig = typeof secretKey === 'string' ? JSON.parse(secretKey) : secretKey;
-      secret = jwtConfig.key;
-      algorithm = jwtConfig.type || 'HS256';
-      if (!secret) {
-        throw new Error('JWT key not found in configuration');
-      }
-    } catch (e) {
-      secret = secretKey as string;
+    // Get the JWT secret key and algorithm
+    const secretKeyUint8Array = getJwtSecret(); // Gets Uint8Array
+    const algorithm = getJwtAlgorithm(); // Gets algorithm string e.g., 'HS256'
+
+    if (!algorithm.startsWith('HS') && !algorithm.startsWith('ES') && !algorithm.startsWith('RS') && !algorithm.startsWith('PS')) {
+        throw new Error(`Unsupported JWT algorithm: ${algorithm}`);
     }
     
     // Create the Hasura claims
@@ -119,29 +111,26 @@ export const generateJWT = async (
     };
     
     // Create the payload
-    const payload = {
+    const payload: JWTPayload = {
       sub: userId,
       'https://hasura.io/jwt/claims': hasuraClaims
+      // Add other standard claims like iat, exp if needed, SignJWT handles them
     };
     
-    // Use jsonwebtoken to sign
+    // Use jose.SignJWT to sign
     const { expiresIn = '1h' } = options;
+
+    const jwt = await new SignJWT(payload)
+        .setProtectedHeader({ alg: algorithm })
+        .setIssuedAt() // Sets 'iat' claim
+        .setSubject(userId) // Sets 'sub' claim (redundant but explicit)
+        .setExpirationTime(expiresIn) // Sets 'exp' claim
+        .sign(secretKeyUint8Array); // Use the Uint8Array key
     
-    // Fix the way we pass the algorithm to match jsonwebtoken expectations
-    // @ts-ignore
-    const token = jwt.sign(
-      payload, 
-      secret, 
-      { 
-        algorithm: algorithm as "HS256" | "RS256" | "ES256" | "PS256", // Specify valid algorithms
-        expiresIn 
-      }
-    );
-    
-    debug('JWT token successfully created using jsonwebtoken');
-    return token;
+    debug('JWT token successfully created using jose');
+    return jwt;
   } catch (error) {
-    debug('Error generating JWT:', error);
+    debug('Error generating JWT using jose:', error);
     throw error;
   }
 };
