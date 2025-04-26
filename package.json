@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.58",
+  "version": "0.1.59",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -17,8 +17,8 @@
     "unbuild:lib": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -print -delete",
     "build:next": "next build --turbopack",
     "build:client": "node build-client.mjs",
-    "build:android": "npm run build:client && npx cap sync android",
-    "build:ios": "npm run build:client && npx cap sync ios",
+    "build:android": "npm run build:client && npm run cli -- assets && npx cap sync android",
+    "build:ios": "npm run build:client && npm run cli -- assets && npx cap sync ios",
     "start": "next start --turbopack",
     "lint": "next lint --turbopack",
     "test": "jest",
@@ -29,7 +29,8 @@
     "hasyx:unmigrate": "tsx ./migrations/hasyx/down.ts",
     "hasura:schema": "tsx ./lib/hasura-schema.ts",
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
-    "npm-publish": "npm run build; npm publish"
+    "npm-publish": "npm run build; npm publish",
+    "cli": "tsx ./lib/cli.ts"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

@@ -3,7 +3,7 @@ import * as React from "react"
 import { SearchForm } from "hasyx/components/search-form"
 import { VersionSwitcher } from "hasyx/components/version-switcher"
 import {
-  Sidebar,
+  Sidebar as SidebarComponent,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
@@ -26,9 +26,9 @@ export interface SidebarData {
   navMain: SidebarItem[];
 }
 
-export function AppSidebar({ activeUrl, data }: { activeUrl: string, data: SidebarData }) {
+export function Sidebar({ activeUrl, data }: { activeUrl: string, data: SidebarData }) {
   return (
-    <Sidebar>
+    <SidebarComponent>
       <SidebarHeader>
         <VersionSwitcher
           versions={data.versions}
@@ -56,6 +56,6 @@ export function AppSidebar({ activeUrl, data }: { activeUrl: string, data: Sideb
         ))}
       </SidebarContent>
       <SidebarRail />
-    </Sidebar>
+    </SidebarComponent>
   )
 }

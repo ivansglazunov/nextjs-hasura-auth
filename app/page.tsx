@@ -1,4 +1,4 @@
-import { AppSidebar } from "hasyx/components/app-sidebar"
+import { Sidebar } from "@/components/sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -37,7 +37,7 @@ export default async function Page() {
 
   return (
     <SidebarProvider>
-      <AppSidebar activeUrl={'/'} data={sidebar} />
+      <Sidebar activeUrl={'/'} data={sidebar} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />

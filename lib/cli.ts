@@ -172,6 +172,7 @@ program
       'app/api/auth/[...nextauth]/route.ts': 'app/api/auth/[...nextauth]/route.ts',
       'app/api/auth/[...nextauth]/options.ts': 'app/api/auth/[...nextauth]/options.ts',
       'app/api/auth/verify/route.ts': 'app/api/auth/verify/route.ts',
+      'app/api/auth/route.ts': 'app/api/auth/route.ts',
       'app/api/graphql/route.ts': 'app/api/graphql/route.ts',
     };
     debug('Files to create or replace:', Object.keys(filesToCreateOrReplace));
@@ -183,6 +184,8 @@ program
       'app/page.tsx': 'app/page.tsx',
       'app/globals.css': 'app/globals.css',
       'app/favicon.ico': 'app/favicon.ico', // Need binary template handling or skip
+      // Universal logo path
+      'public/logo.svg': 'public/logo.svg',
       // Config files (won't overwrite)
       '.gitignore': '.gitignore',
       '.npmignore': '.npmignore',
@@ -547,6 +550,245 @@ program
       debug('Finished "schema" command with errors.');
       process.exit(1); // Exit with error code
     }
+  });
+
+// --- NEW: `assets` Command ---
+program
+  .command('assets')
+  .description('Generate app icons and splash screens from logo.svg for web, Capacitor, and Electron apps.')
+  .action(async () => {
+    debug('Executing "assets" command.');
+    console.log('🖼️ Generating assets from logo.svg...');
+    const projectRoot = findProjectRoot();
+    
+    // Source SVG file
+    const svgLogoPath = path.join(projectRoot, 'public', 'logo.svg');
+    debug(`Source SVG logo path: ${svgLogoPath}`);
+    
+    // Ensure source file exists
+    if (!fs.existsSync(svgLogoPath)) {
+      console.error(`❌ Source logo file not found: ${svgLogoPath}`);
+      debug('Source logo file not found.');
+      console.log('💡 Please make sure public/logo.svg exists. You can run "npx hasyx init" to create a default logo.');
+      process.exit(1);
+    }
+    
+    console.log('✅ Found source logo file.');
+    
+    // --- Step 1: Ensure required directories exist ---
+    console.log('📁 Ensuring required directories exist...');
+    
+    // Ensure public directory exists
+    const publicDir = path.join(projectRoot, 'public');
+    debug(`Ensuring public directory: ${publicDir}`);
+    await fs.ensureDir(publicDir);
+    
+    // Ensure assets directory exists
+    const assetsDir = path.join(projectRoot, 'assets');
+    debug(`Ensuring assets directory: ${assetsDir}`);
+    await fs.ensureDir(assetsDir);
+    
+    // Ensure electron assets directory exists (if needed)
+    const electronAssetsDir = path.join(projectRoot, 'electron', 'assets');
+    debug(`Checking if electron directory exists...`);
+    const electronExists = fs.existsSync(path.join(projectRoot, 'electron'));
+    
+    if (electronExists) {
+      debug(`Ensuring electron assets directory: ${electronAssetsDir}`);
+      await fs.ensureDir(electronAssetsDir);
+      console.log('✅ Found Electron project, will generate Electron assets.');
+    } else {
+      debug('Electron directory not found, skipping Electron assets.');
+      console.log('ℹ️ Electron directory not found, skipping Electron assets.');
+    }
+    
+    // --- Step 2: Convert SVG to PNG for logo.png ---
+    console.log('🔄 Converting SVG to PNG...');
+    debug('Installing sharp package if needed...');
+    
+    try {
+      // Install sharp if not already installed
+      const sharpResult = spawn.sync('npm', ['install', '--no-save', 'sharp'], {
+        stdio: 'inherit',
+        cwd: projectRoot,
+      });
+      
+      if (sharpResult.error || sharpResult.status !== 0) {
+        console.error('❌ Failed to install sharp package:', sharpResult.error || `Exit code: ${sharpResult.status}`);
+        debug('Failed to install sharp package.');
+        process.exit(1);
+      }
+      
+      // Dynamic import of sharp (since it's a native module)
+      debug('Dynamically importing sharp...');
+      const { default: importSharp } = await import('sharp');
+      const sharp = importSharp;
+      
+      // Convert SVG to PNG with 1024px size
+      const logoPngPath = path.join(assetsDir, 'logo.png');
+      debug(`Converting SVG to PNG at path: ${logoPngPath}`);
+      
+      await sharp(svgLogoPath)
+        .resize(1024, 1024)
+        .png()
+        .toFile(logoPngPath);
+      
+      console.log(`✅ Created ${logoPngPath}`);
+      
+      // Copy to public folder
+      const publicLogoPngPath = path.join(publicDir, 'logo.png');
+      debug(`Copying logo.png to public folder: ${publicLogoPngPath}`);
+      await fs.copyFile(logoPngPath, publicLogoPngPath);
+      console.log(`✅ Copied logo.png to public folder`);
+      
+    } catch (error) {
+      console.error('❌ Failed to convert SVG to PNG:', error);
+      debug(`Error converting SVG to PNG: ${error}`);
+      process.exit(1);
+    }
+    
+    // --- Step 3: Generate favicon.ico ---
+    console.log('🔄 Generating favicon.ico...');
+    debug('Installing png-to-ico package if needed...');
+    
+    try {
+      // Install png-to-ico if not already installed
+      const pngToIcoResult = spawn.sync('npm', ['install', '--no-save', 'png-to-ico'], {
+        stdio: 'inherit',
+        cwd: projectRoot,
+      });
+      
+      if (pngToIcoResult.error || pngToIcoResult.status !== 0) {
+        console.error('❌ Failed to install png-to-ico package:', pngToIcoResult.error || `Exit code: ${pngToIcoResult.status}`);
+        debug('Failed to install png-to-ico package.');
+        process.exit(1);
+      }
+      
+      // Generate favicon.ico using png-to-ico
+      const logoPngPath = path.join(assetsDir, 'logo.png');
+      const faviconPath = path.join(publicDir, 'favicon.ico');
+      debug(`Generating favicon.ico at path: ${faviconPath}`);
+      
+      const pngToIcoProcess = spawn.sync('npx', ['png-to-ico', logoPngPath], {
+        stdio: ['ignore', 'pipe', 'inherit'],
+        cwd: projectRoot,
+      });
+      
+      if (pngToIcoProcess.error || pngToIcoProcess.status !== 0) {
+        console.error('❌ Failed to generate favicon.ico:', pngToIcoProcess.error || `Exit code: ${pngToIcoProcess.status}`);
+        debug('Failed to generate favicon.ico.');
+        process.exit(1);
+      }
+      
+      await fs.writeFile(faviconPath, pngToIcoProcess.stdout);
+      console.log(`✅ Created ${faviconPath}`);
+      
+      // Copy favicon to app/favicon.ico for Next.js
+      const nextFaviconPath = path.join(projectRoot, 'app', 'favicon.ico');
+      debug(`Copying favicon.ico to Next.js app folder: ${nextFaviconPath}`);
+      
+      // Ensure app directory exists
+      await fs.ensureDir(path.join(projectRoot, 'app'));
+      await fs.copyFile(faviconPath, nextFaviconPath);
+      console.log(`✅ Copied favicon.ico to app folder for Next.js`);
+      
+      // If Electron exists, copy favicon to electron assets
+      if (electronExists) {
+        const electronFaviconPath = path.join(electronAssetsDir, 'appIcon.ico');
+        debug(`Copying favicon.ico to Electron assets: ${electronFaviconPath}`);
+        await fs.copyFile(faviconPath, electronFaviconPath);
+        console.log(`✅ Copied favicon.ico to Electron assets as appIcon.ico`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to generate favicon.ico:', error);
+      debug(`Error generating favicon.ico: ${error}`);
+      // Continue even if favicon generation fails
+    }
+    
+    // --- Step 4: Generate Capacitor assets ---
+    console.log('🔄 Generating Capacitor assets...');
+    debug('Checking if @capacitor/assets is installed...');
+    
+    try {
+      // Install @capacitor/assets if not already installed
+      const capacitorAssetsResult = spawn.sync('npm', ['install', '--no-save', '@capacitor/assets'], {
+        stdio: 'inherit',
+        cwd: projectRoot,
+      });
+      
+      if (capacitorAssetsResult.error || capacitorAssetsResult.status !== 0) {
+        console.error('❌ Failed to install @capacitor/assets package:', capacitorAssetsResult.error || `Exit code: ${capacitorAssetsResult.status}`);
+        debug('Failed to install @capacitor/assets package.');
+        // Continue even if installation fails
+      } else {
+        // Run @capacitor/assets generate
+        debug('Running @capacitor/assets generate...');
+        console.log('📱 Generating Capacitor app icons and splash screens...');
+        
+        // Create a simple assets directory structure if it doesn't exist
+        const assetsPngPath = path.join(assetsDir, 'logo.png');
+        debug(`Ensuring logo.png exists at ${assetsPngPath}`);
+        
+        // Make sure we have the logo.png in the assets directory
+        await fs.copyFile(path.join(assetsDir, 'logo.png'), assetsPngPath);
+        
+        // Run the command with the correct arguments - much simpler than before
+        const capacitorGenResult = spawn.sync('npx', [
+          '@capacitor/assets', 
+          'generate',
+          '--iconBackgroundColor', 'transparent',
+          '--iconBackgroundColorDark', 'transparent',
+          '--splashBackgroundColor', 'transparent',
+          '--splashBackgroundColorDark', 'transparent'
+        ], {
+          stdio: 'inherit',
+          cwd: projectRoot
+        });
+        
+        if (capacitorGenResult.error) {
+          console.error('❌ Failed to generate Capacitor assets:', capacitorGenResult.error);
+          debug(`Failed to generate Capacitor assets: ${capacitorGenResult.error}`);
+          // Continue even if generation fails
+        } else {
+          console.log('✅ Generated Capacitor assets');
+          debug('Successfully generated Capacitor assets.');
+          
+          // Check if Android resources were generated
+          const androidSplashPath = path.join(projectRoot, 'android', 'app', 'src', 'main', 'res', 'drawable-port-hdpi', 'splash.png');
+          debug(`Checking if Android splash screen was generated: ${androidSplashPath}`);
+          
+          if (fs.existsSync(androidSplashPath) && electronExists) {
+            // Copy Android splash to Electron assets
+            debug(`Copying Android splash screen to Electron assets.`);
+            const electronSplashPath = path.join(electronAssetsDir, 'splash.png');
+            await fs.copyFile(androidSplashPath, electronSplashPath);
+            console.log(`✅ Copied Android splash screen to Electron assets`);
+          } else if (electronExists) {
+            // If Android splash doesn't exist but Electron does, copy logo.png as splash
+            debug(`Android splash not found, copying logo.png to Electron splash.`);
+            const electronSplashPath = path.join(electronAssetsDir, 'splash.png');
+            await fs.copyFile(path.join(assetsDir, 'logo.png'), electronSplashPath);
+            console.log(`✅ Copied logo.png to Electron assets as splash.png`);
+          }
+          
+          // If Electron exists, copy logo.png as appIcon.png
+          if (electronExists) {
+            debug(`Copying logo.png to Electron assets as appIcon.png.`);
+            const electronIconPath = path.join(electronAssetsDir, 'appIcon.png');
+            await fs.copyFile(path.join(assetsDir, 'logo.png'), electronIconPath);
+            console.log(`✅ Copied logo.png to Electron assets as appIcon.png`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error during Capacitor assets generation:', error);
+      debug(`Error during Capacitor assets generation: ${error}`);
+      // Continue even if generation fails
+    }
+    
+    console.log('\n✨ Assets generation completed!');
+    debug('Finished "assets" command.');
   });
 
 debug('Parsing CLI arguments...');

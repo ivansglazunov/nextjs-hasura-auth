@@ -12,7 +12,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <html lang="en" suppressHydrationWarning>
-        <head />
+        <head>
+          <link rel="icon" href="/favicon.ico" sizes="any" />
+        </head>
         <body>
           <HasyxProvider generate={generate}>
             {children}

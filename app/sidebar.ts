@@ -1,5 +1,5 @@
 import pckg from "hasyx/package.json"
-import { SidebarData } from "hasyx/components/app-sidebar"
+import { SidebarData } from "@/components/sidebar"
 import {
   CircleDollarSign,
   Home,

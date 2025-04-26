@@ -210,12 +210,14 @@ npx hasyx init
 │       ├── 🔄 npm-publish.yml  # Example CI/CD for publishing (if you fork Hasyx)
 │       └── 🔄 test.yml          # Example CI for running tests (if you fork Hasyx)
 ├── app/
+│   ├── ✨ sidebar.ts
 │   ├── ✨ layout.tsx
 │   ├── ✨ page.tsx
 │   ├── ✨ globals.css
 │   ├── ✨ favicon.ico
 │   └── api/
 │       ├── auth/
+│       │   ├── 🔄 route.ts
 │       │   ├── [...nextauth]/
 │       │   │   ├── 🔄 route.ts
 │       │   │   └── 🔄 options.ts
@@ -223,9 +225,18 @@ npx hasyx init
 │       │       └── 🔄 route.ts     # (Likely for email verification)
 │       └── graphql/
 │           └── 🔄 route.ts         # Hasyx GraphQL Proxy
+|-- public/
+│   ├── ✨ logo.svg
 ├── ✨ .gitignore
 ├── ✨ .npmignore
 └── ✨ .npmrc
+├── ✨ jest.config.js
+├── ✨ jest.setup.js
+├── ✨ next.config.ts
+├── ✨ postcss.config.mjs
+├── ✨ components.json
+├── ✨ tsconfig.json
+├── ✨ tsconfig.lib.json
 ```
 *Note: GitHub workflow files are copied as examples and might need adjustment for your specific repository.*
 

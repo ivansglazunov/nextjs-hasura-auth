@@ -1,7 +1,7 @@
 import React from 'react'; // Import React
 
 import sidebar from "@/app/sidebar"; // Убедитесь, что путь правильный
-import { AppSidebar } from "hasyx/components/app-sidebar";
+import { Sidebar } from "@/components/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -35,7 +35,7 @@ export default function AframePage() {
   return (
     <SidebarProvider>
       {/* Убедитесь, что activeUrl правильный */}
-      <AppSidebar activeUrl={'/aframe'} data={sidebar} />
+      <Sidebar activeUrl={'/aframe'} data={sidebar} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />

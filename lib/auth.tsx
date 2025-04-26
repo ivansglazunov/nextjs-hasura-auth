@@ -52,8 +52,8 @@ export async function getTokenFromRequest(request: NextRequest): Promise<JWT | n
 
   // 2. Check URL query parameter 'auth_token'
   try {
-    const url = new URL(request.url);
-    const urlToken = url.searchParams.get('auth_token');
+    // Use request.nextUrl which is already parsed in Next.js
+    const urlToken = request.nextUrl.searchParams.get('auth_token');
     if (urlToken) {
       debug('Found token in URL query parameter (auth_token)');
       try {
@@ -66,7 +66,7 @@ export async function getTokenFromRequest(request: NextRequest): Promise<JWT | n
       }
     }
   } catch (urlError) {
-    debug('Error parsing URL or accessing query parameters:', urlError);
+    debug('Error accessing URL parameters:', urlError);
     // Fall through to check cookies
   }
 
