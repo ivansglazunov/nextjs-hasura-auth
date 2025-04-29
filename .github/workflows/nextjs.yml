@@ -75,6 +75,21 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} npm run build:client
+        env:
+          TEST_TOKEN: ${{secrets.TEST_TOKEN}}
+          NEXT_PUBLIC_HASURA_GRAPHQL_URL: ${{secrets.NEXT_PUBLIC_HASURA_GRAPHQL_URL}}
+          HASURA_ADMIN_SECRET: ${{secrets.HASURA_ADMIN_SECRET}}
+          HASURA_JWT_SECRET: ${{secrets.HASURA_JWT_SECRET}}
+          NEXT_PUBLIC_MAIN_URL: ${{secrets.NEXT_PUBLIC_MAIN_URL}}
+          NEXT_PUBLIC_BASE_URL: ${{secrets.NEXT_PUBLIC_BASE_URL}}
+          NEXTAUTH_SECRET: ${{secrets.NEXTAUTH_SECRET}}
+          GOOGLE_CLIENT_ID: ${{secrets.GOOGLE_CLIENT_ID}}
+          GOOGLE_CLIENT_SECRET: ${{secrets.GOOGLE_CLIENT_SECRET}}
+          YANDEX_CLIENT_ID: ${{secrets.YANDEX_CLIENT_ID}}
+          YANDEX_CLIENT_SECRET: ${{secrets.YANDEX_CLIENT_SECRET}}
+          RESEND_API_KEY: ${{secrets.RESEND_API_KEY}}
+          NODE_ENV: ${{secrets.NODE_ENV}}
+          NEXT_PUBLIC_BUILD_TARGET: ${{secrets.NEXT_PUBLIC_BUILD_TARGET}}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
