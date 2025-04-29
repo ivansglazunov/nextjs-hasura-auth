@@ -550,10 +550,10 @@ export const useDelete = (genOpts: Omit<GenerateOptions, 'operation'>, hookOpts?
     useMutation({ operation: 'delete', ...genOpts }, hookOpts);
 export const useSubscribe = useSubscription;
 
-function HasyxProviderCore({ url = '/api/graphql', children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
+function HasyxProviderCore({ url, children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
   const { data: session } = useSession(); // Get session
   const client = useCreateApolloClient(useMemo(() => ({
-    url,
+    url: url || process.env.NEXT_PUBLIC_BUILD_TARGET === 'client' ? `${process.env.NEXT_PUBLIC_MAIN_URL || 'http://localhost:3000'}/api/graphql` : '/api/graphql',
     token: session?.accessToken, // Pass Hasura token from session
     ws: true // Enable WebSocket support
   }), [session]));

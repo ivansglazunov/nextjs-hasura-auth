@@ -2,10 +2,7 @@ import NextAuth from 'next-auth';
 // import GitHubProvider from 'next-auth/providers/github'; // Uncomment if needed
 // import { HasuraAdapter } from '@auth/hasura-adapter'; // REMOVE ADAPTER
 import Debug from 'hasyx/lib/debug'; // Import from new path
-import authOptions from './options';
-
-// For static export (Capacitor)
-// export const dynamic = 'force-static';
+import authOptions from '../../../options';
 
 // Provide static params for [...nextauth] route for static export
 export function generateStaticParams() {

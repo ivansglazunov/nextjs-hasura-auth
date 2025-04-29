@@ -2,17 +2,12 @@
 import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Paths
-const apiDir = path.join(__dirname, 'app', 'api');
-const backupDir = path.join(__dirname, 'app', '_api_backup');
-// const pageFile = path.join(__dirname, 'app', 'page.tsx'); // No longer needed
-// const pageBackup = path.join(__dirname, 'app', 'page.tsx.bak'); // No longer needed
+const projectRoot = process.cwd(); // Get the project root directory
+const apiDir = path.join(projectRoot, 'app', 'api');
+const backupDir = path.join(projectRoot, 'app', '_api_backup'); // Backup location
 
 // Function to execute shell commands
 async function runCommand(command) {
@@ -24,96 +19,100 @@ async function runCommand(command) {
     return true;
   } catch (error) {
     console.error(`❌ Command failed: ${error.message}`);
+    if (error.stdout) console.log('Stdout:', error.stdout);
+    if (error.stderr) console.error('Stderr:', error.stderr);
     return false;
   }
 }
 
-
 // Main function
 async function buildClient() {
   console.log('📦 Starting client build process...');
-  
-  // Step 1: Build CSS
-  await runCommand('npm run build:css');
-  
-  // Step 2: Backup API directory if it exists
-  if (fs.existsSync(apiDir)) {
-    console.log('🔄 Backing up API directory...');
-    
-    // Create backup directory if it doesn't exist
-    if (!fs.existsSync(backupDir)) {
-      fs.mkdirSync(backupDir, { recursive: true });
-    }
-    
-    try {
-      // Copy the api directory to backup
-      fs.cpSync(apiDir, path.join(backupDir, 'api'), { recursive: true });
-      console.log('✅ API directory backed up successfully.');
-      
-      // Remove the original api directory
-      fs.rmSync(apiDir, { recursive: true, force: true });
-      console.log('✅ API directory temporarily removed for static export.');
-    } catch (err) {
-      console.error('❌ Error handling API backup:', err);
-      process.exit(1);
-    }
-  } else {
-    console.log('⚠️ API directory not found, skipping backup.');
-  }
-  
-  // Step 3: Create simple static home page - REMOVED
-  // console.log('🔄 Creating simple static home page...');
-  // createSimpleHomePage();
-  
-  // Step 4: Run Next.js build (Now Step 3)
-  console.log('🔨 Running Next.js build...');
-  const buildSuccess = await runCommand('cross-env NODE_ENV=production next build');
-  
-  // Step 5: Restore files (Now Step 4)
-  console.log('🔄 Restoring original files...');
-  
-  // Restore home page - REMOVED
-  /*
-  if (fs.existsSync(pageBackup)) {
-    fs.copyFileSync(pageBackup, pageFile);
-    fs.unlinkSync(pageBackup);
-    console.log('✅ Original home page restored.');
-  }
-  */
-  
-  // Restore API directory
-  if (fs.existsSync(path.join(backupDir, 'api'))) {
-    console.log('🔄 Restoring API directory...');
-    try {
-      // If the api directory was recreated during build, remove it
-      if (fs.existsSync(apiDir)) {
-        fs.rmSync(apiDir, { recursive: true, force: true });
+  let buildSuccess = false;
+  let apiWasMoved = false; // Flag to track if we moved the directory
+
+  try {
+    // Step 1: Temporarily move API directory if it exists
+    console.log('🛠️ Checking for API directory...');
+    if (fs.existsSync(apiDir)) {
+      console.log('    Moving API directory to backup location...');
+      try {
+        // Ensure backup parent directory exists (usually 'app')
+        // fs.mkdirSync(path.dirname(backupDir), { recursive: true }); // Might not be needed if backup is inside app
+        // Remove old backup if it exists for some reason
+        if (fs.existsSync(backupDir)) {
+            console.warn('    ⚠️ Found old backup directory, removing it.');
+            fs.rmSync(backupDir, { recursive: true, force: true });
+        }
+        // Use renameSync for atomic move
+        fs.renameSync(apiDir, backupDir); 
+        apiWasMoved = true;
+        console.log('    ✅ API directory moved successfully.');
+      } catch (err) {
+        console.error('❌ Failed to move API directory:', err);
+        throw err; // Stop the build if moving failed
       }
-      
-      // Restore from backup
-      fs.cpSync(path.join(backupDir, 'api'), apiDir, { recursive: true });
-      console.log('✅ API directory restored successfully.');
-      
-      // Clean up backup
-      fs.rmSync(backupDir, { recursive: true, force: true });
-    } catch (err) {
-      console.error('❌ Error restoring API directory:', err);
-      if (buildSuccess) process.exit(1); // Exit if build succeeded but restore failed
+    } else {
+      console.log('    ⚠️ API directory not found, skipping move.');
+    }
+
+    // Step 2: Build CSS (Keep this if needed)
+    await runCommand('npm run build:css');
+
+    // Step 3: Run Next.js build for client target
+    console.log('🔨 Running Next.js build for client target...');
+    // Use NEXT_PUBLIC_BUILD_TARGET for consistency, config reads this
+    buildSuccess = await runCommand('cross-env NEXT_PUBLIC_BUILD_TARGET=client NODE_ENV=production next build');
+
+  } catch (error) {
+    console.error('❌ An error occurred during the build process phase:', error);
+    buildSuccess = false; 
+  } finally {
+    // Step 4: Restore API directory if it was moved
+    if (apiWasMoved) {
+      console.log('🔄 Restoring API directory from backup...');
+      try {
+        // Check if apiDir exists (e.g., build recreated it unexpectedly)
+        if (fs.existsSync(apiDir)) {
+             console.warn('    ⚠️ API directory was recreated during build, removing it before restore.');
+             fs.rmSync(apiDir, { recursive: true, force: true });
+        }
+        // Move backup back to original location
+        fs.renameSync(backupDir, apiDir);
+        console.log('    ✅ API directory restored successfully.');
+        // Optionally remove the now-empty parent of the backup if needed, 
+        // but since it's likely 'app', we probably shouldn't.
+        // fs.rmdirSync(path.dirname(backupDir)); // Be careful with this
+      } catch (err) {
+         console.error('❌ Failed to restore API directory:', err);
+         // This is critical, inform the user
+         console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+         console.error('!!! CRITICAL: Failed to restore app/api directory.     !!!');
+         console.error('!!! Please restore it manually from app/_api_backup    !!!');
+         console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+         // Decide if the overall build should fail if restore fails
+         if (buildSuccess) { // If build succeeded but restore failed
+             // buildSuccess = false; // Mark build as failed? Or just warn?
+             process.exitCode = 1; // Indicate error, but maybe let script finish?
+         } 
+      }
+    } else {
+        console.log('    ⏭️ API directory was not moved, skipping restore.');
     }
   }
-  
+
   // Finish
   if (buildSuccess) {
     console.log('✅ Client build completed successfully!');
     process.exit(0);
   } else {
     console.error('❌ Client build failed.');
-    process.exit(1);
+    process.exit(1); // Exit with error code if build failed
   }
 }
 
 // Run the build process
 buildClient().catch(err => {
-  console.error('❌ Unhandled error during build:', err);
+  console.error('❌ Unhandled error during build script execution:', err);
   process.exit(1);
 }); 

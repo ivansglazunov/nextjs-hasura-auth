@@ -7,7 +7,7 @@ import 'next-auth/jwt';
 import { createAuthOptions } from 'hasyx/lib/auth-options';
 import { AppCredentialsProvider } from 'hasyx/lib/credentials';
 
-import schema from '../../../../public/hasura-schema.json';
+import schema from '../public/hasura-schema.json';
 
 const client = new Hasyx(createApolloClient({
   secret: process.env.HASURA_ADMIN_SECRET!,

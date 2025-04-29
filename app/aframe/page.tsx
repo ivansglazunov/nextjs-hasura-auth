@@ -65,5 +65,3 @@ export default function AframePage() {
   )
 }
 
-// For static export (Capacitor)
-export const dynamic = 'force-static';

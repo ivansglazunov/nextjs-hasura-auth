@@ -6,9 +6,6 @@ import WebSocket, { WebSocketServer } from 'ws';
 
 const debug = Debug('api:auth');
 
-// For static export (Capacitor)
-// export const dynamic = 'force-static';
-
 export async function GET(request: NextRequest) {
   debug('GET /api/auth: Getting authorization status...');
   try {

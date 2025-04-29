@@ -1,14 +1,28 @@
 import type { NextConfig } from "next";
-import fs from 'fs';
-import path from 'path';
+// Removed fs, path imports as they are no longer needed here
 
-// Detect if we're building for client (Capacitor) based on build script name
-const isBuildingForClient = process.env.npm_lifecycle_event === 'build:client';
+// Use environment variables to determine build mode and base path
+const buildTarget = process.env.NEXT_PUBLIC_BUILD_TARGET;
+const isBuildingForClient = buildTarget === 'client';
+// Read basePath from environment, default to undefined if not set
 
-let config: NextConfig = {
+let basePath = process.env.NEXT_PUBLIC_BASE_PATH;
+if (!basePath && process.env.GITHUB_REPOSITORY) {
+  const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+  basePath = `https://${owner}.github.io/${repo}/`;
+}
+
+console.log(`Building config: isClient=${isBuildingForClient}, basePath=${basePath}`);
+
+const config: NextConfig = {
+  // Conditionally set output to 'export'
   output: isBuildingForClient ? 'export' : undefined,
+  // Conditionally set distDir
   distDir: isBuildingForClient ? 'client' : '.next',
-  trailingSlash: isBuildingForClient, // Helps with static file paths
+  // Set basePath from environment variable (will be undefined for non-client or default client builds)
+  basePath: basePath, 
+  // Keep trailingSlash for client build if needed for Capacitor/static server paths
+  trailingSlash: isBuildingForClient, // basePath affects this, ensure compatibility
   images: {
     remotePatterns: [
       {
@@ -20,73 +34,28 @@ let config: NextConfig = {
         hostname: '**',
       },
     ],
-    unoptimized: isBuildingForClient, // Only unoptimize for client build
+    // Keep unoptimized for client build (often needed for static export)
+    unoptimized: isBuildingForClient,
   },
-  // For App Router static export
+  // Keep these if needed for client export compatibility
   skipTrailingSlashRedirect: isBuildingForClient,
   skipMiddlewareUrlNormalize: isBuildingForClient,
-  // Disable type checking and linting during client build
+  
+  // Keep ignoring errors during client build if necessary, 
+  // but be aware this might hide real issues with static export incompatibility.
+  // Consider removing these ignore flags later to see actual Next.js errors.
   typescript: {
     ignoreBuildErrors: isBuildingForClient,
   },
   eslint: {
     ignoreDuringBuilds: isBuildingForClient,
   },
+  // Remove onDemandEntries if not specifically needed
+  // onDemandEntries: isBuildingForClient ? { maxInactiveAge: 1 } : undefined,
 };
 
-// If we're building for client, exclude API routes completely
-if (isBuildingForClient) {
-  config = {
-    ...config,
-    eslint: {
-      ignoreDuringBuilds: true, // Skip ESLint checks for client builds
-    },
-    typescript: {
-      ignoreBuildErrors: true, // Skip TypeScript errors for client builds
-    },
-    onDemandEntries: {
-      // Don't keep pages in memory during client builds
-      maxInactiveAge: 1,
-    },
-  };
-  
-  // Create a temporary patch to exclude API routes from static export
-  // This is a temporary workaround until Next.js provides better static export controls
-  if (fs.existsSync('app/api')) {
-    const tmpApiBackupDir = path.join('app', '_api_backup');
-    if (!fs.existsSync(tmpApiBackupDir)) {
-      fs.mkdirSync(tmpApiBackupDir, { recursive: true });
-    }
-    
-    try {
-      // Move the api directory temporarily
-      fs.renameSync(path.join('app', 'api'), path.join(tmpApiBackupDir, 'api'));
-      
-      // Create a callback to restore the API directory after build
-      process.on('exit', () => {
-        if (fs.existsSync(path.join(tmpApiBackupDir, 'api'))) {
-          try {
-            fs.renameSync(path.join(tmpApiBackupDir, 'api'), path.join('app', 'api'));
-            fs.rmdirSync(tmpApiBackupDir);
-            console.log('✅ API routes restored after client build');
-          } catch (err) {
-            console.error('❌ Error restoring API routes:', err);
-          }
-        }
-      });
-      
-      // Also handle early termination signals
-      ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach(signal => {
-        process.on(signal, () => {
-          process.exit(0);
-        });
-      });
-      
-      console.log('✅ API routes temporarily removed for static export');
-    } catch (err) {
-      console.error('❌ Error handling API routes for static export:', err);
-    }
-  }
-}
+// REMOVED the entire block that was moving the app/api directory.
+// Next.js with output: 'export' will handle API routes appropriately 
+// (either build them if static GET, or error if dynamic).
 
 export default config;

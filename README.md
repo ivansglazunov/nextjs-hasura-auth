@@ -324,30 +324,47 @@ NEXT_PUBLIC_HASURA_GRAPHQL_URL=https://your-project.hasura.app/v1/graphql
 # Required for migrations, schema generation, and potentially backend operations if not using JWT auth for them.
 HASURA_ADMIN_SECRET=your_strong_hasura_admin_secret
 # Required if using JWT authentication mode with Hasura. MUST match Hasura's config.
-HASURA_JWT_SECRET={"type":"HS256","key":"your_32_byte_or_longer_secret_key_for_hs256"}
+HASURA_JWT_SECRET={\"type\":\"HS256\",\"key\":\"your_32_byte_or_longer_secret_key_for_hs256\"}
 
 # ===== NextAuth.js Configuration =====
-# Required: The canonical URL of your deployment. Use http://localhost:3000 for local dev.
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
 # Required: A strong secret for signing tokens, CSRF protection, etc.
 NEXTAUTH_SECRET=your_super_secret_nextauth_key_32_chars_or_more
 
+# ===== Deployment & Build Configuration =====
+# Base URL for server-side operations and default NextAuth callbacks (OAuth, emails). 
+# IMPORTANT: Set this to your canonical production URL (e.g., https://myapp.com) 
+# or http://localhost:3000 for local dev.
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Optional: Set the base path if deploying the site to a subdirectory (e.g., /my-app).
+# For GitHub Pages, this is set automatically by the workflow based on your repo name.
+# Leave blank or remove if deploying to the root.
+# NEXT_PUBLIC_BASE_PATH=
+
+# Optional: URL of the *deployed* backend API for client-side builds (Capacitor, static export).
+# If set, the client build will make API calls to this URL instead of relative paths.
+# Defaults to NEXT_PUBLIC_BASE_URL if not set.
+# NEXT_PUBLIC_MAIN_URL=
+
+# Internal use: Set automatically by specific build scripts (e.g., build:client sets it to 'client').
+# Do not set manually unless you know what you are doing.
+# NEXT_PUBLIC_BUILD_TARGET=
+
 # ===== OAuth Providers (Optional - Enable by setting credentials) =====
 # --- Google ---
-GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+# GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+# GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 # --- Yandex ---
-YANDEX_CLIENT_ID=your_yandex_client_id
-YANDEX_CLIENT_SECRET=your_yandex_client_secret
+# YANDEX_CLIENT_ID=your_yandex_client_id
+# YANDEX_CLIENT_SECRET=your_yandex_client_secret
 
 # ===== Email Provider (Optional - For passwordless or verification) =====
 # Required if using EmailProvider or email features (like verification if implemented)
-RESEND_API_KEY=re_your_resend_api_key
+# RESEND_API_KEY=re_your_resend_api_key
 
 # ===== Other =====
 # NODE_ENV=development # Usually set automatically by Node/Next.js
-# NEXT_PUBLIC_BUILD_TARGET=server # Specific Hasyx build target setting (if needed)
 ```
 
 ### Configuration Details
@@ -361,10 +378,16 @@ RESEND_API_KEY=re_your_resend_api_key
     *   **Migrations:** Define your database changes in `up.ts` and rollbacks in `down.ts` files within `./migrations/<name>/` directories (see [example up](./migrations/hasyx/up.ts), [example down](./migrations/hasyx/down.ts)). Run `npx hasyx migrate` to apply or `npx hasyx unmigrate` to revert.
     *   **Schema Updates:** After changing your database structure (and running migrations), update the local schema representation and types by running `npx hasyx schema`.
 
-#### NextAuth.js (`NEXT_PUBLIC_BASE_URL`, `NEXTAUTH_SECRET`)
+#### NextAuth.js (`NEXTAUTH_SECRET`)
 
-*   `NEXT_PUBLIC_BASE_URL`: **Required** by NextAuth.js, especially for OAuth redirects and email links. Set it to your application's canonical base URL (e.g., `http://localhost:3000` locally, `https://yourdomain.com` in production).
 *   `NEXTAUTH_SECRET`: **Required** for securing sessions, signing JWTs, and CSRF protection. Generate a strong, random string (at least 32 characters). You can use `openssl rand -base64 32` to generate one.
+
+#### Deployment & Build (`NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_BASE_PATH`, `NEXT_PUBLIC_MAIN_URL`, `NEXT_PUBLIC_BUILD_TARGET`)
+
+*   `NEXT_PUBLIC_BASE_URL`: **Required**. The canonical base URL of your application deployment. Used by NextAuth.js for OAuth redirects and email links, and as a default fallback for `NEXT_PUBLIC_MAIN_URL`. Set it to your production domain (e.g., `https://yourdomain.com`) or `http://localhost:3000` for local development.
+*   `NEXT_PUBLIC_BASE_PATH`: *Optional*. If you deploy your application to a subdirectory of a domain (e.g., `https://example.com/my-app`), set this variable to the subdirectory path (e.g., `/my-app`). Next.js will use this to correctly prefix asset paths (`/_next/...` becomes `/my-app/_next/...`) and links. **For GitHub Pages deployments**, the included workflow (`.github/workflows/nextjs.yml`) **automatically detects and sets this** based on your repository name, so you typically don't need to set it manually for GH Pages.
+*   `NEXT_PUBLIC_MAIN_URL`: *Optional*. Specifies the absolute URL of your deployed backend API. This is primarily used by **client-side builds** (`build:client` for Capacitor/static export). When `NEXT_PUBLIC_BUILD_TARGET` is set to `client`, API calls from the client (e.g., via Apollo Client configured in `HasyxProvider`) will be directed to this URL (e.g., `https://yourdomain.com/api/graphql`) instead of relative paths (`/api/graphql`). If not set, it defaults to the value of `NEXT_PUBLIC_BASE_URL`.
+*   `NEXT_PUBLIC_BUILD_TARGET`: *Internal Use*. This variable is set automatically by specific build scripts (like `npm run build:client` which sets it to `client`) to signal the type of build being performed. This allows `next.config.ts` and potentially other parts of the application (like `HasyxProvider`) to adjust their behavior, for example, by enabling `output: 'export'` or changing API endpoints. **Avoid setting this manually** unless you have a specific reason and understand the implications.
 
 #### OAuth Providers (`GOOGLE_*`, `YANDEX_*`, etc.)
 
