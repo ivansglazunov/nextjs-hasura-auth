@@ -8,7 +8,7 @@ import schema from '../../../../public/hasura-schema.json';
 const debug = Debug('api:auth:verify');
 
 // Add force-static for Capacitor exports
-export const dynamic = 'force-static';
+// export const dynamic = 'force-static';
 
 // For static export, we need to avoid using request.url
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';

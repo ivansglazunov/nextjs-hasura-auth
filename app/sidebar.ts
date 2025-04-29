@@ -1,14 +1,5 @@
-import pckg from "hasyx/package.json"
-import { SidebarData } from "@/components/sidebar"
-import {
-  CircleDollarSign,
-  Home,
-  Settings,
-  ShoppingBag,
-  User,
-  LogOut,
-  Box,
-} from "lucide-react"
+import { SidebarData } from "hasyx/components/sidebar";
+import pckg from "hasyx/package.json";
 
 export const sidebar: SidebarData = {
   versions: [pckg.version],
