@@ -66,6 +66,7 @@ jobs:
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
+        id: build
         run: ${{ steps.detect-package-manager.outputs.runner }} npm run client
         env:
           TEST_TOKEN: ${{secrets.TEST_TOKEN}}
@@ -82,8 +83,13 @@ jobs:
           RESEND_API_KEY: ${{secrets.RESEND_API_KEY}}
           NODE_ENV: production
           NEXT_PUBLIC_BUILD_TARGET: client
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
       - name: Verify Build Output Directory
-        run: ls -la
+        run: |
+          echo "Listing directory contents:"
+          ls -la
+          echo "Checking contents of client/_next/static/:":
+          ls -la client/_next/static/ || echo "client/_next/static/ not found"
         shell: bash
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

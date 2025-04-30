@@ -4,16 +4,9 @@ import type { NextConfig } from "next";
 // Use environment variables to determine build mode and base path
 const buildTarget = process.env.NEXT_PUBLIC_BUILD_TARGET;
 const isBuildingForClient = buildTarget === 'client';
-// Read basePath from environment, default to undefined if not set
 
-let basePath = process.env.NEXT_PUBLIC_BASE_PATH;
-
-// Fallback for GitHub Actions if basePath is not explicitly set
-if (!basePath && process.env.GITHUB_REPOSITORY) {
-  const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
-  basePath = `/${repoName}`; // Correct: Generate path like /hasyx
-  console.log(`   -> Using GitHub Repository for basePath: ${basePath}`);
-}
+// Read basePath directly from environment. Fallback logic is removed.
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
 
 console.log(`Building config: isClient=${isBuildingForClient}, basePath=${basePath}`);
 
