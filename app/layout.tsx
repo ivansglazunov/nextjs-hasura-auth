@@ -13,14 +13,6 @@ const DESCRIPTION = 'hasyx framework';
 // Get basePath from environment variable
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
-export const metadata = {
-  icons: {
-    // Use basePath for favicon href
-    icon: `${basePath}/favicon.ico`,
-    apple: `${basePath}/logo192.png`, // Assuming you might have these
-  },
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
