@@ -143,6 +143,14 @@ async function buildClient() {
 
     // 5. Run Next.js build for client target
     console.log('🔨 Running Next.js build for client target...');
+    
+    // --- Add environment variable logging just before build ---
+    console.log(`   ENV_VARS before next build:`);
+    console.log(`      NEXT_PUBLIC_BUILD_TARGET: ${process.env.NEXT_PUBLIC_BUILD_TARGET}`);
+    console.log(`      NEXT_PUBLIC_BASE_PATH: ${process.env.NEXT_PUBLIC_BASE_PATH}`);
+    console.log(`      NEXT_PUBLIC_MAIN_URL: ${process.env.NEXT_PUBLIC_MAIN_URL}`);
+    // ----------------------------------------------------------
+    
     buildSuccess = await runCommand('cross-env NEXT_PUBLIC_BUILD_TARGET=client NODE_ENV=production next build');
 
   } catch (error) {
