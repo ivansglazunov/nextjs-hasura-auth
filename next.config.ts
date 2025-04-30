@@ -1,24 +1,20 @@
 import type { NextConfig } from "next";
 // Removed fs, path imports as they are no longer needed here
 
-// Use environment variables to determine build mode and base path
+// Use environment variables to determine build mode
 const buildTarget = process.env.NEXT_PUBLIC_BUILD_TARGET;
 const isBuildingForClient = buildTarget === 'client';
 
-// Read basePath directly from environment. Fallback logic is removed.
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
-
-console.log(`Building config: isClient=${isBuildingForClient}, basePath=${basePath}`);
+// basePath and distDir are now removed, relying on actions/configure-pages@v5 or defaults
+console.log(`Building config: isClient=${isBuildingForClient}`);
 
 const config: NextConfig = {
   // Conditionally set output to 'export'
   output: isBuildingForClient ? 'export' : undefined,
-  // Conditionally set distDir
-  distDir: isBuildingForClient ? 'client' : '.next',
-  // Set basePath from environment variable (will be undefined for non-client or default client builds)
-  basePath: basePath, 
-  // Keep trailingSlash for client build if needed for Capacitor/static server paths
-  trailingSlash: isBuildingForClient, // basePath affects this, ensure compatibility
+  // distDir: isBuildingForClient ? 'client' : '.next', // REMOVED
+  // basePath: process.env.NEXT_PUBLIC_BASE_PATH, // REMOVED
+  // trailingSlash should likely be true for static exports compatibility, especially with basePath
+  trailingSlash: isBuildingForClient, 
   images: {
     remotePatterns: [
       {
@@ -30,7 +26,7 @@ const config: NextConfig = {
         hostname: '**',
       },
     ],
-    // Keep unoptimized for client build (often needed for static export)
+    // keep unoptimized for static export
     unoptimized: isBuildingForClient,
   },
   // Keep these if needed for client export compatibility
