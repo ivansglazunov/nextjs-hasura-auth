@@ -89,6 +89,7 @@ jobs:
           YANDEX_CLIENT_SECRET: ${{secrets.YANDEX_CLIENT_SECRET}}
           RESEND_API_KEY: ${{secrets.RESEND_API_KEY}}
           NODE_ENV: production
+          NEXT_PUBLIC_BUILD_TARGET: client
       - name: Verify Build Output Directory
         run: ls -la
         shell: bash
