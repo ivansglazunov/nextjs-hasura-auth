@@ -404,6 +404,45 @@ program
      debug('Finished "start" command (likely interrupted).');
   });
 
+// --- NEW: `build:client` Command ---
+program
+  .command('build:client')
+  .description('Builds the Next.js application for static client export (e.g., for Capacitor).')
+  .action(() => {
+    debug('Executing "build:client" command via CLI.');
+    console.log('📦 Building Next.js application for client export...');
+    const cwd = findProjectRoot();
+    const scriptPath = path.join('lib', 'build-client.ts'); // Path relative to project root
+    debug(`Running command: npx tsx ${scriptPath} in ${cwd}`);
+    
+    // Check if the script exists before trying to run it
+    if (!fs.existsSync(path.join(cwd, scriptPath))) {
+      console.error(`❌ Build script not found at ${scriptPath}. Please ensure it exists.`);
+      debug(`Build script not found at ${path.join(cwd, scriptPath)}`);
+      process.exit(1);
+    }
+
+    const result = spawn.sync('npx', ['tsx', scriptPath], {
+      stdio: 'inherit',
+      cwd: cwd, // Ensure execution context is the project root
+    });
+    debug('build:client script result:', JSON.stringify(result, null, 2));
+    
+    if (result.error) {
+      console.error('❌ Client build failed to start:', result.error);
+      debug(`Client build failed to start: ${result.error}`);
+      process.exit(1);
+    }
+    if (result.status !== 0) {
+       console.error(`❌ Client build process exited with status ${result.status}`);
+       debug(`Client build exited with non-zero status: ${result.status}`);
+       process.exit(result.status ?? 1);
+    }
+    // Success message is usually handled within the build-client.ts script itself
+    // console.log('✅ Client build complete!'); 
+    debug('Finished executing "build:client" command via CLI.');
+  });
+
 // --- NEW: `migrate` Command ---
 program
   .command('migrate')

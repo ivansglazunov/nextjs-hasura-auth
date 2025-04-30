@@ -25,15 +25,15 @@ import { UsersCard } from "hasyx/components/users/users-card"
 
 // Imports for getting server-side session
 import authOptions from "@/app/options"
-import { Session } from "next-auth"; // Import Session type
 
 import sidebar from "@/app/sidebar"
-import getSsrSession from "hasyx/lib/ssr-session"
+import useSsr, { SsrResult } from "@/lib/ssr"
 
 // Now this is an async server component
 export default async function Page() {
   // Get session on the server
-  const session: Session | null = await getSsrSession(authOptions);
+  const { session } = await useSsr(authOptions) as SsrResult;
+  // const session = null;
 
   return (
     <SidebarProvider>

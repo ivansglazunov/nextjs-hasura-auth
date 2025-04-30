@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.62",
+  "version": "0.1.63",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -16,7 +16,7 @@
     "build:css": "tailwindcss -i ./app/globals.css -o ./lib/styles.css",
     "unbuild:lib": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -print -delete",
     "build:next": "next build --turbopack",
-    "build:client": "node build-client.mjs",
+    "client": "tsx lib/build-client.ts",
     "build:android": "npm run build:client && npm run cli -- assets && npx cap sync android",
     "build:ios": "npm run build:client && npm run cli -- assets && npx cap sync ios",
     "start": "next start --turbopack",
@@ -97,6 +97,7 @@
     "axios": "^1.8.4",
     "babel-jest": "^29.7.0",
     "bcrypt": "^5.1.1",
+    "blob": "^0.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -134,7 +135,6 @@
     "ts-essentials": "^10.0.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "tsx": "^4.19.3",
     "tw-animate-css": "^1.2.5",
     "typescript": "^5",
     "uuid": "^11.1.0",
@@ -151,6 +151,8 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.2.0",
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "glob": "^11.0.2",
+    "tsx": "^4.19.4"
   }
 }
