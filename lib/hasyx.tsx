@@ -554,25 +554,34 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
   const { data: session } = useSession(); // Get session
   
   const client = useCreateApolloClient(useMemo(() => {
+    const buildTarget = process.env.NEXT_PUBLIC_BUILD_TARGET;
+    const mainUrlFromEnv = process.env.NEXT_PUBLIC_MAIN_URL;
+    debug(`HasyxProviderCore: Build Target=${buildTarget}, Main URL Env=${mainUrlFromEnv}, Provided URL Prop=${url}`);
+
     let apiUrl = '/api/graphql'; // Default relative path
     if (url) {
       apiUrl = url;
-    } else if (process.env.NEXT_PUBLIC_BUILD_TARGET === 'client') {
-      const mainUrl = process.env.NEXT_PUBLIC_MAIN_URL || 'http://localhost:3000';
+      debug(`HasyxProviderCore: Using provided URL prop: ${apiUrl}`);
+    } else if (buildTarget === 'client') {
+      const mainUrl = mainUrlFromEnv || 'http://localhost:3000';
       // Use URL constructor for robust path joining
       try {
         const base = new URL(mainUrl);
         const combinedUrl = new URL('/api/graphql', base); // Relative path resolved against base
         apiUrl = combinedUrl.toString();
-        debug(`Constructed absolute apiUrl for client build: ${apiUrl}`);
+        debug(`HasyxProviderCore: Constructed absolute apiUrl for client build: ${apiUrl} from mainUrl: ${mainUrl}`);
       } catch (e) {
          console.error(`❌ Invalid URL provided for NEXT_PUBLIC_MAIN_URL: ${mainUrl}`, e);
          debug(`Invalid URL provided for NEXT_PUBLIC_MAIN_URL: ${mainUrl}`, e);
          // Fallback to relative path or handle error appropriately
          apiUrl = '/api/graphql'; 
+         debug(`HasyxProviderCore: Falling back to relative apiUrl due to invalid mainUrl: ${apiUrl}`);
       }
+    } else {
+      debug(`HasyxProviderCore: Using default relative apiUrl: ${apiUrl}`);
     }
     
+    debug(`HasyxProviderCore: Final options for useCreateApolloClient -> url: ${apiUrl}, token: ${session?.accessToken ? '******' : 'undefined'}, ws: true`);
     return {
       url: apiUrl,
       token: session?.accessToken, // Pass Hasura token from session

@@ -21,6 +21,8 @@ const debug = Debug('apollo');
 // Determine if running on client
 const isClient = typeof window !== 'undefined';
 
+debug(`Environment check: isClient=${isClient}`); // Log environment type
+
 export interface ApolloOptions {
   url?: string;
   ws?: boolean;
@@ -59,6 +61,7 @@ const createRoleLink = () => setContext((request: GraphQLRequest, previousContex
  * @returns {ApolloClient} Apollo Client
  */
 export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClient {
+  debug('apollo', '🔌 Creating Apollo client with options:', options);
   // Default values
   const { 
     url = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL,
@@ -67,7 +70,13 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
     secret = process.env.HASURA_ADMIN_SECRET 
   } = options;
   
+  debug(`apollo: Resolved endpoint URL: ${url} (from options: ${options.url}, fallback: ${process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL})`);
+  debug(`apollo: Resolved WS setting: ${ws} (from options: ${options.ws})`);
+  debug(`apollo: Resolved token: ${token ? '******' : 'undefined'} (from options)`);
+  debug(`apollo: Resolved secret: ${secret ? '******' : 'undefined'} (from options or env)`);
+
   if (!url) {
+    console.error('❌ Apollo Client Error: Endpoint URL is not defined. Checked options.url and NEXT_PUBLIC_HASURA_GRAPHQL_URL.');
     throw new Error('❌ options.url or NEXT_PUBLIC_HASURA_GRAPHQL_URL not defined');
   }
   

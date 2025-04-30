@@ -17,6 +17,9 @@ import {
 
 import pckg from "hasyx/package.json"
 import Image from "next/image"
+import { Label } from 'hasyx/components/ui/label'
+
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
 
 export function VersionSwitcher({
   versions,
@@ -37,7 +40,7 @@ export function VersionSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex size-8 items-center justify-center">
-                <Image src="/logo.svg" alt="Hasyx Logo" width={32} height={32} />
+                <Image src={`${basePath}/logo.svg`} alt="Hasyx Logo" width={32} height={32} />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-semibold">{pckg.name}</span>
