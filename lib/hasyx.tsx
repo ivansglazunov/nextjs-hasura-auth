@@ -552,11 +552,34 @@ export const useSubscribe = useSubscription;
 
 function HasyxProviderCore({ url, children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
   const { data: session } = useSession(); // Get session
-  const client = useCreateApolloClient(useMemo(() => ({
-    url: url || process.env.NEXT_PUBLIC_BUILD_TARGET === 'client' ? `${process.env.NEXT_PUBLIC_MAIN_URL || 'http://localhost:3000'}/api/graphql` : '/api/graphql',
-    token: session?.accessToken, // Pass Hasura token from session
-    ws: true // Enable WebSocket support
-  }), [session]));
+  
+  const client = useCreateApolloClient(useMemo(() => {
+    let apiUrl = '/api/graphql'; // Default relative path
+    if (url) {
+      apiUrl = url;
+    } else if (process.env.NEXT_PUBLIC_BUILD_TARGET === 'client') {
+      const mainUrl = process.env.NEXT_PUBLIC_MAIN_URL || 'http://localhost:3000';
+      // Use URL constructor for robust path joining
+      try {
+        const base = new URL(mainUrl);
+        const combinedUrl = new URL('/api/graphql', base); // Relative path resolved against base
+        apiUrl = combinedUrl.toString();
+        debug(`Constructed absolute apiUrl for client build: ${apiUrl}`);
+      } catch (e) {
+         console.error(`❌ Invalid URL provided for NEXT_PUBLIC_MAIN_URL: ${mainUrl}`, e);
+         debug(`Invalid URL provided for NEXT_PUBLIC_MAIN_URL: ${mainUrl}`, e);
+         // Fallback to relative path or handle error appropriately
+         apiUrl = '/api/graphql'; 
+      }
+    }
+    
+    return {
+      url: apiUrl,
+      token: session?.accessToken, // Pass Hasura token from session
+      ws: true // Enable WebSocket support
+    };
+  }, [session, url])); // Include url in dependencies
+  
   client.hasyxGenerator = generate;
 
   return <client.Provider>
