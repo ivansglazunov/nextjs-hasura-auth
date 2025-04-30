@@ -88,8 +88,10 @@ jobs:
           YANDEX_CLIENT_ID: ${{secrets.YANDEX_CLIENT_ID}}
           YANDEX_CLIENT_SECRET: ${{secrets.YANDEX_CLIENT_SECRET}}
           RESEND_API_KEY: ${{secrets.RESEND_API_KEY}}
-          NODE_ENV: ${{secrets.NODE_ENV}}
-          NEXT_PUBLIC_BUILD_TARGET: ${{secrets.NEXT_PUBLIC_BUILD_TARGET}}
+          NODE_ENV: production
+      - name: Verify Build Output Directory
+        run: ls -la
+        shell: bash
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

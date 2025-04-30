@@ -209,18 +209,19 @@ npx hasyx init
 │   └── workflows/
 │       ├── 🔄 npm-publish.yml  # Example CI/CD for publishing (if you fork Hasyx)
 │       └── 🔄 test.yml          # Example CI for running tests (if you fork Hasyx)
+│       └── 🔄 nextjs.yml        # Example CI/CD for building and deploying to GitHub Pages (if you fork Hasyx)
 ├── app/
 │   ├── ✨ sidebar.ts
 │   ├── ✨ layout.tsx
 │   ├── ✨ page.tsx
 │   ├── ✨ globals.css
 │   ├── ✨ favicon.ico
+│   ├── 🔄 options.ts
 │   └── api/
 │       ├── auth/
 │       │   ├── 🔄 route.ts
 │       │   ├── [...nextauth]/
 │       │   │   ├── 🔄 route.ts
-│       │   │   └── 🔄 options.ts
 │       │   └── verify/
 │       │       └── 🔄 route.ts     # (Likely for email verification)
 │       └── graphql/

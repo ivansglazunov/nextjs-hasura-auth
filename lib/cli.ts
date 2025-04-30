@@ -168,9 +168,10 @@ program
       // GitHub Actions (will overwrite)
       '.github/workflows/npm-publish.yml': '.github/workflows/npm-publish.yml',
       '.github/workflows/test.yml': '.github/workflows/test.yml',
+      '.github/workflows/nextjs.yml': '.github/workflows/nextjs.yml',
       // API Routes (will overwrite)
       'app/api/auth/[...nextauth]/route.ts': 'app/api/auth/[...nextauth]/route.ts',
-      'app/api/auth/[...nextauth]/options.ts': 'app/api/auth/[...nextauth]/options.ts',
+      'app/options.ts': 'app/options.ts',
       'app/api/auth/verify/route.ts': 'app/api/auth/verify/route.ts',
       'app/api/auth/route.ts': 'app/api/auth/route.ts',
       'app/api/graphql/route.ts': 'app/api/graphql/route.ts',
