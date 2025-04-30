@@ -13,6 +13,8 @@ const debug = Debug('auth:get-status');
 
 type AuthData = { authenticated: false } | { authenticated: true, token: any };
 
+const URL = process.env.NEXT_PUBLIC_BUILD_TARGET === 'client' ? process.env.NEXT_PUBLIC_MAIN_URL : window.location.host;
+
 export function GetAuthStatus() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [authData, setAuthData] = useState<AuthData | null>(null);
@@ -24,7 +26,7 @@ export function GetAuthStatus() {
     setError(null);
     setAuthData(null);
     try {
-      const response = await fetch('/api/auth');
+      const response = await fetch(`${URL}/api/auth`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

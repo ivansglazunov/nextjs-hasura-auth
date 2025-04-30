@@ -11,6 +11,8 @@ const debug = Debug('auth:socket-status');
 
 type SocketAuthData = { authenticated: false } | { authenticated: true, userId: string, token: any };
 
+const URL = process.env.NEXT_PUBLIC_BUILD_TARGET === 'client' ? process.env.NEXT_PUBLIC_MAIN_URL : window.location.host;
+
 export function SocketAuthStatus() {
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [authData, setAuthData] = useState<SocketAuthData | null>(null);
@@ -22,7 +24,7 @@ export function SocketAuthStatus() {
     // IMPORTANT: Use wss:// for HTTPS and ws:// for HTTP
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     // Use current host and port, but path /api/auth
-    const wsUrl = `${protocol}://${window.location.host}/api/auth`;
+    const wsUrl = `${protocol}://${URL}/api/auth`;
     
     debug(`Attempting to connect WebSocket: ${wsUrl}`);
     setConnectionStatus('connecting');

@@ -19,7 +19,7 @@ import pckg from "hasyx/package.json"
 import Image from "next/image"
 import { Label } from 'hasyx/components/ui/label'
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 export function VersionSwitcher({
   versions,

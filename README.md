@@ -215,7 +215,6 @@ npx hasyx init
 │   ├── ✨ layout.tsx
 │   ├── ✨ page.tsx
 │   ├── ✨ globals.css
-│   ├── ✨ favicon.ico
 │   ├── 🔄 options.ts
 │   └── api/
 │       ├── auth/
@@ -228,6 +227,7 @@ npx hasyx init
 │           └── 🔄 route.ts         # Hasyx GraphQL Proxy
 |-- public/
 │   ├── ✨ logo.svg
+│   ├── ✨ favicon.ico
 ├── ✨ .gitignore
 ├── ✨ .npmignore
 └── ✨ .npmrc

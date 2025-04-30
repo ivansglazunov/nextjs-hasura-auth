@@ -184,7 +184,7 @@ program
       'app/layout.tsx': 'app/layout.tsx',
       'app/page.tsx': 'app/page.tsx',
       'app/globals.css': 'app/globals.css',
-      'app/favicon.ico': 'app/favicon.ico', // Need binary template handling or skip
+      'public/favicon.ico': 'public/favicon.ico', // Need binary template handling or skip
       // Universal logo path
       'public/logo.svg': 'public/logo.svg',
       // Config files (won't overwrite)
