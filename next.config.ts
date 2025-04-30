@@ -1,18 +1,23 @@
 import type { NextConfig } from "next";
 // Removed fs, path imports as they are no longer needed here
 
-// Use environment variables to determine build mode
+// Use environment variables to determine build mode and base path
 const buildTarget = process.env.NEXT_PUBLIC_BUILD_TARGET;
 const isBuildingForClient = buildTarget === 'client';
 
+// Read basePath directly from environment. 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
+
 // basePath and distDir are now removed, relying on actions/configure-pages@v5 or defaults
-console.log(`Building config: isClient=${isBuildingForClient}`);
+console.log(`Building config: isClient=${isBuildingForClient}, basePath=${basePath}`);
 
 const config: NextConfig = {
   // Conditionally set output to 'export'
   output: isBuildingForClient ? 'export' : undefined,
-  // distDir: isBuildingForClient ? 'client' : '.next', // REMOVED
-  // basePath: process.env.NEXT_PUBLIC_BASE_PATH, // REMOVED
+  // Explicitly set distDir again
+  distDir: isBuildingForClient ? 'client' : '.next',
+  // Explicitly set basePath again
+  basePath: basePath, 
   // trailingSlash should likely be true for static exports compatibility, especially with basePath
   trailingSlash: isBuildingForClient, 
   images: {
