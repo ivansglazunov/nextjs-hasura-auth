@@ -8,12 +8,13 @@ import { CodeBlock } from 'hasyx/components/code-block';
 import { Button } from '../ui/button';
 import { RefreshCw } from 'lucide-react';
 import Debug from 'hasyx/lib/debug';
+import url from '@/lib/url';
 
 const debug = Debug('auth:get-status');
 
 type AuthData = { authenticated: false } | { authenticated: true, token: any };
 
-const URL = process.env.NEXT_PUBLIC_BUILD_TARGET === 'client' ? process.env.NEXT_PUBLIC_MAIN_URL : window.location.host;
+const URL = (process.env.NEXT_PUBLIC_BUILD_TARGET === 'client' ? process.env.NEXT_PUBLIC_MAIN_URL : window.location.host) || window.location.host;
 
 export function GetAuthStatus() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -26,7 +27,7 @@ export function GetAuthStatus() {
     setError(null);
     setAuthData(null);
     try {
-      const response = await fetch(`${URL}/api/auth`);
+      const response = await fetch(url('http', URL, '/api/auth'));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

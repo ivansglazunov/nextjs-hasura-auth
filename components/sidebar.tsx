@@ -1,7 +1,5 @@
-import * as React from "react"
 
-import { SearchForm } from "hasyx/components/search-form"
-import { VersionSwitcher } from "hasyx/components/version-switcher"
+import { SearchForm } from "hasyx/components/search-form";
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -13,7 +11,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "hasyx/components/ui/sidebar"
+} from "hasyx/components/ui/sidebar";
+import { VersionSwitcher } from "hasyx/components/version-switcher";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export interface SidebarItem {
   title: string;
@@ -37,6 +37,7 @@ export function Sidebar({ activeUrl, data }: { activeUrl: string, data: SidebarD
         <SearchForm />
       </SidebarHeader>
       <SidebarContent>
+        <ThemeSwitcher style={{ margin: 16 }} />
         {/* We create a SidebarGroup for each parent. */}
         {data.navMain.map((item) => (
           <SidebarGroup key={item.title}>

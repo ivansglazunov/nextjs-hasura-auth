@@ -34,7 +34,6 @@ export default async function Page() {
   // Get session on the server
   const { session } = await useSsr(authOptions) as SsrResult;
   // const session = null;
-
   return (
     <SidebarProvider>
       <Sidebar activeUrl={'/'} data={sidebar} />

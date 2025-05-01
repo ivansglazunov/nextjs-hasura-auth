@@ -117,14 +117,9 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
     }
 
     debugGraphql('--- proxyPOST End ---');
-    // Add CORS header to the actual response
-    const responseHeaders = new Headers(hasuraResponse.headers); // Get headers from Hasura if needed
-    responseHeaders.set('Access-Control-Allow-Origin', '*'); // Allow all origins (adjust if needed)
-    
-    // Return data with CORS header
-    return new NextResponse(JSON.stringify(data), {
+    return NextResponse.json(data, {
       status: hasuraResponse.status,
-      headers: responseHeaders,
+      headers: { 'Access-Control-Allow-Origin': '*' },
     });
 
   } catch (error: any) {
@@ -146,10 +141,7 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
       },
       { 
         status: 500,
-        headers: {
-          // Also add CORS header to error responses
-          'Access-Control-Allow-Origin': '*', 
-        }
+        headers: { 'Access-Control-Allow-Origin': '*' },
       }
     );
   }
