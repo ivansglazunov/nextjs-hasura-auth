@@ -8,7 +8,7 @@ import { CodeBlock } from 'hasyx/components/code-block';
 import { Button } from '../ui/button';
 import { RefreshCw } from 'lucide-react';
 import Debug from 'hasyx/lib/debug';
-import url from '@/lib/url';
+import url from 'hasyx/lib/url';
 
 const debug = Debug('auth:get-status');
 

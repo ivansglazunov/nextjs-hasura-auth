@@ -188,9 +188,9 @@ program
       // Universal logo path
       'public/logo.svg': 'public/logo.svg',
       // Config files (won't overwrite)
-      '.gitignore': '.gitignore',
-      '.npmignore': '.npmignore',
-      '.npmrc': '.npmrc',
+      '.gitignore.template': '.gitignore',
+      '.npmignore.template': '.npmignore',
+      '.npmrc.template': '.npmrc',
       'jest.config.js': 'jest.config.js',
       'jest.setup.js': 'jest.setup.js',
       'next.config.ts': 'next.config.ts',

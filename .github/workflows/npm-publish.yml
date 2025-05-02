@@ -18,6 +18,12 @@ jobs:
           node-version: '22.14' # Version from your package.json
           registry-url: 'https://registry.npmjs.org/' # Specify the npm registry
 
+      - name: Prepare ignore files
+        run: |
+          cp .npmignore .npmignore.template
+          cp .npmrc .npmrc.template
+          cp .gitignore .gitignore.template
+
       - name: Install dependencies
         run: npm ci # Use ci for more reliable installs in CI
 
