@@ -27,7 +27,7 @@ export function GetAuthStatus() {
     setError(null);
     setAuthData(null);
     try {
-      const response = await fetch(url('http', URL, '/api/auth'));
+      const response = await fetch(url(window.location.protocol, URL, '/api/auth'));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
