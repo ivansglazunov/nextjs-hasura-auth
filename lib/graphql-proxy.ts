@@ -53,6 +53,15 @@ interface NextAuthToken {
   [key: string]: any;
 }
 
+// CORS headers to be used consistently
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Hasura-Role, X-Hasura-User-Id, apollo-require-preflight, X-Apollo-Operation-Name, X-Apollo-Operation-Id, X-Apollo-Tracing, x-apollo-tracing',
+  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Max-Age': '86400'
+};
+
 // =======================================================================
 // GET Handler Logic
 // =======================================================================
@@ -66,6 +75,20 @@ export async function proxyGET(request: NextRequest): Promise<NextResponse> {
       ws: '/api/graphql' // WebSocket uses the same endpoint via upgrade
     },
     hasura_endpoint: HASURA_ENDPOINT,
+  }, { headers: corsHeaders });
+}
+
+// =======================================================================
+// OPTIONS Handler Logic
+// =======================================================================
+export async function proxyOPTIONS(request: NextRequest): Promise<NextResponse> {
+  debugGraphql('Executing proxyOPTIONS');
+  const origin = request.headers.get('origin') || '*';
+  debugGraphql(`OPTIONS request from origin: ${origin}`);
+  
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders
   });
 }
 
@@ -74,11 +97,15 @@ export async function proxyGET(request: NextRequest): Promise<NextResponse> {
 // =======================================================================
 export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
   debugGraphql('--- proxyPOST Start ---');
+  
   if (!HASURA_ENDPOINT) {
       const errorMsg = 'Hasura HTTP endpoint is not configured on the server.';
       console.error(`❌ ${errorMsg}`);
       debugGraphql(`❌ ${errorMsg}`);
-      return NextResponse.json({ errors: [{ message: errorMsg }] }, { status: 500 });
+      return NextResponse.json({ errors: [{ message: errorMsg }] }, { 
+        status: 500,
+        headers: corsHeaders
+      });
   }
 
   try {
@@ -95,7 +122,10 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
         console.error(`❌ ${errorMsg}`);
         debugGraphql(`❌ ${errorMsg}`);
         // Important: Do not proceed if admin secret is missing for POST
-        return NextResponse.json({ errors: [{ message: errorMsg }] }, { status: 500 });
+        return NextResponse.json({ errors: [{ message: errorMsg }] }, { 
+          status: 500,
+          headers: corsHeaders
+        });
     }
     headers['x-hasura-admin-secret'] = HASURA_ADMIN_SECRET;
     debugGraphql('🔑 Using Hasura Admin Secret for downstream HTTP request.');
@@ -119,7 +149,7 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
     debugGraphql('--- proxyPOST End ---');
     return NextResponse.json(data, {
       status: hasuraResponse.status,
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: corsHeaders
     });
 
   } catch (error: any) {
@@ -141,7 +171,7 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
       },
       { 
         status: 500,
-        headers: { 'Access-Control-Allow-Origin': '*' },
+        headers: corsHeaders
       }
     );
   }

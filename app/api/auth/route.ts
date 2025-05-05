@@ -3,30 +3,35 @@ import { getTokenFromRequest, WsClientsManager } from 'hasyx';
 import Debug from 'hasyx/lib/debug';
 import http from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
+import { withCors } from '../../../lib/cors';
 
 const debug = Debug('api:auth');
 
 export async function GET(request: NextRequest) {
-  debug('GET /api/auth: Getting authorization status...');
-  try {
-    const token = await getTokenFromRequest(request);
-
-    if (token) {
-      debug('GET /api/auth: User authenticated via getToken, returning token payload.', token);
-      const { accessToken, ...tokenWithoutSensitiveData } = token as any; 
-      return NextResponse.json({ authenticated: true, token: tokenWithoutSensitiveData });
-    } else {
-      debug('GET /api/auth: User not authenticated (getToken returned null).');
-      return NextResponse.json({ authenticated: false });
+  return withCors(request, async (req) => {
+    debug('GET /api/auth: Getting authorization status...');
+    try {
+      const token = await getTokenFromRequest(req);
+  
+      if (token) {
+        debug('GET /api/auth: User authenticated via getToken, returning token payload.', token);
+        const { accessToken, ...tokenWithoutSensitiveData } = token as any; 
+        return NextResponse.json({ authenticated: true, token: tokenWithoutSensitiveData });
+      } else {
+        debug('GET /api/auth: User not authenticated (getToken returned null).');
+        return NextResponse.json({ authenticated: false });
+      }
+    } catch (error: any) {
+      debug('GET /api/auth: Error getting token:', error);
+      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
-  } catch (error: any) {
-    debug('GET /api/auth: Error getting token:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+  });
 }
 
 export function POST(request: NextRequest) {
-  return NextResponse.json({ message: 'API route for static builds' });
+  return withCors(request, () => {
+    return NextResponse.json({ message: 'API route for static builds' });
+  });
 }
 
 const clients = WsClientsManager('/api/auth');

@@ -47,8 +47,23 @@ const config: NextConfig = {
   eslint: {
     ignoreDuringBuilds: isBuildingForClient,
   },
-  // Remove onDemandEntries if not specifically needed
-  // onDemandEntries: isBuildingForClient ? { maxInactiveAge: 1 } : undefined,
+  
+  // Add CORS headers to all API routes
+  async headers() {
+    return [
+      {
+        // Apply CORS headers to all API routes - used for regular requests
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-Hasura-Role, X-Hasura-User-Id, apollo-require-preflight, X-Apollo-Operation-Name, X-Apollo-Operation-Id, X-Apollo-Tracing, x-apollo-tracing' },
+          { key: 'Access-Control-Allow-Credentials', value: 'true' },
+          { key: 'Access-Control-Max-Age', value: '86400' },
+        ],
+      },
+    ];
+  },
 };
 
 // REMOVED the entire block that was moving the app/api directory.
