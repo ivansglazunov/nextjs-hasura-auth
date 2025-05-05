@@ -1,17 +1,17 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { Hasura } from '../../lib/hasura'; // Путь относительно файла миграции
+import { Hasura } from '../../lib/hasura'; // Path relative to migration file
 import Debug from '../../lib/debug';
 
-// Инициализация debug
+// Initialize debug
 const debug = Debug('migration:up');
 
-// Загружаем переменные окружения из корневого .env файла
+// Load environment variables from root .env file
 dotenv.config();
 
-// Валидация происходит внутри конструктора Hasura
+// Validation happens inside the Hasura constructor
 const hasura = new Hasura({
-  url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!, // Используем non-null assertion
+  url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!, // Using non-null assertion
   secret: process.env.HASURA_ADMIN_SECRET!,
 });
 
@@ -30,7 +30,7 @@ const sqlSchema = `
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_admin BOOLEAN DEFAULT FALSE,
-    hasura_role TEXT DEFAULT 'user' -- Убедитесь, что роль по умолчанию 'user'
+    hasura_role TEXT DEFAULT 'user' -- Make sure default role is 'user'
   );
 
   -- Accounts table
@@ -87,7 +87,7 @@ const relationships = [
   }
 ];
 
-// Определения прав из init-gql.js
+// Permission definitions from init-gql.js
 const permissionsToDrop = [
   { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'users' }, role: 'user' } },
   { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'users' }, role: 'admin' } },

@@ -157,8 +157,15 @@ const executeScript = (scriptPath: string): boolean => {
 program
   .command('init')
   .description('Initialize hasyx authentication and GraphQL proxy in a Next.js project.')
-  .action(async () => {
+  .option('--reinit', 'Reinitialize all files, replacing even those that would normally only be created if missing')
+  .action(async (options) => {
     debug('Executing "init" command.');
+    debug('Options:', options);
+    const forceReinit = options.reinit === true;
+    if (forceReinit) {
+      debug('Reinit mode: Will replace all files, even those that would normally only be created if missing');
+      console.log('🔄 Reinit mode: forcing replacement of all files');
+    }
     console.log('🚀 Initializing hasyx...');
     const projectRoot = findProjectRoot();
     const targetDir = projectRoot;
@@ -232,20 +239,22 @@ program
       }
     }
 
-    // Create files if they don't exist
-    debug('Processing files to create if not exists...');
+    // Create files if they don't exist (or force replace if --reinit)
+    debug('Processing files to create if not exists... (or forced replace if reinit)');
     for (const [targetPath, templateName] of Object.entries(filesToCreateIfNotExists)) {
       const fullTargetPath = path.join(targetDir, targetPath);
-      debug(`Processing ${targetPath} -> ${templateName} (Create If Not Exists)`);
-      if (!fs.existsSync(fullTargetPath)) {
-          debug(`File does not exist, creating: ${fullTargetPath}`);
+      const exists = fs.existsSync(fullTargetPath);
+      debug(`Processing ${targetPath} -> ${templateName} (${exists ? (forceReinit ? 'Force Replace' : 'Skip') : 'Create'})`);
+      
+      if (!exists || forceReinit) {
+          debug(`File ${exists ? 'exists but forcing replacement' : 'does not exist, creating'}: ${fullTargetPath}`);
           // Special handling for favicon (binary)
           if (targetPath.endsWith('favicon.ico')) {
              const templatePath = path.join(templatesDir, templateName);
              debug(`Copying binary file from template: ${templatePath}`);
              try {
                 await fs.copyFile(templatePath, fullTargetPath);
-                console.log(`✅ Created: ${targetPath}`);
+                console.log(`✅ ${exists && forceReinit ? 'Replaced' : 'Created'}: ${targetPath}`);
                 debug(`Successfully copied binary file: ${fullTargetPath}`);
              } catch (copyError) {
                 console.warn(`⚠️ Could not copy favicon template ${templateName}: ${copyError}`);
@@ -255,11 +264,11 @@ program
             try {
                 const templateContent = getTemplateContent(templateName);
                 await fs.writeFile(fullTargetPath, templateContent);
-                console.log(`✅ Created: ${targetPath}`);
-                debug(`Successfully wrote new file: ${fullTargetPath}`);
+                console.log(`✅ ${exists && forceReinit ? 'Replaced' : 'Created'}: ${targetPath}`);
+                debug(`Successfully wrote ${exists && forceReinit ? 'replaced' : 'new'} file: ${fullTargetPath}`);
             } catch (error) {
-               console.error(`❌ Failed to create ${targetPath} from template ${templateName}: ${error}`);
-               debug(`Error writing new file ${fullTargetPath}: ${error}`);
+               console.error(`❌ Failed to ${exists && forceReinit ? 'replace' : 'create'} ${targetPath} from template ${templateName}: ${error}`);
+               debug(`Error writing file ${fullTargetPath}: ${error}`);
             }
           }
       } else {

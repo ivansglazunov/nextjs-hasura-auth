@@ -10,16 +10,16 @@ interface ProviderButtonProps {
 }
 
 /**
- * Кнопка авторизации через провайдера, использующая встроенный метод signIn из NextAuth.js
+ * Authorization button through provider, using the built-in signIn method from NextAuth.js
  */
 export function ProviderButton({ provider, icon, label, className }: ProviderButtonProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Сохраняем текущий URL перед редиректом
+    // Save current URL before redirect
     sessionStorage.setItem('preAuthUrl', window.location.href);
-    // Определяем URL для обратного вызова - специальная страница на клиенте
+    // Define URL for callback - special page on the client
     const callbackUrl = `${window.location.origin}/auth/callback`;
-    // Используем встроенный метод signIn с указанием callbackUrl
+    // Use the built-in signIn method with callbackUrl parameter
     signIn(provider, { callbackUrl });
   };
 

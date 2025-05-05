@@ -100,11 +100,11 @@ export async function proxyOPTIONS(request: NextRequest): Promise<NextResponse> 
 }
 
 // =======================================================================
-// Helper: Получение Hasura Claims (приоритет Bearer, потом NextAuth Cookie - пока убрано)
+// Helper: Getting Hasura Claims (priority: Bearer, then NextAuth Cookie - currently disabled)
 // =======================================================================
 async function getClaimsForRequest(request: NextRequest | http.IncomingMessage): Promise<HasuraClaims | null> {
   debugGraphql('Attempting to get claims for request...');
-  // 1. Проверяем Bearer Token
+  // 1. Check Bearer Token
   let bearerToken: string | null = null;
   if (request instanceof NextRequest) {
     bearerToken = request.headers.get('Authorization')?.split('Bearer ')?.[1] ?? null;
@@ -117,14 +117,14 @@ async function getClaimsForRequest(request: NextRequest | http.IncomingMessage):
     try {
       const payload = await verifyJWT(bearerToken); 
       const claims = getHasuraClaimsFromPayload(payload);
-      // Добавляем проверку на наличие обязательных полей
+      // Add check for required fields
       if (claims && 
           claims['x-hasura-allowed-roles'] && 
           claims['x-hasura-default-role'] && 
           claims['x-hasura-user-id']) 
       {
         debugGraphql('Bearer token verified successfully. Using claims:', claims);
-        return claims as HasuraClaims; // Приводим к типу после проверки
+        return claims as HasuraClaims; // Cast to type after verification
       }
       debugGraphql('Bearer token valid, but Hasura claims are incomplete or missing.');
     } catch (error: any) {
@@ -132,7 +132,7 @@ async function getClaimsForRequest(request: NextRequest | http.IncomingMessage):
     }
   }
 
-  // 2. Проверка NextAuth Cookie (ПОКА ОТКЛЮЧЕНА ДЛЯ УПРОЩЕНИЯ - нужно будет вернуть для same-origin)
+  // 2. Check NextAuth Cookie (CURRENTLY DISABLED FOR SIMPLIFICATION - need to restore for same-origin)
   /*
   if (!NEXTAUTH_SECRET) {
       debugGraphql('Skipping NextAuth cookie check: NEXTAUTH_SECRET not set.');
@@ -140,7 +140,7 @@ async function getClaimsForRequest(request: NextRequest | http.IncomingMessage):
   }
   try {
       const nextAuthToken = await getToken({
-          req: request as any, // Приведение типов может потребовать уточнений
+          req: request as any, // Type casting may require clarification
           secret: NEXTAUTH_SECRET
       }) as NextAuthToken | null;
 
@@ -182,14 +182,14 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
       'Content-Type': 'application/json',
     };
 
-    // Получаем Hasura claims
+    // Get Hasura claims
     const claims = await getClaimsForRequest(request);
 
     if (claims) {
-      // Если есть claims (из Bearer токена), добавляем их
+      // If there are claims (from Bearer token), add them
       headers['X-Hasura-Role'] = claims['x-hasura-default-role'];
       headers['X-Hasura-User-Id'] = claims['x-hasura-user-id'];
-      // Добавляем все claims, начинающиеся с X-Hasura-
+      // Add all claims starting with X-Hasura-
       Object.keys(claims).forEach(key => {
         if (key.toLowerCase().startsWith('x-hasura-')) {
           headers[key] = claims[key];
@@ -197,20 +197,20 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
       });
       debugGraphql('🔑 Forwarding request with Hasura claims from token.', { role: claims['x-hasura-default-role'], userId: claims['x-hasura-user-id'] });
     } else if (HASURA_ADMIN_SECRET) {
-      // Если claims нет, но есть админский секрет, используем его
-      // (Это позволит выполнять анонимные операции, если они настроены в Hasura, или операции с ролью admin, если она передана)
-      // Важно: если роль не anonymous, Hasura ожидает X-Hasura-Role
+      // If there are no claims but there is an admin secret, use it
+      // (This allows performing anonymous operations if configured in Hasura, or operations with admin role if passed)
+      // Important: if the role is not anonymous, Hasura expects X-Hasura-Role
       headers['x-hasura-admin-secret'] = HASURA_ADMIN_SECRET;
       debugGraphql('🔑 No claims found. Forwarding request with Hasura Admin Secret.');
     } else {
-       // Если нет ни claims, ни секрета - ошибка
+       // If there are no claims and no secret - error
        const errorMsg = 'Cannot forward request: No authentication credentials (Bearer/Admin Secret) available.';
        console.error(`❌ ${errorMsg}`);
        debugGraphql(`❌ ${errorMsg}`);
        return NextResponse.json({ errors: [{ message: errorMsg }] }, { status: 401, headers: corsHeaders });
     }
     
-    // Удаляем заголовок Authorization, если он был, чтобы не слать его в Hasura
+    // Remove Authorization header if present to avoid sending it to Hasura
     delete headers['Authorization']; 
 
     debugGraphql(`🔗 Sending request to Hasura HTTP: ${HASURA_ENDPOINT}`);
@@ -300,27 +300,27 @@ export async function proxySOCKET(
   };
 
   try {
-    // Получаем claims для WebSocket соединения (приоритет Bearer)
+    // Get Hasura claims
     const claims = await getClaimsForRequest(request);
     const wsHeaders: Record<string, string> = {};
 
     if (claims) {
-      // Если есть claims (из Bearer токена в initial request headers)
-      // Hasura ожидает claims в payload при connection_init, не в заголовках ws
+      // If there are claims (from Bearer token in initial request headers)
+      // Hasura expects claims in payload at connection_init, not in ws headers
       debugGraphql(`🔑 [${clientId}] Using claims from verified Bearer token for WS payload.`);
     } else {
-      // Если claims нет, используем анонимную роль
+      // If there are no claims, use anonymous role
       debugGraphql(`👤 [${clientId}] No claims found. Using anonymous role for WS payload.`);
-      // Анонимные claims генерируются на лету при connection_init
+      // Anonymous claims are generated on the fly at connection_init
     }
 
-    // Создаем соединение с Hasura WS
+    // Create connection with Hasura WS
     debugGraphql(`🔗 [${clientId}] Establishing WebSocket connection to Hasura: ${HASURA_WS_ENDPOINT}`);
-    hasuraWs = new ws(HASURA_WS_ENDPOINT, ['graphql-transport-ws'], { headers: wsHeaders }); // Headers здесь обычно не используются для auth
+    hasuraWs = new ws(HASURA_WS_ENDPOINT, ['graphql-transport-ws'], { headers: wsHeaders }); // Headers are usually not used for auth
 
-    // --- Обработка сообщений --- 
+    // --- Message processing --- 
     client.on('message', async (message) => {
-       // ... (парсинг сообщения от клиента) ...
+       // ... (parsing message from client) ...
        const msgData = JSON.parse(message.toString());
        debugGraphql(`[${clientId}] --> Received from Client: ${message.toString().substring(0, 200)}...`);
 
@@ -328,13 +328,13 @@ export async function proxySOCKET(
          clientConnectionInitialized = true;
          debugGraphql(`[${clientId}] Client initialized connection.`);
          
-         // Отправляем connection_init в Hasura с правильными claims в payload
+         // Send connection_init to Hasura with correct claims in payload
          const hasuraInitPayload: { headers?: Record<string, string> } = {};
          if (claims) {
-            // Передаем claims из токена
-            hasuraInitPayload.headers = { ...claims }; // Hasura ожидает их в headers payload
+            // Send claims from token
+            hasuraInitPayload.headers = { ...claims }; // Hasura expects them in headers payload
          } else {
-            // Генерируем анонимный JWT для Hasura
+            // Generate anonymous JWT for Hasura
              try {
                 const anonClaims = {
                   'x-hasura-allowed-roles': ['anonymous'],
@@ -353,10 +353,10 @@ export async function proxySOCKET(
          const initMsg = JSON.stringify({ type: 'connection_init', payload: hasuraInitPayload });
          debugGraphql(`[${clientId}] <-- Sending to Hasura: ${initMsg}`);
          if (hasuraWs?.readyState === WebSocket.OPEN) hasuraWs.send(initMsg);
-         return; // Не пробрасываем connection_init дальше
+         return; // Don't forward connection_init further
        }
        
-       // Пробрасываем остальные сообщения в Hasura, если соединение установлено
+       // Forward other messages to Hasura if connection is established
        if (hasuraConnectionInitialized && hasuraWs?.readyState === WebSocket.OPEN) {
          debugGraphql(`[${clientId}] <-- Forwarding to Hasura: ${message.toString().substring(0, 200)}...`);
          hasuraWs.send(message.toString());
@@ -364,29 +364,29 @@ export async function proxySOCKET(
     });
 
     hasuraWs.on('message', (message) => {
-      // ... (парсинг сообщения от Hasura) ...
+      // ... (parsing message from Hasura) ...
        const msgData = JSON.parse(message.toString());
        debugGraphql(`[${clientId}] --> Received from Hasura: ${message.toString().substring(0, 200)}...`);
        
        if (msgData.type === 'connection_ack') {
           hasuraConnectionInitialized = true;
           debugGraphql(`[${clientId}] Hasura acknowledged connection.`);
-          // Отправляем ack клиенту, если он инициализировался
+          // Send ack to client if it initialized
           if (clientConnectionInitialized && client.readyState === WebSocket.OPEN) {
               debugGraphql(`[${clientId}] <-- Sending connection_ack to Client.`);
               client.send(JSON.stringify({ type: 'connection_ack' }));
           }
-          return; // Не пробрасываем connection_ack дальше
+          return; // Don't forward connection_ack further
        }
        
-       // Пробрасываем остальные сообщения клиенту, если соединение установлено
+       // Forward other messages to client if connection is established
        if (clientConnectionInitialized && client.readyState === WebSocket.OPEN) {
           debugGraphql(`[${clientId}] <-- Forwarding to Client: ${message.toString().substring(0, 200)}...`);
           client.send(message.toString());
        }
     });
 
-    // --- Обработка ошибок и закрытия --- 
+    // --- Error handling and closing --- 
     client.on('close', (code, reason) => { 
         debugGraphql(`[${clientId}] Client disconnected: Code=${code}, Reason=${reason?.toString()}`); 
         closeConnections(code, reason?.toString()); 

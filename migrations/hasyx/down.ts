@@ -1,27 +1,27 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { Hasura } from '../../lib/hasura'; // Путь относительно файла миграции
+import { Hasura } from '../../lib/hasura'; // Path relative to migration file
 import Debug from '../../lib/debug';
 
-// Инициализация debug
+// Initialize debug
 const debug = Debug('migration:down');
 
-// Загружаем переменные окружения из корневого .env файла
+// Load environment variables from root .env file
 dotenv.config();
 
-// Валидация происходит внутри конструктора Hasura
+// Validation happens inside the Hasura constructor
 const hasura = new Hasura({
-  url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!, // Используем non-null assertion
+  url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!, // Using non-null assertion
   secret: process.env.HASURA_ADMIN_SECRET!,
 });
 
-// SQL для удаления таблиц
+// SQL for dropping tables
 const dropTablesSQL = `
   DROP TABLE IF EXISTS public.accounts CASCADE;
   DROP TABLE IF EXISTS public.users CASCADE;
 `;
 
-// Метаданные для удаления отслеживания таблиц
+// Metadata for untracking tables
 const tablesToUntrack = [
   {
     type: 'pg_untrack_table',
@@ -31,7 +31,7 @@ const tablesToUntrack = [
         schema: 'public',
         name: 'accounts'
       },
-      cascade: true // Удаляем связанные разрешения и отношения
+      cascade: true // Delete related permissions and relationships
     }
   },
   {
@@ -42,12 +42,12 @@ const tablesToUntrack = [
         schema: 'public',
         name: 'users'
       },
-      cascade: true // Удаляем связанные разрешения и отношения
+      cascade: true // Delete related permissions and relationships
     }
   }
 ];
 
-// Метаданные для удаления разрешений anonymous
+// Metadata for dropping anonymous permissions
 const permissionsToDropAnonymous = [
   {
     type: 'pg_drop_select_permission',
@@ -100,10 +100,10 @@ async function dropTables() {
 async function down() {
   debug('🚀 Starting Hasura migration DOWN...');
   try {
-    // Сначала удаляем метаданные (отслеживание), т.к. они зависят от таблиц
+    // First remove metadata (tracking), as they depend on tables
     await dropMetadata();
 
-    // Затем удаляем сами таблицы
+    // Then drop the tables themselves
     await dropTables();
 
     debug('✨ Hasura migration DOWN completed successfully!');

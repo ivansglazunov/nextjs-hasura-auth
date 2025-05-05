@@ -2,7 +2,7 @@ import React from 'react';
 import { ProviderButton } from './provider-button';
 
 /**
- * Компонент с кнопками для OAuth авторизации через различные провайдеры
+ * Component with buttons for OAuth authorization through various providers
  */
 export function OAuthButtons() {
   return (

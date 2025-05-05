@@ -15,7 +15,7 @@ import Debug from 'hasyx/lib/debug';
 // import GoogleIcon from 'hasyx/public/icons/google.svg';
 // import YandexIcon from 'hasyx/public/icons/yandex.svg';
 
-const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Используем тот же ключ, что и в callback странице
+const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Using the same key as in callback page
 
 const debug = Debug('auth:actions-card');
 
@@ -45,12 +45,12 @@ export function AuthActionsCard(props: React.HTMLAttributes<HTMLDivElement>) {
   // --- End Subscription ---
 
   const handleSignOut = async () => {
-    // Очищаем токен из localStorage
+    // Clear token from localStorage
     localStorage.removeItem(AUTH_TOKEN_KEY);
     debug('AuthActionsCard: Removed token from localStorage.');
     
-    // Вызываем стандартный signOut
-    // Указываем callbackUrl, чтобы после выхода с Vercel вернуться на главную localhost
+    // Call standard signOut
+    // Specify callbackUrl to return to homepage on localhost after signing out from Vercel
     await signOut({ callbackUrl: '/' }); 
   };
 

@@ -132,7 +132,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
   if (ws && isClient) {
     debug('apollo', '✅ Entering WS Link creation block.'); // Log entry
     
-    // Используем улучшенную функцию создания WebSocket URL
+    // Use improved function for creating WebSocket URL
     const wsEndpoint = createWebSocketUrl(url);
     debug('apollo', '🔌 Setting up GraphQLWsLink for:', wsEndpoint);
     

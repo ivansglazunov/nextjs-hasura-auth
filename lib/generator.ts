@@ -10,7 +10,7 @@ export type Generate = (opts: GenerateOptions) => GenerateResult;
 
 export interface GenerateOptions {
   operation: GenerateOperation;
-  table: string; // Пока оставим string, типизируем на следующем шаге
+  table: string; // For now we'll keep it as string, we'll type it in the next step
   where?: Record<string, any>;
   // Allow array, object (for appending), or string (legacy split)
   returning?: (string | Record<string, any>)[] | Record<string, any> | string; 
@@ -36,12 +36,12 @@ export interface GenerateResult {
   queryName: string; // Added queryName
 }
 
-// --- Вспомогательная функция для разбора типа GraphQL ---
-// Рекурсивно разбирает тип (обрабатывая NON_NULL и LIST) и возвращает базовое имя и флаги
+// --- Helper function for parsing GraphQL type ---
+// Recursively parses the type (handling NON_NULL and LIST) and returns the base name and flags
 function getTypeInfo(type: any): { name: string | null; kind: string; isList: boolean; isNonNull: boolean; isNonNullItem: boolean } {
     let isList = false;
     let isNonNull = false;
-    let isNonNullItem = false; // Для проверки [Type!]
+    let isNonNullItem = false; // For checking [Type!]
     let currentType = type;
 
     if (currentType.kind === 'NON_NULL') {
@@ -56,9 +56,9 @@ function getTypeInfo(type: any): { name: string | null; kind: string; isList: bo
             currentType = currentType.ofType;
         }
     }
-     // Второй NON_NULL возможен для [Type!]!
+     // Second NON_NULL is possible for [Type!]!
      if (currentType.kind === 'NON_NULL') {
-         isNonNullItem = true; // Если внешний LIST был NON_NULL, то и внутренний тоже
+         isNonNullItem = true; // If outer LIST was NON_NULL, then inner is also
          currentType = currentType.ofType;
      }
 
@@ -72,7 +72,7 @@ function getTypeInfo(type: any): { name: string | null; kind: string; isList: bo
 }
 // --- ---
 
-export function Generator(schema: any): Generate { // Принимаем __schema объект
+export function Generator(schema: any): Generate { // We take the __schema object
   const _schema = schema?.data?.__schema || schema?.__schema || schema;
 
   // --- Validation moved here ---
@@ -87,10 +87,10 @@ export function Generator(schema: any): Generate { // Принимаем __schem
   // --- End validation ---
 
   const queryRootName = _schema.queryType.name;
-  const mutationRootName = _schema.mutationType?.name; // Может отсутствовать
-  const subscriptionRootName = _schema.subscriptionType?.name; // Может отсутствовать
+  const mutationRootName = _schema.mutationType?.name; // May be missing
+  const subscriptionRootName = _schema.subscriptionType?.name; // May be missing
 
-  // Находим детальные описания корневых типов
+  // Find detailed descriptions of root types
   const queryRoot = _schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === queryRootName);
   const mutationRoot = mutationRootName ? _schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === mutationRootName) : null;
   const subscriptionRoot = subscriptionRootName ? _schema.types.find((t: any) => t.kind === 'OBJECT' && t.name === subscriptionRootName) : null;
@@ -119,9 +119,9 @@ export function Generator(schema: any): Generate { // Принимаем __schem
       throw new Error(`❌ Invalid operation type: ${operation}. Allowed types: ${validOperations.join(', ')}`);
     }
 
-    // --- Определение корневого типа и полей для поиска ---
-    let rootType: any = null; // Тип будет 'OBJECT' из __schema.types
-    let rootFields: any[] = []; // Массив полей из корневого типа
+    // --- Definition of root type and fields to search ---
+    let rootType: any = null; // Type will be 'OBJECT' from __schema.types
+    let rootFields: any[] = []; // Array of fields from root type
 
     if (operation === 'query') {
       rootType = queryRoot;
@@ -137,18 +137,18 @@ export function Generator(schema: any): Generate { // Принимаем __schem
     }
     // --- ---
 
-    // --- Логика определения имени операции (queryName) ---
-    let targetFieldName = table; // Имя поля, которое ищем в корневом типе
+    // --- Logic for determining operation name (queryName) ---
+    let targetFieldName = table; // Field name we're looking for in the root type
     let isByPkOperation = false;
     let isAggregate = operation === 'query' && !!aggregate;
 
-    // Определяем префиксы и суффиксы для мутаций и by_pk запросов
+    // Define prefixes and suffixes for mutations and by_pk queries
     const mutationPrefix = operation === 'insert' ? 'insert_' : operation === 'update' ? 'update_' : operation === 'delete' ? 'delete_' : '';
     const pkSuffix = '_by_pk';
     const aggregateSuffix = '_aggregate';
     const oneSuffix = '_one';
 
-    // Формируем ожидаемые имена полей (улучшенная логика)
+    // Form expected field names (improved logic)
     if (isAggregate) {
         targetFieldName = `${table}${aggregateSuffix}`;
     } else if (opts.pk_columns) {
@@ -160,12 +160,12 @@ export function Generator(schema: any): Generate { // Принимаем __schem
         } else if (operation === 'delete') {
             targetFieldName = `${mutationPrefix}${table}${pkSuffix}`;
         }
-        // pk_columns не влияет на insert
+        // pk_columns doesn't affect insert
     } else if (operation === 'insert' && opts.object && !opts.objects) {
         const oneFieldName = `${mutationPrefix}${table}${oneSuffix}`;
         if (rootFields.find(f => f.name === oneFieldName)) {
             targetFieldName = oneFieldName;
-            // Не ставим isByPkOperation в true для insert_one, т.к. аргументы другие
+            // We don't set isByPkOperation to true for insert_one, as the arguments are different
         } else {
             targetFieldName = `${mutationPrefix}${table}`;
         }
@@ -176,25 +176,25 @@ export function Generator(schema: any): Generate { // Принимаем __schem
     } else if (operation === 'delete') {
          targetFieldName = `${mutationPrefix}${table}`; // Bulk delete
     }
-    // Для обычных query/subscription без pk_columns и aggregate, имя таблицы (targetFieldName) остается исходным 'table'
+    // For regular query/subscription without pk_columns and aggregate, the table name (targetFieldName) remains the original 'table'
 
 
     const queryInfo = rootFields.find(f => f.name === targetFieldName);
 
     if (!queryInfo) {
-         // Fallback для случая, когда _by_pk/aggregate/etc не найдены, но базовый запрос есть
+         // Fallback for cases when _by_pk/aggregate/etc are not found, but the base query exists
          const fallbackQueryInfo = rootFields.find(f => f.name === table);
          if (fallbackQueryInfo && ['query', 'subscription'].includes(operation) && !isAggregate && !isByPkOperation) {
-             // Используем debug вместо console.warn
+             // Use debug instead of console.warn
              debug(`[generator] ⚠️ Exact field "%s" not found, using fallback "%s" in %s`, targetFieldName, table, rootType.name);
-             targetFieldName = table; // Используем базовое имя
-             // queryInfo = fallbackQueryInfo; // Переприсваиваем для дальнейшего использования
-              throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}" after fallback`); // Упадем здесь, если все равно не нашли
+             targetFieldName = table; // Use base name
+             // queryInfo = fallbackQueryInfo; // Reassign for further use
+              throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}" after fallback`); // Fail here if still not found
          } else {
              throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}"`);
          }
     }
-    const queryName = queryInfo.name; // Имя поля GraphQL, которое будем использовать
+    const queryName = queryInfo.name; // GraphQL field name that we'll use
     // --- ---
 
 
@@ -202,7 +202,7 @@ export function Generator(schema: any): Generate { // Принимаем __schem
     const variables: Record<string, any> = {};
     const varParts: string[] = [];
 
-    // --- РЕФАКТОРИНГ getGqlType ---
+    // --- REFACTORING getGqlType ---
     const getGqlTypeFromSchema = (argType: any): string => {
         const info = getTypeInfo(argType);
         if (!info.name) {
@@ -219,7 +219,7 @@ export function Generator(schema: any): Generate { // Принимаем __schem
     };
     // --- ---
 
-    // --- РЕФАКТОРИНГ Цикла обработки аргументов (Top Level) ---
+    // --- REFACTORING of the argument processing cycle (Top Level) ---
     const processedArgs = new Set<string>();
     const addArgument = (argName: string, value: any, argDefinition: any) => {
          if (processedArgs.has(argName)) return;
@@ -234,7 +234,7 @@ export function Generator(schema: any): Generate { // Принимаем __schem
          processedArgs.add(argName);
     };
 
-    // 1. Обработка прямых аргументов поля (из queryInfo.args)
+    // 1. Processing direct arguments of the field (from queryInfo.args)
     queryInfo.args?.forEach((argDef: any) => {
         const argName = argDef.name;
         let value: any = undefined;
@@ -248,30 +248,30 @@ export function Generator(schema: any): Generate { // Принимаем __schem
              if (queryName.endsWith('_one')) {
             value = opts.object;
              } else {
-                 // Логика для случая, когда передан object, но ожидается objects или object
-                 value = [opts.object]; // По умолчанию делаем массивом
+                 // Logic for the case when object is passed but objects or object is expected
+                 value = [opts.object]; // Default to making it an array
                  const expectsObjects = queryInfo.args.find((a: any) => a.name === 'objects');
                  const expectsObject = queryInfo.args.find((a: any) => a.name === 'object');
-
+                 
                  if (expectsObjects && !expectsObject) {
-                     // Явно ожидает objects, передаем массив
-                     addArgument('objects', value, expectsObjects);
-                     return; // Аргумент добавлен, выходим
+                    // Explicitly expects objects, pass an array
+                    addArgument('objects', value, expectsObjects);
+                    return; // Argument added, exit
                  } else if (!expectsObjects && expectsObject) {
-                      // Явно ожидает object (не _one суффикс, странно, но допустим)
-                      // В этом случае addArgument ниже обработает 'object'
-                      value = opts.object; // Вернем как было
+                     // Explicitly expects object (not _one suffix, strange but possible)
+                     // In this case addArgument below will handle 'object'
+                     value = opts.object; // Return to original
                  } else if (expectsObjects && expectsObject) {
-                     // Имеет оба, но insert_one не было. Вероятно, ошибка схемы или нестандартная мутация.
-                     // Предупредим и попробуем угадать objects
-                     debug(`[generator] Ambiguous arguments for "${queryName}": both 'object' and 'objects' found. Defaulting to 'objects' with single item array.`);
-                     addArgument('objects', value, expectsObjects);
-                     return;
+                    // Has both, but insert_one wasn't found. Probably a schema error or non-standard mutation.
+                    // Warn and try to guess objects
+                    debug(`[generator] Ambiguous arguments for "${queryName}": both 'object' and 'objects' found. Defaulting to 'objects' with single item array.`);
+                    addArgument('objects', value, expectsObjects);
+                    return; // Argument added, exit
                  } else {
-                     // Не ожидает ни object, ни objects. Очень странно. Предупредим.
-                     debug(`[generator] Neither 'object' nor 'objects' argument found for "${queryName}" but object/objects provided in options.`);
-                     // Не будем добавлять аргумент
-                     return;
+                    // Expects neither object nor objects. Very strange. Warn.
+                    debug(`[generator] Neither 'object' nor 'objects' argument found for "${queryName}" but object/objects provided in options.`);
+                    // Don't add argument
+                    return;
                  }
              }
         } else if (isByPkOperation && opts.pk_columns && opts.pk_columns[argName] !== undefined) {
@@ -536,7 +536,7 @@ export function Generator(schema: any): Generate { // Принимаем __schem
     // --- Final Query String Assembly --- (Adjusted section)
     // const returningStr = finalReturningFields.length > 0 ? finalReturningFields.join('\n      ') : ''; // Use the calculated finalReturningFields
 
-    // Логика для affected_rows
+    // Logic for affected_rows
     let assembledReturningFields = [...finalReturningFields]; // Start with the combined list
     if (['insert', 'update', 'delete'].includes(operation) && !queryName.endsWith('_by_pk') && !queryName.endsWith('_one')) {
       let directFieldReturnType = queryInfo.type;
@@ -599,4 +599,4 @@ export function Generator(schema: any): Generate { // Принимаем __schem
   };
 }
 
-// Экспортируем Generator с уже загруженной схемой (или null/undefined if loading failed)
+// Export Generator with already loaded schema (or null/undefined if loading failed)

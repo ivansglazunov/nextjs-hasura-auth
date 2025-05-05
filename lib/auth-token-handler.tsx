@@ -4,12 +4,11 @@ import { useEffect } from 'react';
 import Debug from './debug';
 
 const debug = Debug('auth:token-handler');
-const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Ключ для localStorage
+const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Key for localStorage
 
 /**
- * Клиентский компонент, который при монтировании проверяет URL
- * на наличие параметра 'auth_token', сохраняет его в localStorage
- * и очищает URL.
+ * Client component that checks URL for 'auth_token' parameter when mounted,
+ * saves it to localStorage and cleans the URL.
  */
 export function AuthTokenHandler() {
   useEffect(() => {
@@ -19,16 +18,16 @@ export function AuthTokenHandler() {
     if (tokenFromUrl) {
       debug('AuthTokenHandler: Found auth_token in URL.');
       localStorage.setItem(AUTH_TOKEN_KEY, tokenFromUrl);
-      // Очищаем URL от токена, сохраняя хэш, если он есть
+      // Clean token from URL, preserving hash if present
       const cleanUrl = window.location.pathname + window.location.hash;
       window.history.replaceState({}, document.title, cleanUrl);
       debug('AuthTokenHandler: Token stored and URL cleaned.');
-      // Можно добавить принудительное обновление состояния Apollo Client,
-      // если это необходимо для немедленного подхвата токена.
-      // Например, через Apollo Client cache reinitialization или refetchQueries.
+      // Can add forced update of Apollo Client state,
+      // if necessary for immediate token usage.
+      // For example, through Apollo Client cache reinitialization or refetchQueries.
     }
-  }, []); // Запускаем только один раз при монтировании
+  }, []); // Run only once when mounting
 
-  // Этот компонент ничего не рендерит
+  // This component doesn't render anything
   return null;
 } 

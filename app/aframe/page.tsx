@@ -1,6 +1,6 @@
 import React from 'react'; // Import React
 
-import sidebar from "@/app/sidebar"; // Убедитесь, что путь правильный
+import sidebar from "@/app/sidebar"; // Make sure the path is correct
 import { Sidebar } from "@/components/sidebar";
 import {
   Breadcrumb,
@@ -22,19 +22,19 @@ import { AframeProvider } from '@/lib/aframe';
 
 // This page needs to be a client component for A-Frame
 export default function AframePage() {
-  // Стили для контейнера сцены, чтобы она занимала доступное пространство
+  // Styles for the scene container to make it fill available space
   const sceneContainerStyle: React.CSSProperties = {
-    position: 'relative', // Нужно для абсолютного позиционирования сцены внутри
-    flexGrow: 1,          // Занимает все доступное вертикальное пространство
+    position: 'relative', // Needed for absolute positioning of scene inside
+    flexGrow: 1,          // Occupies all available vertical space
     width: '100%',
-    height: 'calc(100vh - 4rem)', // Пример: высота viewport минус высота хедера
-    overflow: 'hidden',    // Предотвратить лишние скроллы
+    height: 'calc(100vh - 4rem)', // Example: viewport height minus header height
+    overflow: 'hidden',    // Prevent extra scrolling
     backgroundColor: 'white',
   };
 
   return (
     <SidebarProvider>
-      {/* Убедитесь, что activeUrl правильный */}
+      {/* Make sure that activeUrl is correct */}
       <Sidebar activeUrl={'/aframe'} data={sidebar} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -54,7 +54,7 @@ export default function AframePage() {
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        {/* A-Frame Scene Container - Применяем стили */}
+        {/* A-Frame Scene Container - Apply styles */}
         <div style={sceneContainerStyle}>
           <AframeProvider>
             <AframeClient />

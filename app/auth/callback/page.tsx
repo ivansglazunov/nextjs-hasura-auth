@@ -6,7 +6,7 @@ import Debug from 'hasyx/lib/debug';
 import { API_URL } from 'hasyx/lib/url';
 
 const debug = Debug('auth:callback-page');
-const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Ключ для localStorage
+const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Key for localStorage
 
 export default function AuthCallbackPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -15,13 +15,13 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const fetchSessionAndStoreToken = async () => {
       debug('AuthCallbackPage mounted. Fetching session from API...');
-      // Определяем URL для запроса сессии
+      // Define URL for requesting session
       const sessionUrl = new URL('/api/auth/session', API_URL).toString();
       debug('Session URL:', sessionUrl);
       
       try {
         const response = await fetch(sessionUrl, {
-          credentials: 'include', // ВАЖНО: для отправки cookie, установленных на домене API
+          credentials: 'include', // IMPORTANT: for sending cookies set on the API domain
         });
 
         if (!response.ok) {
@@ -36,14 +36,14 @@ export default function AuthCallbackPage() {
           localStorage.setItem(AUTH_TOKEN_KEY, sessionData.accessToken);
           setStatus('success');
           
-          // Перенаправляем на сохраненный URL или на главную
+          // Redirect to saved URL or home page
           const preAuthUrl = sessionStorage.getItem('preAuthUrl') || '/';
-          sessionStorage.removeItem('preAuthUrl'); // Очищаем сохраненный URL
+          sessionStorage.removeItem('preAuthUrl'); // Clear saved URL
           debug('Redirecting to:', preAuthUrl);
           window.location.href = preAuthUrl;
         } else {
-          // Ситуация, когда сессия есть, но токена нет (маловероятно с JWT, но возможно)
-          // Или когда сессии нет вообще
+          // Situation when session exists but no token (unlikely with JWT, but possible)
+          // Or when there's no session at all
           debug('No access token found in session data or no session active.');
           throw new Error('Authentication failed: No active session or token found after callback.');
         }
@@ -51,7 +51,7 @@ export default function AuthCallbackPage() {
         debug('Error fetching session or storing token:', err);
         setError(err.message || 'An unknown error occurred during authentication callback.');
         setStatus('error');
-        // Опционально: можно перенаправить на страницу ошибки или показать сообщение
+        // Optional: can redirect to error page or show message
         // window.location.href = '/auth/error?error=CallbackFetchFailed';
       }
     };
@@ -74,7 +74,7 @@ export default function AuthCallbackPage() {
           <p className="text-sm text-muted-foreground">You can try returning to the <a href="/" className="underline">homepage</a>.</p>
         </>
       )}
-      {/* Статус success не отображается, т.к. происходит редирект */}
+      {/* Success status is not displayed as a redirect occurs */}
     </div>
   );
 } 

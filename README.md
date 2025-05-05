@@ -104,6 +104,11 @@ Get your Next.js project integrated with Hasura and authentication in minutes!
     ```
     See the `init` command documentation below for details on created files.
 
+    If you need to reinstall and replace ALL files, including those that normally wouldn't be overwritten, use:
+    ```bash
+    npx hasyx init --reinit
+    ```
+
 3.  **Configure Environment Variables:**
     Create a `.env` file in your project root (or configure environment variables in your deployment platform). Fill in the necessary details for Hasura, NextAuth, and any OAuth providers you plan to use. See the "Environment Variables" section below for a full example and detailed setup instructions.
 
@@ -198,10 +203,16 @@ Initializes Hasyx in your Next.js project. It copies necessary API routes, confi
 npx hasyx init
 ```
 
+You can also use the `--reinit` flag to force replacement of all files, including those that would normally only be created if they don't exist:
+
+```bash
+npx hasyx init --reinit
+```
+
 **File Operations:**
 
 *   🔄 = Overwrites the file if it exists.
-*   ✨ = Creates the file only if it does not exist.
+*   ✨ = Creates the file only if it does not exist (or always replaces it with `--reinit`).
 
 ```
 .

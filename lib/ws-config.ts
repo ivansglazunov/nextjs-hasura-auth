@@ -3,10 +3,10 @@ import Debug from './debug';
 const debug = Debug('ws-config');
 
 /**
- * Конфигурация WebSocket для корректной работы CORS
+ * WebSocket configuration for proper CORS support
  */
 
-// Заголовки CORS для WebSocket соединений
+// CORS headers for WebSocket connections
 export const wsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -16,22 +16,22 @@ export const wsHeaders = {
 };
 
 /**
- * Создает URL для WebSocket соединения, учитывая требования для различных окружений
+ * Creates a URL for WebSocket connection, considering requirements for different environments
  */
 export function createWebSocketUrl(baseUrl: string): string {
   debug(`Creating WebSocket URL from base: ${baseUrl}`);
   
-  // Если мы обращаемся к vercel.app, всегда используем WSS
+  // If we're accessing vercel.app, always use WSS
   if (baseUrl.includes('vercel.app')) {
     const wsUrl = baseUrl.replace(/^http/, 'ws').replace(/^https/, 'wss');
     debug(`Using secure wss for Vercel domain: ${wsUrl}`);
     return wsUrl;
   }
   
-  // Определение, запущено ли приложение по HTTPS
+  // Determine if the application is running over HTTPS
   const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
   
-  // Создание соответствующего WS URL
+  // Create the appropriate WS URL
   const wsUrl = baseUrl.replace(/^http/, isSecure ? 'wss' : 'ws');
   
   debug(`Created WebSocket URL: ${wsUrl} (secure: ${isSecure})`);

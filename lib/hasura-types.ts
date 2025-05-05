@@ -3,14 +3,14 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Загружаем переменные окружения (путь к .env файлу)
+// Load environment variables (path to .env file)
 dotenv.config();
 
 const config: CodegenConfig = {
   overwrite: true,
-  // Указываем путь к файлу схемы, который мы генерируем
+  // Specify the path to the schema file that we generate
   schema: './public/hasura-schema.json',
-  // Можно также указать URL и заголовки, если хотим запрашивать схему напрямую
+  // Can also specify URL and headers if we want to request schema directly
   // schema: [
   //   {
   //     [process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!]: {
@@ -20,37 +20,37 @@ const config: CodegenConfig = {
   //     },
   //   },
   // ],
-  documents: undefined, // Мы не используем отдельные .graphql файлы для операций
+  documents: undefined, // We don't use separate .graphql files for operations
   generates: {
-    // Путь к файлу, куда будут сгенерированы типы
+    // Path to the file where types will be generated
     'types/hasura-types.d.ts': {
-      plugins: ['typescript'], // Используем базовый плагин typescript
+      plugins: ['typescript'], // Use basic typescript plugin
       config: {
-        // Настройки плагина typescript (можно добавить позже по необходимости)
-        // Например:
-        // scalars: { // Маппинг скаляров Hasura/Postgres на типы TS
+        // TypeScript plugin settings (can be added later as needed)
+        // For example:
+        // scalars: { // Mapping Hasura/Postgres scalars to TS types
         //   uuid: 'string',
         //   timestamptz: 'string',
         //   numeric: 'number',
-        //   // ... другие скаляры
+        //   // ... other scalars
         // },
-        // avoidOptionals: true, // Сделать необязательные поля обязательными (осторожно)
-        // maybeValue: 'T | null | undefined', // Как представлять nullable типы
+        // avoidOptionals: true, // Make optional fields required (use with caution)
+        // maybeValue: 'T | null | undefined', // How to represent nullable types
       },
     },
-    // Можно добавить другие выходные файлы или плагины сюда
-    // Например, для генерации типов операций:
+    // Can add other output files or plugins here
+    // For example, for generating operation types:
     // './path/to/graphql.ts': {
     //   preset: 'import-types',
-    //   documents: 'src/**/*.graphql', // Если бы у нас были .graphql файлы
+    //   documents: 'src/**/*.graphql', // If we had .graphql files
     //   plugins: ['typescript-operations'],
     //   presetConfig: {
-    //     typesPath: './hasura-types.d.ts', // Ссылка на базовые типы
+    //     typesPath: './hasura-types.d.ts', // Reference to base types
     //   },
     // },
   },
-  hooks: { // Запускается после генерации
-      afterAllFileWrite: ['prettier --write'] // Форматируем сгенерированные файлы
+  hooks: { // Runs after generation
+      afterAllFileWrite: ['prettier --write'] // Format generated files
   }
 };
 

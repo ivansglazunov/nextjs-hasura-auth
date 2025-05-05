@@ -11,7 +11,7 @@ import React, { useEffect, useRef } from 'react'; // Restore imports
 // This page needs to be a client component for A-Frame
 export default function AframeClient() {
   const sceneRef = useRef<any>(null); // Use 'any' for now to bypass type issues
-  const logSent = useRef(false); // Флаг, чтобы отправить только один раз
+  const logSent = useRef(false); // Flag to send only once
 
   const sceneStyle: React.CSSProperties = {
     position: 'absolute',
@@ -19,7 +19,7 @@ export default function AframeClient() {
     left: 0,
     width: '100%',
     height: '100%',
-    zIndex: 0, // Убедитесь, что сцена не перекрывает UI
+    zIndex: 0, // Make sure the scene doesn't overlap UI
   };
 
   // Effect to set up event listener and log after scene is loaded
@@ -30,7 +30,7 @@ export default function AframeClient() {
     const handleSceneLoad = () => {
       if (sceneEl && !logSent.current) {
         const sceneOuterHtml = sceneEl.outerHTML;
-        logSent.current = true; // Ставим флаг
+        logSent.current = true; // Set the flag
 
         // Log the HTML directly to the console
         console.log("--- A-Frame Scene Loaded outerHTML ---");
@@ -66,7 +66,7 @@ export default function AframeClient() {
   // Render the scene once A-Frame is loaded
   return (<>
     <Scene
-      id="my-aframe-scene" // Добавляем ID для рефа
+      id="my-aframe-scene" // Adding ID for ref
       ref={(el) => { sceneRef.current = el; }} // Ensure ref callback returns void
       embedded style={sceneStyle} renderer="alpha: true; colorManagement: true;"
       webxr="requiredFeatures: local-floor; optionalFeatures: anchors, hit-test, dom-overlay, bounded-floor;" // Request AR features
