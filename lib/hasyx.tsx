@@ -1,11 +1,12 @@
 import { useCreateApolloClient } from './apollo'; // Our client creation function
-import { useSession } from './auth'; // Our client creation function
+// import { useSession } from './auth'; // Убрали useSession
 import { ThemeProvider } from "hasyx/components/theme-provider";
-import { SessionProvider } from "next-auth/react"; // Import SessionProvider and useSession
-import { useMemo } from "react";
+import { SessionProvider } from "next-auth/react"; // SessionProvider нужен для signIn/signOut
+import { useMemo } from "react"; // Убрали useEffect
 import { Generate, GenerateOptions, GenerateResult } from "./generator";
-import toUrl, { API_URL } from 'hasyx/lib/url';
+import toUrl, { API_URL, url } from 'hasyx/lib/url';
 import isEqual from 'react-fast-compare'; // Import for deep equality checks
+import { AuthTokenHandler } from './auth-token-handler'; // Импортируем новый компонент
 
 import {
   ApolloError,
@@ -412,8 +413,11 @@ type QueryHookOptions<TData, TVariables extends OperationVariables> = BaseHookOp
 type SubscriptionHookOptions<TData, TVariables extends OperationVariables> = BaseHookOptions & Omit<ApolloSubscriptionHookOptions<TData, TVariables>, 'query' | 'variables' | 'context'>;
 type MutationHookOptions<TData, TVariables extends OperationVariables> = BaseHookOptions & Omit<ApolloMutationHookOptions<TData, TVariables>, 'mutation' | 'variables' | 'context'>;
 
+const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Ключ для localStorage
+
 function HasyxProviderCore({ url, children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
-  const { data: session } = useSession(); // Get session
+  // Удаляем useSession(), так как он не будет работать корректно кросс-доменно
+  // const { data: session } = useSession(); 
   
   const client = useCreateApolloClient(useMemo(() => {
     // Определяем, является ли текущий домен localhost
@@ -422,33 +426,33 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
       window.location.hostname === '127.0.0.1'
     );
     
-    // Определяем базовый URL
+    // Определяем базовый URL API (GraphQL эндпоинт)
     let apiUrl: string;
-    
-    if (isLocalhost) {
-      // Если локальная разработка и не указан url в props, используем относительный путь
-      if (!url) {
-        apiUrl = toUrl('http', API_URL, '/api/graphql');
-      } else {
-        // Если указан url в props, используем его с правильным протоколом
-        apiUrl = url.includes('vercel.app') 
-          ? toUrl('https', url, '/api/graphql') 
-          : toUrl('http', url, '/api/graphql');
-      }
-    } else {
-      // Для production или preview сред
+    if (isLocalhost && !url) {
+      apiUrl = toUrl('http', API_URL, '/api/graphql');
+    } else if (isLocalhost && url) {
+      apiUrl = url.includes('vercel.app') ? toUrl('https', url, '/api/graphql') : toUrl('http', url, '/api/graphql');
+    } else { // Production/Preview
       const protocol = url?.includes('vercel.app') ? 'https' : 'http';
       apiUrl = toUrl(protocol, API_URL, '/api/graphql');
     }
     
     debug(`HasyxProviderCore: Final API URL: ${apiUrl}, isLocalhost: ${isLocalhost}`);
     
+    // Получаем токен из localStorage, если он там есть
+    const tokenFromStorage = typeof window !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null;
+    debug(`HasyxProviderCore: Token from localStorage: ${tokenFromStorage ? 'found' : 'not found'}`);
+
+    // TODO: Вместо session?.accessToken теперь используем tokenFromStorage
+    // Нужна ли проверка токена или дополнительная логика?
+
     return {
       url: apiUrl,
-      token: session?.accessToken, // Pass Hasura token from session
+      token: tokenFromStorage || undefined, // Используем undefined вместо null
       ws: true // Enable WebSocket support
     };
-  }, [session, url])); // Include url in dependencies
+  // Зависимость от url остается, но убираем session
+  }, [url])); 
   
   client.hasyxGenerator = generate;
 
@@ -458,14 +462,19 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
 }
 
 export function HasyxProvider({ children, generate }: { children: React.ReactNode, generate: Generate }) {
+  const authBasePath = url('http', API_URL, '/api/auth');
+
   return (
-    <SessionProvider>
+    // SessionProvider все еще нужен для вызова signIn/signOut
+    <SessionProvider basePath={authBasePath}>
       <ThemeProvider
         attribute="class"
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
       >
+        {/* Рендерим обработчик токена внутри провайдеров */}
+        <AuthTokenHandler /> 
         <HasyxProviderCore generate={generate}>
           {children}
         </HasyxProviderCore>  

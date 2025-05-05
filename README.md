@@ -388,6 +388,12 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 *   `NEXTAUTH_SECRET`: **Required** for securing sessions, signing JWTs, and CSRF protection. Generate a strong, random string (at least 32 characters). You can use `openssl rand -base64 32` to generate one.
 
+* **For client-side builds using different domains (GitHub Pages, Capacitor, etc.):**
+  * When deploying client-side builds (static export) that need to connect to your main backend API with NextAuth, the authentication is handled automatically via the `basePath` configuration in `SessionProvider`.
+  * The client-side build will use the URL from `NEXT_PUBLIC_API_URL` or `NEXT_PUBLIC_MAIN_URL` environment variables as the authentication API base.
+  * The `SessionProvider` automatically detects when the app is running on a different domain and configures the authentication endpoints properly.
+  * This allows authentication to work seamlessly across different environments (development, production) and deployments (client-side or server-side).
+
 #### Deployment & Build (`NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_BASE_PATH`, `NEXT_PUBLIC_MAIN_URL`, `NEXT_PUBLIC_BUILD_TARGET`, `NEXT_PUBLIC_WS`)
 
 *   `NEXT_PUBLIC_BASE_URL`: **Required**. The canonical base URL of your application deployment. Used by NextAuth.js for OAuth redirects and email links, and as a default fallback for `NEXT_PUBLIC_MAIN_URL`. Set it to your production domain (e.g., `https://yourdomain.com`) or `http://localhost:3000` for local development.

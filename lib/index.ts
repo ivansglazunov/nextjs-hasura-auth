@@ -6,3 +6,4 @@ export * from './hasura';
 export * from './auth';
 export * from './jwt';
 export * from './hasyx';
+export * from './auth-token-handler';

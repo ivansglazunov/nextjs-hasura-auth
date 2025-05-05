@@ -33,24 +33,26 @@ export async function withCors(
   request: NextRequest,
   handler: (request: NextRequest) => Promise<NextResponse> | NextResponse
 ): Promise<NextResponse> {
+  const requestOrigin = request.headers.get('Origin') || '*';
+  
   // Handle preflight OPTIONS request
   if (request.method === 'OPTIONS') {
-    debug('Handling OPTIONS preflight request');
+    debug('Handling OPTIONS preflight request from origin:', requestOrigin);
     const response = new NextResponse(null, { status: 204 });
-    return applyCorsHeaders(response);
+    return applyCorsHeaders(response, requestOrigin);
   }
   
   // Process the request with the handler
   try {
     const response = await handler(request);
-    return applyCorsHeaders(response);
+    return applyCorsHeaders(response, requestOrigin);
   } catch (error) {
     debug(`Error handling request: ${error}`);
     const errorResponse = NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
     );
-    return applyCorsHeaders(errorResponse);
+    return applyCorsHeaders(errorResponse, requestOrigin);
   }
 }
 

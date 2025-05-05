@@ -7,6 +7,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import YandexProvider from 'next-auth/providers/yandex';
 import { createApolloClient } from './apollo'; // Import from generated package
 import { Hasyx } from './hasyx'; // Import from generated package
+import { SignJWT } from 'jose';
 
 // Ensure type augmentation is applied globally (can be in a separate .d.ts file or here)
 import 'next-auth';
@@ -14,12 +15,17 @@ import 'next-auth/jwt';
 
 const debug = Debug('auth:options-base');
 
+// Переменная для временного хранения токена между jwt и redirect
+// Объявляем ВНЕ функции createAuthOptions, чтобы она была в замыкании
+let tempTokenForRedirect: string | null = null; 
+
 // Type Augmentation - Extend default types carefully
 declare module 'next-auth' {
   interface Session {
     provider?: string;
     error?: string;
     hasuraClaims?: Record<string, any>;
+    accessToken?: string | null;
     // user?: any;
   }
 }
@@ -131,6 +137,9 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
       strategy: 'jwt',
     },
     callbacks: {
+      // Убираем объявление переменной отсюда
+      // let tempTokenForRedirect: string | null = null; 
+
       async jwt({ token, user, account, profile }): Promise<DefaultJWT> {
         debug('JWT Callback: input', { userId: token.sub, provider: account?.provider });
 
@@ -211,14 +220,39 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
         token.userId = userId;
         token.provider = provider ?? token.provider; // Keep existing if not sign-in
         token.emailVerified = emailVerified;
+        // Генерация Hasura claims
         token["https://hasura.io/jwt/claims"] = {
             'x-hasura-allowed-roles': uniqueAllowedRoles,
             'x-hasura-default-role': latestRole,
             'x-hasura-user-id': userId,
         };
-        // Clear error if we successfully processed
+        
+        // Генерируем и сохраняем accessToken (Hasura JWT) в токен
+        // Используем данные из token для генерации
+        try {
+            const jwtSecret = process.env.HASURA_JWT_SECRET;
+            if (!jwtSecret) throw new Error('HASURA_JWT_SECRET is not configured.');
+            
+            const parsedJwtSecret = JSON.parse(jwtSecret);
+            if (!parsedJwtSecret.key) throw new Error('Invalid HASURA_JWT_SECRET format.');
+            
+            const hasuraJwt = await new SignJWT(token["https://hasura.io/jwt/claims"])
+              .setProtectedHeader({ alg: 'HS256' }) // Указываем алгоритм
+              .setIssuedAt()
+              // .setExpirationTime('2h') // Установите время жизни токена по необходимости
+              .sign(new TextEncoder().encode(parsedJwtSecret.key)); // Используем ключ из секрета
+              
+            (token as any).accessToken = hasuraJwt; // Сохраняем сгенерированный JWT
+            tempTokenForRedirect = hasuraJwt; // Сохраняем для redirect callback
+            debug('JWT Callback: Generated and stored Hasura accessToken.');
+            
+        } catch (error) {
+             debug('JWT Callback: Error generating Hasura JWT:', error);
+             token.error = 'HasuraJWTGenerationFailed';
+             tempTokenForRedirect = null; // Сбрасываем, если генерация не удалась
+        }
+        
         delete token.error; 
-
         debug('JWT Callback: completed.', { userId: token.userId, provider: token.provider });
         return token; // Return the enriched JWT
       },
@@ -230,14 +264,38 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
         session.provider = token.provider ?? 'unknown'; 
         session.error = token.error;
         session.hasuraClaims = token["https://hasura.io/jwt/claims"];
+        session.accessToken = (token as any).accessToken || null;
 
         // Add emailVerified directly to the session root if needed, not user object
         // Or rely on it being in the hasuraClaims/token if client needs it
         // (session.user as any).emailVerified = token.emailVerified; // Avoid modifying session.user structure
 
-        debug('Session Callback: output session', { userId: session.user?.id, provider: session.provider });
+        debug('Session Callback: output session', { userId: session.user?.id, provider: session.provider, hasToken: !!session.accessToken });
         return session; // Return the session adhering to DefaultSession + our extensions
       },
+      
+      // Обновленный redirect callback для передачи токена
+      async redirect({ url, baseUrl }: { url: string, baseUrl: string }): Promise<string> {
+        debug('Redirect Callback: url=', url, 'baseUrl=', baseUrl, 'tempToken=', tempTokenForRedirect ? 'present' : 'null');
+        
+        const defaultRedirectUrl = url.startsWith('/') ? `${baseUrl}${url}` : url;
+        const targetOrigin = new URL(defaultRedirectUrl).origin;
+        
+        // Если перенаправление НЕ на наш baseUrl (т.е. на localhost callback)
+        // и у нас есть токен из jwt callback
+        if (targetOrigin !== baseUrl && tempTokenForRedirect) {
+            const redirectUrlWithToken = new URL(defaultRedirectUrl); // Используем URL, куда NextAuth хотел перенаправить
+            redirectUrlWithToken.searchParams.set('auth_token', tempTokenForRedirect);
+            debug('Redirect Callback: Different origin detected, appending token:', redirectUrlWithToken.toString());
+            tempTokenForRedirect = null; // Сбрасываем временный токен
+            return redirectUrlWithToken.toString();
+        }
+        
+        // Во всех остальных случаях (редирект внутри Vercel, нет токена)
+        debug('Redirect Callback: Same origin or no token, returning default URL:', defaultRedirectUrl);
+        tempTokenForRedirect = null; // Сбрасываем временный токен
+        return defaultRedirectUrl;
+      }
     },
     // Add custom pages if needed
     // pages: {
