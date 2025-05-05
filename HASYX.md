@@ -20,6 +20,10 @@ This document describes the `Hasyx` class and associated React hooks provided in
 *   **Error Handling:**
     *   Class methods (`select`, `insert`, etc.) throw `ApolloError` on failure.
     *   Hooks return errors via the `error` property in their result object, consistent with Apollo Hasyx patterns.
+*   **WebSocket Fallback:** For environments where WebSockets are not available (like some serverless platforms):
+    *   Automatic fallback to polling-based subscriptions when `NEXT_PUBLIC_WS=0` is set.
+    *   Both `useSubscription` and `subscribe()` method support polling intervals customizable via `pollingInterval` option (defaults to 1000ms).
+    *   Deep equality comparison ensures subscribers only receive updates when data actually changes.
 
 ## `Hasyx` Class Usage
 
@@ -113,7 +117,8 @@ function subscribeToUserChanges(userId: string): Observable<any> | null {
     table: 'users',
     pk_columns: { id: userId },
     returning: ['name', 'updated_at'],
-    role: 'me' // Role for subscription might be handled at connection time
+    role: 'me', // Role for subscription might be handled at connection time
+    pollingInterval: 2000 // Optional: customize polling interval (ms) for WebSocket fallback
   });
 
   const subscription = subscriptionObservable.subscribe({
@@ -134,9 +139,9 @@ function subscribeToUserChanges(userId: string): Observable<any> | null {
 *   `async insert<TData = any, TOptions = HasyxMethodOptions>(options: TOptions): Promise<TData>`: Executes an insert mutation.
 *   `async update<TData = any, TOptions = HasyxMethodOptions>(options: TOptions): Promise<TData>`: Executes an update mutation.
 *   `async delete<TData = any, TOptions = HasyxMethodOptions>(options: TOptions): Promise<TData>`: Executes a delete mutation.
-*   `subscribe<TData = any, TVariables = OperationVariables, TOptions = HasyxMethodOptions>(options: TOptions): Observable<FetchResult<TData>>`: Initiates a subscription, returning an Apollo Observable.
+*   `subscribe<TData = any, TVariables = OperationVariables, TOptions = HasyxMethodOptions>(options: TOptions): Observable<FetchResult<TData>>`: Initiates a subscription, returning an Apollo Observable. If WebSockets are disabled (`NEXT_PUBLIC_WS=0`), falls back to polling.
 
-Where `HasyxMethodOptions` extends `GenerateOptions` (from `lib/generator.ts`) and adds an optional `role: string` property.
+Where `HasyxMethodOptions` extends `GenerateOptions` (from `lib/generator.ts`) and adds an optional `role: string` property and an optional `pollingInterval: number` property (for subscriptions).
 
 ## React Hooks Usage
 
@@ -259,6 +264,7 @@ function OnlineUsersList() {
         },
         { // Hook options
             // role: 'user' // Or appropriate role
+            pollingInterval: 2000, // Optional: customize polling interval (ms) for WebSocket fallback
             // ... other Apollo useSubscription options
         }
     );
@@ -271,7 +277,7 @@ function OnlineUsersList() {
 
 *   `useClient(providedClient?: ApolloClient<any> | null): Hasyx`: Hook to get an instance of the `Hasyx` class.
 *   `useQuery<TData = any, TVariables = OperationVariables>(generateOptions: HasyxMethodOptions, hookOptions?: QueryHookOptions<TData, TVariables>)`: Core query hook.
-*   `useSubscription<TData = any, TVariables = OperationVariables>(generateOptions: HasyxMethodOptions, hookOptions?: SubscriptionHookOptions<TData, TVariables>)`: Core subscription hook.
+*   `useSubscription<TData = any, TVariables = OperationVariables>(generateOptions: HasyxMethodOptions, hookOptions?: SubscriptionHookOptions<TData, TVariables>)`: Core subscription hook. Falls back to polling-based implementation if WebSockets are disabled (`NEXT_PUBLIC_WS=0`).
 *   `useMutation<TData = any, TVariables = OperationVariables>(generateOptions: HasyxMethodOptions & { operation: GenerateOperation }, hookOptions?: MutationHookOptions<TData, TVariables>): [mutateFn, MutationResult<TData>]`: Core mutation hook (requires `operation` in `generateOptions`).
 *   **Aliases:**
     *   `useSelect`: Alias for `useQuery`.
@@ -283,6 +289,7 @@ function OnlineUsersList() {
 1.  `generateOptions`: An object matching `Omit<GenerateOptions, 'operation'>` (for `useQuery`/`useSubscription` and aliases) or `GenerateOptions` (for `useMutation`). Defines *what* data to operate on. Assumed type is `HasyxMethodOptions`.
 2.  `hookOptions` (Optional): An object containing:
     *   `role?: string`: The Hasura role to use for the request.
+    *   `pollingInterval?: number`: For subscriptions, the interval in milliseconds between polling requests when WebSockets are disabled. Defaults to 1000ms.
     *   Any other valid options for the underlying Apollo hook (`useQuery`, `useSubscription`, `useMutation`), like `variables`, `skip`, `onCompleted`, `onError`, `fetchPolicy`, etc. *except* `query`, `mutation`, or `context` (which are handled internally).
 
 ## Important Considerations
@@ -295,8 +302,12 @@ function OnlineUsersList() {
         *   A standard role like `'user'` defines a general set of permissions for logged-in users.
         *   The special role `'me'` is commonly used in Hasura permissions that depend on the `X-Hasura-User-Id` session variable. This allows you to define rules like "users can only select/update/delete *their own* records". Passing `{ role: 'me' }` tells Hasura to evaluate these specific user-ID-based permissions.
         *   Always ensure your Hasura permissions are configured correctly for the roles you intend to use (`user`, `me`, `admin`, `anonymous`, etc.).
-*   **Dependencies:** Depends on `@apollo/client`, `react`, `lib/generator`, `lib/debug`, and `ts-essentials`.
+*   **Dependencies:** Depends on `@apollo/client`, `react`, `lib/generator`, `lib/debug`, `react-fast-compare`, and `ts-essentials`.
 *   **Memoization (Hooks):** Hooks memoize generated queries based on `generateOptions`. Ensure this object is stable between renders if needed (e.g., use `React.useMemo`).
-*   **Subscription Cleanup:** Apollo Client's `useSubscription` hook handles WebSocket cleanup automatically on unmount.
+*   **Subscription Cleanup:** Apollo Client's `useSubscription` hook handles WebSocket cleanup automatically on unmount. For polling-based subscriptions, timeouts are properly cleared on unmount.
+*   **WebSocket Fallback:** 
+    *   Set `NEXT_PUBLIC_WS=0` in your environment variables to enable the polling-based subscription fallback.
+    *   This is particularly useful for serverless environments like Vercel where WebSockets might not be supported.
+    *   The polling mechanism uses deep equality checks (`react-fast-compare`) to ensure subscribers only receive updates when data has actually changed.
 *   **Class Method Return Values:** Methods like `select`, `insert`, `update`, `delete` now return the *unwrapped* data where applicable (e.g., `User[]` or `User` object). For bulk mutations or aggregate queries, they return the standard Hasura response structure (`{ affected_rows, returning }` or `{ aggregate, nodes }`). Ensure the generic `TData` type matches the expected return value.
 *   **Hook Return Values:** Hooks (`useQuery`, `useMutation`, etc.) return the standard Apollo Client result objects. The actual data is nested within the `data` property (e.g., `result.data.users` or `result.data.insert_users_one`). 

@@ -351,6 +351,11 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 # Do not set manually unless you know what you are doing.
 # NEXT_PUBLIC_BUILD_TARGET=
 
+# Optional: Controls WebSocket support for subscriptions (default: 1 = enabled)
+# Set to 0 to disable WebSockets and use polling-based subscriptions instead.
+# Particularly useful for serverless environments like Vercel where WebSockets are not supported.
+# NEXT_PUBLIC_WS=1
+
 # ===== OAuth Providers (Optional - Enable by setting credentials) =====
 # --- Google ---
 # GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
@@ -383,12 +388,13 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
 *   `NEXTAUTH_SECRET`: **Required** for securing sessions, signing JWTs, and CSRF protection. Generate a strong, random string (at least 32 characters). You can use `openssl rand -base64 32` to generate one.
 
-#### Deployment & Build (`NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_BASE_PATH`, `NEXT_PUBLIC_MAIN_URL`, `NEXT_PUBLIC_BUILD_TARGET`)
+#### Deployment & Build (`NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_BASE_PATH`, `NEXT_PUBLIC_MAIN_URL`, `NEXT_PUBLIC_BUILD_TARGET`, `NEXT_PUBLIC_WS`)
 
 *   `NEXT_PUBLIC_BASE_URL`: **Required**. The canonical base URL of your application deployment. Used by NextAuth.js for OAuth redirects and email links, and as a default fallback for `NEXT_PUBLIC_MAIN_URL`. Set it to your production domain (e.g., `https://yourdomain.com`) or `http://localhost:3000` for local development.
 *   `NEXT_PUBLIC_BASE_PATH`: *Optional*. If you deploy your application to a subdirectory of a domain (e.g., `https://example.com/my-app`), set this variable to the subdirectory path (e.g., `/my-app`). Next.js will use this to correctly prefix asset paths (`/_next/...` becomes `/my-app/_next/...`) and links. **For GitHub Pages deployments**, the included workflow (`.github/workflows/nextjs.yml`) **automatically detects and sets this** based on your repository name, so you typically don't need to set it manually for GH Pages.
 *   `NEXT_PUBLIC_MAIN_URL`: *Optional*. Specifies the absolute URL of your deployed backend API. This is primarily used by **client-side builds** (`build:client` for Capacitor/static export). When `NEXT_PUBLIC_BUILD_TARGET` is set to `client`, API calls from the client (e.g., via Apollo Client configured in `HasyxProvider`) will be directed to this URL (e.g., `https://yourdomain.com/api/graphql`) instead of relative paths (`/api/graphql`). If not set, it defaults to the value of `NEXT_PUBLIC_BASE_URL`.
 *   `NEXT_PUBLIC_BUILD_TARGET`: *Internal Use*. This variable is set automatically by specific build scripts (like `npm run build:client` which sets it to `client`) to signal the type of build being performed. This allows `next.config.ts` and potentially other parts of the application (like `HasyxProvider`) to adjust their behavior, for example, by enabling `output: 'export'` or changing API endpoints. **Avoid setting this manually** unless you have a specific reason and understand the implications.
+*   `NEXT_PUBLIC_WS`: *Optional*. Controls whether WebSockets are used for GraphQL subscriptions. Defaults to `1` (enabled). Set to `0` to disable WebSockets and use polling-based subscriptions instead. This is particularly useful for serverless environments like Vercel where WebSockets are not supported. When disabled, subscriptions will automatically fall back to a polling implementation with deep equality checks to minimize unnecessary updates.
 
 #### OAuth Providers (`GOOGLE_*`, `YANDEX_*`, etc.)
 

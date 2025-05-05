@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.67",
+  "version": "0.1.68",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -125,6 +125,7 @@
     "react": "^19.0.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^19.0.0",
+    "react-fast-compare": "^3.2.2",
     "react-hook-form": "^7.55.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.3",
