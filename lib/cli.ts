@@ -5,6 +5,8 @@ import fs from 'fs-extra';
 import path from 'path';
 import spawn from 'cross-spawn';
 import Debug from './debug'; // Import the Debug factory
+import setupInfrastructure from './infra';
+import removeInfrastructure from './uninfra';
 
 // Create a debugger instance for the CLI
 const debug = Debug('cli');
@@ -829,6 +831,34 @@ program
     
     console.log('\n✨ Assets generation completed!');
     debug('Finished "assets" command.');
+  });
+
+// --- NEW: `infra` Command ---
+program
+  .command('infra')
+  .description('Setup infrastructure for Next.js, Hasura, Vercel, and GitHub integration.')
+  .option('--skip-github', 'Skip GitHub integration setup')
+  .option('--skip-vercel', 'Skip Vercel integration setup')
+  .option('--skip-hasura', 'Skip Hasura integration setup')
+  .option('--debug', 'Enable verbose debug logging')
+  .action(async (options) => {
+    debug('Executing "infra" command.');
+    await setupInfrastructure(options);
+    debug('Finished "infra" command.');
+  });
+
+// --- NEW: `uninfra` Command ---
+program
+  .command('uninfra')
+  .description('Remove infrastructure created by the infra command (GitHub repository, Vercel project, Hasura instance).')
+  .option('--skip-github', 'Skip GitHub repository deletion')
+  .option('--skip-vercel', 'Skip Vercel project deletion')
+  .option('--skip-hasura', 'Skip Hasura instance deletion')
+  .option('--force', 'Skip confirmation prompt')
+  .action(async (options) => {
+    debug('Executing "uninfra" command.');
+    await removeInfrastructure(options);
+    debug('Finished "uninfra" command.');
   });
 
 debug('Parsing CLI arguments...');
