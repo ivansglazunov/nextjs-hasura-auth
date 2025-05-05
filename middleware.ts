@@ -7,6 +7,29 @@ const debug = Debug('middleware');
 
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
+  // Обработка запросов по HTTP к vercel.app, которые должны быть по HTTPS
+  // Если запрос идет по HTTP к Vercel домену, это может вызвать проблемы с CORS
+  if (
+    request.nextUrl.protocol === 'http:' && 
+    request.headers.get('host')?.includes('vercel.app')
+  ) {
+    // Для CORS preflight запросов (OPTIONS), возвращаем 204 с CORS заголовками
+    // вместо перенаправления, которое не работает для preflight
+    if (request.method === 'OPTIONS') {
+      debug(`Intercepting OPTIONS preflight request to HTTP Vercel domain, responding directly`);
+      return new NextResponse(null, { 
+        status: 204,
+        headers: corsHeaders
+      });
+    }
+    
+    // Для обычных запросов, перенаправляем на HTTPS
+    const httpsUrl = request.nextUrl.clone();
+    httpsUrl.protocol = 'https:';
+    debug(`Redirecting HTTP Vercel URL to HTTPS: ${httpsUrl.toString()}`);
+    return NextResponse.redirect(httpsUrl, 308); // 308 Permanent Redirect
+  }
+
   // Log all requests to API routes
   const isApiRoute = request.nextUrl.pathname.startsWith('/api/');
   const origin = request.headers.get('origin') || '*';
@@ -53,8 +76,10 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Apply middleware to all API routes and exclude static assets
+  // Apply middleware to all API routes and exclude static assets,
+  // and also match root path to handle HTTP to HTTPS redirects
   matcher: [
     '/api/:path*',
+    '/',
   ],
 } 

@@ -14,6 +14,7 @@ import { getJwtSecret } from './jwt';
 // import { WebSocketLink } from '@apollo/client/link/ws'; 
 import { onError } from '@apollo/client/link/error';
 import { Generate } from './generator';
+import { createWebSocketUrl } from './ws-config';
 
 // Create a debug logger for this module
 const debug = Debug('apollo');
@@ -130,7 +131,9 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
 
   if (ws && isClient) {
     debug('apollo', '✅ Entering WS Link creation block.'); // Log entry
-    const wsEndpoint = url.replace('http', 'ws').replace('https://', 'wss');
+    
+    // Используем улучшенную функцию создания WebSocket URL
+    const wsEndpoint = createWebSocketUrl(url);
     debug('apollo', '🔌 Setting up GraphQLWsLink for:', wsEndpoint);
     
     // --- Restore GraphQLWsLink --- 

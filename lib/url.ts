@@ -1,7 +1,14 @@
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_MAIN_URL || process.env.NEXT_PUBLIC_BASE_URL || 'localhost:3000';
+
 /**
  * Formats URL with protocol and path
  */
 export const url = (protocol: string, url: string, path: string): string => {
+  // Force https for vercel domains
+  if (url.includes('vercel.app')) {
+    protocol = 'https';
+  }
+
   // Normalize protocol (ensure it ends with "://")
   const normalizedProtocol = protocol.endsWith('://') 
     ? protocol 

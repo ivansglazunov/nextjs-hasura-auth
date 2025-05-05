@@ -4,6 +4,7 @@ import { ThemeProvider } from "hasyx/components/theme-provider";
 import { SessionProvider } from "next-auth/react"; // Import SessionProvider and useSession
 import { useMemo } from "react";
 import { Generate, GenerateOptions, GenerateResult } from "./generator";
+import toUrl, { API_URL } from 'hasyx/lib/url';
 import isEqual from 'react-fast-compare'; // Import for deep equality checks
 
 import {
@@ -415,34 +416,33 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
   const { data: session } = useSession(); // Get session
   
   const client = useCreateApolloClient(useMemo(() => {
-    const buildTarget = process.env.NEXT_PUBLIC_BUILD_TARGET;
-    const mainUrlFromEnv = process.env.NEXT_PUBLIC_MAIN_URL;
-    debug(`HasyxProviderCore: Build Target=${buildTarget}, Main URL Env=${mainUrlFromEnv}, Provided URL Prop=${url}`);
-
-    let apiUrl = '/api/graphql'; // Default relative path
-    if (url) {
-      apiUrl = url;
-      debug(`HasyxProviderCore: Using provided URL prop: ${apiUrl}`);
-    } else if (buildTarget === 'client') {
-      const mainUrl = mainUrlFromEnv || 'http://localhost:3000';
-      // Use URL constructor for robust path joining
-      try {
-        const base = new URL(mainUrl);
-        const combinedUrl = new URL('/api/graphql', base); // Relative path resolved against base
-        apiUrl = combinedUrl.toString();
-        debug(`HasyxProviderCore: Constructed absolute apiUrl for client build: ${apiUrl} from mainUrl: ${mainUrl}`);
-      } catch (e) {
-         console.error(`❌ Invalid URL provided for NEXT_PUBLIC_MAIN_URL: ${mainUrl}`, e);
-         debug(`Invalid URL provided for NEXT_PUBLIC_MAIN_URL: ${mainUrl}`, e);
-         // Fallback to relative path or handle error appropriately
-         apiUrl = '/api/graphql'; 
-         debug(`HasyxProviderCore: Falling back to relative apiUrl due to invalid mainUrl: ${apiUrl}`);
+    // Определяем, является ли текущий домен localhost
+    const isLocalhost = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1'
+    );
+    
+    // Определяем базовый URL
+    let apiUrl: string;
+    
+    if (isLocalhost) {
+      // Если локальная разработка и не указан url в props, используем относительный путь
+      if (!url) {
+        apiUrl = toUrl('http', API_URL, '/api/graphql');
+      } else {
+        // Если указан url в props, используем его с правильным протоколом
+        apiUrl = url.includes('vercel.app') 
+          ? toUrl('https', url, '/api/graphql') 
+          : toUrl('http', url, '/api/graphql');
       }
     } else {
-      debug(`HasyxProviderCore: Using default relative apiUrl: ${apiUrl}`);
+      // Для production или preview сред
+      const protocol = url?.includes('vercel.app') ? 'https' : 'http';
+      apiUrl = toUrl(protocol, API_URL, '/api/graphql');
     }
     
-    debug(`HasyxProviderCore: Final options for useCreateApolloClient -> url: ${apiUrl}, token: ${session?.accessToken ? '******' : 'undefined'}, ws: true`);
+    debug(`HasyxProviderCore: Final API URL: ${apiUrl}, isLocalhost: ${isLocalhost}`);
+    
     return {
       url: apiUrl,
       token: session?.accessToken, // Pass Hasura token from session
