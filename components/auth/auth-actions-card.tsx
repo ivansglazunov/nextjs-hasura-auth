@@ -8,10 +8,16 @@ import { signIn, signOut } from "next-auth/react";
 import Image from 'next/image';
 import React from "react";
 import { useSession, useSubscription } from 'hasyx';
+import { OAuthButtons } from './oauth-buttons';
+import Debug from 'hasyx/lib/debug';
 
 // Import provider icons (assuming they exist)
 // import GoogleIcon from 'hasyx/public/icons/google.svg';
 // import YandexIcon from 'hasyx/public/icons/yandex.svg';
+
+const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Используем тот же ключ, что и в callback странице
+
+const debug = Debug('auth:actions-card');
 
 export function AuthActionsCard(props: React.HTMLAttributes<HTMLDivElement>) {
   const { data: session, status } = useSession();
@@ -37,6 +43,16 @@ export function AuthActionsCard(props: React.HTMLAttributes<HTMLDivElement>) {
 
   const emailVerified = subData?.users?.[0]?.email_verified;
   // --- End Subscription ---
+
+  const handleSignOut = async () => {
+    // Очищаем токен из localStorage
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    debug('AuthActionsCard: Removed token from localStorage.');
+    
+    // Вызываем стандартный signOut
+    // Указываем callbackUrl, чтобы после выхода с Vercel вернуться на главную localhost
+    await signOut({ callbackUrl: '/' }); 
+  };
 
   return (
     <Card {...props}>
@@ -94,27 +110,12 @@ export function AuthActionsCard(props: React.HTMLAttributes<HTMLDivElement>) {
         <div className="grid w-full items-center gap-2">
           <Label>{session ? 'Sign Out' : 'Sign In with OAuth'}</Label>
           {session && (
-            <Button onClick={() => signOut()} disabled={loading}>
+            <Button onClick={handleSignOut} disabled={loading}>
               <LogOut className="mr-2 h-4 w-4" /> Sign Out
             </Button>
           )}
           {!session && (
-            <div className="flex flex-col space-y-4">
-              {/* Provider Buttons */}
-              <Button onClick={() => signIn('google')} disabled={loading}>
-                {/* <GoogleIcon className="mr-2 h-4 w-4" /> */}
-                <LogIn className="mr-2 h-4 w-4" /> Sign In with Google
-              </Button>
-              <Button onClick={() => signIn('yandex')} disabled={loading}>
-                {/* <YandexIcon className="mr-2 h-4 w-4" /> */} Sign In with Yandex
-              </Button>
-              <Button onClick={() => signIn('github')} disabled={loading}>
-                <Github className="mr-2 h-4 w-4" /> Sign In with GitHub (coming soon)
-              </Button>
-              <Button variant="outline" disabled>
-                <Label>More providers coming soon...</Label>
-              </Button>
-            </div>
+            <OAuthButtons />
           )}
         </div>
       </CardContent>
