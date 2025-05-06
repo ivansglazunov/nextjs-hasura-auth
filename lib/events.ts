@@ -353,8 +353,7 @@ export async function syncEventTriggersFromDirectory(eventsDir: string, hasuraUr
   
   if (!url || !secret) {
     debug('Missing Hasura URL or admin secret');
-    console.error('❌ Error: NEXT_PUBLIC_HASURA_GRAPHQL_URL and HASURA_ADMIN_SECRET are required for event trigger synchronization');
-    return;
+    throw new Error('NEXT_PUBLIC_HASURA_GRAPHQL_URL and HASURA_ADMIN_SECRET are required for event trigger synchronization');
   }
   
   const hasura = new Hasura({ url, secret });
@@ -375,9 +374,17 @@ export function verifyHasuraRequest(headers: Record<string, string | string[] | 
   // If no secret is provided, use the HASURA_EVENT_SECRET environment variable
   const secretKey = secret || process.env.HASURA_EVENT_SECRET;
   
-  // If no secret is configured, we can't verify the request
+  // If no secret is configured, we should log a warning
   if (!secretKey) {
-    debug('No secret configured for Hasura event verification');
+    // In production, this is a security risk, so we should fail the verification
+    if (process.env.NODE_ENV === 'production') {
+      debug('SECURITY WARNING: No HASURA_EVENT_SECRET configured in production environment! Request denied.');
+      return false;
+    }
+    
+    // In development, allow requests but log a warning
+    debug('SECURITY WARNING: No HASURA_EVENT_SECRET configured! ANYONE can trigger your event handlers.');
+    debug('Set HASURA_EVENT_SECRET in your .env file for secure event trigger handling.');
     return true;
   }
   
@@ -386,7 +393,13 @@ export function verifyHasuraRequest(headers: Record<string, string | string[] | 
   const secretValue = Array.isArray(requestSecret) ? requestSecret[0] : requestSecret;
   
   // Compare the secrets
-  return secretValue === secretKey;
+  const isValid = secretValue === secretKey;
+  
+  if (!isValid) {
+    debug('Invalid event secret provided in request');
+  }
+  
+  return isValid;
 }
 
 /**

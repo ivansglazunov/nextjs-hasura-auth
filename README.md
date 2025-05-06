@@ -230,9 +230,9 @@ npx hasyx init --reinit
 │   └── api/
 │       ├── events/
 │       │   ├── [name]/
-│       │   |   └── 🔄 route.ts
+│       │   |   └── 🔄 route.ts     # Default event handler
 │       │   └── your-custom-event-handler/
-│       │       └── ? route.ts
+│       │       └── ? route.ts      # Your custom event handlers (copy from [name]/route.ts)
 │       ├── auth/
 │       │   ├── 🔄 route.ts
 │       │   ├── [...nextauth]/
@@ -398,8 +398,9 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 *   `NEXT_PUBLIC_HASURA_GRAPHQL_URL`: The **required** public endpoint for your Hasura instance. Hasyx uses this for client-side requests (via the proxy) and schema generation.
 *   `HASURA_ADMIN_SECRET`: **Required** for running migrations (`npx hasyx migrate`/`unmigrate`) and schema generation (`npx hasyx schema`) as these operations need admin privileges. It's also used by the GraphQL proxy *if* you configure the proxy to use the admin secret instead of forwarding user JWTs (not the default Hasyx setup). **Keep this secret secure and never expose it to the client.**
 *   `HASURA_JWT_SECRET`: **Required** if your Hasura instance is configured to use JWT authentication mode. This variable must contain the *exact* same JWT configuration (type and key) as set in your Hasura environment variables. Hasyx uses this internally to generate Hasura-compatible JWTs based on the NextAuth session.
+*   `HASURA_EVENT_SECRET`: **Required** for secure communication between Hasura and your event trigger handlers. This secret is automatically added as a header to event trigger requests from Hasura and verified by your handlers. It prevents unauthorized requests to your event trigger endpoints. Generate a strong, random string similar to NEXTAUTH_SECRET.
 
-    *   **Migrations:** Define your database changes in `up.ts` and rollbacks in `down.ts` files within `./migrations/<name>/` directories (see [example up](./migrations/hasyx/up.ts), [example down](./migrations/hasyx/down.ts)). Run `npx hasyx migrate` to apply or `npx hasyx unmigrate` to revert.
+    *   **Migrations:** Define your database changes in `up.ts` and rollbacks in `down.ts` files within `./migrations/<n>/` directories (see [example up](./migrations/hasyx/up.ts), [example down](./migrations/hasyx/down.ts)). Run `npx hasyx migrate` to apply or `npx hasyx unmigrate` to revert.
     *   **Schema Updates:** After changing your database structure (and running migrations), update the local schema representation and types by running `npx hasyx schema`.
 
 #### NextAuth.js (`NEXTAUTH_SECRET`)
@@ -477,6 +478,10 @@ npx hasyx <command>
 - `migrate` - Run all migration scripts in alphabetical order
 - `unmigrate` - Run all down migration scripts in reverse alphabetical order
 - `schema` - Generate GraphQL schema from Hasura
+- `events` - Synchronize Hasura event triggers with local definitions
+  - Option: `--init` - Create default event trigger definitions
+
+The CLI automatically loads environment variables from the `.env` file in your project root. This ensures that commands like `npx hasyx events` have access to your Hasura URL, admin secret, and other configuration.
 
 # Hasura Integration
 
@@ -507,6 +512,15 @@ Hasyx includes support for Hasura Event Triggers, which allow you to automate as
 
 3. **Security**
    For security, you should set `HASURA_EVENT_SECRET` in your environment variables. This secret will be automatically added as a header to event trigger requests and verified by your handler.
+
+   Important security considerations:
+   
+   - Always set `HASURA_EVENT_SECRET` to a strong, random value in production environments
+   - In production mode, requests without the correct secret will be denied automatically
+   - Keep your `HASURA_EVENT_SECRET` as secure as your `HASURA_ADMIN_SECRET`
+   - The `hasyxEvent` wrapper handles all security verification automatically
+   - Never expose your event handlers to public access without authentication
+   - For local development, ensure your Hasura instance can reach your local server (use tools like ngrok if needed)
 
 ### Example Event Trigger Definition
 
@@ -562,28 +576,4 @@ export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
   
   return { success: true, message: 'Custom handler processed event' };
 });
-```
-
-## CLI Usage
-
-```bash
-# Install globally
-npm install -g hasyx
-
-# Or use with npx directly
-npx hasyx <command>
-```
-
-### Available Commands
-
-- `init` - Initialize hasyx in a Next.js project
-  - Option: `--reinit` - Reinitialize all files, including those that normally would only be created if missing
-- `dev` - Start the development server (with WebSocket support)
-- `build` - Build the Next.js application
-- `start` - Start the production server
-- `build:client` - Build for client export (for Capacitor or similar)
-- `migrate` - Run all migration scripts in alphabetical order
-- `unmigrate` - Run all down migration scripts in reverse alphabetical order
-- `schema` - Generate GraphQL schema from Hasura
-- `events` - Synchronize Hasura event triggers with local definitions
-  - Option: `--init` - Create default event trigger definitions 
+``` 

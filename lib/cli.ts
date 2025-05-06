@@ -7,6 +7,36 @@ import spawn from 'cross-spawn';
 import Debug from './debug'; // Import the Debug factory
 import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './events';
 
+// Import and configure dotenv to load environment variables from .env
+import dotenv from 'dotenv';
+
+// Attempt to load environment variables from .env file
+try {
+  // Determine project root to locate .env file
+  let projectRoot = process.cwd();
+  let pkgPath = path.join(projectRoot, 'package.json');
+  let maxDepth = 5;  // Limit the number of parent directories to check
+  
+  // Move up the directory tree to find package.json (limit to 5 levels)
+  while (!fs.existsSync(pkgPath) && maxDepth > 0) {
+    projectRoot = path.dirname(projectRoot);
+    pkgPath = path.join(projectRoot, 'package.json');
+    maxDepth--;
+  }
+  
+  // Load .env file from the project root
+  const envResult = dotenv.config({ path: path.join(projectRoot, '.env') });
+  
+  if (envResult.error) {
+    // Only log in debug mode to avoid cluttering output for users without .env files
+    console.debug('Failed to load .env file:', envResult.error);
+  } else {
+    console.debug('.env file loaded successfully');
+  }
+} catch (error) {
+  console.debug('Error loading .env file:', error);
+}
+
 // Create a debugger instance for the CLI
 const debug = Debug('cli');
 
@@ -907,7 +937,11 @@ program
       const baseUrl = process.env.NEXT_PUBLIC_MAIN_URL || process.env.NEXT_PUBLIC_BASE_URL;
       if (!baseUrl) {
         console.warn('⚠️ NEXT_PUBLIC_MAIN_URL or NEXT_PUBLIC_BASE_URL not set. Using relative paths for webhooks.');
+        console.warn('   This may cause issues if Hasura cannot access your API with relative paths.');
+        console.warn('   For production, set NEXT_PUBLIC_MAIN_URL to your publicly accessible domain (e.g., https://your-domain.com).');
         debug('No base URL found in environment variables');
+      } else {
+        console.log(`ℹ️ Using base URL for webhooks: ${baseUrl}`);
       }
       
       await syncEventTriggersFromDirectory(eventsDir, undefined, undefined, baseUrl);
