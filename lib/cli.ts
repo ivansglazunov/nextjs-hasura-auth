@@ -948,7 +948,7 @@ program
               const originalLength = triggerDef.headers.length;
               
               // Filter out security headers
-              triggerDef.headers = triggerDef.headers.filter(header => 
+              triggerDef.headers = triggerDef.headers.filter((header: any) => 
                 !(header.name.toLowerCase() === 'x-hasura-event-secret' && 
                   (header.value_from_env === 'HASURA_EVENT_SECRET' || 
                    (header.value && header.value.length > 0)))
