@@ -2,17 +2,17 @@
  * @jest-environment node
  */
 import dotenv from 'dotenv';
+import { encode } from 'next-auth/jwt'; // Import encode for creating mock cookies
+import { NextRequest } from 'next/server'; // Import NextRequest
 import { v4 as uuidv4 } from 'uuid';
 import schema from '../public/hasura-schema.json';
 import { createApolloClient } from './apollo';
-import { testAuthorize, getTokenFromRequest } from './auth'; // Import the function to test and getTokenFromRequest
+import { testAuthorize } from './auth';
+import { getTokenFromRequest } from './auth-next';
 import { hashPassword } from './authDbUtils';
 import Debug from './debug';
 import { Generator } from './generator';
 import { Hasyx } from './hasyx';
-import axios from 'axios';
-import { NextRequest } from 'next/server'; // Import NextRequest
-import { encode } from 'next-auth/jwt'; // Import encode for creating mock cookies
 import { generateJWT } from './jwt'; // Import generateJWT for Bearer tokens
 
 dotenv.config(); // Load .env variables
