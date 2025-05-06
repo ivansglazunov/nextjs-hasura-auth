@@ -291,7 +291,7 @@ export async function proxySOCKET(
   const closeConnections = (code = 1000, reason = 'Closing connection') => {
     debugGraphql(`[${clientId}] Closing connections: Code=${code}, Reason=${reason}`);
     if (client.readyState === WebSocket.OPEN || client.readyState === WebSocket.CONNECTING) {
-      try { client.close(code, reason); } catch (err: any) {}
+      client.close(code, reason);
     }
     if (hasuraWs && (hasuraWs.readyState === WebSocket.OPEN || hasuraWs.readyState === WebSocket.CONNECTING)) {
       hasuraWs.close(code, reason);
