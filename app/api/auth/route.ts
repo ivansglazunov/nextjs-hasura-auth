@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest, WsClientsManager } from 'hasyx';
+import { getTokenFromRequest, WsClientsManager } from 'hasyx/lib/auth-next';
 import Debug from 'hasyx/lib/debug';
 import http from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
@@ -40,7 +40,7 @@ export function SOCKET(
   request: http.IncomingMessage, 
   server: WebSocketServer 
 ) {
-  const clientId = clients.Client(ws as WebSocket);
+  const clientId = clients.Client(ws as any);
   (async () => {
     const user = await clients.parseUser(request, clientId);
     if (user) {
