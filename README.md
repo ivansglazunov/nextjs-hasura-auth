@@ -228,6 +228,11 @@ npx hasyx init --reinit
 │   ├── ✨ globals.css
 │   ├── 🔄 options.ts
 │   └── api/
+│       ├── events/
+│       │   ├── [name]/
+│       │   |   └── 🔄 route.ts
+│       │   └── your-custom-event-handler/
+│       │       └── ? route.ts
 │       ├── auth/
 │       │   ├── 🔄 route.ts
 │       │   ├── [...nextauth]/
@@ -337,6 +342,8 @@ NEXT_PUBLIC_HASURA_GRAPHQL_URL=https://your-project.hasura.app/v1/graphql
 HASURA_ADMIN_SECRET=your_strong_hasura_admin_secret
 # Required if using JWT authentication mode with Hasura. MUST match Hasura's config.
 HASURA_JWT_SECRET={\"type\":\"HS256\",\"key\":\"your_32_byte_or_longer_secret_key_for_hs256\"}
+# Required for event triggers security.
+HASURA_EVENT_SECRET=your_strong_hasura_event_secret
 
 # ===== NextAuth.js Configuration =====
 # Required: A strong secret for signing tokens, CSRF protection, etc.
@@ -469,4 +476,114 @@ npx hasyx <command>
 - `build:client` - Build for client export (for Capacitor or similar)
 - `migrate` - Run all migration scripts in alphabetical order
 - `unmigrate` - Run all down migration scripts in reverse alphabetical order
-- `schema` - Generate GraphQL schema from Hasura 
+- `schema` - Generate GraphQL schema from Hasura
+
+# Hasura Integration
+
+## Event Triggers
+
+Hasyx includes support for Hasura Event Triggers, which allow you to automate asynchronous logic when changes are made in the database. This is useful for implementing webhook-based workflows, sending notifications, or syncing data with external systems.
+
+### How Event Triggers Work
+
+1. You define event triggers in JSON files inside the `events/` directory.
+2. Each file represents one event trigger and defines which table it watches and what operations (INSERT, UPDATE, DELETE) it responds to.
+3. When those operations occur in Hasura, it sends a webhook request to your Next.js API route at `/api/events/[name]`.
+4. Your handler in `app/api/events/[name]/route.ts` processes the webhook and performs any necessary actions.
+
+### Using Event Triggers
+
+1. **Initialize Event Triggers**
+   ```bash
+   npx hasyx events --init
+   ```
+   This creates default event trigger definitions for the `users` and `accounts` tables in the `events/` directory.
+
+2. **Deploy the Event Triggers to Hasura**
+   ```bash
+   npx hasyx events
+   ```
+   This reads the trigger definitions from the `events/` directory and creates or updates them in Hasura.
+
+3. **Security**
+   For security, you should set `HASURA_EVENT_SECRET` in your environment variables. This secret will be automatically added as a header to event trigger requests and verified by your handler.
+
+### Example Event Trigger Definition
+
+```json
+{
+  "name": "users",
+  "table": {
+    "schema": "public",
+    "name": "users"
+  },
+  "webhook_path": "/api/events/users",
+  "insert": {
+    "columns": "*"
+  },
+  "update": {
+    "columns": "*"
+  },
+  "delete": {
+    "columns": "*"
+  }
+}
+```
+
+For more information on Event Triggers, see the [Hasura Event Triggers documentation](https://hasura.io/docs/latest/event-triggers/index/).
+
+### Creating Custom Event Handlers
+
+To create a custom event handler for a specific trigger:
+
+1. Copy the default handler from `app/api/events/[name]/route.ts` to a new file such as `app/api/events/my-trigger-name/route.ts`
+2. Modify the new file to implement your custom logic in the handler function
+3. Make sure your event trigger definition in the `events/` directory has a matching `webhook_path` that points to your handler (e.g., `/api/events/my-trigger-name`)
+
+Example custom handler:
+
+```typescript
+import { NextResponse } from 'next/server';
+import { hasyxEvent, HasuraEventPayload } from 'hasyx/lib/events';
+
+export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
+  // Your custom logic here
+  const { event, table } = payload;
+  const { op, data } = event;
+  
+  // Example: Log to console and perform different actions based on operation type
+  console.log(`Handling ${op} operation on ${table.schema}.${table.name}`);
+  
+  if (op === 'INSERT') {
+    // Handle insert operation
+    const newRecord = data.new;
+    // Do something with the new record...
+  }
+  
+  return { success: true, message: 'Custom handler processed event' };
+});
+```
+
+## CLI Usage
+
+```bash
+# Install globally
+npm install -g hasyx
+
+# Or use with npx directly
+npx hasyx <command>
+```
+
+### Available Commands
+
+- `init` - Initialize hasyx in a Next.js project
+  - Option: `--reinit` - Reinitialize all files, including those that normally would only be created if missing
+- `dev` - Start the development server (with WebSocket support)
+- `build` - Build the Next.js application
+- `start` - Start the production server
+- `build:client` - Build for client export (for Capacitor or similar)
+- `migrate` - Run all migration scripts in alphabetical order
+- `unmigrate` - Run all down migration scripts in reverse alphabetical order
+- `schema` - Generate GraphQL schema from Hasura
+- `events` - Synchronize Hasura event triggers with local definitions
+  - Option: `--init` - Create default event trigger definitions 

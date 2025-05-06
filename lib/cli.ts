@@ -5,6 +5,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import spawn from 'cross-spawn';
 import Debug from './debug'; // Import the Debug factory
+import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './events';
 
 // Create a debugger instance for the CLI
 const debug = Debug('cli');
@@ -182,6 +183,8 @@ program
       'app/api/auth/verify/route.ts': 'app/api/auth/verify/route.ts',
       'app/api/auth/route.ts': 'app/api/auth/route.ts',
       'app/api/graphql/route.ts': 'app/api/graphql/route.ts',
+      // Event Triggers handler (will overwrite)
+      'app/api/events/[name]/route.ts': 'app/api/events/[name]/route.ts',
     };
     debug('Files to create or replace:', Object.keys(filesToCreateOrReplace));
 
@@ -218,6 +221,8 @@ program
       'app/api/auth/verify',
       'app/api/graphql',
       'migrations/hasyx', // Ensure migrations directory exists
+      'app/api/events/[name]', // Ensure events directory exists
+      'events', // Ensure events definitions directory exists
     ];
     debug('Ensuring directories exist:', ensureDirs);
     for (const dir of ensureDirs) {
@@ -842,6 +847,77 @@ program
     
     console.log('\n✨ Assets generation completed!');
     debug('Finished "assets" command.');
+  });
+
+// --- NEW: `events` Command ---
+program
+  .command('events')
+  .description('Synchronize Hasura event triggers with local definitions')
+  .option('--init', 'Create default event trigger definitions in the events directory')
+  .action(async (options) => {
+    debug('Executing "events" command.');
+    const projectRoot = findProjectRoot();
+    const eventsDir = path.join(projectRoot, 'events');
+    
+    // If --init flag is set, create default event trigger definitions
+    if (options.init) {
+      debug('Initializing events directory with default triggers');
+      console.log('🏗️ Creating default event trigger definitions...');
+      
+      try {
+        await createDefaultEventTriggers(eventsDir);
+        console.log('✅ Default event trigger definitions created in events directory');
+      } catch (error) {
+        console.error('❌ Failed to create default event trigger definitions:', error);
+        debug(`Error creating default event trigger definitions: ${error}`);
+        process.exit(1);
+      }
+      
+      // Exit early if only initializing
+      return;
+    }
+    
+    // Ensure the events directory exists
+    if (!fs.existsSync(eventsDir)) {
+      console.log('⚠️ Events directory not found. Creating empty directory.');
+      debug('Creating events directory');
+      try {
+        fs.mkdirSync(eventsDir, { recursive: true });
+      } catch (error) {
+        console.error('❌ Failed to create events directory:', error);
+        debug(`Error creating events directory: ${error}`);
+        process.exit(1);
+      }
+    }
+    
+    // Check if the directory is empty and suggest --init
+    const files = fs.readdirSync(eventsDir);
+    if (files.length === 0) {
+      console.log('⚠️ Events directory is empty. Use --init to create default event trigger definitions.');
+      debug('Events directory is empty');
+      process.exit(0);
+    }
+    
+    // Synchronize event triggers
+    console.log('🔄 Synchronizing Hasura event triggers...');
+    debug('Synchronizing event triggers');
+    
+    try {
+      // Determine base URL for webhook
+      const baseUrl = process.env.NEXT_PUBLIC_MAIN_URL || process.env.NEXT_PUBLIC_BASE_URL;
+      if (!baseUrl) {
+        console.warn('⚠️ NEXT_PUBLIC_MAIN_URL or NEXT_PUBLIC_BASE_URL not set. Using relative paths for webhooks.');
+        debug('No base URL found in environment variables');
+      }
+      
+      await syncEventTriggersFromDirectory(eventsDir, undefined, undefined, baseUrl);
+      console.log('✅ Event triggers synchronized successfully!');
+      debug('Event triggers synchronized');
+    } catch (error) {
+      console.error('❌ Failed to synchronize event triggers:', error);
+      debug(`Error synchronizing event triggers: ${error}`);
+      process.exit(1);
+    }
   });
 
 debug('Parsing CLI arguments...');
