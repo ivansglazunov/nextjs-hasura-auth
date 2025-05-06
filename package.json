@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.82",
+  "version": "0.1.83",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -14,7 +14,7 @@
     "build": "npm run build:lib && npm run build:css && next build",
     "build:lib": "tsc -p tsconfig.lib.json",
     "build:css": "tailwindcss -i ./app/globals.css -o ./lib/styles.css",
-    "unbuild:lib": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -print -delete; rm -rf tsconfig.lib.tsbuildinfo",
+    "unbuild:lib": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -print -delete; rm -rf tsconfig.lib.tsbuildinfo; echo '✅ Cleaned compiled files'",
     "build:next": "next build --turbopack",
     "client": "tsx lib/build-client.ts",
     "build:android": "npm run build:client && npm run cli -- assets && npx cap sync android",

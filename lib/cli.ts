@@ -1213,22 +1213,23 @@ program
 // --- NEW: `unbuild` Command ---
 program
   .command('unbuild')
-  .description('Remove compiled files (.js, .d.ts) from lib, components, and hooks directories, and delete tsconfig.lib.tsbuildinfo.')
+  .description('Remove compiled files (.js, .d.ts) from lib, components, and hooks directories only (preserves types directory), and delete tsconfig.lib.tsbuildinfo.')
   .action(async () => {
     debug('Executing "unbuild" command.');
     console.log('🧹 Cleaning compiled files...');
     const projectRoot = findProjectRoot();
 
-    // Directories to clean
+    // Directories to clean - IMPORTANT: 'types' directory is intentionally NOT included
+    // to preserve generated type definition files
     const dirsToClean = ['lib', 'components', 'hooks'];
+    
+    console.log(`ℹ️ Will clean only these directories: ${dirsToClean.join(', ')} (types directory is preserved)`);
+    let deletedCount = 0;
     
     try {
       // Import glob only when needed
       const globModule = await import('glob');
       const { glob } = globModule;
-      
-      // Get all matching files
-      let deletedCount = 0;
       
       for (const dir of dirsToClean) {
         const dirPath = path.join(projectRoot, dir);
@@ -1239,24 +1240,89 @@ program
           continue;
         }
         
-        // Find and delete .js files
-        const jsFiles = await glob(`${dirPath}/**/*.js`);
-        debug(`Found ${jsFiles.length} .js files in ${dir}`);
-        
-        for (const file of jsFiles) {
-          debug(`Deleting: ${file}`);
-          await fs.remove(file);
-          deletedCount++;
-        }
-        
-        // Find and delete .d.ts files
-        const dtsFiles = await glob(`${dirPath}/**/*.d.ts`);
-        debug(`Found ${dtsFiles.length} .d.ts files in ${dir}`);
-        
-        for (const file of dtsFiles) {
-          debug(`Deleting: ${file}`);
-          await fs.remove(file);
-          deletedCount++;
+        try {
+          // Pattern for .js files
+          const jsPattern = `${dirPath}/**/*.js`;
+          debug(`Searching for .js files using pattern: ${jsPattern}`);
+          
+          // Find and delete .js files - handling both array and AsyncGenerator formats
+          const jsFiles = await glob(jsPattern);
+          debug(`Found JS files result type: ${typeof jsFiles}, is array: ${Array.isArray(jsFiles)}`);
+          
+          // Handle the result regardless of whether it's an array, iterator, or something else
+          if (Array.isArray(jsFiles)) {
+            debug(`Found ${jsFiles.length} .js files in ${dir}`);
+            for (const file of jsFiles) {
+              debug(`Deleting: ${file}`);
+              await fs.remove(file);
+              deletedCount++;
+            }
+          } else if (jsFiles && typeof jsFiles === 'object' && Symbol.iterator in (jsFiles as any)) {
+            // Handle if it's an iterable but not an array
+            debug(`Found iterable JS files result`);
+            for (const file of (jsFiles as any)) {
+              debug(`Deleting: ${file}`);
+              await fs.remove(file);
+              deletedCount++;
+            }
+          } else {
+            // Fallback - use glob.sync if available, or just log an error
+            debug(`JS files result is neither array nor iterable, trying alternative approach`);
+            if (globModule.sync) {
+              const syncFiles = globModule.sync(jsPattern);
+              debug(`Found ${syncFiles.length} .js files using sync in ${dir}`);
+              for (const file of syncFiles) {
+                debug(`Deleting: ${file}`);
+                await fs.remove(file);
+                deletedCount++;
+              }
+            } else {
+              console.warn(`⚠️ Could not process .js files in ${dir} - unexpected glob result format`);
+            }
+          }
+          
+          // Pattern for .d.ts files
+          const dtsPattern = `${dirPath}/**/*.d.ts`;
+          debug(`Searching for .d.ts files using pattern: ${dtsPattern}`);
+          
+          // Find and delete .d.ts files - same approach as above
+          const dtsFiles = await glob(dtsPattern);
+          debug(`Found D.TS files result type: ${typeof dtsFiles}, is array: ${Array.isArray(dtsFiles)}`);
+          
+          // Handle the result regardless of type
+          if (Array.isArray(dtsFiles)) {
+            debug(`Found ${dtsFiles.length} .d.ts files in ${dir}`);
+            for (const file of dtsFiles) {
+              debug(`Deleting: ${file}`);
+              await fs.remove(file);
+              deletedCount++;
+            }
+          } else if (dtsFiles && typeof dtsFiles === 'object' && Symbol.iterator in (dtsFiles as any)) {
+            // Handle if it's an iterable but not an array
+            debug(`Found iterable D.TS files result`);
+            for (const file of (dtsFiles as any)) {
+              debug(`Deleting: ${file}`);
+              await fs.remove(file);
+              deletedCount++;
+            }
+          } else {
+            // Fallback to sync
+            debug(`D.TS files result is neither array nor iterable, trying alternative approach`);
+            if (globModule.sync) {
+              const syncFiles = globModule.sync(dtsPattern);
+              debug(`Found ${syncFiles.length} .d.ts files using sync in ${dir}`);
+              for (const file of syncFiles) {
+                debug(`Deleting: ${file}`);
+                await fs.remove(file);
+                deletedCount++;
+              }
+            } else {
+              console.warn(`⚠️ Could not process .d.ts files in ${dir} - unexpected glob result format`);
+            }
+          }
+        } catch (dirError) {
+          console.warn(`⚠️ Error processing ${dir} directory: ${dirError}`);
+          debug(`Error processing directory ${dir}: ${dirError}`);
         }
       }
       
@@ -1268,7 +1334,48 @@ program
         console.log('✅ Removed tsconfig.lib.tsbuildinfo');
       }
       
-      console.log(`✅ Removed ${deletedCount} compiled files (.js, .d.ts) from lib, components, and hooks directories.`);
+      // Alternative approach using shell command if no files were deleted through glob
+      if (deletedCount === 0) {
+        debug('No files deleted using glob, attempting alternative shell command approach');
+        console.log('🔄 Using alternative method to clean files...');
+        
+        try {
+          // Use fs.rm recursively with filtering (safer than shell command)
+          for (const dir of dirsToClean) {
+            const dirPath = path.join(projectRoot, dir);
+            if (!fs.existsSync(dirPath)) continue;
+            
+            const processDir = async (directory: string) => {
+              const entries = await fs.readdir(directory, { withFileTypes: true });
+              for (const entry of entries) {
+                const fullPath = path.join(directory, entry.name);
+                if (entry.isDirectory()) {
+                  await processDir(fullPath);
+                } else if (
+                  (entry.name.endsWith('.js') || entry.name.endsWith('.d.ts')) &&
+                  !entry.name.includes('node_modules')
+                ) {
+                  debug(`Deleting (alt method): ${fullPath}`);
+                  await fs.remove(fullPath);
+                  deletedCount++;
+                }
+              }
+            };
+            
+            await processDir(dirPath);
+          }
+        } catch (altError) {
+          console.warn(`⚠️ Alternative cleanup method failed: ${altError}`);
+          debug(`Alternative cleanup method failed: ${altError}`);
+        }
+      }
+      
+      if (deletedCount > 0) {
+        console.log(`✅ Removed ${deletedCount} compiled files (.js, .d.ts) from lib, components, and hooks directories.`);
+      } else {
+        console.log('ℹ️ No compiled files found to remove.');
+      }
+      
       console.log('🧹 Clean complete!');
       debug('Finished "unbuild" command successfully.');
     } catch (error) {
