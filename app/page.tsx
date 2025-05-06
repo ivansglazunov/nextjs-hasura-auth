@@ -1,4 +1,4 @@
-import { Sidebar } from "@/components/sidebar"
+import { Sidebar } from "hasyx/components/sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,7 +27,7 @@ import { UsersCard } from "hasyx/components/users/users-card"
 import authOptions from "@/app/options"
 
 import sidebar from "@/app/sidebar"
-import useSsr, { SsrResult } from "@/lib/ssr"
+import useSsr, { SsrResult } from "hasyx/lib/ssr"
 
 // Now this is an async server component
 export default async function Page() {

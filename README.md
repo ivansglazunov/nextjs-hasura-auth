@@ -447,4 +447,26 @@ Contributions are welcome! Please see [`CONTRIBUTING.md`](CONTRIBUTING.md) for d
 
 ## License
 
-(Add your license info here, e.g., MIT License) 
+(Add your license info here, e.g., MIT License)
+
+## CLI Usage
+
+```bash
+# Install globally
+npm install -g hasyx
+
+# Or use with npx directly
+npx hasyx <command>
+```
+
+### Available Commands
+
+- `init` - Initialize hasyx in a Next.js project
+  - Option: `--reinit` - Reinitialize all files, including those that normally would only be created if missing
+- `dev` - Start the development server (with WebSocket support)
+- `build` - Build the Next.js application
+- `start` - Start the production server
+- `build:client` - Build for client export (for Capacitor or similar)
+- `migrate` - Run all migration scripts in alphabetical order
+- `unmigrate` - Run all down migration scripts in reverse alphabetical order
+- `schema` - Generate GraphQL schema from Hasura 

@@ -1,7 +1,7 @@
 import React from 'react'; // Import React
 
 import sidebar from "@/app/sidebar"; // Make sure the path is correct
-import { Sidebar } from "@/components/sidebar";
+import { Sidebar } from "hasyx/components/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,7 +18,7 @@ import {
 } from "hasyx/components/ui/sidebar";
 import pckg from "hasyx/package.json";
 import AframeClient from './client';
-import { AframeProvider } from '@/lib/aframe';
+import { AframeProvider } from 'hasyx/lib/aframe';
 
 // This page needs to be a client component for A-Frame
 export default function AframePage() {

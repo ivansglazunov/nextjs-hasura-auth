@@ -205,6 +205,9 @@ program
       'components.json': 'components.json',
       'tsconfig.json': 'tsconfig.json',
       'tsconfig.lib.json': 'tsconfig.lib.json',
+      // Migration files (won't overwrite unless --reinit)
+      'migrations/hasyx/up.ts': 'migrations/hasyx/up.ts',
+      'migrations/hasyx/down.ts': 'migrations/hasyx/down.ts',
     };
     debug('Files to create if not exists:', Object.keys(filesToCreateIfNotExists));
 
@@ -214,6 +217,7 @@ program
       'app/api/auth/[...nextauth]',
       'app/api/auth/verify',
       'app/api/graphql',
+      'migrations/hasyx', // Ensure migrations directory exists
     ];
     debug('Ensuring directories exist:', ensureDirs);
     for (const dir of ensureDirs) {

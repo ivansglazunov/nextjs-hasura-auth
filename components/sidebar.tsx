@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "hasyx/components/ui/sidebar";
-import { VersionSwitcher } from "hasyx/components/version-switcher";
+import { ProjectAndVersion } from "hasyx/components/version-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export interface SidebarItem {
@@ -30,11 +30,10 @@ export function Sidebar({ activeUrl, data }: { activeUrl: string, data: SidebarD
   return (
     <SidebarComponent>
       <SidebarHeader>
-        <VersionSwitcher
+        <ProjectAndVersion
           versions={data.versions}
           defaultVersion={data.versions[0]}
         />
-        <SearchForm />
       </SidebarHeader>
       <SidebarContent>
         <ThemeSwitcher style={{ margin: 16 }} />

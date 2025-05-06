@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { verifyVerificationToken } from 'hasyx/lib/tokenUtils';
 import { Hasyx, createApolloClient, Generator } from 'hasyx';
 import Debug from 'hasyx/lib/debug';
-import { withCors } from '../../../../lib/cors';
+import { withCors } from 'hasyx/lib/cors';
 
 import schema from '../../../../public/hasura-schema.json';
 import { API_URL } from '@/lib/url';

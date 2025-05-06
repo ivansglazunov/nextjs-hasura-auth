@@ -4,7 +4,7 @@ import NextAuth from 'next-auth';
 import Debug from 'hasyx/lib/debug'; // Import from new path
 import authOptions from '../../../options';
 import { NextRequest, NextResponse } from 'next/server';
-import { withCors } from '../../../../lib/cors';
+import { withCors } from 'hasyx/lib/cors';
 
 // Provide static params for [...nextauth] route for static export
 export function generateStaticParams() {

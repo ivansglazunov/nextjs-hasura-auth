@@ -3,7 +3,7 @@ import { getTokenFromRequest, WsClientsManager } from 'hasyx';
 import Debug from 'hasyx/lib/debug';
 import http from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
-import { withCors } from '../../../lib/cors';
+import { withCors } from 'hasyx/lib/cors';
 
 const debug = Debug('api:auth');
 

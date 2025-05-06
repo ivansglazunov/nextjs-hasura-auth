@@ -21,7 +21,7 @@ import { Label } from 'hasyx/components/ui/label'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
-export function VersionSwitcher({
+export function ProjectAndVersion({
   versions,
   defaultVersion,
 }: {
@@ -33,37 +33,18 @@ export function VersionSwitcher({
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className="flex size-8 items-center justify-center">
-                <Image src={`${basePath}/logo.svg`} alt="Hasyx Logo" width={32} height={32} />
-              </div>
-              <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold">{pckg.name}</span>
-                <span className="">v{selectedVersion}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width]"
-            align="start"
-          >
-            {versions.map((version) => (
-              <DropdownMenuItem
-                key={version}
-                onSelect={() => setSelectedVersion(version)}
-              >
-                v{version}{" "}
-                {version === selectedVersion && <Check className="ml-auto" />}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SidebarMenuButton
+          size="lg"
+          className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+        >
+          <div className="flex size-8 items-center justify-center">
+            <Image src={`${basePath}/logo.svg`} alt="Hasyx Logo" width={32} height={32} />
+          </div>
+          <div className="flex flex-col gap-0.5 leading-none">
+            <span className="font-semibold">{pckg.name}</span>
+            <span className="">v{selectedVersion}</span>
+          </div>
+        </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>
   )
