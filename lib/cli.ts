@@ -884,6 +884,7 @@ program
   .command('events')
   .description('Synchronize Hasura event triggers with local definitions')
   .option('--init', 'Create default event trigger definitions in the events directory')
+  .option('--clean', 'Remove security headers from event definitions - they will be added automatically during sync')
   .action(async (options) => {
     debug('Executing "events" command.');
     const projectRoot = findProjectRoot();
@@ -904,6 +905,85 @@ program
       }
       
       // Exit early if only initializing
+      return;
+    }
+    
+    // If --clean flag is set, clean security headers from event definitions
+    if (options.clean) {
+      debug('Cleaning security headers from event definitions');
+      console.log('🧹 Cleaning security headers from event definitions...');
+      
+      try {
+        // Ensure the events directory exists
+        if (!fs.existsSync(eventsDir)) {
+          console.log('⚠️ Events directory not found. Nothing to clean.');
+          debug('Events directory does not exist, nothing to clean');
+          return;
+        }
+        
+        // Get all JSON files in the events directory
+        const files = fs.readdirSync(eventsDir).filter(file => file.endsWith('.json'));
+        debug(`Found ${files.length} JSON files in events directory`);
+        
+        if (files.length === 0) {
+          console.log('⚠️ No event definition files found. Nothing to clean.');
+          debug('No JSON files in events directory');
+          return;
+        }
+        
+        let cleanedCount = 0;
+        
+        // Process each file
+        for (const file of files) {
+          const filePath = path.join(eventsDir, file);
+          debug(`Processing ${filePath}`);
+          
+          try {
+            // Read the file
+            const content = await fs.readFile(filePath, 'utf8');
+            const triggerDef = JSON.parse(content);
+            
+            // Check if it has headers array with security header
+            if (triggerDef.headers) {
+              const originalLength = triggerDef.headers.length;
+              
+              // Filter out security headers
+              triggerDef.headers = triggerDef.headers.filter(header => 
+                !(header.name.toLowerCase() === 'x-hasura-event-secret' && 
+                  (header.value_from_env === 'HASURA_EVENT_SECRET' || 
+                   (header.value && header.value.length > 0)))
+              );
+              
+              // If the headers array is now empty, remove it
+              if (triggerDef.headers.length === 0) {
+                delete triggerDef.headers;
+                debug(`Removed empty headers array from ${file}`);
+              }
+              
+              // If we made changes, write the file back
+              if (!triggerDef.headers || triggerDef.headers.length !== originalLength) {
+                await fs.writeFile(filePath, JSON.stringify(triggerDef, null, 2));
+                console.log(`✅ Cleaned security headers from ${file}`);
+                cleanedCount++;
+                debug(`Cleaned security headers from ${file}`);
+              }
+            }
+          } catch (error) {
+            console.error(`❌ Failed to process ${file}:`, error);
+            debug(`Error processing ${file}: ${error}`);
+          }
+        }
+        
+        console.log(`🧹 Cleaned security headers from ${cleanedCount} file(s).`);
+        console.log('   Security headers will be added automatically during synchronization.');
+        debug(`Finished cleaning ${cleanedCount} files`);
+      } catch (error) {
+        console.error('❌ Failed to clean security headers:', error);
+        debug(`Error cleaning security headers: ${error}`);
+        process.exit(1);
+      }
+      
+      // Exit early if only cleaning
       return;
     }
     

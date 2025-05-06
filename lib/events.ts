@@ -213,8 +213,31 @@ export async function createOrUpdateEventTrigger(
     // Add retry configuration if specified
     if (trigger.retry_conf) args.retry_conf = trigger.retry_conf;
     
-    // Add headers if specified
-    if (trigger.headers && trigger.headers.length > 0) args.headers = trigger.headers;
+    // Get the HASURA_EVENT_SECRET from environment
+    const eventSecret = process.env.HASURA_EVENT_SECRET;
+    
+    // Clone the headers array from the trigger definition or create a new one
+    const headers = trigger.headers ? [...trigger.headers] : [];
+    
+    // Check if the event secret header already exists in the array
+    const hasEventSecretHeader = headers.some(h => 
+      h.name.toLowerCase() === 'x-hasura-event-secret' && 
+      (h.value_from_env === 'HASURA_EVENT_SECRET' || h.value === eventSecret)
+    );
+    
+    // Add the event secret header if it doesn't exist and the secret is set
+    if (!hasEventSecretHeader && eventSecret) {
+      headers.push({
+        name: 'X-Hasura-Event-Secret',
+        value_from_env: 'HASURA_EVENT_SECRET'
+      });
+      debug('Added X-Hasura-Event-Secret header to event trigger');
+    } else if (!hasEventSecretHeader) {
+      debug('WARNING: HASURA_EVENT_SECRET not set in environment, skipping secret header');
+    }
+    
+    // Add headers to args if any exist
+    if (headers.length > 0) args.headers = headers;
     
     // Set replace to true if the trigger already exists
     args.replace = triggerExists;
@@ -347,6 +370,19 @@ export async function syncEventTriggers(hasura: Hasura, localTriggers: EventTrig
 export async function syncEventTriggersFromDirectory(eventsDir: string, hasuraUrl?: string, hasuraSecret?: string, baseUrl?: string): Promise<void> {
   debug('Synchronizing event triggers from directory');
   
+  // Check if HASURA_EVENT_SECRET is set
+  const eventSecret = process.env.HASURA_EVENT_SECRET;
+  if (!eventSecret) {
+    debug('HASURA_EVENT_SECRET not set in environment');
+    console.warn('⚠️ WARNING: HASURA_EVENT_SECRET is not set. This is required for secure event trigger handling.');
+    console.warn('   Please set HASURA_EVENT_SECRET in your environment variables.');
+    
+    // In production, we should fail if the secret is not set
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('HASURA_EVENT_SECRET is required for event trigger synchronization in production');
+    }
+  }
+  
   // Create a Hasura client
   const url = hasuraUrl || process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
   const secret = hasuraSecret || process.env.HASURA_ADMIN_SECRET;
@@ -432,13 +468,7 @@ export async function createDefaultEventTriggers(eventsDir: string): Promise<voi
       num_retries: 3,
       interval_sec: 15,
       timeout_sec: 60
-    },
-    headers: [
-      {
-        name: 'X-Hasura-Event-Secret',
-        value_from_env: 'HASURA_EVENT_SECRET'
-      }
-    ]
+    }
   };
   
   // Default accounts event trigger
@@ -462,13 +492,7 @@ export async function createDefaultEventTriggers(eventsDir: string): Promise<voi
       num_retries: 3,
       interval_sec: 15,
       timeout_sec: 60
-    },
-    headers: [
-      {
-        name: 'X-Hasura-Event-Secret',
-        value_from_env: 'HASURA_EVENT_SECRET'
-      }
-    ]
+    }
   };
   
   // Write the trigger definitions to files

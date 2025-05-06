@@ -324,6 +324,17 @@ Run this command whenever your Hasura database structure (tables, columns, relat
 
 ---
 
+### `events`
+
+Synchronize Hasura event triggers with local definitions
+
+- Option: `--init` - Create default event trigger definitions
+- Option: `--clean` - Remove security headers from event definitions (they will be added automatically during sync)
+
+The CLI automatically loads environment variables from the `.env` file in your project root. This ensures that commands like `npx hasyx events` have access to your Hasura URL, admin secret, and other configuration.
+
+---
+
 ## 🔑 Environment Variables
 
 Configure Hasyx features by setting environment variables. Create a `.env` file in your project root or set them in your deployment environment. Features requiring specific variables (like OAuth providers or email sending) are automatically activated when the corresponding variables are set.
@@ -480,6 +491,7 @@ npx hasyx <command>
 - `schema` - Generate GraphQL schema from Hasura
 - `events` - Synchronize Hasura event triggers with local definitions
   - Option: `--init` - Create default event trigger definitions
+  - Option: `--clean` - Remove security headers from event definitions (they will be added automatically during sync)
 
 The CLI automatically loads environment variables from the `.env` file in your project root. This ensures that commands like `npx hasyx events` have access to your Hasura URL, admin secret, and other configuration.
 
@@ -504,18 +516,26 @@ Hasyx includes support for Hasura Event Triggers, which allow you to automate as
    ```
    This creates default event trigger definitions for the `users` and `accounts` tables in the `events/` directory.
 
-2. **Deploy the Event Triggers to Hasura**
+2. **Clean Event Trigger Definitions**
+   ```bash
+   npx hasyx events --clean
+   ```
+   This removes any security headers from your event trigger definitions, allowing them to be added automatically during synchronization.
+
+3. **Deploy the Event Triggers to Hasura**
    ```bash
    npx hasyx events
    ```
-   This reads the trigger definitions from the `events/` directory and creates or updates them in Hasura.
+   This reads the trigger definitions from the `events/` directory and creates or updates them in Hasura. Security headers with `HASURA_EVENT_SECRET` are automatically added to each trigger.
 
-3. **Security**
+4. **Security**
    For security, you should set `HASURA_EVENT_SECRET` in your environment variables. This secret will be automatically added as a header to event trigger requests and verified by your handler.
 
    Important security considerations:
    
    - Always set `HASURA_EVENT_SECRET` to a strong, random value in production environments
+   - The secret header is automatically added to all event triggers during synchronization
+   - In production mode, the `events` command will fail if `HASURA_EVENT_SECRET` is not set
    - In production mode, requests without the correct secret will be denied automatically
    - Keep your `HASURA_EVENT_SECRET` as secure as your `HASURA_ADMIN_SECRET`
    - The `hasyxEvent` wrapper handles all security verification automatically
@@ -540,9 +560,16 @@ Hasyx includes support for Hasura Event Triggers, which allow you to automate as
   },
   "delete": {
     "columns": "*"
+  },
+  "retry_conf": {
+    "num_retries": 3,
+    "interval_sec": 15,
+    "timeout_sec": 60
   }
 }
 ```
+
+The security header with `HASURA_EVENT_SECRET` will be automatically added during synchronization - you don't need to specify it in your event definition files.
 
 For more information on Event Triggers, see the [Hasura Event Triggers documentation](https://hasura.io/docs/latest/event-triggers/index/).
 

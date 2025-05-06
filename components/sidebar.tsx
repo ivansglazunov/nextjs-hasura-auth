@@ -1,5 +1,4 @@
 
-import { SearchForm } from "hasyx/components/search-form";
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
