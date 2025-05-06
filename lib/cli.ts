@@ -524,11 +524,57 @@ program
          debug(`Error checking package.json: ${err}`);
     }
 
-    console.log('✨ hasyx initialization complete!');
-
     // --- NEW: Apply the WebSocket patch ---
     ensureWebSocketSupport(projectRoot);
     // --- END NEW ---
+
+    // --- NEW: Ensure required npm scripts are set in package.json ---
+    try {
+      console.log('📝 Checking and updating npm scripts in package.json...');
+      const pkgJsonPath = path.join(projectRoot, 'package.json');
+      if (fs.existsSync(pkgJsonPath)) {
+        const pkgJson = await fs.readJson(pkgJsonPath);
+        
+        // Initialize scripts object if it doesn't exist
+        if (!pkgJson.scripts) {
+          pkgJson.scripts = {};
+        }
+        
+        // Required npm scripts with their exact values
+        const requiredScripts = {
+          "build": "NODE_ENV=production npx -y hasyx build",
+          "unbuild": "npx -y hasyx unbuild",
+          "start": "NODE_ENV=production npx -y hasyx start",
+          "dev": "npx -y hasyx dev"
+        };
+        
+        // Check if scripts need updating
+        let scriptsModified = false;
+        
+        for (const [scriptName, scriptValue] of Object.entries(requiredScripts)) {
+          if (!pkgJson.scripts[scriptName] || pkgJson.scripts[scriptName] !== scriptValue) {
+            pkgJson.scripts[scriptName] = scriptValue;
+            scriptsModified = true;
+          }
+        }
+        
+        // Save changes if scripts were modified
+        if (scriptsModified) {
+          await fs.writeJson(pkgJsonPath, pkgJson, { spaces: 2 });
+          console.log('✅ Required npm scripts updated in package.json.');
+        } else {
+          console.log('ℹ️ Required npm scripts already present in package.json.');
+        }
+      } else {
+        console.warn('⚠️ package.json not found in project root. Unable to update npm scripts.');
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to update npm scripts in package.json:', error);
+      debug(`Error updating npm scripts in package.json: ${error}`);
+    }
+    // --- END NEW ---
+
+    console.log('✨ hasyx initialization complete!');
 
     console.log('👉 Next steps:');
     console.log('   1. Fill in your .env file with necessary secrets (Hasura, NextAuth, OAuth, etc.).');

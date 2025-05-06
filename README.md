@@ -214,6 +214,25 @@ npx hasyx init --reinit
 *   🔄 = Overwrites the file if it exists.
 *   ✨ = Creates the file only if it does not exist (or always replaces it with `--reinit`).
 
+**npm Scripts Setup:**
+
+During initialization, Hasyx ensures that the following npm scripts are added to your project's package.json:
+
+```json
+"scripts": {
+  "build": "NODE_ENV=production npx -y hasyx build",
+  "unbuild": "npx -y hasyx unbuild",
+  "start": "NODE_ENV=production npx -y hasyx start",
+  "dev": "npx -y hasyx dev"
+}
+```
+
+These scripts allow you to use standard npm commands (e.g., `npm run dev`, `npm run build`) in your project while leveraging Hasyx's enhanced functionality. The scripts automatically use the Hasyx CLI and apply the necessary environment variables.
+
+**WebSocket Support:**
+
+When running `init`, Hasyx automatically patches your Next.js project for WebSocket support:
+
 ```
 .
 ├── .github/

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { IncomingMessage } from "http";
 import Debug from './debug';
-import { getTokenFromRequest, JWT } from './auth-next';
+import { JWT } from 'next-auth/jwt';
 import { useSession as useSessionNextAuth } from "next-auth/react";
 import { v4 as uuidv4 } from 'uuid';
 import WebSocket from "ws";
