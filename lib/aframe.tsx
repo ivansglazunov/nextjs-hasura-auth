@@ -11,7 +11,7 @@ const debug = Debug('aframe');
  * @returns A-Frame undefined, or the module when loaded.
  */
 export function useAframe() {
-  const [aframe, setAframe] = useState();
+  const [aframe, setAframe] = useState<any>(undefined);
   useEffect(() => {
     // @ts-ignore
     import('aframe')

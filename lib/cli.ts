@@ -1223,6 +1223,9 @@ program
     // to preserve generated type definition files
     const dirsToClean = ['lib', 'components', 'hooks'];
     
+    // Explicitly define directories that should NEVER be cleaned
+    const excludeDirs = ['types', 'node_modules'];
+    
     console.log(`ℹ️ Will clean only these directories: ${dirsToClean.join(', ')} (types directory is preserved)`);
     let deletedCount = 0;
     
@@ -1241,7 +1244,7 @@ program
         }
         
         try {
-          // Pattern for .js files
+          // Pattern for .js files - ENSURE we exclude 'types' directory completely
           const jsPattern = `${dirPath}/**/*.js`;
           debug(`Searching for .js files using pattern: ${jsPattern}`);
           
@@ -1253,6 +1256,11 @@ program
           if (Array.isArray(jsFiles)) {
             debug(`Found ${jsFiles.length} .js files in ${dir}`);
             for (const file of jsFiles) {
+              // Extra safety check to never touch 'types' directory
+              if (file.includes('/types/') || file.includes('\\types\\')) {
+                debug(`Skipping file in 'types' directory: ${file}`);
+                continue;
+              }
               debug(`Deleting: ${file}`);
               await fs.remove(file);
               deletedCount++;
@@ -1261,6 +1269,11 @@ program
             // Handle if it's an iterable but not an array
             debug(`Found iterable JS files result`);
             for (const file of (jsFiles as any)) {
+              // Extra safety check to never touch 'types' directory
+              if (file.includes('/types/') || file.includes('\\types\\')) {
+                debug(`Skipping file in 'types' directory: ${file}`);
+                continue;
+              }
               debug(`Deleting: ${file}`);
               await fs.remove(file);
               deletedCount++;
@@ -1272,6 +1285,11 @@ program
               const syncFiles = globModule.sync(jsPattern);
               debug(`Found ${syncFiles.length} .js files using sync in ${dir}`);
               for (const file of syncFiles) {
+                // Extra safety check to never touch 'types' directory
+                if (file.includes('/types/') || file.includes('\\types\\')) {
+                  debug(`Skipping file in 'types' directory: ${file}`);
+                  continue;
+                }
                 debug(`Deleting: ${file}`);
                 await fs.remove(file);
                 deletedCount++;
@@ -1281,7 +1299,7 @@ program
             }
           }
           
-          // Pattern for .d.ts files
+          // Pattern for .d.ts files - ENSURE we exclude 'types' directory completely
           const dtsPattern = `${dirPath}/**/*.d.ts`;
           debug(`Searching for .d.ts files using pattern: ${dtsPattern}`);
           
@@ -1293,6 +1311,11 @@ program
           if (Array.isArray(dtsFiles)) {
             debug(`Found ${dtsFiles.length} .d.ts files in ${dir}`);
             for (const file of dtsFiles) {
+              // Extra safety check to never touch 'types' directory
+              if (file.includes('/types/') || file.includes('\\types\\')) {
+                debug(`Skipping file in 'types' directory: ${file}`);
+                continue;
+              }
               debug(`Deleting: ${file}`);
               await fs.remove(file);
               deletedCount++;
@@ -1301,6 +1324,11 @@ program
             // Handle if it's an iterable but not an array
             debug(`Found iterable D.TS files result`);
             for (const file of (dtsFiles as any)) {
+              // Extra safety check to never touch 'types' directory
+              if (file.includes('/types/') || file.includes('\\types\\')) {
+                debug(`Skipping file in 'types' directory: ${file}`);
+                continue;
+              }
               debug(`Deleting: ${file}`);
               await fs.remove(file);
               deletedCount++;
@@ -1312,6 +1340,11 @@ program
               const syncFiles = globModule.sync(dtsPattern);
               debug(`Found ${syncFiles.length} .d.ts files using sync in ${dir}`);
               for (const file of syncFiles) {
+                // Extra safety check to never touch 'types' directory
+                if (file.includes('/types/') || file.includes('\\types\\')) {
+                  debug(`Skipping file in 'types' directory: ${file}`);
+                  continue;
+                }
                 debug(`Deleting: ${file}`);
                 await fs.remove(file);
                 deletedCount++;
@@ -1346,10 +1379,36 @@ program
             if (!fs.existsSync(dirPath)) continue;
             
             const processDir = async (directory: string) => {
+              // Skip prohibited directories completely
+              const dirName = path.basename(directory);
+              if (excludeDirs.includes(dirName)) {
+                debug(`Skipping excluded directory: ${directory}`);
+                return;
+              }
+              
+              // Safety check - never process a path containing '/types/' or '\types\'
+              if (directory.includes('/types/') || directory.includes('\\types\\')) {
+                debug(`Skipping types directory: ${directory}`);
+                return;
+              }
+              
               const entries = await fs.readdir(directory, { withFileTypes: true });
               for (const entry of entries) {
                 const fullPath = path.join(directory, entry.name);
+                
                 if (entry.isDirectory()) {
+                  // Skip if this is a directory we should exclude
+                  if (excludeDirs.includes(entry.name)) {
+                    debug(`Skipping excluded directory: ${fullPath}`);
+                    continue;
+                  }
+                  
+                  // Skip the 'types' directory completely
+                  if (entry.name === 'types') {
+                    debug(`Skipping 'types' directory: ${fullPath}`);
+                    continue;
+                  }
+                  
                   await processDir(fullPath);
                 } else if (
                   (entry.name.endsWith('.js') || entry.name.endsWith('.d.ts')) &&
@@ -1372,6 +1431,7 @@ program
       
       if (deletedCount > 0) {
         console.log(`✅ Removed ${deletedCount} compiled files (.js, .d.ts) from lib, components, and hooks directories.`);
+        console.log('✅ Types directory was preserved.');
       } else {
         console.log('ℹ️ No compiled files found to remove.');
       }

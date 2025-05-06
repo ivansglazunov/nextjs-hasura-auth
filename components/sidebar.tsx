@@ -13,6 +13,7 @@ import {
 } from "hasyx/components/ui/sidebar";
 import { ProjectAndVersion } from "hasyx/components/version-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
+import { useTheme } from "next-themes";
 
 export interface SidebarItem {
   title: string;
@@ -22,15 +23,21 @@ export interface SidebarItem {
 
 export interface SidebarData {
   versions: string[];
+  logo?: string;
+  logoLight?: string;
+  logoDark?: string;
   navMain: SidebarItem[];
 }
 
 export function Sidebar({ activeUrl, data }: { activeUrl: string, data: SidebarData }) {
+  const { theme, setTheme } = useTheme();
+
   return (
     <SidebarComponent>
       <SidebarHeader>
         <ProjectAndVersion
           versions={data.versions}
+          logo={(theme == 'light' ? data.logoLight : data.logoDark) || data.logo}
           defaultVersion={data.versions[0]}
         />
       </SidebarHeader>

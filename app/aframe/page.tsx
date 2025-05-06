@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react'; // Import React
 
 import sidebar from "@/app/sidebar"; // Make sure the path is correct

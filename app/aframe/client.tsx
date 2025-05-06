@@ -1,17 +1,14 @@
 'use client'
 
-// Import A-Frame statically
-import 'aframe';
-
-// Import our forked components
+// Remove static import of A-Frame - we'll import it dynamically
 import { AframeEntity as Entity, AframeScene as Scene } from '@/lib/aframe'; // Use the aliased exports
-import React, { useEffect, useRef } from 'react'; // Restore imports
-
+import React, { useEffect, useRef, useState } from 'react'; // Add useState for tracking
 
 // This page needs to be a client component for A-Frame
 export default function AframeClient() {
   const sceneRef = useRef<any>(null); // Use 'any' for now to bypass type issues
   const logSent = useRef(false); // Flag to send only once
+  const [aframeLoaded, setAframeLoaded] = useState(false);
 
   const sceneStyle: React.CSSProperties = {
     position: 'absolute',
@@ -22,8 +19,26 @@ export default function AframeClient() {
     zIndex: 0, // Make sure the scene doesn't overlap UI
   };
 
-  // Effect to set up event listener and log after scene is loaded
+  // First effect - load A-Frame dynamically only on the client side
   useEffect(() => {
+    // Dynamically import A-Frame only on the client
+    const loadAframe = async () => {
+      try {
+        await import('aframe');
+        console.log('A-Frame loaded successfully');
+        setAframeLoaded(true);
+      } catch (error) {
+        console.error('Failed to load A-Frame:', error);
+      }
+    };
+    
+    loadAframe();
+  }, []);
+
+  // Second effect - set up event listener after A-Frame is loaded
+  useEffect(() => {
+    if (!aframeLoaded) return; // Skip if A-Frame isn't loaded yet
+    
     const sceneEl = sceneRef.current as any; // Cast to any to access addEventListener easily
 
     // Function to handle the logging logic
@@ -61,7 +76,12 @@ export default function AframeClient() {
         sceneEl.removeEventListener('loaded', handleSceneLoad);
       }
     };
-  }, []); // Empty dependency array ensures this runs only once on mount to set up listener
+  }, [aframeLoaded]); // Run this effect when aframeLoaded changes to true
+
+  // Show loading state if A-Frame is not yet loaded
+  if (!aframeLoaded) {
+    return <div>Loading A-Frame...</div>;
+  }
 
   // Render the scene once A-Frame is loaded
   return (<>

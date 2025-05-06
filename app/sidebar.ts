@@ -3,6 +3,7 @@ import pckg from "hasyx/package.json";
 
 export const sidebar: SidebarData = {
   versions: [pckg.version],
+  logo: "logo.svg",
   navMain: [
     {
       title: "Core",
