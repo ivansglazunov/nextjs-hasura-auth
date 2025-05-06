@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { IncomingMessage } from "http";
 import Debug from './debug';
-import { getToken, JWT } from 'next-auth/jwt';
+import { getTokenFromRequest, JWT } from './auth-next';
 import { useSession as useSessionNextAuth } from "next-auth/react";
 import { v4 as uuidv4 } from 'uuid';
 import WebSocket from "ws";
@@ -13,108 +13,10 @@ import schema from '../public/hasura-schema.json';
 import { AxiosInstance } from 'axios';
 import axios from 'axios';
 import { JWTPayload } from 'jose';
+import { getTokenFromIncomingMessage } from './auth-next';
 
 const debug = Debug('auth');
 const generate = Generator(schema);
-
-/**
- * Extracts the JWT payload from a NextRequest.
- * 
- * It tries to find a token in the following order:
- * 1. 'Authorization: Bearer <token>' header
- * 2. URL query parameter 'auth_token=<token>'
- * 3. Next-auth session cookies
- *
- * @param {NextRequest} request - The incoming Next.js request object.
- * @returns {Promise<JWT | null>} A promise that resolves to the decoded JWT payload or null if no valid token is found.
- */
-export async function getTokenFromRequest(request: NextRequest): Promise<JWT | null> {
-  debug('Attempting to get token from request...');
-
-  // 1. Check Authorization header
-  const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
-  debug('Authorization header value:', authHeader ? authHeader.substring(0, 15) + '...' : 'null'); // Log safely
-
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7); // Remove 'Bearer '
-    debug('Found Bearer token in Authorization header.');
-    try {
-      debug('Attempting to verify Bearer token...'); 
-      const payload: JWTPayload = await verifyJWT(token);
-      debug('Successfully verified Bearer token.');
-      // --- CONSTRUCT JWT FROM PAYLOAD ---
-      const constructedJwt: JWT = {
-        sub: payload.sub, // Standard JWT subject
-        userId: payload.sub, // Our custom field
-        // Map Hasura claims if they exist
-        "https://hasura.io/jwt/claims": payload['https://hasura.io/jwt/claims'] as Record<string, any> | undefined,
-        provider: 'bearer', // Indicate source
-        // Add other fields from payload if necessary/available and expected in JWT type
-        // iat: payload.iat,
-        // exp: payload.exp,
-      };
-      debug('Constructed JWT from Bearer payload:', constructedJwt);
-      return constructedJwt;
-      // --- END CONSTRUCTION ---
-    } catch (error) {
-      debug('Bearer token verification failed:', error); 
-    } 
-  }
-
-  // 2. Check URL query parameter 'auth_token' (Consider removing if not needed)
-  try {
-    const urlToken = request.nextUrl.searchParams.get('auth_token');
-    if (urlToken) {
-      debug('Found token in URL query parameter (auth_token)');
-      try {
-        const payload: JWTPayload = await verifyJWT(urlToken);
-        debug('Successfully verified URL token.');
-        // --- CONSTRUCT JWT FROM PAYLOAD ---
-        const constructedJwt: JWT = {
-          sub: payload.sub,
-          userId: payload.sub,
-          "https://hasura.io/jwt/claims": payload['https://hasura.io/jwt/claims'] as Record<string, any> | undefined,
-          provider: 'url', // Indicate source
-          // Add other fields as needed
-        };
-        debug('Constructed JWT from URL payload:', constructedJwt);
-        return constructedJwt;
-        // --- END CONSTRUCTION ---
-      } catch (urlTokenError) {
-        debug('URL token verification failed:', urlTokenError);
-      }
-    }
-  } catch (urlError) {
-    debug('Error accessing URL parameters:', urlError);
-  }
-
-  // 3. Fallback to checking NextAuth cookies
-  debug('No valid Bearer token or URL token found. Checking cookies...');
-  const secureCookie = request.url.startsWith('https');
-  const cookieName = secureCookie 
-    ? '__Secure-next-auth.session-token' 
-    : 'next-auth.session-token';
-  debug(`Checking cookie: ${cookieName}, secure: ${secureCookie}`);
-  
-  try {
-    const tokenFromCookie = await getToken({
-      req: request as any, // Cast to any to satisfy getToken, NextRequest works
-      secret: process.env.NEXTAUTH_SECRET!, // Ensure secret is loaded
-      cookieName: cookieName,
-    });
-
-    if (tokenFromCookie) {
-      debug('Found valid token in cookie:', tokenFromCookie); // Log the cookie token
-      return tokenFromCookie;
-    } else {
-      debug('No token found in cookies either.');
-      return null;
-    }
-  } catch (cookieError) {
-    debug('Error processing token from cookie:', cookieError); // Log cookie processing error
-    return null;
-  }
-}
 
 /**
  * @typedef {object} WebSocketClientInfo
@@ -157,77 +59,14 @@ export function WsClientsManager(route: string = '') {
      * @returns {Promise<JWT | string | null>} The decoded JWT payload or null.
      */
     async getToken(request: IncomingMessage, clientId: string): Promise<JWT | string | null> {
-      const cookieHeader = request.headers.cookie;
-      const userAgent = request.headers['user-agent'];
-      const forwardedProto = request.headers['x-forwarded-proto'];
-      const connectionEncrypted = (request.connection as any)?.encrypted;
-      debug(`${clientManagerId}: (${clientId}): Incoming request details - URL: ${request.url}, Method: ${request.method}, User-Agent: ${userAgent}`);
-      debug(`${clientManagerId}: (${clientId}): Incoming headers:`, request.headers); 
-      debug(`${clientManagerId}: (${clientId}): Connection encrypted: ${connectionEncrypted}`);
-      debug(`${clientManagerId}: (${clientId}): X-Forwarded-Proto: ${forwardedProto}`);
-      debug(`${clientManagerId}: (${clientId}): Full cookie header:`, cookieHeader || 'No cookies header');
-    
-      // Determine secure context and cookie name
-      const isSecure = forwardedProto === 'https' || connectionEncrypted;
-      const sessionCookieName = isSecure 
-          ? '__Secure-next-auth.session-token' 
-          : 'next-auth.session-token';
-      debug(`${clientManagerId}: (${clientId}): Determined secure context: ${isSecure}`);
-      debug(`${clientManagerId}: (${clientId}): Expecting session cookie name: ${sessionCookieName}`);
-
-      let token: JWT | string | null = null; 
-      let payload: JWT | null = null; 
-      let userId: string | null = null;
-      const rawToken = false; // Keep false
-
-      try {
-        debug(`SOCKET /api/auth (${clientId}): Preparing adapted request for getToken (raw: ${rawToken})...`);
-        const parsedCookies = request.headers.cookie ? 
-            Object.fromEntries(request.headers.cookie.split('; ').map(c => {
-              const [key, ...val] = c.split('=');
-              return [key, decodeURIComponent(val.join('='))];
-            }))
-            : {};
-        debug(`SOCKET /api/auth (${clientId}): Parsed cookies object:`, parsedCookies);
-            
-        const adaptedReq = {
-          headers: request.headers, 
-          cookies: parsedCookies,
-          url: request.url || '',
-          method: request.method || 'GET',
-        };
-        debug(`SOCKET /api/auth (${clientId}): Final adapted request object for getToken:`, adaptedReq);
-
-        const getTokenParams = {
-          req: adaptedReq as any,
-          secret: process.env.NEXTAUTH_SECRET!,
-          cookieName: sessionCookieName, 
-          raw: rawToken, // Should be false now
-        };
-        debug(`${clientManagerId}: (${clientId}): Calling getToken with params:`, {
-          cookieName: getTokenParams.cookieName,
-          raw: getTokenParams.raw,
-          secretProvided: !!getTokenParams.secret,
-        });
-
-        token = await getToken(getTokenParams);
-        debug(`${clientManagerId}: (${clientId}): getToken result received.`);
-        debug(`${clientManagerId}: (${clientId}): Decoded token value from getToken:`, token);
-        debug(`${clientManagerId}: (${clientId}): getToken result type: ${typeof token}, isNull: ${token === null}`);
-
-        if (token && typeof token === 'object' && token.sub) {
-          payload = token as JWT;
-          userId = payload.sub as string;
-          debug(`${clientManagerId}: (${clientId}): User ${userId} authenticated via decoded token from getToken.`);
-        } else {
-          debug(`${clientManagerId}: (${clientId}): No valid token found or token is not an object with sub property.`);
-        }
-
-        return token;
-      } catch (error) {
-        debug(`${clientManagerId}: (${clientId}): Error preparing adapted request for getToken:`, error);
-        throw error;
-      }
+      debug(`${clientManagerId}: (${clientId}): Getting token from WebSocket request...`);
+      
+      // Use the dedicated function from auth-next.ts to get the token
+      const token = await getTokenFromIncomingMessage(request);
+      
+      debug(`${clientManagerId}: (${clientId}): Token received, type: ${typeof token}, null: ${token === null}`);
+      
+      return token;
     },
     /**
      * Parses the user data from the token found in the WebSocket upgrade request and updates the client's state.
