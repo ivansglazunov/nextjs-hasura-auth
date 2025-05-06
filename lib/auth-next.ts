@@ -4,6 +4,7 @@ import Debug from './debug';
 import { JWTPayload } from 'jose';
 import { verifyJWT } from './jwt';
 import { IncomingMessage } from 'http';
+import { v4 as uuidv4 } from 'uuid';
 
 const debug = Debug('auth-next');
 
@@ -174,6 +175,102 @@ export async function getTokenFromIncomingMessage(
     debug(`(${clientId}): Error getting token from WebSocket request:`, error);
     return null;
   }
+}
+
+
+
+/**
+ * @typedef {object} WebSocketClientInfo
+ * @property {WebSocket} ws - The WebSocket client instance.
+ * @property {string} [userId] - The authenticated user ID, if available.
+ * @property {any} [user] - The decoded user token payload, if available.
+ */
+
+/**
+ * Manages WebSocket client connections and authentication state.
+ * 
+ * Provides methods to add clients, retrieve authentication tokens (from cookies),
+ * parse user data from tokens, and manage client connections.
+ *
+ * @param {string} [route=''] - Optional route identifier for debugging purposes.
+ * @returns {{Client: (client: WebSocket) => string, getToken: (request: IncomingMessage, clientId: string) => Promise<JWT | string | null>, parseUser: (request: IncomingMessage, clientId: string) => Promise<any | null>, delete: (clientId: string) => void, getClient: (clientId: string) => WebSocketClientInfo | undefined}}
+ */
+export function WsClientsManager(route: string = '') {
+  const clientManagerId = route+uuidv4();
+  debug(`(${clientManagerId}): New WebSocket clients manager established.`);
+
+  const clients = new Map<string, { ws: WebSocket; userId?: string; user?: any }>();
+
+  return {
+    /**
+     * Adds a new WebSocket client and returns its generated ID.
+     * @param {WebSocket} client - The WebSocket client instance.
+     * @returns {string} The unique client ID.
+     */
+    Client: (client: WebSocket): string => {
+      const clientId = uuidv4();
+      clients.set(clientId, { ws: client });
+      debug(`(${clientManagerId}): New client (${clientId}) connected.`);
+      return clientId;
+    },
+    /**
+     * Retrieves and decodes the NextAuth session token from the WebSocket upgrade request's cookies.
+     * @param {IncomingMessage} request - The HTTP upgrade request.
+     * @param {string} clientId - The ID of the client making the request.
+     * @returns {Promise<JWT | string | null>} The decoded JWT payload or null.
+     */
+    async getToken(request: IncomingMessage, clientId: string): Promise<JWT | string | null> {
+      debug(`${clientManagerId}: (${clientId}): Getting token from WebSocket request...`);
+      
+      // Use the dedicated function from auth-next.ts to get the token
+      const token = await getTokenFromIncomingMessage(request);
+      
+      debug(`${clientManagerId}: (${clientId}): Token received, type: ${typeof token}, null: ${token === null}`);
+      
+      return token;
+    },
+    /**
+     * Parses the user data from the token found in the WebSocket upgrade request and updates the client's state.
+     * @param {IncomingMessage} request - The HTTP upgrade request.
+     * @param {string} clientId - The ID of the client.
+     * @returns {Promise<any | null>} The user data payload or null if authentication fails.
+     */
+    async parseUser(request: IncomingMessage, clientId: string): Promise<any | null> {
+      const token = await this.getToken(request, clientId);
+      if (token && typeof token === 'object' && token.sub) {
+        const { accessToken, ...user } = token as any;
+        const client = clients.get(clientId);
+        if (client) {
+          client.userId = token.sub as string;
+          client.user = user;
+          clients.set(clientId, client);
+          debug(`${clientManagerId}: (${clientId}): Client parsed and updated.`);
+        } else {
+          debug(`${clientManagerId}: (${clientId}): No client found in clients map.`);
+        }
+        return user;
+      } else {
+        debug(`${clientManagerId}: (${clientId}): No valid token found or token is not an object with sub property.`);
+      }
+      return null;
+    },
+    /**
+     * Deletes a client connection from the manager.
+     * @param {string} clientId - The ID of the client to delete.
+     */
+    delete(clientId: string): void {
+      clients.delete(clientId);
+      debug(`${clientManagerId}: (${clientId}): Client deleted from clients map.`);
+    },
+    /**
+     * Retrieves the client information object.
+     * @param {string} clientId - The ID of the client to retrieve.
+     * @returns {WebSocketClientInfo | undefined} The client info object or undefined if not found.
+     */
+    getClient(clientId: string): { ws: WebSocket; userId?: string; user?: any } | undefined {
+      return clients.get(clientId);
+    }
+  };
 }
 
 // Export the type to make it available without importing directly from next-auth/jwt

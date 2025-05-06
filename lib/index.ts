@@ -12,5 +12,5 @@ export * from './auth-token-handler';
 export * from './auth';
 
 // For backwards compatibility: explicitly re-export getTokenFromRequest
-export { getTokenFromRequest } from './auth-next';
+export { getTokenFromRequest, WsClientsManager } from './auth-next';
 export type { JWT } from './auth-next';
