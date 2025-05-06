@@ -5,7 +5,7 @@ import Debug from 'hasyx/lib/debug';
 import { withCors } from 'hasyx/lib/cors';
 
 import schema from '../../../../public/hasura-schema.json';
-import { API_URL } from '@/lib/url';
+import { API_URL } from 'hasyx/lib/url';
 
 const debug = Debug('api:auth:verify');
 

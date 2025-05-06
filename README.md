@@ -432,7 +432,39 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 *   `NEXT_PUBLIC_BUILD_TARGET`: *Internal Use*. This variable is set automatically by specific build scripts (like `npm run build:client` which sets it to `client`) to signal the type of build being performed. This allows `next.config.ts` and potentially other parts of the application (like `HasyxProvider`) to adjust their behavior, for example, by enabling `output: 'export'` or changing API endpoints. **Avoid setting this manually** unless you have a specific reason and understand the implications.
 *   `NEXT_PUBLIC_WS`: *Optional*. Controls whether WebSockets are used for GraphQL subscriptions. Defaults to `1` (enabled). Set to `0` to disable WebSockets and use polling-based subscriptions instead. This is particularly useful for serverless environments like Vercel where WebSockets are not supported. When disabled, subscriptions will automatically fall back to a polling implementation with deep equality checks to minimize unnecessary updates.
 
-#### OAuth Providers (`GOOGLE_*`, `YANDEX_*`, etc.)
+#### WebSocket Support
+
+Hasyx uses WebSockets for real-time GraphQL subscriptions. To ensure proper WebSocket functionality:
+
+- The `ws` package is installed automatically during project initialization
+- A patch for Next.js WebSocket support is applied via `next-ws-cli`
+- A `postinstall` script is added to your project to ensure the patch is applied after package installations
+
+If you encounter WebSocket connection issues:
+
+1. Verify the `ws` package is installed in your project's dependencies:
+   ```bash
+   npm install ws@^8.18.1 --save
+   ```
+
+2. Make sure you have the necessary scripts in your package.json:
+   ```json
+   "scripts": {
+     "postinstall": "npm run ws -- -y",
+     "ws": "npx --yes next-ws-cli@latest patch -y"
+   }
+   ```
+
+3. Apply the Next.js WebSocket patch manually:
+   ```bash
+   npx --yes next-ws-cli@latest patch -y
+   ```
+
+4. Ensure `NEXT_PUBLIC_WS=1` is set in your environment (this is the default if not specified)
+
+Common WebSocket error: `TypeError: bufferUtil.mask is not a function` indicates missing or incompatible WebSocket native modules. Running the patch and reinstalling the `ws` package typically resolves this issue.
+
+### OAuth Providers (`GOOGLE_*`, `YANDEX_*`, etc.)
 
 *   OAuth providers are automatically enabled in the NextAuth configuration provided by `hasyx init` if their corresponding `CLIENT_ID` and `CLIENT_SECRET` environment variables are set.
 *   **Google:**
@@ -492,6 +524,8 @@ npx hasyx <command>
 - `events` - Synchronize Hasura event triggers with local definitions
   - Option: `--init` - Create default event trigger definitions
   - Option: `--clean` - Remove security headers from event definitions (they will be added automatically during sync)
+- `assets` - Generate app icons and splash screens from logo.svg for web, Capacitor, and Electron apps
+- `unbuild` - Remove compiled files (.js, .d.ts) from lib, components, and hooks directories, and clear build cache
 
 The CLI automatically loads environment variables from the `.env` file in your project root. This ensures that commands like `npx hasyx events` have access to your Hasura URL, admin secret, and other configuration.
 

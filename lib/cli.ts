@@ -183,6 +183,134 @@ const executeScript = (scriptPath: string): boolean => {
   return true;
 };
 
+// --- Helper function to ensure WebSocket support in the project ---
+const ensureWebSocketSupport = (projectRoot: string): void => {
+  debug('Ensuring WebSocket support');
+  
+  // Apply next-ws patch
+  console.log('🩹 Applying next-ws patch...');
+  debug('Running next-ws patch command: npx --yes next-ws-cli@latest patch -y');
+  const patchResult = spawn.sync('npx', ['--yes', 'next-ws-cli@latest', 'patch', '-y'], {
+    stdio: 'inherit',
+    cwd: projectRoot,
+  });
+  debug('next-ws patch result:', JSON.stringify(patchResult, null, 2));
+  if (patchResult.error) {
+    console.error('❌ Failed to run next-ws patch:', patchResult.error);
+    console.warn('⚠️ Please try running "npx --yes next-ws-cli@latest patch" manually.');
+    debug(`next-ws patch failed to start: ${patchResult.error}`);
+  } else if (patchResult.status !== 0) {
+    console.error(`❌ next-ws patch process exited with status ${patchResult.status}`);
+    console.warn('⚠️ Please try running "npx --yes next-ws-cli@latest patch" manually.');
+    debug(`next-ws patch exited with non-zero status: ${patchResult.status}`);
+  } else {
+    console.log('✅ next-ws patch applied successfully!');
+    debug('next-ws patch successful.');
+  }
+
+  // Check if ws is installed
+  const checkWsInstalled = () => {
+    try {
+      // Check if ws exists in package.json dependencies or devDependencies
+      const pkgJsonPath = path.join(projectRoot, 'package.json');
+      const pkgJsonContent = fs.readFileSync(pkgJsonPath, 'utf8');
+      const pkgJson = JSON.parse(pkgJsonContent);
+      
+      // Check if ws is installed directly or transitively
+      const hasWsDependency = 
+        (pkgJson.dependencies && pkgJson.dependencies.ws) || 
+        (pkgJson.devDependencies && pkgJson.devDependencies.ws);
+      
+      // Check for postinstall script
+      const hasPostinstall = 
+        pkgJson.scripts && 
+        pkgJson.scripts.postinstall && 
+        pkgJson.scripts.postinstall.includes('ws');
+      
+      // Check for ws script
+      const hasWsScript = 
+        pkgJson.scripts && 
+        pkgJson.scripts.ws && 
+        pkgJson.scripts.ws.includes('next-ws-cli');
+      
+      debug(`WS checks - direct dependency: ${hasWsDependency}, postinstall script: ${hasPostinstall}, ws script: ${hasWsScript}`);
+      
+      return { hasWsDependency, hasPostinstall, hasWsScript, pkgJson, pkgJsonPath };
+    } catch (error) {
+      debug(`Error checking for ws installation: ${error}`);
+      return { hasWsDependency: false, hasPostinstall: false, hasWsScript: false };
+    }
+  };
+  
+  const { hasWsDependency, hasPostinstall, hasWsScript, pkgJson, pkgJsonPath } = checkWsInstalled();
+  
+  // Install ws if not present
+  if (!hasWsDependency) {
+    console.log('📦 Installing WebSocket (ws) dependency...');
+    const installWsResult = spawn.sync('npm', ['install', 'ws@^8.18.1', '--save'], {
+      stdio: 'inherit',
+      cwd: projectRoot,
+    });
+    
+    if (installWsResult.error || installWsResult.status !== 0) {
+      console.warn('⚠️ Failed to install ws package automatically.');
+      console.warn('   Please install it manually: npm install ws@^8.18.1 --save');
+      debug(`ws installation failed: ${installWsResult.error || `Exit code: ${installWsResult.status}`}`);
+    } else {
+      console.log('✅ WebSocket dependency installed successfully.');
+      debug('ws package installed successfully');
+    }
+  } else {
+    debug('ws dependency already installed, skipping installation');
+  }
+  
+  // Add necessary scripts to package.json if not present
+  if (pkgJson && pkgJsonPath && (!hasPostinstall || !hasWsScript)) {
+    console.log('📝 Adding WebSocket scripts to package.json...');
+    
+    // Only modify if needed
+    let modified = false;
+    
+    // Initialize scripts object if it doesn't exist
+    if (!pkgJson.scripts) {
+      pkgJson.scripts = {};
+    }
+    
+    // Add ws script if not present
+    if (!hasWsScript) {
+      pkgJson.scripts.ws = "npx --yes next-ws-cli@latest patch -y";
+      modified = true;
+      debug('Added ws script to package.json');
+    }
+    
+    // Add postinstall script if not present
+    if (!hasPostinstall) {
+      const currentPostinstall = pkgJson.scripts.postinstall || "";
+      pkgJson.scripts.postinstall = currentPostinstall 
+        ? `${currentPostinstall} && npm run ws -- -y` 
+        : "npm run ws -- -y";
+      modified = true;
+      debug('Added/updated postinstall script in package.json');
+    }
+    
+    // Save changes if modified
+    if (modified) {
+      try {
+        fs.writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2));
+        console.log('✅ Package.json updated with WebSocket scripts.');
+        debug('Successfully updated package.json with WebSocket scripts');
+      } catch (error) {
+        console.warn('⚠️ Failed to update package.json automatically.');
+        console.warn('   Please add the following scripts manually:');
+        console.warn('   "ws": "npx --yes next-ws-cli@latest patch -y"');
+        console.warn('   "postinstall": "npm run ws -- -y"');
+        debug(`Error updating package.json: ${error}`);
+      }
+    } else {
+      debug('No changes needed to package.json scripts');
+    }
+  }
+};
 
 // --- `init` Command ---
 program
@@ -201,6 +329,22 @@ program
     const projectRoot = findProjectRoot();
     const targetDir = projectRoot;
     debug(`Target directory for init: ${targetDir}`);
+
+    // Get project name from package.json
+    let projectName = "hasyx"; // Default fallback
+    try {
+      const pkgJsonPath = path.join(projectRoot, 'package.json');
+      const pkgJson = await fs.readJson(pkgJsonPath);
+      if (pkgJson.name) {
+        projectName = pkgJson.name;
+        debug(`Found project name in package.json: ${projectName}`);
+      } else {
+        debug('No project name found in package.json, using default: hasyx');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not read package.json to determine project name, using default: hasyx');
+      debug(`Error reading package.json: ${error}`);
+    }
 
     const filesToCreateOrReplace = {
       // GitHub Actions (will overwrite)
@@ -278,8 +422,51 @@ program
       }
     }
 
+    // Special handling for tsconfig files to replace 'hasyx' with project name
+    const tsConfigFiles = ['tsconfig.json', 'tsconfig.lib.json'];
+    debug(`Processing tsconfig files with project name replacement: ${projectName}`);
+    
+    for (const configFile of tsConfigFiles) {
+      const fullTargetPath = path.join(targetDir, configFile);
+      const exists = fs.existsSync(fullTargetPath);
+      const shouldProcess = !exists || forceReinit;
+      
+      debug(`Processing ${configFile} (${exists ? (forceReinit ? 'Force Replace' : 'Skip') : 'Create'})`);
+      
+      if (shouldProcess) {
+        try {
+          // Get template content
+          let templateContent = getTemplateContent(configFile);
+          
+          // Replace 'hasyx' with project name in paths section
+          templateContent = templateContent.replace(
+            /"hasyx":\s*\[\s*"\.\/lib\/index\.ts"\s*\]/g, 
+            `"${projectName}": ["./lib/index.ts"]`
+          );
+          
+          templateContent = templateContent.replace(
+            /"hasyx\/\*":\s*\[\s*"\.\/*"\s*\]/g, 
+            `"${projectName}/*": ["./*"]`
+          );
+          
+          // Write content to file
+          await fs.writeFile(fullTargetPath, templateContent);
+          console.log(`✅ ${exists && forceReinit ? 'Replaced' : 'Created'}: ${configFile} (with project name: ${projectName})`);
+          debug(`Successfully wrote ${exists && forceReinit ? 'replaced' : 'new'} file with project name: ${fullTargetPath}`);
+        } catch (error) {
+          console.error(`❌ Failed to ${exists && forceReinit ? 'replace' : 'create'} ${configFile}: ${error}`);
+          debug(`Error processing tsconfig file ${fullTargetPath}: ${error}`);
+        }
+        
+        // Remove from filesToCreateIfNotExists so it's not processed again
+        if (configFile in filesToCreateIfNotExists) {
+          delete (filesToCreateIfNotExists as Record<string, string>)[configFile];
+        }
+      }
+    }
+
     // Create files if they don't exist (or force replace if --reinit)
-    debug('Processing files to create if not exists... (or forced replace if reinit)');
+    debug('Processing remaining files to create if not exists... (or forced replace if reinit)');
     for (const [targetPath, templateName] of Object.entries(filesToCreateIfNotExists)) {
       const fullTargetPath = path.join(targetDir, targetPath);
       const exists = fs.existsSync(fullTargetPath);
@@ -339,26 +526,8 @@ program
 
     console.log('✨ hasyx initialization complete!');
 
-    // --- NEW: Run next-ws patch ---
-    console.log('🩹 Applying next-ws patch...');
-    debug('Running next-ws patch command: npx --yes next-ws-cli@latest patch -y');
-    const patchResult = spawn.sync('npx', ['--yes', 'next-ws-cli@latest', 'patch', '-y'], {
-        stdio: 'inherit',
-        cwd: projectRoot,
-    });
-    debug('next-ws patch result:', JSON.stringify(patchResult, null, 2));
-    if (patchResult.error) {
-        console.error('❌ Failed to run next-ws patch:', patchResult.error);
-        console.warn('⚠️ Please try running "npx --yes next-ws-cli@latest patch" manually.');
-        debug(`next-ws patch failed to start: ${patchResult.error}`);
-    } else if (patchResult.status !== 0) {
-        console.error(`❌ next-ws patch process exited with status ${patchResult.status}`);
-        console.warn('⚠️ Please try running "npx --yes next-ws-cli@latest patch" manually.');
-        debug(`next-ws patch exited with non-zero status: ${patchResult.status}`);
-    } else {
-        console.log('✅ next-ws patch applied successfully!');
-        debug('next-ws patch successful.');
-    }
+    // --- NEW: Apply the WebSocket patch ---
+    ensureWebSocketSupport(projectRoot);
     // --- END NEW ---
 
     console.log('👉 Next steps:');
@@ -375,8 +544,12 @@ program
   .description('Starts the Next.js development server with WebSocket support.')
   .action(() => {
     debug('Executing "dev" command.');
-    console.log('🚀 Starting development server (using next dev)...');
     const cwd = findProjectRoot();
+    
+    // Apply WebSocket patch before starting development server
+    ensureWebSocketSupport(cwd);
+    
+    console.log('🚀 Starting development server (using next dev)...');
     debug(`Running command: npx next dev in ${cwd}`);
     const result = spawn.sync('npx', ['next', 'dev'], {
       stdio: 'inherit', // Show output in console
@@ -402,9 +575,13 @@ program
   .description('Builds the Next.js application for production.')
   .action(() => {
     debug('Executing "build" command.');
-    console.log('🏗️ Building Next.js application...');
     const cwd = findProjectRoot();
-     debug(`Running command: npx next build in ${cwd}`);
+    
+    // Apply WebSocket patch before building
+    ensureWebSocketSupport(cwd);
+    
+    console.log('🏗️ Building Next.js application...');
+    debug(`Running command: npx next build in ${cwd}`);
     const result = spawn.sync('npx', ['next', 'build'], {
       stdio: 'inherit',
       cwd: cwd,
@@ -430,8 +607,12 @@ program
   .description('Starts the Next.js production server (uses custom server.js).')
   .action(() => {
     debug('Executing "start" command.');
-    console.log('🛰️ Starting production server (using next start)...');
     const cwd = findProjectRoot();
+    
+    // Apply WebSocket patch before starting production server
+    ensureWebSocketSupport(cwd);
+    
+    console.log('🛰️ Starting production server (using next start)...');
     debug(`Running command: npx next start in ${cwd}`);
      const result = spawn.sync('npx', ['next', 'start'], {
       stdio: 'inherit',
@@ -459,8 +640,12 @@ program
   .description('Builds the Next.js application for static client export (e.g., for Capacitor).')
   .action(() => {
     debug('Executing "build:client" command via CLI.');
-    console.log('📦 Building Next.js application for client export...');
     const cwd = findProjectRoot();
+    
+    // Apply WebSocket patch before building for client
+    ensureWebSocketSupport(cwd);
+    
+    console.log('📦 Building Next.js application for client export...');
     const scriptPath = path.join('lib', 'build-client.ts'); // Path relative to project root
     debug(`Running command: npx tsx ${scriptPath} in ${cwd}`);
     
@@ -771,15 +956,6 @@ program
       await fs.writeFile(faviconPath, pngToIcoProcess.stdout);
       console.log(`✅ Created ${faviconPath}`);
       
-      // Copy favicon to app/favicon.ico for Next.js
-      const nextFaviconPath = path.join(projectRoot, 'app', 'favicon.ico');
-      debug(`Copying favicon.ico to Next.js app folder: ${nextFaviconPath}`);
-      
-      // Ensure app directory exists
-      await fs.ensureDir(path.join(projectRoot, 'app'));
-      await fs.copyFile(faviconPath, nextFaviconPath);
-      console.log(`✅ Copied favicon.ico to app folder for Next.js`);
-      
       // If Electron exists, copy favicon to electron assets
       if (electronExists) {
         const electronFaviconPath = path.join(electronAssetsDir, 'appIcon.ico');
@@ -1030,6 +1206,74 @@ program
     } catch (error) {
       console.error('❌ Failed to synchronize event triggers:', error);
       debug(`Error synchronizing event triggers: ${error}`);
+      process.exit(1);
+    }
+  });
+
+// --- NEW: `unbuild` Command ---
+program
+  .command('unbuild')
+  .description('Remove compiled files (.js, .d.ts) from lib, components, and hooks directories, and delete tsconfig.lib.tsbuildinfo.')
+  .action(async () => {
+    debug('Executing "unbuild" command.');
+    console.log('🧹 Cleaning compiled files...');
+    const projectRoot = findProjectRoot();
+
+    // Directories to clean
+    const dirsToClean = ['lib', 'components', 'hooks'];
+    
+    try {
+      // Import glob only when needed
+      const globModule = await import('glob');
+      const { glob } = globModule;
+      
+      // Get all matching files
+      let deletedCount = 0;
+      
+      for (const dir of dirsToClean) {
+        const dirPath = path.join(projectRoot, dir);
+        
+        // Skip if directory doesn't exist
+        if (!fs.existsSync(dirPath)) {
+          debug(`Directory doesn't exist, skipping: ${dirPath}`);
+          continue;
+        }
+        
+        // Find and delete .js files
+        const jsFiles = await glob(`${dirPath}/**/*.js`);
+        debug(`Found ${jsFiles.length} .js files in ${dir}`);
+        
+        for (const file of jsFiles) {
+          debug(`Deleting: ${file}`);
+          await fs.remove(file);
+          deletedCount++;
+        }
+        
+        // Find and delete .d.ts files
+        const dtsFiles = await glob(`${dirPath}/**/*.d.ts`);
+        debug(`Found ${dtsFiles.length} .d.ts files in ${dir}`);
+        
+        for (const file of dtsFiles) {
+          debug(`Deleting: ${file}`);
+          await fs.remove(file);
+          deletedCount++;
+        }
+      }
+      
+      // Delete tsconfig.lib.tsbuildinfo if it exists
+      const tsconfigBuildInfoPath = path.join(projectRoot, 'tsconfig.lib.tsbuildinfo');
+      if (fs.existsSync(tsconfigBuildInfoPath)) {
+        debug(`Deleting: ${tsconfigBuildInfoPath}`);
+        await fs.remove(tsconfigBuildInfoPath);
+        console.log('✅ Removed tsconfig.lib.tsbuildinfo');
+      }
+      
+      console.log(`✅ Removed ${deletedCount} compiled files (.js, .d.ts) from lib, components, and hooks directories.`);
+      console.log('🧹 Clean complete!');
+      debug('Finished "unbuild" command successfully.');
+    } catch (error) {
+      console.error(`❌ Error while cleaning compiled files:`, error);
+      debug(`Error in unbuild command: ${error}`);
       process.exit(1);
     }
   });
