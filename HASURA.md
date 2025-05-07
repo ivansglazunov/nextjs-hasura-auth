@@ -72,13 +72,13 @@ The primary use case for this class is in automation scripts like database migra
 **Example: `up.ts` (Creating Schema, Tables, Relations, Permissions)**
 
 ```typescript
-// migrations/hasuxy/up.ts (Simplified Example)
+// migrations/1746660891582-hasyx-users/up.ts (Simplified Example)
 import dotenv from 'dotenv';
 import path from 'path';
 import { Hasura } from 'hasyx';
 import Debug from 'debug';
 
-const debug = Debug('hasuxy:migration:up');
+const debug = Debug('hasyx-users:migration:up');
 dotenv.config();
 
 const hasura = new Hasura({
@@ -152,13 +152,13 @@ up();
 **Example: `down.ts` (Untracking and Dropping Tables)**
 
 ```typescript
-// migrations/hasuxy/down.ts (Simplified Example)
+// migrations/1746660891582-hasyx-users/down.ts (Simplified Example)
 import dotenv from 'dotenv';
 import path from 'path';
 import { Hasura } from 'hasyx';
 import Debug from 'debug';
 
-const debug = Debug('hasuxy:migration:down');
+const debug = Debug('hasyx-users:migration:down');
 dotenv.config();
 
 const hasura = new Hasura({

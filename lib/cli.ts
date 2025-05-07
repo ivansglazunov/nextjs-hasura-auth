@@ -389,8 +389,8 @@ program
       'tsconfig.json': 'tsconfig.json',
       'tsconfig.lib.json': 'tsconfig.lib.json',
       // Migration files (won't overwrite unless --reinit)
-      'migrations/hasyx/up.ts': 'migrations/hasyx/up.ts',
-      'migrations/hasyx/down.ts': 'migrations/hasyx/down.ts',
+      'migrations/1746660891582-hasyx-users/up.ts': 'migrations/1746660891582-hasyx-users/up.ts',
+      'migrations/1746660891582-hasyx-users/down.ts': 'migrations/1746660891582-hasyx-users/down.ts',
     };
     debug('Files to create if not exists:', Object.keys(filesToCreateIfNotExists));
 
