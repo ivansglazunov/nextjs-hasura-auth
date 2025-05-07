@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.103",
+  "version": "0.1.104",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npm run build:lib && npm run build:css && NODE_ENV=production next build",
+    "build": "npm run build:lib && npm run build:css && NODE_ENV=production npm run build:next",
     "build:lib": "tsc -p tsconfig.lib.json",
     "build:css": "tailwindcss -i ./app/globals.css -o ./lib/styles.css",
     "unbuild": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -not -path \"*/types/*\" -print -delete; rm -rf tsconfig.lib.tsbuildinfo; echo '✅ Cleaned compiled files (types directory preserved)'",
@@ -118,7 +118,6 @@
     "jose": "^5.10.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.488.0",
-    "next": "15.3.1",
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
     "next-ws": "^2.0.7",
@@ -153,6 +152,12 @@
     "@capacitor/cli": "^7.2.0",
     "cross-env": "^7.0.3",
     "glob": "^11.0.2",
+    "next": "15.3.1",
     "tsx": "^4.19.4"
+  },
+  "peerDependencies": {
+    "next": "15.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

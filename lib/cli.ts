@@ -375,6 +375,7 @@ program
       '.gitignore.template': '.gitignore',
       '.npmignore.template': '.npmignore',
       '.npmrc.template': '.npmrc',
+      // 'vercel.json': 'vercel.json', // Removed as per user changes
       'babel.jest.config.mjs': 'babel.jest.config.mjs',
       'jest.config.mjs': 'jest.config.mjs',
       'jest.setup.js': 'jest.setup.js',
@@ -528,50 +529,80 @@ program
     // --- NEW: Apply the WebSocket patch ---
     ensureWebSocketSupport(projectRoot);
     // --- END NEW ---
-
-    // --- NEW: Ensure required npm scripts are set in package.json ---
+    
+    // --- NEW: Enforce Next.js version and update npm scripts ---
     try {
-      console.log('📝 Checking and updating npm scripts in package.json...');
+      console.log('📦 Ensuring correct Next.js version and updating npm scripts...');
+      const ownPkgJsonPath = path.join(__dirname, '..', 'package.json');
+      let nextVersionToEnforce = 'latest'; // Fallback
+      try {
+        const ownPkgJson = await fs.readJson(ownPkgJsonPath);
+        nextVersionToEnforce = ownPkgJson.peerDependencies?.next || ownPkgJson.devDependencies?.next || 'latest';
+        if (nextVersionToEnforce === 'latest') {
+            console.warn("⚠️ Could not determine specific Next.js version from hasyx's peerDependencies, will use 'latest'.");
+        } else {
+            console.log(`ℹ️ Target Next.js version from hasyx: ${nextVersionToEnforce}`);
+        }
+      } catch (error) {
+          console.error("❌ Critical: Could not read hasyx's package.json to determine Next.js version.", error);
+          debug("Failed to read hasyx's own package.json: " + error);
+          // Decide if to proceed or exit. For now, will try with 'latest'.
+      }
+
+      console.log(`🔧 Installing/Verifying Next.js version: ${nextVersionToEnforce} in project dependencies...`);
+      const installNextResult = spawn.sync('npm', ['install', `next@${nextVersionToEnforce}`, '--save'], {
+        stdio: 'inherit',
+        cwd: projectRoot,
+      });
+
+      if (installNextResult.error || installNextResult.status !== 0) {
+        console.error(`❌ Failed to install Next.js version ${nextVersionToEnforce}. Please install it manually.`);
+        debug(`npm install next@${nextVersionToEnforce} --save failed: ${installNextResult.error || `Exit code: ${installNextResult.status}`}`);
+        // Optionally, exit or proceed with script updates anyway
+      } else {
+        console.log(`✅ Next.js version ${nextVersionToEnforce} ensured in project dependencies.`);
+      }
+      
       const pkgJsonPath = path.join(projectRoot, 'package.json');
       if (fs.existsSync(pkgJsonPath)) {
         const pkgJson = await fs.readJson(pkgJsonPath);
         
-        // Initialize scripts object if it doesn't exist
         if (!pkgJson.scripts) {
           pkgJson.scripts = {};
         }
         
-        // Required npm scripts with their exact values
         const requiredScripts = {
-          "build": "NODE_ENV=production npx -y hasyx build",
-          "unbuild": "npx -y hasyx unbuild",
-          "start": "NODE_ENV=production npx -y hasyx start",
-          "dev": "npx -y hasyx dev"
+          "dev": "next dev --turbopack",
+          "build": "npm run build:lib && NODE_ENV=production npm run build:next",
+          "build:next": "next build --turbopack",
+          "build:lib": "tsc -p tsconfig.lib.json",
+          "start": "next start --turbopack",
+          "lint": "next lint --turbopack",
+          "ws": "npx --yes next-ws-cli@latest patch -y",
+          "unbuild": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -not -path \"*/types/*\" -print -delete; rm -rf tsconfig.lib.tsbuildinfo; echo '✅ Cleaned compiled files (types directory preserved)'"
         };
         
-        // Check if scripts need updating
         let scriptsModified = false;
-        
         for (const [scriptName, scriptValue] of Object.entries(requiredScripts)) {
           if (!pkgJson.scripts[scriptName] || pkgJson.scripts[scriptName] !== scriptValue) {
             pkgJson.scripts[scriptName] = scriptValue;
             scriptsModified = true;
+            console.log(`   🔧 Updated script: "${scriptName}": "${scriptValue}"`);
           }
         }
         
-        // Save changes if scripts were modified
         if (scriptsModified) {
           await fs.writeJson(pkgJsonPath, pkgJson, { spaces: 2 });
-          console.log('✅ Required npm scripts updated in package.json.');
+          console.log('✅ Required npm scripts updated in child project package.json.');
         } else {
-          console.log('ℹ️ Required npm scripts already present in package.json.');
+          console.log('ℹ️ Required npm scripts already up-to-date in child project package.json.');
         }
       } else {
         console.warn('⚠️ package.json not found in project root. Unable to update npm scripts.');
       }
     } catch (error) {
-      console.warn('⚠️ Failed to update npm scripts in package.json:', error);
-      debug(`Error updating npm scripts in package.json: ${error}`);
+      console.warn('⚠️ Failed to update npm scripts or install Next.js in child project package.json:', error);
+      debug(`Error updating npm scripts/installing Next.js in child project: ${error}`);
     }
     // --- END NEW ---
 
@@ -581,104 +612,41 @@ program
     console.log('   1. Fill in your .env file with necessary secrets (Hasura, NextAuth, OAuth, etc.).');
     console.log('   2. Apply Hasura migrations and metadata if not already done. You can use `npx hasyx migrate`.');
     console.log('   3. Generate Hasura schema and types using `npx hasyx schema`.');
-    console.log('   4. Run `npx hasyx dev` to start the development server.');
+    console.log('   4. Run `npm run dev` to start the development server (instead of `npx hasyx dev`).');
     debug('Finished "init" command.');
   });
 
 // --- `dev` Command ---
 program
   .command('dev')
-  .description('Starts the Next.js development server with WebSocket support.')
+  .description('DEPRECATED: Starts the Next.js development server. Use `npm run dev` in your project.')
   .action(() => {
-    debug('Executing "dev" command.');
-    const cwd = findProjectRoot();
-    
-    // Apply WebSocket patch before starting development server
-    ensureWebSocketSupport(cwd);
-    
-    console.log('🚀 Starting development server (using next dev --turbopack)...');
-    debug(`Running command: npx next dev --turbopack in ${cwd}`);
-    const result = spawn.sync('npx', ['next', 'dev', '--turbopack'], {
-      stdio: 'inherit', // Show output in console
-      cwd: cwd,
-    });
-    debug('next dev --turbopack result:', JSON.stringify(result, null, 2));
-    if (result.error) {
-      console.error('❌ Failed to start development server:', result.error);
-      debug(`next dev failed to start: ${result.error}`);
-      process.exit(1);
-    }
-    if (result.status !== 0) {
-       console.error(`❌ Development server exited with status ${result.status}`);
-       debug(`next dev exited with non-zero status: ${result.status}`);
-       process.exit(result.status ?? 1);
-    }
-    debug('Finished "dev" command (likely interrupted).');
+    debug('Executing "dev" command (DEPRECATED - use `npm run dev`).');
+    console.log('ℹ️ The `npx hasyx dev` command is deprecated.');
+    console.log('   Please use `npm run dev` in your project directory to start the development server.');
+    console.log('   Ensure your project\'s package.json has the "dev" script configured by `npx hasyx init`.');
   });
 
 // --- `build` Command ---
 program
   .command('build')
-  .description('Builds the Next.js application for production.')
+  .description('DEPRECATED: Builds the Next.js application. Use `npm run build` in your project.')
   .action(() => {
-    debug('Executing "build" command.');
-    const cwd = findProjectRoot();
-    
-    // Apply WebSocket patch before building
-    ensureWebSocketSupport(cwd);
-    
-    console.log('🏗️ Building Next.js application...');
-    debug(`Running command: npx next build --turbopack in ${cwd}`);
-    const result = spawn.sync('npx', ['next', 'build', '--turbopack'], {
-      stdio: 'inherit',
-      cwd: cwd,
-    });
-    debug('next build --turbopack result:', JSON.stringify(result, null, 2));
-     if (result.error) {
-      console.error('❌ Build failed:', result.error);
-      debug(`next build failed to start: ${result.error}`);
-      process.exit(1);
-    }
-    if (result.status !== 0) {
-       console.error(`❌ Build process exited with status ${result.status}`);
-       debug(`next build exited with non-zero status: ${result.status}`);
-       process.exit(result.status ?? 1);
-    }
-    console.log('✅ Build complete!');
-    debug('Finished "build" command.');
+    debug('Executing "build" command (DEPRECATED - use `npm run build`).');
+     console.log('ℹ️ The `npx hasyx build` command is deprecated.');
+    console.log('   Please use `npm run build` in your project directory to build the application.');
+    console.log('   Ensure your project\'s package.json has the "build" script configured by `npx hasyx init`.');
   });
 
 // --- `start` Command ---
 program
   .command('start')
-  .description('Starts the Next.js production server (uses custom server.js).')
+  .description('DEPRECATED: Starts the Next.js production server. Use `npm run start` in your project.')
   .action(() => {
-    debug('Executing "start" command.');
-    const cwd = findProjectRoot();
-    
-    // Apply WebSocket patch before starting production server
-    ensureWebSocketSupport(cwd);
-    
-    console.log('🛰️ Starting production server (using next start)...');
-    debug(`Running command: npx next start --turbopack in ${cwd}`);
-     const result = spawn.sync('npx', ['next', 'start', '--turbopack'], {
-      stdio: 'inherit',
-      cwd: cwd,
-      // NODE_ENV should be set by 'next start' automatically
-      // env: { ...process.env, NODE_ENV: 'production' },
-    });
-    debug('next start --turbopack result:', JSON.stringify(result, null, 2));
-    if (result.error) {
-      console.error('❌ Failed to start production server:', result.error);
-      debug(`next start failed to start: ${result.error}`);
-      process.exit(1);
-    }
-    if (result.status !== 0) {
-       console.error(`❌ Production server exited with status ${result.status}`);
-       debug(`next start exited with non-zero status: ${result.status}`);
-       process.exit(result.status ?? 1);
-    }
-     debug('Finished "start" command (likely interrupted).');
+    debug('Executing "start" command (DEPRECATED - use `npm run start`).');
+    console.log('ℹ️ The `npx hasyx start` command is deprecated.');
+    console.log('   Please use `npm run start` in your project directory to start the production server.');
+    console.log('   Ensure your project\'s package.json has the "start" script configured by `npx hasyx init`.');
   });
 
 // --- NEW: `build:client` Command ---
