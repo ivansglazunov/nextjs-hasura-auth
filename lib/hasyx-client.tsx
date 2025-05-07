@@ -393,20 +393,61 @@ function useWsSubscription<TData = any, TVariables extends OperationVariables = 
   // Cast apolloOptions to the correct type
   const typedApolloOptions = apolloOptions as Omit<ApolloSubscriptionHookOptions<TData, TVariables>, 'query' | 'variables' | 'context'>;
 
-  const result = useApolloSubscription<TData, TVariables>(subscription, {
+  const result = useApolloSubscription<any, TVariables>(subscription, {
     client,
     variables: combinedVariables,
     context,
     ...typedApolloOptions,
   });
 
+  // Data extraction wrapper to match the behavior of class methods
+  const wrappedResult = useMemo(() => {
+    if (!result.data) {
+      return result as SubscriptionResult<TData, TVariables>;
+    }
+
+    // Clone the result to avoid modifying the original Apollo result
+    const extractedResult = { ...result };
+    
+    // --- Data Extraction Logic ---
+    // For aggregate queries, keep the full structure
+    if (generateOptions.aggregate) {
+      debug(`Subscription ${operationName} keeping full structure for aggregate query`);
+      extractedResult.data = result.data as TData;
+    } else {
+      // Extract data using queryName
+      let extractedData = result.data?.[queryName] ?? null;
+      
+      // Fallback: If queryName extraction failed, try using the base table name
+      if (!extractedData && result.data?.[generateOptions.table]) {
+        debug(`Subscription ${operationName} extraction using queryName failed, falling back to base table name`);
+        extractedData = result.data[generateOptions.table];
+        
+        // For _by_pk subscriptions returning an array with one item under the base table name
+        if (queryName.endsWith('_by_pk') && Array.isArray(extractedData) && extractedData.length === 1) {
+          debug(`Subscription ${operationName} fallback found array for _by_pk, extracting first element`);
+          extractedData = extractedData[0];
+        } else if (queryName.endsWith('_by_pk') && Array.isArray(extractedData) && extractedData.length === 0) {
+          debug(`Subscription ${operationName} fallback found empty array for _by_pk, setting to null`);
+          extractedData = null;
+        }
+      }
+      
+      debug(`Subscription ${operationName} extracted data:`, extractedData);
+      extractedResult.data = extractedData as TData;
+    }
+    // --- End Data Extraction Logic ---
+
+    return extractedResult as SubscriptionResult<TData, TVariables>;
+  }, [result, queryName, operationName, generateOptions.aggregate, generateOptions.table]);
+
   debug(`WebSocket subscription ${operationName} result`, { 
-    loading: result.loading, 
-    error: result.error, 
-    data: !!result.data 
+    loading: wrappedResult.loading, 
+    error: wrappedResult.error, 
+    data: !!wrappedResult.data 
   });
 
-  return result;
+  return wrappedResult;
 }
 
 // Polling-based subscription implementation
@@ -427,6 +468,12 @@ function usePollingSubscription<TData = any, TVariables extends OperationVariabl
   // For triggering re-renders when data changes
   const [, setForceUpdate] = useState<number>(0);
   
+  // Get the queryName for data extraction
+  const { queryName } = useMemo(() => client.hasyxGenerator({
+    operation: 'query',
+    ...generateOptions
+  }), [client.hasyxGenerator, generateOptions]);
+
   // Use regular useQuery but with polling enabled
   const queryResult = useQuery<TData, TVariables>(
     generateOptions,
@@ -506,20 +553,45 @@ export function useQuery<TData = any, TVariables extends OperationVariables = Op
     options: apolloOptions 
   });
 
-  const result = useApolloQuery<TData, TVariables>(query, {
+  const result = useApolloQuery<any, TVariables>(query, {
     client,
     variables: combinedVariables,
     context,
     ...apolloOptions,
   });
 
+  // Data extraction wrapper to match the behavior of class methods
+  const wrappedResult = useMemo(() => {
+    if (!result.data) {
+      return result as QueryResult<TData, TVariables>;
+    }
+
+    // Clone the result to avoid modifying the original Apollo result
+    const extractedResult = { ...result };
+    
+    // --- Data Extraction Logic ---
+    // For aggregate queries, keep the full structure
+    if (generateOptions.aggregate) {
+      debug(`Query ${operationName} keeping full structure for aggregate query`);
+      extractedResult.data = result.data as TData;
+    } else {
+      // For regular queries, extract data using queryName
+      const extractedData = result.data?.[queryName] ?? null;
+      debug(`Query ${operationName} extracted data:`, extractedData);
+      extractedResult.data = extractedData as TData;
+    }
+    // --- End Data Extraction Logic ---
+
+    return extractedResult as QueryResult<TData, TVariables>;
+  }, [result, queryName, operationName, generateOptions.aggregate]);
+
   debug(`Query ${operationName} result`, { 
-    loading: result.loading, 
-    error: result.error, 
-    data: !!result.data 
+    loading: wrappedResult.loading, 
+    error: wrappedResult.error, 
+    data: !!wrappedResult.data 
   });
 
-  return result;
+  return wrappedResult;
 }
 
 export function useMutation<TData = any, TVariables extends OperationVariables = OperationVariables>(

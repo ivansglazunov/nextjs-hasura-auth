@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.92",
+  "version": "0.1.93",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"

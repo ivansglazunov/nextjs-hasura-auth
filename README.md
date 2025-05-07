@@ -166,19 +166,23 @@ Get your Next.js project integrated with Hasura and authentication in minutes!
         order_by: { created_at: 'desc' }
       });
 
-      return <div onClick={async () => {
-        const result = await client.insert({
-          table: 'users',
-          // Generator syntax for variables is used directly in client methods
-          objects: [{ name: 'New User', email: 'new@example.com' }],
-          returning: ['id'] // Return the ID of the new user
-        });
-        // Similarly, you can use:
-        // await client.update({ table: 'users', where: { id: { _eq: userId } }, _set: { name: 'Updated Name' } });
-        // await client.delete({ table: 'users', where: { id: { _eq: userId } } });
-        // await client.select({ table: 'posts', returning: ['id', 'title'] });
-      }}>
-      
+      return <>
+        <div onClick={async () => {
+          const result = await client.insert({
+            table: 'users',
+            // Generator syntax for variables is used directly in client methods
+            objects: [{ name: 'New User', email: 'new@example.com' }],
+            returning: ['id'] // Return the ID of the new user
+          });
+          // Similarly, you can use:
+          // await client.update({ table: 'users', where: { id: { _eq: userId } }, _set: { name: 'Updated Name' } });
+          // await client.delete({ table: 'users', where: { id: { _eq: userId } } });
+          // await client.select({ table: 'posts', returning: ['id', 'title'] });
+        }}>
+        <div>
+          {subData.map(user => <div key={user.id}>{user.name}</div>)}
+        </div>
+      </>;
       // ... render your component using the fetched/subscribed data ...
     }
     ```

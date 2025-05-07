@@ -17,7 +17,7 @@ interface User {
 }
 
 export function UsersQuery() {
-  const { data, loading, error } = useQuery<{ users: User[] }>(
+  const { data = [], loading, error } = useQuery(
     {
       table: 'users',
       limit: 5,
@@ -52,9 +52,9 @@ export function UsersQuery() {
             </AlertDescription>
           </Alert>
         )}
-        {!loading && !error && data?.users && data.users.length > 0 && (
+        {(!loading && !error && !!data?.length) && (
           <ul className="space-y-2">
-            {data.users.map((user) => (
+            {data.map((user) => (
               <li key={user.id} className="text-sm p-2 border rounded bg-muted/40">
                 <p><strong>ID:</strong> {user.id}</p>
                 {user.name && <p><strong>Name:</strong> {user.name}</p>}
@@ -63,7 +63,7 @@ export function UsersQuery() {
             ))}
           </ul>
         )}
-         {!loading && !error && (!data?.users || data.users.length === 0) && (
+         {(!loading && !error && !data?.length) && (
            <p className="text-sm text-muted-foreground">No users found.</p>
          )}
       </CardContent>

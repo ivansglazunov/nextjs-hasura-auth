@@ -11,6 +11,8 @@ This document describes the `Hasyx` class and associated React hooks provided in
     *   `useMutation`: For insert, update, or delete operations.
     *   `useClient`: Hook to get an instance of the `Hasyx` class within a component, allowing direct calls to `.insert()`, `.update()`, `.delete()`, etc.
 
+**Note on Type Inference:** All methods and hooks automatically infer the return type based on the query structure and `returning` fields. There is no need to explicitly specify generic type parameters when calling these functions.
+
 ## Key Features (Both Class & Hooks)
 
 *   **Automatic Query Generation:** Internally uses the `generate` function (`lib/generator.ts`) to build the necessary GraphQL query/mutation/subscription strings and variables based on the provided options (`GenerateOptions`).
@@ -45,7 +47,7 @@ const client = new Hasyx(apolloAdminClient, Generator(schema));
 // Example: Select data with a specific role
 async function getUserProfile(userId: string) {
   try {
-    const userData = await client.select({ // Specify TData
+    const userData = await client.select({
       table: 'users',
       pk_columns: { id: userId },
       returning: ['id', 'name', 'email'],
@@ -113,7 +115,7 @@ async function deleteUser(userId: string) {
 // Example: Subscribe (returns an Observable)
 function subscribeToUserChanges(userId: string): Observable<any> | null {
   // Specify TData as the expected unwrapped type (e.g., User)
-  const subscriptionObservable = client.subscribe<{ id: string, name: string, updated_at: string }>({ 
+  const subscriptionObservable = client.subscribe({ 
     table: 'users',
     pk_columns: { id: userId },
     returning: ['name', 'updated_at'],
@@ -135,11 +137,11 @@ function subscribeToUserChanges(userId: string): Observable<any> | null {
 ### `Hasyx` Class Methods
 
 *   `constructor(apolloClient: ApolloClient<any>)`: Creates a new `Hasyx` instance.
-*   `async select<TData = any, TOptions = HasyxMethodOptions>(options: TOptions): Promise<TData>`: Executes a select query.
-*   `async insert<TData = any, TOptions = HasyxMethodOptions>(options: TOptions): Promise<TData>`: Executes an insert mutation.
-*   `async update<TData = any, TOptions = HasyxMethodOptions>(options: TOptions): Promise<TData>`: Executes an update mutation.
-*   `async delete<TData = any, TOptions = HasyxMethodOptions>(options: TOptions): Promise<TData>`: Executes a delete mutation.
-*   `subscribe<TData = any, TVariables = OperationVariables, TOptions = HasyxMethodOptions>(options: TOptions): Observable<FetchResult<TData>>`: Initiates a subscription, returning an Apollo Observable. If WebSockets are disabled (`NEXT_PUBLIC_WS=0`), falls back to polling.
+*   `async select(options: HasyxMethodOptions): Promise<any>`: Executes a select query.
+*   `async insert(options: HasyxMethodOptions): Promise<any>`: Executes an insert mutation.
+*   `async update(options: HasyxMethodOptions): Promise<any>`: Executes an update mutation.
+*   `async delete(options: HasyxMethodOptions): Promise<any>`: Executes a delete mutation.
+*   `subscribe(options: HasyxMethodOptions): Observable<any>`: Initiates a subscription, returning an Apollo Observable. If WebSockets are disabled (`NEXT_PUBLIC_WS=0`), falls back to polling.
 
 Where `HasyxMethodOptions` extends `GenerateOptions` (from `lib/generator.ts`) and adds an optional `role: string` property and an optional `pollingInterval: number` property (for subscriptions).
 
@@ -158,7 +160,7 @@ function UserProfile() {
   const { data: session } = useSession()
   const userId = session?.user?.id;
 
-  const { loading, error, data, refetch } = useSelect( // Specify TData
+  const { loading, error, data, refetch } = useSelect(
     { // Generator Options (1st argument - HasyxMethodOptions)
       table: 'users',
       pk_columns: { id: userId },
@@ -183,9 +185,7 @@ function UserProfile() {
 // --- Example: Using useMutation --- 
 function AddUserButtonWithMutationHook() {
   // useMutation requires 'operation' in the first argument
-  const [addUser, { loading, error: mutationError }] = useMutation< // Specify TData
-    { insert_users_one: { id: string } }
-  >(
+  const [addUser, { loading, error: mutationError }] = useMutation(
     { // Generator Options (1st argument - HasyxMethodOptions & { operation: ... })
       operation: 'insert',
       table: 'users',
@@ -256,7 +256,7 @@ function UpdateSelfNameButton() {
 
 // --- Example: Using useSubscription (or useSubscribe alias) ---
 function OnlineUsersList() {
-    const { loading, error, data } = useSubscribe<{ users: {id: string, name: string}[] }>( // Specify TData
+    const { loading, error, data } = useSubscribe(
         { // Generator options (HasyxMethodOptions)
             table: 'users',
             where: { last_seen: { _gte: new Date(Date.now() - 5 * 60 * 1000).toISOString() } }, // Example: online in last 5 mins
@@ -276,9 +276,9 @@ function OnlineUsersList() {
 ### Available Hooks
 
 *   `useClient(providedClient?: ApolloClient<any> | null): Hasyx`: Hook to get an instance of the `Hasyx` class.
-*   `useQuery<TData = any, TVariables = OperationVariables>(generateOptions: HasyxMethodOptions, hookOptions?: QueryHookOptions<TData, TVariables>)`: Core query hook.
-*   `useSubscription<TData = any, TVariables = OperationVariables>(generateOptions: HasyxMethodOptions, hookOptions?: SubscriptionHookOptions<TData, TVariables>)`: Core subscription hook. Falls back to polling-based implementation if WebSockets are disabled (`NEXT_PUBLIC_WS=0`).
-*   `useMutation<TData = any, TVariables = OperationVariables>(generateOptions: HasyxMethodOptions & { operation: GenerateOperation }, hookOptions?: MutationHookOptions<TData, TVariables>): [mutateFn, MutationResult<TData>]`: Core mutation hook (requires `operation` in `generateOptions`).
+*   `useQuery(generateOptions: HasyxMethodOptions, hookOptions?: QueryHookOptions): QueryResult`: Core query hook.
+*   `useSubscription(generateOptions: HasyxMethodOptions, hookOptions?: SubscriptionHookOptions): SubscriptionResult`: Core subscription hook. Falls back to polling-based implementation if WebSockets are disabled (`NEXT_PUBLIC_WS=0`).
+*   `useMutation(generateOptions: HasyxMethodOptions & { operation: GenerateOperation }, hookOptions?: MutationHookOptions): [mutateFn, MutationResult]`: Core mutation hook (requires `operation` in `generateOptions`).
 *   **Aliases:**
     *   `useSelect`: Alias for `useQuery`.
     *   `useSubscribe`: Alias for `useSubscription`.
@@ -310,4 +310,4 @@ function OnlineUsersList() {
     *   This is particularly useful for serverless environments like Vercel where WebSockets might not be supported.
     *   The polling mechanism uses deep equality checks (`react-fast-compare`) to ensure subscribers only receive updates when data has actually changed.
 *   **Class Method Return Values:** Methods like `select`, `insert`, `update`, `delete` now return the *unwrapped* data where applicable (e.g., `User[]` or `User` object). For bulk mutations or aggregate queries, they return the standard Hasura response structure (`{ affected_rows, returning }` or `{ aggregate, nodes }`). Ensure the generic `TData` type matches the expected return value.
-*   **Hook Return Values:** Hooks (`useQuery`, `useMutation`, etc.) return the standard Apollo Client result objects. The actual data is nested within the `data` property (e.g., `result.data.users` or `result.data.insert_users_one`). 
+*   **Hook Return Values:** Hooks (`useQuery`, `useSubscription`, etc.) return the standard Apollo Client result objects with the added benefit of automatically unwrapped data. Like the class methods, the hooks extract data from the nested Hasura structure, so you directly get the data without needing to access it via the query name (e.g., you get `result.data` instead of `result.data.users`). Only aggregate queries preserve the full structure. This consistent behavior makes it easier to switch between class methods and hooks. 
