@@ -1,12 +1,11 @@
 import { useCreateApolloClient } from './apollo'; // Our client creation function
 // import { useSession } from './auth'; // Removed useSession
 import { ThemeProvider } from "hasyx/components/theme-provider";
+import toUrl, { API_URL, url } from 'hasyx/lib/url';
 import { SessionProvider } from "next-auth/react"; // SessionProvider needed for signIn/signOut
 import { useMemo } from "react"; // Removed useEffect
-import { Generate, GenerateOptions, GenerateResult } from "./generator";
-import toUrl, { API_URL, url } from 'hasyx/lib/url';
 import isEqual from 'react-fast-compare'; // Import for deep equality checks
-import { AuthTokenHandler } from './auth-token-handler'; // Importing new component
+import { Generate, GenerateOptions, GenerateResult } from "./generator";
 
 import {
   ApolloError,
@@ -14,34 +13,18 @@ import {
   QueryHookOptions as ApolloQueryHookOptions,
   ApolloQueryResult,
   SubscriptionHookOptions as ApolloSubscriptionHookOptions,
-  DocumentNode,
   FetchResult,
-  MutationTuple,
   Observable,
   OperationVariables,
   QueryResult,
-  SubscriptionResult,
-  getApolloContext,
-  gql,
-  useApolloClient,
-  useMutation as useApolloMutation,
-  useQuery as useApolloQuery, useSubscription as useApolloSubscription
+  SubscriptionResult
 } from '@apollo/client';
-import { useCallback, useContext } from 'react';
 import { HasyxApolloClient } from './apollo';
 import Debug from './debug';
 
 // Import and re-export all client-side hooks from hasyx-client.tsx
 export {
-  useClient,
-  useQuery,
-  useSubscription,
-  useMutation,
-  useSelect,
-  useInsert,
-  useUpdate,
-  useDelete,
-  useSubscribe
+  useClient, useDelete, useInsert, useMutation, useQuery, useSelect, useSubscribe, useSubscription, useUpdate
 } from './hasyx-client';
 
 const debug = Debug('client');
@@ -413,12 +396,7 @@ type QueryHookOptions<TData, TVariables extends OperationVariables> = BaseHookOp
 type SubscriptionHookOptions<TData, TVariables extends OperationVariables> = BaseHookOptions & Omit<ApolloSubscriptionHookOptions<TData, TVariables>, 'query' | 'variables' | 'context'>;
 type MutationHookOptions<TData, TVariables extends OperationVariables> = BaseHookOptions & Omit<ApolloMutationHookOptions<TData, TVariables>, 'mutation' | 'variables' | 'context'>;
 
-const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Key for localStorage
-
 function HasyxProviderCore({ url, children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
-  // Removed useSession() as it won't work correctly cross-domain
-  // const { data: session } = useSession(); 
-  
   const client = useCreateApolloClient(useMemo(() => {
     // Determine if current domain is localhost
     const isLocalhost = typeof window !== 'undefined' && (
@@ -439,19 +417,10 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
     
     debug(`HasyxProviderCore: Final API URL: ${apiUrl}, isLocalhost: ${isLocalhost}`);
     
-    // Get token from localStorage if it exists
-    const tokenFromStorage = typeof window !== 'undefined' ? localStorage.getItem(AUTH_TOKEN_KEY) : null;
-    debug(`HasyxProviderCore: Token from localStorage: ${tokenFromStorage ? 'found' : 'not found'}`);
-
-    // TODO: Instead of session?.accessToken we now use tokenFromStorage
-    // Is token verification or additional logic needed?
-
     return {
       url: apiUrl,
-      token: tokenFromStorage || undefined, // Use undefined instead of null
       ws: true // Enable WebSocket support
     };
-  // Dependency on url remains, but we remove session
   }, [url])); 
   
   client.hasyxGenerator = generate;
@@ -465,7 +434,7 @@ export function HasyxProvider({ children, generate }: { children: React.ReactNod
   const authBasePath = url('http', API_URL, '/api/auth');
 
   return (
-    // SessionProvider is still needed for signIn/signOut calls
+    // SessionProvider is needed for signIn/signOut calls
     <SessionProvider basePath={authBasePath}>
       <ThemeProvider
         attribute="class"
@@ -473,8 +442,6 @@ export function HasyxProvider({ children, generate }: { children: React.ReactNod
         enableSystem
         disableTransitionOnChange
       >
-        {/* Render token handler inside providers */}
-        <AuthTokenHandler /> 
         <HasyxProviderCore generate={generate}>
           {children}
         </HasyxProviderCore>  

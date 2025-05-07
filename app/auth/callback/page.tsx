@@ -6,57 +6,32 @@ import Debug from 'hasyx/lib/debug';
 import { API_URL } from 'hasyx/lib/url';
 
 const debug = Debug('auth:callback-page');
-const AUTH_TOKEN_KEY = 'hasyx_auth_token'; // Key for localStorage
 
 export default function AuthCallbackPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchSessionAndStoreToken = async () => {
-      debug('AuthCallbackPage mounted. Fetching session from API...');
-      // Define URL for requesting session
-      const sessionUrl = new URL('/api/auth/session', API_URL).toString();
-      debug('Session URL:', sessionUrl);
+    const completeAuthentication = async () => {
+      debug('AuthCallbackPage mounted. Processing authentication callback...');
       
       try {
-        const response = await fetch(sessionUrl, {
-          credentials: 'include', // IMPORTANT: for sending cookies set on the API domain
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch session: ${response.status} ${response.statusText}`);
-        }
-
-        const sessionData = await response.json();
-        debug('Session data received:', sessionData);
-
-        if (sessionData && sessionData.accessToken) {
-          debug('Access token found in session data. Storing in localStorage...');
-          localStorage.setItem(AUTH_TOKEN_KEY, sessionData.accessToken);
-          setStatus('success');
-          
-          // Redirect to saved URL or home page
-          const preAuthUrl = sessionStorage.getItem('preAuthUrl') || '/';
-          sessionStorage.removeItem('preAuthUrl'); // Clear saved URL
-          debug('Redirecting to:', preAuthUrl);
-          window.location.href = preAuthUrl;
-        } else {
-          // Situation when session exists but no token (unlikely with JWT, but possible)
-          // Or when there's no session at all
-          debug('No access token found in session data or no session active.');
-          throw new Error('Authentication failed: No active session or token found after callback.');
-        }
+        // Get pre-auth URL if it exists
+        const preAuthUrl = sessionStorage.getItem('preAuthUrl') || '/';
+        sessionStorage.removeItem('preAuthUrl'); // Clear saved URL
+        
+        // Set success status and redirect
+        setStatus('success');
+        debug('Authentication successful. Redirecting to:', preAuthUrl);
+        window.location.href = preAuthUrl;
       } catch (err: any) {
-        debug('Error fetching session or storing token:', err);
+        debug('Error during authentication callback:', err);
         setError(err.message || 'An unknown error occurred during authentication callback.');
         setStatus('error');
-        // Optional: can redirect to error page or show message
-        // window.location.href = '/auth/error?error=CallbackFetchFailed';
       }
     };
 
-    fetchSessionAndStoreToken();
+    completeAuthentication();
   }, []);
 
   return (
