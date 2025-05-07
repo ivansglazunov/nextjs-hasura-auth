@@ -85,7 +85,7 @@ export async function proxyOPTIONS(request: NextRequest): Promise<NextResponse> 
   debugGraphql('Executing proxyOPTIONS');
   const origin = request.headers.get('origin') || '*';
   debugGraphql(`OPTIONS request from origin: ${origin}`);
-  
+
   return new NextResponse(null, {
     status: 204,
     headers: corsHeaders
@@ -97,15 +97,15 @@ export async function proxyOPTIONS(request: NextRequest): Promise<NextResponse> 
 // =======================================================================
 export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
   debugGraphql('--- proxyPOST Start ---');
-  
+
   if (!HASURA_ENDPOINT) {
-      const errorMsg = 'Hasura HTTP endpoint is not configured on the server.';
-      console.error(`❌ ${errorMsg}`);
-      debugGraphql(`❌ ${errorMsg}`);
-      return NextResponse.json({ errors: [{ message: errorMsg }] }, { 
-        status: 500,
-        headers: corsHeaders
-      });
+    const errorMsg = 'Hasura HTTP endpoint is not configured on the server.';
+    console.error(`❌ ${errorMsg}`);
+    debugGraphql(`❌ ${errorMsg}`);
+    return NextResponse.json({ errors: [{ message: errorMsg }] }, {
+      status: 500,
+      headers: corsHeaders
+    });
   }
 
   try {
@@ -118,14 +118,14 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
     };
 
     if (!HASURA_ADMIN_SECRET) {
-        const errorMsg = 'HASURA_ADMIN_SECRET is not configured on the server for HTTP proxy.';
-        console.error(`❌ ${errorMsg}`);
-        debugGraphql(`❌ ${errorMsg}`);
-        // Important: Do not proceed if admin secret is missing for POST
-        return NextResponse.json({ errors: [{ message: errorMsg }] }, { 
-          status: 500,
-          headers: corsHeaders
-        });
+      const errorMsg = 'HASURA_ADMIN_SECRET is not configured on the server for HTTP proxy.';
+      console.error(`❌ ${errorMsg}`);
+      debugGraphql(`❌ ${errorMsg}`);
+      // Important: Do not proceed if admin secret is missing for POST
+      return NextResponse.json({ errors: [{ message: errorMsg }] }, {
+        status: 500,
+        headers: corsHeaders
+      });
     }
     headers['x-hasura-admin-secret'] = HASURA_ADMIN_SECRET;
     debugGraphql('🔑 Using Hasura Admin Secret for downstream HTTP request.');
@@ -169,7 +169,7 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
           }
         ]
       },
-      { 
+      {
         status: 500,
         headers: corsHeaders
       }
@@ -204,6 +204,8 @@ export async function proxySOCKET(
   let hasuraWs: WebSocket | null = null;
   let clientConnectionInitialized = false;
   let hasuraConnectionInitialized = false;
+  // Буфер для хранения сообщений от клиента до установления соединения с Hasura
+  const messageBuffer: string[] = [];
 
   const closeConnections = (code = 1000, reason = 'Closing connection') => {
     debugGraphql(`[${clientId}] Closing connections: Code=${code}, Reason=${reason}`);
@@ -216,10 +218,30 @@ export async function proxySOCKET(
     debugGraphql(`[${clientId}] Connections closed.`);
   };
 
+  // Функция для обработки буферизированных сообщений
+  const processBufferedMessages = () => {
+    if (messageBuffer.length > 0) {
+      debugGraphql(`🔄 [${clientId}] Processing ${messageBuffer.length} buffered messages`);
+      while (messageBuffer.length > 0) {
+        const bufferedMessage = messageBuffer.shift();
+        if (bufferedMessage && hasuraWs && hasuraWs.readyState === WebSocket.OPEN) {
+          try {
+            const parsedMessage = JSON.parse(bufferedMessage);
+            const type = parsedMessage.type;
+            debugGraphql(`📤 [${clientId}] Forwarding buffered ${type} C -> H`);
+            hasuraWs.send(bufferedMessage);
+          } catch (err: any) {
+            debugGraphql(`❌ [${clientId}] Error processing buffered message:`, err.message);
+          }
+        }
+      }
+    }
+  };
+
   try {
     const token = await getToken({
-        req: request as any,
-        secret: NEXTAUTH_SECRET
+      req: request as any,
+      secret: NEXTAUTH_SECRET
     }) as NextAuthToken | null;
 
     const headers: Record<string, string> = {};
@@ -236,10 +258,10 @@ export async function proxySOCKET(
         headers['Authorization'] = `Bearer ${jwt}`;
         debugGraphql(`🔑 [${clientId}] Using generated JWT (user role) for Hasura WS connection.`);
       } catch (jwtError: any) {
-          console.error(`❌ [${clientId}] Failed to generate Hasura JWT for user:`, jwtError);
-          debugGraphql(`❌ [${clientId}] Failed to generate Hasura JWT for user:`, jwtError.message);
-          closeConnections(1011, "JWT generation failed");
-          return;
+        console.error(`❌ [${clientId}] Failed to generate Hasura JWT for user:`, jwtError);
+        debugGraphql(`❌ [${clientId}] Failed to generate Hasura JWT for user:`, jwtError.message);
+        closeConnections(1011, "JWT generation failed");
+        return;
       }
     } else {
       // --- MODIFICATION START: Generate Anonymous JWT instead of using Admin Secret ---
@@ -256,24 +278,13 @@ export async function proxySOCKET(
         headers['Authorization'] = `Bearer ${jwt}`;
         debugGraphql(`🔑 [${clientId}] Using generated JWT (anonymous role) for Hasura WS connection.`);
       } catch (jwtError: any) {
-          console.error(`❌ [${clientId}] Failed to generate Hasura JWT for anonymous:`, jwtError);
-          debugGraphql(`❌ [${clientId}] Failed to generate Hasura JWT for anonymous:`, jwtError.message);
-          // Fallback or error closing might depend on requirements, here we close.
-          closeConnections(1011, "Anonymous JWT generation failed");
-          return;
+        console.error(`❌ [${clientId}] Failed to generate Hasura JWT for anonymous:`, jwtError);
+        debugGraphql(`❌ [${clientId}] Failed to generate Hasura JWT for anonymous:`, jwtError.message);
+        // Fallback or error closing might depend on requirements, here we close.
+        closeConnections(1011, "Anonymous JWT generation failed");
+        return;
       }
       // --- MODIFICATION END ---
-      /* --- OLD CODE using Admin Secret --- 
-      } else if (HASURA_ADMIN_SECRET) {
-        debugGraphql(`👤 [${clientId}] User not authenticated. Using Admin Secret for Hasura WS connection.`);
-        headers['x-hasura-admin-secret'] = HASURA_ADMIN_SECRET;
-      } else {
-         debugGraphql(`❌ [${clientId}] Anonymous connection attempted, but no Admin Secret configured.`);
-         console.error(`❌ [${clientId}] Anonymous connection attempted, but no Admin Secret configured.`);
-         closeConnections(1011, 'Server configuration error for anonymous access.');
-         return;
-      }
-      */
     }
 
     debugGraphql(`🔗 [${clientId}] Establishing connection to Hasura WS: ${HASURA_WS_ENDPOINT}`);
@@ -289,15 +300,10 @@ export async function proxySOCKET(
     });
 
     client.on('message', (message: Buffer | ArrayBuffer | Buffer[]) => {
-        if (!hasuraWs || hasuraWs.readyState !== WebSocket.OPEN) {
-          debugGraphql(`⚠️ [${clientId}] Received message from client, but Hasura WS not open. Ignoring.`);
-          return;
-        }
       try {
         const messageStr = message.toString();
         const parsedMessage = JSON.parse(messageStr);
         const type = parsedMessage.type;
-        // const preview = messageStr.substring(0, 100) + (messageStr.length > 100 ? '...' : '');
 
         if (type === 'connection_init') {
           debugGraphql(`🤝 [${clientId}] Received connection_init from client.`);
@@ -316,6 +322,17 @@ export async function proxySOCKET(
           return;
         }
 
+        // Проверка готовности соединения с Hasura и буферизация сообщений
+        if (!hasuraWs || hasuraWs.readyState !== WebSocket.OPEN || !hasuraConnectionInitialized) {
+          if (['start', 'stop', 'subscribe', 'complete'].includes(type)) {
+            debugGraphql(`🔄 [${clientId}] Buffering ${type} message until Hasura connection is ready`);
+            messageBuffer.push(messageStr);
+          } else {
+            debugGraphql(`⚠️ [${clientId}] Received message from client, but Hasura WS not ready. Ignoring.`);
+          }
+          return;
+        }
+
         if (['start', 'stop', 'subscribe', 'complete'].includes(type)) {
           debugGraphql(`📤 [${clientId}] Forwarding ${type} C -> H`);
           hasuraWs.send(messageStr);
@@ -329,15 +346,14 @@ export async function proxySOCKET(
     });
 
     hasuraWs.on('message', (message: Buffer | ArrayBuffer | Buffer[]) => {
-        if (client.readyState !== WebSocket.OPEN) {
-            debugGraphql(`⚠️ [${clientId}] Received message from Hasura, but client WS not open. Ignoring.`);
-            return;
-        }
+      if (client.readyState !== WebSocket.OPEN) {
+        debugGraphql(`⚠️ [${clientId}] Received message from Hasura, but client WS not open. Ignoring.`);
+        return;
+      }
       try {
         const messageStr = message.toString();
         const parsedMessage = JSON.parse(messageStr);
         const type = parsedMessage.type;
-        // const preview = messageStr.substring(0, 100) + (messageStr.length > 100 ? '...' : '');
 
         if (type === 'connection_ack') {
           debugGraphql(`🤝 [${clientId}] Received connection_ack from Hasura.`);
@@ -345,6 +361,11 @@ export async function proxySOCKET(
           if (clientConnectionInitialized) {
             debugGraphql(`🤝 [${clientId}] Sending connection_ack to client (Hasura just acked).`);
             client.send(JSON.stringify({ type: 'connection_ack' }));
+            
+            // Обработка буферизированных сообщений после установления соединения
+            if (messageBuffer.length > 0) {
+              setTimeout(() => processBufferedMessages(), 50); // Небольшая задержка для гарантии
+            }
           }
           return;
         }
@@ -360,11 +381,11 @@ export async function proxySOCKET(
           parsedMessage.type = 'next';
           messageToSend = JSON.stringify(parsedMessage);
         } else if (type === 'error') {
-           debugGraphql(`❗ [${clientId}] Forwarding error H -> C`);
+          debugGraphql(`❗ [${clientId}] Forwarding error H -> C`);
         } else if (type === 'complete') {
-            debugGraphql(`✅ [${clientId}] Forwarding complete H -> C`);
+          debugGraphql(`✅ [${clientId}] Forwarding complete H -> C`);
         } else {
-            debugGraphql(`❓ [${clientId}] Unknown message type from Hasura: ${type}. Forwarding as-is.`);
+          debugGraphql(`❓ [${clientId}] Unknown message type from Hasura: ${type}. Forwarding as-is.`);
         }
 
         client.send(messageToSend);
@@ -409,7 +430,7 @@ export async function proxySOCKET(
     debugGraphql(`--- proxySOCKET [${clientId}] End (Setup Error) ---`);
     // Ensure client connection is closed on setup error
     if (client.readyState === WebSocket.OPEN || client.readyState === WebSocket.CONNECTING) {
-        client.close(1011, 'Proxy setup error');
+      client.close(1011, 'Proxy setup error');
     }
   }
 } 
