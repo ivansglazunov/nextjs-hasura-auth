@@ -597,13 +597,13 @@ program
     // Apply WebSocket patch before starting development server
     ensureWebSocketSupport(cwd);
     
-    console.log('🚀 Starting development server (using next dev)...');
-    debug(`Running command: npx next dev in ${cwd}`);
-    const result = spawn.sync('npx', ['next', 'dev'], {
+    console.log('🚀 Starting development server (using next dev --turbopack)...');
+    debug(`Running command: npx next dev --turbopack in ${cwd}`);
+    const result = spawn.sync('npx', ['next', 'dev', '--turbopack'], {
       stdio: 'inherit', // Show output in console
       cwd: cwd,
     });
-    debug('next dev result:', JSON.stringify(result, null, 2));
+    debug('next dev --turbopack result:', JSON.stringify(result, null, 2));
     if (result.error) {
       console.error('❌ Failed to start development server:', result.error);
       debug(`next dev failed to start: ${result.error}`);
@@ -629,12 +629,12 @@ program
     ensureWebSocketSupport(cwd);
     
     console.log('🏗️ Building Next.js application...');
-    debug(`Running command: npx next build in ${cwd}`);
-    const result = spawn.sync('npx', ['next', 'build'], {
+    debug(`Running command: npx next build --turbopack in ${cwd}`);
+    const result = spawn.sync('npx', ['next', 'build', '--turbopack'], {
       stdio: 'inherit',
       cwd: cwd,
     });
-    debug('next build result:', JSON.stringify(result, null, 2));
+    debug('next build --turbopack result:', JSON.stringify(result, null, 2));
      if (result.error) {
       console.error('❌ Build failed:', result.error);
       debug(`next build failed to start: ${result.error}`);
@@ -661,14 +661,14 @@ program
     ensureWebSocketSupport(cwd);
     
     console.log('🛰️ Starting production server (using next start)...');
-    debug(`Running command: npx next start in ${cwd}`);
-     const result = spawn.sync('npx', ['next', 'start'], {
+    debug(`Running command: npx next start --turbopack in ${cwd}`);
+     const result = spawn.sync('npx', ['next', 'start', '--turbopack'], {
       stdio: 'inherit',
       cwd: cwd,
       // NODE_ENV should be set by 'next start' automatically
       // env: { ...process.env, NODE_ENV: 'production' },
     });
-    debug('next start result:', JSON.stringify(result, null, 2));
+    debug('next start --turbopack result:', JSON.stringify(result, null, 2));
     if (result.error) {
       console.error('❌ Failed to start production server:', result.error);
       debug(`next start failed to start: ${result.error}`);
