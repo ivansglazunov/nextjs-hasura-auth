@@ -15,23 +15,20 @@ import {
   SidebarMenuItem,
 } from "hasyx/components/ui/sidebar"
 
-import pckg from "hasyx/package.json"
 import Image from "next/image"
 import { Label } from 'hasyx/components/ui/label'
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 export function ProjectAndVersion({
-  versions,
+  name,
   logo,
-  defaultVersion,
+  version,
 }: {
-  versions: string[];
+  name: string;
   logo?: string;
-  defaultVersion: string;
-}) {
-  const [selectedVersion, setSelectedVersion] = React.useState(defaultVersion)
-
+  version: string;
+}) {    
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -43,8 +40,8 @@ export function ProjectAndVersion({
             <Image src={`${basePath}/${logo || 'logo.svg'}`} alt="Hasyx Logo" width={32} height={32} />
           </div>
           <div className="flex flex-col gap-0.5 leading-none">
-            <span className="font-semibold">{pckg.name}</span>
-            <span className="">v{selectedVersion}</span>
+            <span className="font-semibold">{name}</span>
+            <span className="">v{version}</span>
           </div>
         </SidebarMenuButton>
       </SidebarMenuItem>

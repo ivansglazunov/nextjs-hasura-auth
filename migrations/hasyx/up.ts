@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { up } from '../../lib/up';
+import { up } from 'hasyx/lib/up';
 
 // Load environment variables from root .env file
 dotenv.config();

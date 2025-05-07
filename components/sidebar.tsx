@@ -20,7 +20,8 @@ export interface SidebarItem {
 }
 
 export interface SidebarData {
-  versions: string[];
+  name: string;
+  version: string;
   logo?: string;
   logoLight?: string;
   logoDark?: string;
@@ -32,9 +33,9 @@ export function Sidebar({ activeUrl, data }: { activeUrl: string, data: SidebarD
     <SidebarComponent>
       <SidebarHeader>
         <ProjectAndVersion
-          versions={data.versions}
+          name={data.name}
           logo={data.logo}
-          defaultVersion={data.versions[0]}
+          version={data.version}
         />
       </SidebarHeader>
       <SidebarContent>
