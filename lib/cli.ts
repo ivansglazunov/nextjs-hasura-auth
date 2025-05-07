@@ -375,6 +375,7 @@ program
       '.gitignore.template': '.gitignore',
       '.npmignore.template': '.npmignore',
       '.npmrc.template': '.npmrc',
+      'vercel.json': 'vercel.json',
       'babel.jest.config.mjs': 'babel.jest.config.mjs',
       'jest.config.mjs': 'jest.config.mjs',
       'jest.setup.js': 'jest.setup.js',

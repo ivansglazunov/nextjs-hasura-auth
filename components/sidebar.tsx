@@ -11,7 +11,7 @@ import {
   SidebarRail,
 } from "hasyx/components/ui/sidebar";
 import { ProjectAndVersion } from "hasyx/components/version-switcher";
-import { ThemeSwitcher } from "./theme-switcher";
+import { ThemeSwitcher } from "./theme";
 
 export interface SidebarItem {
   title: string;

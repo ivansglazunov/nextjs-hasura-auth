@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "hasyx/components/ui/button";
-import { useTheme } from "next-themes";
+import { useTheme as useNextTheme } from "next-themes";
 
 export interface SidebarItem {
   title: string;
@@ -15,10 +15,15 @@ export interface SidebarData {
 }
 
 export function ThemeSwitcher(props: any) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useNextTheme();
   return (
     <Button {...props} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
       {theme === 'dark' ? 'Light' : 'Dark'}
     </Button>
   )
+}
+
+export function useTheme() {
+  const { theme, setTheme } = useNextTheme();
+  return { theme, setTheme };
 }
