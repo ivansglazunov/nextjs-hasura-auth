@@ -6,6 +6,7 @@ import path from 'path';
 import spawn from 'cross-spawn';
 import Debug from './debug'; // Import the Debug factory
 import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './events';
+import assist from './assist'; // Import the assist module
 
 import pckg from '../package.json';
 
@@ -376,9 +377,9 @@ program
       // Universal logo path
       'public/logo.svg': 'public/logo.svg',
       // Config files (won't overwrite)
-      '.gitignore.template': '.gitignore',
-      '.npmignore.template': '.npmignore',
-      '.npmrc.template': '.npmrc',
+      '.gitignore': '.gitignore.template',
+      '.npmignore': '.npmignore.template',
+      '.npmrc': '.npmrc.template',
       'vercel.json': 'vercel.json',
       'babel.jest.config.mjs': 'babel.jest.config.mjs',
       'jest.config.mjs': 'jest.config.mjs',
@@ -400,7 +401,7 @@ program
       'app/api/auth/[...nextauth]',
       'app/api/auth/verify',
       'app/api/graphql',
-      'migrations/hasyx', // Ensure migrations directory exists
+      'migrations/1746660891582-hasyx-users', // Ensure migrations directory exists
       'app/api/events/[name]', // Ensure events directory exists
       'events', // Ensure events definitions directory exists
     ];
@@ -1497,6 +1498,28 @@ program
       debug(`Error in unbuild command: ${error}`);
       process.exit(1);
     }
+  });
+
+// --- NEW: `assist` Command ---
+program
+  .command('assist')
+  .description('Interactive assistant to set up hasyx project with GitHub, Hasura, and Vercel')
+  .option('--skip-auth', 'Skip GitHub authentication check')
+  .option('--skip-repo', 'Skip repository setup')
+  .option('--skip-env', 'Skip environment setup')
+  .option('--skip-package', 'Skip package.json setup')
+  .option('--skip-init', 'Skip hasyx initialization')
+  .option('--skip-hasura', 'Skip Hasura configuration')
+  .option('--skip-secrets', 'Skip authentication secrets setup')
+  .option('--skip-oauth', 'Skip OAuth configuration')
+  .option('--skip-resend', 'Skip Resend configuration')
+  .option('--skip-vercel', 'Skip Vercel setup')
+  .option('--skip-sync', 'Skip environment variable sync')
+  .option('--skip-commit', 'Skip commit step')
+  .option('--skip-migrations', 'Skip migrations check')
+  .action((options) => {
+    debug('Executing "assist" command with options:', options);
+    assist(options);
   });
 
 debug('Parsing CLI arguments...');
