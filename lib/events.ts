@@ -564,22 +564,32 @@ export function hasyxEvent(
     try {
       // Parse the request body
       const body = await request.json();
-      debug(`Event payload for ${triggerName}:`, body);
+      debug(`Raw request body for ${triggerName}:`, body);
       
       // Extract the payload
-      const payload = body.payload as HasuraEventPayload;
-      
-      if (!payload || !payload.event || !payload.table) {
-        debug('Invalid event payload');
+      if (!body || typeof body !== 'object' || !('payload' in body)) {
+        debug('Invalid event payload: Missing or invalid top-level \'payload\' key.');
         return NextResponse.json(
-          { message: 'Invalid payload' },
+          { message: 'Invalid payload structure: Missing \'payload\' key' },
           { status: 400 }
         );
       }
+      const actualPayload = body.payload as HasuraEventPayload;
+
+      // Add basic validation for the actual payload structure
+      if (!actualPayload || !actualPayload.event || !actualPayload.table || !actualPayload.trigger) {
+         debug('Invalid event payload content:', actualPayload);
+         return NextResponse.json(
+           { message: 'Invalid payload content' },
+           { status: 400 }
+         );
+       }
+
+      debug(`Extracted event payload for ${triggerName}:`, actualPayload); 
       
       // Log details about the operation
-      const { op, data } = payload.event;
-      const tableInfo = `${payload.table.schema}.${payload.table.name}`;
+      const { op, data } = actualPayload.event;
+      const tableInfo = `${actualPayload.table.schema}.${actualPayload.table.name}`;
       
       // Extract the ID or primary key information for logging
       let recordInfo = '';
@@ -593,8 +603,8 @@ export function hasyxEvent(
       
       debug(`Processing ${op} on ${tableInfo} ${recordInfo}`);
       
-      // Call the handler with the payload
-      const result = await handler(payload);
+      // Call the handler with the *extracted* payload
+      const result = await handler(actualPayload);
       
       // Convert the result to a NextResponse if it's not already
       if (!(result instanceof Response) && !(result instanceof NextResponse)) {
