@@ -389,6 +389,10 @@ NEXTAUTH_SECRET=your_super_secret_nextauth_key_32_chars_or_more
 # or http://localhost:3000 for local dev.
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
+# Optional: URL of the deployed Vercel project. Used for switching between development and production environments.
+# Used by the 'vercel' CLI command to update URL environment variables.
+VERCEL_URL=https://your-project.vercel.app
+
 # Optional: Set the base path if deploying the site to a subdirectory (e.g., /my-app).
 # For GitHub Pages, this is set automatically by the workflow based on your repo name.
 # Leave blank or remove if deploying to the root.
@@ -549,6 +553,22 @@ npx hasyx <command>
   - Option: `--clean` - Remove security headers from event definitions (they will be added automatically during sync)
 - `assets` - Generate app icons and splash screens from logo.svg for web, Capacitor, and Electron apps
 - `unbuild` - Remove compiled files (.js, .d.ts) from lib, components, and hooks directories, and clear build cache
+- `assist` - Interactive assistant to set up hasyx project with GitHub, Hasura, and Vercel
+  - Option: `--skip-auth` - Skip GitHub authentication check
+  - Option: `--skip-repo` - Skip repository setup
+  - Option: `--skip-env` - Skip environment setup
+  - Option: `--skip-package` - Skip package.json setup
+  - Option: `--skip-init` - Skip hasyx initialization
+  - Option: `--skip-hasura` - Skip Hasura configuration
+  - Option: `--skip-secrets` - Skip authentication secrets setup
+  - Option: `--skip-oauth` - Skip OAuth configuration
+  - Option: `--skip-resend` - Skip Resend configuration
+  - Option: `--skip-vercel` - Skip Vercel setup
+  - Option: `--skip-sync` - Skip environment variable sync
+  - Option: `--skip-commit` - Skip commit step
+  - Option: `--skip-migrations` - Skip migrations check
+- `local` - Switch environment URL variables to local development (http://localhost:3000)
+- `vercel` - Switch environment URL variables to Vercel deployment using VERCEL_URL variable
 
 The CLI automatically loads environment variables from the `.env` file in your project root. This ensures that commands like `npx hasyx events` have access to your Hasura URL, admin secret, and other configuration.
 

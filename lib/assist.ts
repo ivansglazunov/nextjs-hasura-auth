@@ -845,7 +845,7 @@ async function configureHasura() {
     
     if (createNew) {
       console.log('🚀 Creating new Hasura Cloud project...');
-      console.log('⚠️ Automatic creation not implemented yet https://github.com/ivansglazunov/hasyx/issues/2.');
+      console.log('⚠️ Automatic creation not implemented yet .');
       console.log('ℹ️ Please create a project manually at https://cloud.hasura.io/');
       
       const hasuraUrl = await askForInput('Enter your Hasura GraphQL URL');
@@ -1037,7 +1037,7 @@ async function configureOAuth() {
   // --- Yandex OAuth ---
   console.log('\n📱 Yandex OAuth Configuration:');
   console.log('To set up Yandex OAuth, follow these steps:');
-  console.log('1. Go to https://oauth.yandex.com/');
+  console.log('1. Go to https://oauth.yandex.ru/');
   console.log('2. Create a new application');
   console.log('3. Add the following redirect URIs:');
   console.log('   - http://localhost:3000/api/auth/callback/yandex (for local development)');
@@ -1212,6 +1212,66 @@ async function getVercelProjectName(): Promise<string> {
 }
 
 /**
+ * Helper function to check repository description for Vercel URL
+ * @returns Vercel URL if found in repo description, empty string otherwise
+ */
+async function getVercelUrlFromRepoDescription(): Promise<string> {
+  debug('Checking repository description for Vercel URL');
+  try {
+    // Get the GitHub repository URL
+    const repoUrl = await getGitHubRemoteUrl();
+    if (!repoUrl) {
+      debug('No GitHub remote URL found');
+      return '';
+    }
+    
+    // Extract owner and repo name from URL
+    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+    if (!match) {
+      debug('Could not parse GitHub URL', repoUrl);
+      return '';
+    }
+    
+    const [_, owner, repo] = match;
+    debug(`Checking description for ${owner}/${repo}`);
+    
+    // Use GitHub CLI to get repo info
+    const result = spawn.sync('gh', ['repo', 'view', `${owner}/${repo}`, '--json', 'description'], {
+      stdio: 'pipe',
+      encoding: 'utf-8'
+    });
+    
+    if (result.error || result.status !== 0) {
+      debug('Error fetching repo info:', result.error || result.stderr);
+      return '';
+    }
+    
+    if (result.stdout) {
+      try {
+        const data = JSON.parse(result.stdout);
+        if (data.description) {
+          // Look for Vercel URLs in the description
+          const vercelUrlMatch = data.description.match(
+            /https?:\/\/(?:[\w-]+\.)?vercel\.app(?:\/[\w-]*)*|https?:\/\/[\w-]+\.vercel\.app/i
+          );
+          
+          if (vercelUrlMatch && vercelUrlMatch[0]) {
+            debug(`Found Vercel URL in repo description: ${vercelUrlMatch[0]}`);
+            return vercelUrlMatch[0];
+          }
+        }
+      } catch (parseError) {
+        debug('Error parsing GitHub API response:', parseError);
+      }
+    }
+  } catch (error) {
+    debug('Error checking repo description:', error);
+  }
+  
+  return '';
+}
+
+/**
  * Step 10: Setup Vercel project
  */
 async function setupVercel() {
@@ -1220,6 +1280,45 @@ async function setupVercel() {
   
   const envPath = path.join(process.cwd(), '.env');
   let envVars = parseEnvFile(envPath);
+  
+  // Check if we already have the VERCEL_URL environment variable set
+  if (envVars.VERCEL_URL) {
+    console.log(`✅ Found existing VERCEL_URL: ${envVars.VERCEL_URL}`);
+    const projectDomain = envVars.VERCEL_URL;
+    
+    // Update environment variables if they're not yet set
+    if (!envVars.NEXT_PUBLIC_MAIN_URL || !envVars.NEXT_PUBLIC_BASE_URL || 
+        !envVars.NEXTAUTH_URL || !envVars.NEXT_PUBLIC_API_URL) {
+      
+      console.log('ℹ️ Updating environment variables based on existing VERCEL_URL...');
+      
+      // Set environment variables
+      if (!envVars.NEXT_PUBLIC_MAIN_URL) {
+        envVars.NEXT_PUBLIC_MAIN_URL = projectDomain;
+        console.log(`✅ Set NEXT_PUBLIC_MAIN_URL: ${projectDomain}`);
+      }
+      
+      if (!envVars.NEXT_PUBLIC_BASE_URL) {
+        envVars.NEXT_PUBLIC_BASE_URL = projectDomain;
+        console.log(`✅ Set NEXT_PUBLIC_BASE_URL: ${projectDomain}`);
+      }
+      
+      if (!envVars.NEXTAUTH_URL) {
+        envVars.NEXTAUTH_URL = projectDomain;
+        console.log(`✅ Set NEXTAUTH_URL: ${projectDomain}`);
+      }
+      
+      if (!envVars.NEXT_PUBLIC_API_URL) {
+        envVars.NEXT_PUBLIC_API_URL = projectDomain;
+        console.log(`✅ Set NEXT_PUBLIC_API_URL: ${projectDomain}`);
+      }
+      
+      // Write updated env vars
+      writeEnvFile(envPath, envVars);
+    }
+    
+    // Continue with Vercel CLI checks in case user wants to reconfigure
+  }
   
   // Check if Vercel CLI is installed
   if (!await isVercelInstalled()) {
@@ -1232,6 +1331,27 @@ async function setupVercel() {
     }
     
     console.log('⚠️ Skipping Vercel setup.');
+    
+    // Before giving up, try to get URL from repo description if we don't have VERCEL_URL yet
+    if (!envVars.VERCEL_URL) {
+      const repoVercelUrl = await getVercelUrlFromRepoDescription();
+      if (repoVercelUrl) {
+        console.log(`✅ Found Vercel URL in repository description: ${repoVercelUrl}`);
+        envVars.VERCEL_URL = repoVercelUrl;
+        
+        // Set other variables if not already set
+        if (!envVars.NEXT_PUBLIC_MAIN_URL) envVars.NEXT_PUBLIC_MAIN_URL = repoVercelUrl;
+        if (!envVars.NEXT_PUBLIC_BASE_URL) envVars.NEXT_PUBLIC_BASE_URL = repoVercelUrl;
+        if (!envVars.NEXTAUTH_URL) envVars.NEXTAUTH_URL = repoVercelUrl;
+        if (!envVars.NEXT_PUBLIC_API_URL) envVars.NEXT_PUBLIC_API_URL = repoVercelUrl;
+        
+        // Write updated env vars
+        writeEnvFile(envPath, envVars);
+        
+        console.log('✅ Environment variables updated with Vercel URL from repository description.');
+      }
+    }
+    
     return;
   }
   
@@ -1257,10 +1377,52 @@ async function setupVercel() {
         }
         
         console.log('⚠️ Skipping Vercel setup.');
+        
+        // Try to get URL from repo description as a fallback
+        if (!envVars.VERCEL_URL) {
+          const repoVercelUrl = await getVercelUrlFromRepoDescription();
+          if (repoVercelUrl) {
+            console.log(`✅ Found Vercel URL in repository description: ${repoVercelUrl}`);
+            envVars.VERCEL_URL = repoVercelUrl;
+            
+            // Set other variables if not already set
+            if (!envVars.NEXT_PUBLIC_MAIN_URL) envVars.NEXT_PUBLIC_MAIN_URL = repoVercelUrl;
+            if (!envVars.NEXT_PUBLIC_BASE_URL) envVars.NEXT_PUBLIC_BASE_URL = repoVercelUrl;
+            if (!envVars.NEXTAUTH_URL) envVars.NEXTAUTH_URL = repoVercelUrl;
+            if (!envVars.NEXT_PUBLIC_API_URL) envVars.NEXT_PUBLIC_API_URL = repoVercelUrl;
+            
+            // Write updated env vars
+            writeEnvFile(envPath, envVars);
+            
+            console.log('✅ Environment variables updated with Vercel URL from repository description.');
+          }
+        }
+        
         return;
       }
     } else {
       console.log('⚠️ Skipping Vercel setup.');
+      
+      // Try to get URL from repo description as a fallback
+      if (!envVars.VERCEL_URL) {
+        const repoVercelUrl = await getVercelUrlFromRepoDescription();
+        if (repoVercelUrl) {
+          console.log(`✅ Found Vercel URL in repository description: ${repoVercelUrl}`);
+          envVars.VERCEL_URL = repoVercelUrl;
+          
+          // Set other variables if not already set
+          if (!envVars.NEXT_PUBLIC_MAIN_URL) envVars.NEXT_PUBLIC_MAIN_URL = repoVercelUrl;
+          if (!envVars.NEXT_PUBLIC_BASE_URL) envVars.NEXT_PUBLIC_BASE_URL = repoVercelUrl;
+          if (!envVars.NEXTAUTH_URL) envVars.NEXTAUTH_URL = repoVercelUrl;
+          if (!envVars.NEXT_PUBLIC_API_URL) envVars.NEXT_PUBLIC_API_URL = repoVercelUrl;
+          
+          // Write updated env vars
+          writeEnvFile(envPath, envVars);
+          
+          console.log('✅ Environment variables updated with Vercel URL from repository description.');
+        }
+      }
+      
       return;
     }
   }
@@ -1278,6 +1440,27 @@ async function setupVercel() {
     
     if (!shouldLink) {
       console.log('⚠️ Skipping Vercel setup.');
+      
+      // Try to get URL from repo description as a fallback
+      if (!envVars.VERCEL_URL) {
+        const repoVercelUrl = await getVercelUrlFromRepoDescription();
+        if (repoVercelUrl) {
+          console.log(`✅ Found Vercel URL in repository description: ${repoVercelUrl}`);
+          envVars.VERCEL_URL = repoVercelUrl;
+          
+          // Set other variables if not already set
+          if (!envVars.NEXT_PUBLIC_MAIN_URL) envVars.NEXT_PUBLIC_MAIN_URL = repoVercelUrl;
+          if (!envVars.NEXT_PUBLIC_BASE_URL) envVars.NEXT_PUBLIC_BASE_URL = repoVercelUrl;
+          if (!envVars.NEXTAUTH_URL) envVars.NEXTAUTH_URL = repoVercelUrl;
+          if (!envVars.NEXT_PUBLIC_API_URL) envVars.NEXT_PUBLIC_API_URL = repoVercelUrl;
+          
+          // Write updated env vars
+          writeEnvFile(envPath, envVars);
+          
+          console.log('✅ Environment variables updated with Vercel URL from repository description.');
+        }
+      }
+      
       return;
     }
     
@@ -1312,6 +1495,27 @@ async function setupVercel() {
       }
       
       console.log('⚠️ Skipping Vercel setup.');
+      
+      // Try to get URL from repo description as a fallback
+      if (!envVars.VERCEL_URL) {
+        const repoVercelUrl = await getVercelUrlFromRepoDescription();
+        if (repoVercelUrl) {
+          console.log(`✅ Found Vercel URL in repository description: ${repoVercelUrl}`);
+          envVars.VERCEL_URL = repoVercelUrl;
+          
+          // Set other variables if not already set
+          if (!envVars.NEXT_PUBLIC_MAIN_URL) envVars.NEXT_PUBLIC_MAIN_URL = repoVercelUrl;
+          if (!envVars.NEXT_PUBLIC_BASE_URL) envVars.NEXT_PUBLIC_BASE_URL = repoVercelUrl;
+          if (!envVars.NEXTAUTH_URL) envVars.NEXTAUTH_URL = repoVercelUrl;
+          if (!envVars.NEXT_PUBLIC_API_URL) envVars.NEXT_PUBLIC_API_URL = repoVercelUrl;
+          
+          // Write updated env vars
+          writeEnvFile(envPath, envVars);
+          
+          console.log('✅ Environment variables updated with Vercel URL from repository description.');
+        }
+      }
+      
       return;
     }
   }
@@ -1345,19 +1549,35 @@ async function setupVercel() {
     }
     
     if (!projectDomain) {
-      // If we still don't have a domain, ask the user to provide one
-      projectDomain = await askForInput('Enter your Vercel project URL (e.g., https://your-project.vercel.app)');
+      // If we still don't have a domain, check the repo description
+      projectDomain = await getVercelUrlFromRepoDescription();
+      
+      // If still no domain, ask the user to provide one
+      if (!projectDomain) {
+        projectDomain = await askForInput('Enter your Vercel project URL (e.g., https://your-project.vercel.app)');
+      } else {
+        console.log(`✅ Found Vercel URL in repository description: ${projectDomain}`);
+      }
     }
   } catch (error) {
     debug('Error getting Vercel domains:', error);
-    // Ask user for domain as fallback
-    projectDomain = await askForInput('Enter your Vercel project URL (e.g., https://your-project.vercel.app)');
+    
+    // Check repo description
+    projectDomain = await getVercelUrlFromRepoDescription();
+    
+    // Ask user for domain as fallback if still not found
+    if (!projectDomain) {
+      projectDomain = await askForInput('Enter your Vercel project URL (e.g., https://your-project.vercel.app)');
+    } else {
+      console.log(`✅ Found Vercel URL in repository description: ${projectDomain}`);
+    }
   }
   
   if (projectDomain) {
     console.log(`✅ Using Vercel project URL: ${projectDomain}`);
     
     // Set environment variables
+    envVars.VERCEL_URL = projectDomain;
     envVars.NEXT_PUBLIC_MAIN_URL = projectDomain;
     envVars.NEXT_PUBLIC_BASE_URL = projectDomain;
     envVars.NEXTAUTH_URL = projectDomain;
@@ -1367,6 +1587,7 @@ async function setupVercel() {
     writeEnvFile(envPath, envVars);
     
     console.log('✅ Set Vercel environment variables:');
+    console.log(`- VERCEL_URL: ${projectDomain}`);
     console.log(`- NEXT_PUBLIC_MAIN_URL: ${projectDomain}`);
     console.log(`- NEXT_PUBLIC_BASE_URL: ${projectDomain}`);
     console.log(`- NEXTAUTH_URL: ${projectDomain}`);

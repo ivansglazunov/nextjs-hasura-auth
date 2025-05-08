@@ -1522,6 +1522,144 @@ program
     assist(options);
   });
 
+// --- NEW: `local` Command ---
+program
+  .command('local')
+  .description('Switch environment URL variables to local development (http://localhost:3000)')
+  .action(() => {
+    debug('Executing "local" command');
+    const envPath = path.join(process.cwd(), '.env');
+    
+    if (!fs.existsSync(envPath)) {
+      console.error('❌ .env file not found. Please run "npx hasyx init" first.');
+      process.exit(1);
+    }
+    
+    let envVars: Record<string, string> = {};
+    try {
+      const content = fs.readFileSync(envPath, 'utf-8');
+      const lines = content.split('\n');
+      
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine && !trimmedLine.startsWith('#')) {
+          const equalIndex = trimmedLine.indexOf('=');
+          if (equalIndex > 0) {
+            const key = trimmedLine.substring(0, equalIndex).trim();
+            const value = trimmedLine.substring(equalIndex + 1).trim();
+            
+            // Handle quoted values
+            if ((value.startsWith('"') && value.endsWith('"')) || 
+                (value.startsWith("'") && value.endsWith("'"))) {
+              envVars[key] = value.substring(1, value.length - 1);
+            } else {
+              envVars[key] = value;
+            }
+          }
+        }
+      }
+      
+      // Set URL variables to localhost
+      const localUrl = 'http://localhost:3000';
+      envVars['NEXT_PUBLIC_MAIN_URL'] = localUrl;
+      envVars['NEXT_PUBLIC_BASE_URL'] = localUrl;
+      envVars['NEXTAUTH_URL'] = localUrl;
+      envVars['NEXT_PUBLIC_API_URL'] = localUrl;
+      
+      // Write updated env file
+      let newContent = '# Environment variables for hasyx project\n';
+      for (const [key, value] of Object.entries(envVars)) {
+        // Quote values that contain spaces
+        const formattedValue = value.includes(' ') ? `"${value}"` : value;
+        newContent += `${key}=${formattedValue}\n`;
+      }
+      
+      fs.writeFileSync(envPath, newContent, 'utf-8');
+      console.log('✅ Environment variables switched to local development:');
+      console.log(`- NEXT_PUBLIC_MAIN_URL: ${localUrl}`);
+      console.log(`- NEXT_PUBLIC_BASE_URL: ${localUrl}`);
+      console.log(`- NEXTAUTH_URL: ${localUrl}`);
+      console.log(`- NEXT_PUBLIC_API_URL: ${localUrl}`);
+      
+    } catch (error) {
+      console.error('❌ Error updating .env file:', error);
+      process.exit(1);
+    }
+  });
+
+// --- NEW: `vercel` Command ---
+program
+  .command('vercel')
+  .description('Switch environment URL variables to Vercel deployment')
+  .action(() => {
+    debug('Executing "vercel" command');
+    const envPath = path.join(process.cwd(), '.env');
+    
+    if (!fs.existsSync(envPath)) {
+      console.error('❌ .env file not found. Please run "npx hasyx init" first.');
+      process.exit(1);
+    }
+    
+    let envVars: Record<string, string> = {};
+    try {
+      const content = fs.readFileSync(envPath, 'utf-8');
+      const lines = content.split('\n');
+      
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine && !trimmedLine.startsWith('#')) {
+          const equalIndex = trimmedLine.indexOf('=');
+          if (equalIndex > 0) {
+            const key = trimmedLine.substring(0, equalIndex).trim();
+            const value = trimmedLine.substring(equalIndex + 1).trim();
+            
+            // Handle quoted values
+            if ((value.startsWith('"') && value.endsWith('"')) || 
+                (value.startsWith("'") && value.endsWith("'"))) {
+              envVars[key] = value.substring(1, value.length - 1);
+            } else {
+              envVars[key] = value;
+            }
+          }
+        }
+      }
+      
+      // Check if VERCEL_URL exists
+      if (!envVars['VERCEL_URL']) {
+        console.error('❌ VERCEL_URL not found in .env file.');
+        console.error('Please run "npx hasyx assist" to configure your Vercel URL first.');
+        process.exit(1);
+      }
+      
+      const vercelUrl = envVars['VERCEL_URL'];
+      
+      // Set URL variables to Vercel URL
+      envVars['NEXT_PUBLIC_MAIN_URL'] = vercelUrl;
+      envVars['NEXT_PUBLIC_BASE_URL'] = vercelUrl;
+      envVars['NEXTAUTH_URL'] = vercelUrl;
+      envVars['NEXT_PUBLIC_API_URL'] = vercelUrl;
+      
+      // Write updated env file
+      let newContent = '# Environment variables for hasyx project\n';
+      for (const [key, value] of Object.entries(envVars)) {
+        // Quote values that contain spaces
+        const formattedValue = value.includes(' ') ? `"${value}"` : value;
+        newContent += `${key}=${formattedValue}\n`;
+      }
+      
+      fs.writeFileSync(envPath, newContent, 'utf-8');
+      console.log('✅ Environment variables switched to Vercel deployment:');
+      console.log(`- NEXT_PUBLIC_MAIN_URL: ${vercelUrl}`);
+      console.log(`- NEXT_PUBLIC_BASE_URL: ${vercelUrl}`);
+      console.log(`- NEXTAUTH_URL: ${vercelUrl}`);
+      console.log(`- NEXT_PUBLIC_API_URL: ${vercelUrl}`);
+      
+    } catch (error) {
+      console.error('❌ Error updating .env file:', error);
+      process.exit(1);
+    }
+  });
+
 debug('Parsing CLI arguments...');
 program.parse(process.argv);
 debug('Finished parsing CLI arguments.'); 
