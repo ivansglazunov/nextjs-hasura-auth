@@ -566,14 +566,27 @@ export function hasyxEvent(
       const body = await request.json();
       debug(`Raw request body for ${triggerName}:`, body);
       
-      // Extract the payload
+      // <<< УЛУЧШЕННАЯ ПРОВЕРКА И ДИАГНОСТИКА >>>
       if (!body || typeof body !== 'object' || !('payload' in body)) {
-        debug('Invalid event payload: Missing or invalid top-level \'payload\' key.');
+        const receivedBodyType = typeof body;
+        const receivedBodyKeys = (body && typeof body === 'object') ? Object.keys(body) : null;
+        const contentType = request.headers.get('content-type');
+        
+        const errorDetails = {
+          message: 'Invalid payload structure: Missing top-level \'payload\' key.',
+          receivedBodyType: receivedBodyType,
+          receivedBodyKeys: receivedBodyKeys,
+          contentTypeHeader: contentType
+        };
+        
+        debug('Invalid event payload details:', errorDetails);
         return NextResponse.json(
-          { message: 'Invalid payload structure: Missing \'payload\' key' },
+          errorDetails,
           { status: 400 }
         );
       }
+      // <<< КОНЕЦ УЛУЧШЕННОЙ ПРОВЕРКИ >>>
+
       const actualPayload = body.payload as HasuraEventPayload;
 
       // Add basic validation for the actual payload structure
