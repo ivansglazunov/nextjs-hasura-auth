@@ -566,14 +566,29 @@ export function hasyxEvent(
       const body = await request.json();
       debug(`Raw request body for ${triggerName}:`, body);
       
-      // <<< УЛУЧШЕННАЯ ПРОВЕРКА И ДИАГНОСТИКА >>>
-      if (!body || typeof body !== 'object' || !('payload' in body)) {
+      let actualPayload: HasuraEventPayload | null = null;
+
+      // <<< АДАПТИВНОЕ ИЗВЛЕЧЕНИЕ PAYLOAD >>>
+      if (body && typeof body === 'object') {
+        if ('payload' in body && body.payload && typeof body.payload === 'object') {
+          // Стандартный случай: Hasura отправила { payload: { ... } }
+          debug('Detected payload wrapped in top-level \'payload\' key.');
+          actualPayload = body.payload as HasuraEventPayload;
+        } else if ('event' in body && 'table' in body && 'trigger' in body) {
+          // Нестандартный случай: Похоже, внешний 'payload' был распакован где-то
+          debug('Detected payload structure directly in request body (outer \'payload\' key possibly unwrapped).');
+          actualPayload = body as HasuraEventPayload; // Считаем body самим payload
+        } 
+      }
+
+      // Проверка, удалось ли извлечь payload и его базовую структуру
+      if (!actualPayload || !actualPayload.event || !actualPayload.table || !actualPayload.trigger) {
         const receivedBodyType = typeof body;
         const receivedBodyKeys = (body && typeof body === 'object') ? Object.keys(body) : null;
         const contentType = request.headers.get('content-type');
         
         const errorDetails = {
-          message: 'Invalid payload structure: Missing top-level \'payload\' key.',
+          message: 'Invalid or unrecognized payload structure received.',
           receivedBodyType: receivedBodyType,
           receivedBodyKeys: receivedBodyKeys,
           contentTypeHeader: contentType
@@ -585,18 +600,7 @@ export function hasyxEvent(
           { status: 400 }
         );
       }
-      // <<< КОНЕЦ УЛУЧШЕННОЙ ПРОВЕРКИ >>>
-
-      const actualPayload = body.payload as HasuraEventPayload;
-
-      // Add basic validation for the actual payload structure
-      if (!actualPayload || !actualPayload.event || !actualPayload.table || !actualPayload.trigger) {
-         debug('Invalid event payload content:', actualPayload);
-         return NextResponse.json(
-           { message: 'Invalid payload content' },
-           { status: 400 }
-         );
-       }
+      // <<< КОНЕЦ АДАПТИВНОГО ИЗВЛЕЧЕНИЯ >>>
 
       debug(`Extracted event payload for ${triggerName}:`, actualPayload); 
       
