@@ -16,15 +16,21 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 
 Hasyx takes responsibility for:
 
-*   Setting up a universal, ws/serverless compatible Next.js environment.
+*   Setting up a universal, ssr/server/ws/serverless/client compatible Next.js environment.
 *   Proxying client connections to Hasura through `/api/graphql`, eliminating the need to expose Hasura JWTs to the client and relying solely on NextAuth.js for authorization.
-*   Providing access via both the native ApolloClient and a custom [`Hasyx`](HASYX.md) class for interacting with Hasura.
+*   Providing access via both the native ApolloClient and a custom [`Hasyx`](HASYX.md) class for interacting with Hasura, is super easy syntax sugar for the most common queries, mutations and subscriptions.
+    *   `const hasyx = useClient()` hook for easy client access.
+    *   `hasyx.insert/update/delete/select/subscribe` for easy data manipulation.
+    *   `useQuery/useSubscription` hooks for easy data fetching and subscribing from react.
 *   A fully configured NextAuth.js integration supporting multiple authentication methods (including Credentials, Google, Yandex, with others like GitHub planned).
 *   Maintaining backward compatibility for UI components under `hasyx/components/ui/*` (generated via shadcn/ui) to minimize refactoring needs in downstream projects.
 *   Ensuring seamless compatibility between Vercel deployments and Hasura Cloud/Server.
-*   Structuring the `./lib/**` directory so its contents can be directly imported as if from an npm package, allowing the project to function as both a standalone application and a reusable library.
+*   Structuring the `./lib/**` directory so its contents can be directly imported as if from an npm package, allowing the project to function as both a **standalone application** and a **reusable library** accessable from application by package.json name `import { anything } from 'you-project-name';` anywhere.
 *   Pre-configuring Jest for TypeScript testing of files within the `./lib` directory.
 *   Integrating Resend for sending email verification messages (when `RESEND_API_KEY` is set).
+*   Interactive `npx hasyx cli js [<filePath>] [-e "<script>" | --eval "<script>"]` for quick scripting, data exploration, or debugging interactions with your Hasura backend, with the `client` object available in the global scope.
+*   Migrations control with `npx hasyx migrate` and `npx hasyx unmigrate` for easy database schema management from `./migrations` directory.
+*   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
 
 Applying best development practices from the listed ecosystems, we have combined these libraries into a single framework for rapid deployment.
@@ -591,6 +597,160 @@ npx hasyx <command>
 - `vercel` - Switch environment URL variables to Vercel deployment using VERCEL_URL variable
 
 The CLI automatically loads environment variables from the `.env` file in your project root. This ensures that commands like `npx hasyx events` have access to your Hasura URL, admin secret, and other configuration.
+
+# Hasura Integration
+
+## Event Triggers
+
+Hasyx includes support for Hasura Event Triggers, which allow you to automate asynchronous logic when changes are made in the database. This is useful for implementing webhook-based workflows, sending notifications, or syncing data with external systems.
+
+### How Event Triggers Work
+
+1. You define event triggers in JSON files inside the `events/` directory.
+2. Each file represents one event trigger and defines which table it watches and what operations (INSERT, UPDATE, DELETE) it responds to.
+3. When those operations occur in Hasura, it sends a webhook request to your Next.js API route at `/api/events/[name]`.
+4. Your handler in `app/api/events/[name]/route.ts` processes the webhook and performs any necessary actions.
+
+### Using Event Triggers
+
+1. **Initialize Event Triggers**
+   ```bash
+   npx hasyx events --init
+   ```
+   This creates default event trigger definitions for the `users` and `accounts` tables in the `events/` directory.
+
+2. **Clean Event Trigger Definitions**
+   ```bash
+   npx hasyx events --clean
+   ```
+   This removes any security headers from your event trigger definitions, allowing them to be added automatically during synchronization.
+
+3. **Deploy the Event Triggers to Hasura**
+   ```bash
+   npx hasyx events
+   ```
+   This reads the trigger definitions from the `events/` directory and creates or updates them in Hasura. Security headers with `HASURA_EVENT_SECRET` are automatically added to each trigger.
+
+4. **Security**
+   For security, you should set `HASURA_EVENT_SECRET` in your environment variables. This secret will be automatically added as a header to event trigger requests and verified by your handler.
+
+   Important security considerations:
+   
+   - Always set `HASURA_EVENT_SECRET` to a strong, random value in production environments
+   - The secret header is automatically added to all event triggers during synchronization
+   - In production mode, the `events` command will fail if `HASURA_EVENT_SECRET` is not set
+   - In production mode, requests without the correct secret will be denied automatically
+   - Keep your `HASURA_EVENT_SECRET` as secure as your `HASURA_ADMIN_SECRET`
+   - The `hasyxEvent` wrapper handles all security verification automatically
+   - Never expose your event handlers to public access without authentication
+   - For local development, ensure your Hasura instance can reach your local server (use tools like ngrok if needed)
+
+### Example Event Trigger Definition
+
+```json
+{
+  "name": "users",
+  "table": {
+    "schema": "public",
+    "name": "users"
+  },
+  "webhook_path": "/api/events/users",
+  "insert": {
+    "columns": "*"
+  },
+  "update": {
+    "columns": "*"
+  },
+  "delete": {
+    "columns": "*"
+  },
+  "retry_conf": {
+    "num_retries": 3,
+    "interval_sec": 15,
+    "timeout_sec": 60
+  }
+}
+```
+
+The security header with `HASURA_EVENT_SECRET` will be automatically added during synchronization - you don't need to specify it in your event definition files.
+
+For more information on Event Triggers, see the [Hasura Event Triggers documentation](https://hasura.io/docs/latest/event-triggers/index/).
+
+### Creating Custom Event Handlers
+
+To create a custom event handler for a specific trigger:
+
+1. Copy the default handler from `app/api/events/[name]/route.ts` to a new file such as `app/api/events/my-trigger-name/route.ts`
+2. Modify the new file to implement your custom logic in the handler function
+3. Make sure your event trigger definition in the `events/` directory has a matching `webhook_path` that points to your handler (e.g., `/api/events/my-trigger-name`)
+
+Example custom handler:
+
+```typescript
+import { NextResponse } from 'next/server';
+import { hasyxEvent, HasuraEventPayload } from 'hasyx/lib/events';
+
+export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
+  // Your custom logic here
+  const { event, table } = payload;
+  const { op, data } = event;
+  
+  // Example: Log to console and perform different actions based on operation type
+  console.log(`Handling ${op} operation on ${table.schema}.${table.name}`);
+  
+  if (op === 'INSERT') {
+    // Handle insert operation
+    const newRecord = data.new;
+    // Do something with the new record...
+  }
+  
+  return { success: true, message: 'Custom handler processed event' };
+});
+```
+
+---
+
+### `js [filePath] [-e "<script>" | --eval "<script>"]`
+
+Runs a JavaScript file or starts an interactive REPL (Read-Eval-Print Loop) with a pre-configured `Hasyx` client instance in the context. This is useful for quick scripting, data exploration, or debugging interactions with your Hasura backend.
+
+The `client` instance is initialized with admin privileges using `HASURA_ADMIN_SECRET` and `NEXT_PUBLIC_HASURA_GRAPHQL_URL` from your `.env` file. It also requires `public/hasura-schema.json` to be present (generated via `npx hasyx schema`).
+
+**Modes:**
+
+1.  **REPL Mode:**
+    ```bash
+    npx hasyx js
+    ```
+    Starts an interactive REPL. The `client` object is available in the global scope.
+    Example in REPL:
+    ```javascript
+    hasyx > await client.select({ table: 'users', returning: ['id', 'name'], limit: 1 })
+    // Output: [ { id: 'some-uuid', name: 'Some User' } ]
+    hasyx > .exit
+    ```
+
+2.  **File Execution Mode:**
+    ```bash
+    npx hasyx js your-script.js
+    ```
+    Executes the specified JavaScript file (`your-script.js`). The `client` object is available as a global in the script's context.
+    Example `your-script.js`:
+    ```javascript
+    async function main() {
+      const users = await client.select({ table: 'users', returning: ['id', 'email'] });
+      console.log(users);
+    }
+    main().catch(console.error);
+    ```
+
+3.  **String Evaluation Mode:**
+    ```bash
+    npx hasyx js -e "console.log(await client.select({table: 'users', limit: 1, returning: ['id']}))"
+    # or
+    npx hasyx js --eval "client.select({table: 'users', limit: 1, returning: ['name']}).then(console.log)"
+    ```
+    Executes the provided JavaScript string. The `client` object is available.
 
 # Hasura Integration
 

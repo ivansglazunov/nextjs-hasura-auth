@@ -14,6 +14,11 @@ console.log(`${pckg.name}@${pckg.version}`);
 
 // Import and configure dotenv to load environment variables from .env
 import dotenv from 'dotenv';
+import repl from 'repl'; // Import REPL module
+import vm from 'vm'; // Import VM module for script execution
+import { Hasyx } from './hasyx'; // Import Hasyx class
+import { createApolloClient } from './apollo'; // Import Apollo client creation
+import { Generator } from './generator'; // Import Generator
 
 // Attempt to load environment variables from .env file
 try {
@@ -1657,6 +1662,121 @@ program
     } catch (error) {
       console.error('❌ Error updating .env file:', error);
       process.exit(1);
+    }
+  });
+
+// --- NEW: `js` Command for REPL/script execution ---
+program
+  .command('js [filePath]')
+  .description('Run a JavaScript file or start a REPL with Hasyx client in context.')
+  .option('-e, --eval <script>', 'Evaluate a string of JavaScript code')
+  .action(async (filePath, options) => {
+    debug('Executing "js" command with filePath:', filePath, 'and options:', options);
+    console.log('🚀 Initializing Hasyx JS environment...');
+
+    const projectRoot = findProjectRoot();
+
+    // 1. Load environment variables (already done at the top of cli.ts)
+    // Ensure dotenv.config() has been called.
+    if (!process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL || !process.env.HASURA_ADMIN_SECRET) {
+      console.error('❌ Missing required environment variables: NEXT_PUBLIC_HASURA_GRAPHQL_URL and/or HASURA_ADMIN_SECRET.');
+      console.error('   Please ensure they are set in your .env file.');
+      process.exit(1);
+    }
+
+    // 2. Load Hasura schema for Generator
+    let schema;
+    const schemaPath = path.join(projectRoot, 'public', 'hasura-schema.json');
+    try {
+      if (fs.existsSync(schemaPath)) {
+        schema = await fs.readJson(schemaPath);
+        debug('Successfully loaded hasura-schema.json');
+      } else {
+        console.error(`❌ Hasura schema not found at ${schemaPath}`);
+        console.error('   Please run `npx hasyx schema` first to generate it.');
+        process.exit(1);
+      }
+    } catch (err) {
+      console.error(`❌ Error reading Hasura schema at ${schemaPath}:`, err);
+      process.exit(1);
+    }
+
+    // 3. Create Hasyx client instance
+    let client: Hasyx;
+    try {
+      const apolloAdminClient = createApolloClient({
+        secret: process.env.HASURA_ADMIN_SECRET!,
+        url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
+      });
+      const generator = Generator(schema);
+      client = new Hasyx(apolloAdminClient, generator);
+      console.log('✅ Hasyx client initialized with admin privileges.');
+      debug('Hasyx client created successfully.');
+    } catch (err) {
+      console.error('❌ Failed to initialize Hasyx client:', err);
+      process.exit(1);
+    }
+
+    const scriptContext = vm.createContext({
+      client,
+      console,
+      process,
+      require,
+      __filename: filePath ? path.resolve(filePath) : 'eval',
+      __dirname: filePath ? path.dirname(path.resolve(filePath)) : process.cwd(),
+      setTimeout,
+      clearTimeout,
+      setInterval,
+      clearInterval,
+      URL, // Add URL constructor to the context
+      URLSearchParams, // Add URLSearchParams to the context
+      TextEncoder, // Add TextEncoder
+      TextDecoder, // Add TextDecoder
+      Buffer, // Add Buffer
+      // You can add more Node.js globals or custom utilities here
+    });
+
+    if (options.eval) {
+      debug(`Executing script string: ${options.eval}`);
+      try {
+        const script = new vm.Script(options.eval, { filename: 'eval' });
+        script.runInContext(scriptContext);
+        // Consider if REPL should exit or stay open after -e. For now, it exits.
+      } catch (error) {
+        console.error('❌ Error executing script string:', error);
+        process.exit(1);
+      }
+    } else if (filePath) {
+      const fullPath = path.resolve(filePath);
+      debug(`Executing script file: ${fullPath}`);
+      if (!fs.existsSync(fullPath)) {
+        console.error(`❌ Script file not found: ${fullPath}`);
+        process.exit(1);
+      }
+      try {
+        const fileContent = await fs.readFile(fullPath, 'utf-8');
+        const script = new vm.Script(fileContent, { filename: fullPath });
+        script.runInContext(scriptContext);
+      } catch (error) {
+        console.error(`❌ Error executing script file ${filePath}:`, error);
+        process.exit(1);
+      }
+    } else {
+      debug('Starting REPL session.');
+      console.log('🟢 Hasyx REPL started. `client` variable is available.');
+      console.log('   Type .exit to close.');
+      const replServer = repl.start({
+        prompt: 'hasyx > ',
+        useGlobal: false, // Important to use the context
+      });
+
+      // Assign context variables to the REPL context
+      Object.assign(replServer.context, scriptContext);
+
+      replServer.on('exit', () => {
+        console.log('👋 Exiting Hasyx REPL.');
+        process.exit(0);
+      });
     }
   });
 
