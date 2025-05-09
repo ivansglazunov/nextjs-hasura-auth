@@ -9,7 +9,7 @@ const debug = Debug('migration:up-notify');
 // SQL schema for notification tables
 const sqlSchema = `
   -- Create notification_permissions table
-  CREATE TABLE "public"."notification_permissions" (
+  CREATE TABLE IF NOT EXISTS "public"."notification_permissions" (
       "id" uuid NOT NULL DEFAULT gen_random_uuid(),
       "user_id" uuid NOT NULL,
       "provider" text NOT NULL,
@@ -22,11 +22,11 @@ const sqlSchema = `
   );
 
   -- Create indexes for notification_permissions
-  CREATE INDEX "idx_notification_permissions_device_token" ON "public"."notification_permissions" ("device_token");
-  CREATE INDEX "idx_notification_permissions_user_id" ON "public"."notification_permissions" ("user_id");
+  CREATE INDEX IF NOT EXISTS "idx_notification_permissions_device_token" ON "public"."notification_permissions" ("device_token");
+  CREATE INDEX IF NOT EXISTS "idx_notification_permissions_user_id" ON "public"."notification_permissions" ("user_id");
 
   -- Create notification_messages table
-  CREATE TABLE "public"."notification_messages" (
+  CREATE TABLE IF NOT EXISTS "public"."notification_messages" (
       "id" uuid NOT NULL DEFAULT gen_random_uuid(),
       "title" text NOT NULL,
       "body" text NOT NULL,
@@ -38,10 +38,10 @@ const sqlSchema = `
   );
 
   -- Create indexes for notification_messages
-  CREATE INDEX "idx_notification_messages_user_id" ON "public"."notification_messages" ("user_id");
+  CREATE INDEX IF NOT EXISTS "idx_notification_messages_user_id" ON "public"."notification_messages" ("user_id");
 
   -- Create notifications table
-  CREATE TABLE "public"."notifications" (
+  CREATE TABLE IF NOT EXISTS "public"."notifications" (
       "id" uuid NOT NULL DEFAULT gen_random_uuid(),
       "message_id" uuid NOT NULL,
       "permission_id" uuid NOT NULL,
@@ -56,69 +56,9 @@ const sqlSchema = `
   );
 
   -- Create indexes for notifications
-  CREATE INDEX "idx_notifications_status" ON "public"."notifications" ("status");
-  CREATE INDEX "idx_notifications_message_id" ON "public"."notifications" ("message_id");
-  CREATE INDEX "idx_notifications_permission_id" ON "public"."notifications" ("permission_id");
-`;
-
-// RLS and permission policies
-const rlsAndPoliciesSQL = `
-  -- Notification permissions table RLS
-  ALTER TABLE "public"."notification_permissions" ENABLE ROW LEVEL SECURITY;
-  DROP POLICY IF EXISTS "users_can_see_own_permissions" ON "public"."notification_permissions";
-  CREATE POLICY "users_can_see_own_permissions" ON "public"."notification_permissions"
-      FOR SELECT USING (user_id = auth.uid());
-
-  DROP POLICY IF EXISTS "users_can_delete_own_permissions" ON "public"."notification_permissions";
-  CREATE POLICY "users_can_delete_own_permissions" ON "public"."notification_permissions"
-      FOR DELETE USING (user_id = auth.uid());
-
-  DROP POLICY IF EXISTS "users_can_insert_own_permissions" ON "public"."notification_permissions";
-  CREATE POLICY "users_can_insert_own_permissions" ON "public"."notification_permissions"
-      FOR INSERT WITH CHECK (user_id = auth.uid());
-
-  -- Notification messages table RLS
-  ALTER TABLE "public"."notification_messages" ENABLE ROW LEVEL SECURITY;
-  DROP POLICY IF EXISTS "users_can_see_own_messages" ON "public"."notification_messages";
-  CREATE POLICY "users_can_see_own_messages" ON "public"."notification_messages"
-      FOR SELECT USING (user_id = auth.uid());
-
-  DROP POLICY IF EXISTS "users_can_insert_own_messages" ON "public"."notification_messages";
-  CREATE POLICY "users_can_insert_own_messages" ON "public"."notification_messages"
-      FOR INSERT WITH CHECK (user_id = auth.uid());
-
-  -- Notifications table RLS
-  ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
-  DROP POLICY IF EXISTS "users_can_see_own_notifications" ON "public"."notifications";
-  CREATE POLICY "users_can_see_own_notifications" ON "public"."notifications" FOR SELECT
-      USING (
-          EXISTS (
-              SELECT 1 FROM notification_permissions
-              WHERE notification_permissions.id = permission_id AND notification_permissions.user_id = auth.uid()
-          )
-      );
-
-  DROP POLICY IF EXISTS "users_can_insert_own_notifications" ON "public"."notifications";
-  CREATE POLICY "users_can_insert_own_notifications" ON "public"."notifications" FOR INSERT
-      WITH CHECK (
-          EXISTS (
-              SELECT 1 FROM notification_permissions
-              WHERE notification_permissions.id = permission_id AND notification_permissions.user_id = auth.uid()
-          )
-      );
-`;
-
-// SQL for granting permissions
-const grantPermissionsSQL = `
-  -- Grant permissions to HasuraAdmin role
-  GRANT ALL ON "public"."notification_permissions" TO "HasuraAdmin";
-  GRANT ALL ON "public"."notification_messages" TO "HasuraAdmin";
-  GRANT ALL ON "public"."notifications" TO "HasuraAdmin";
-
-  -- Grant permissions to user role
-  GRANT SELECT, INSERT, DELETE ON "public"."notification_permissions" TO "user";
-  GRANT SELECT, INSERT ON "public"."notification_messages" TO "user";
-  GRANT SELECT, INSERT ON "public"."notifications" TO "user";
+  CREATE INDEX IF NOT EXISTS "idx_notifications_status" ON "public"."notifications" ("status");
+  CREATE INDEX IF NOT EXISTS "idx_notifications_message_id" ON "public"."notifications" ("message_id");
+  CREATE INDEX IF NOT EXISTS "idx_notifications_permission_id" ON "public"."notifications" ("permission_id");
 `;
 
 // Tables to track in Hasura
@@ -262,10 +202,14 @@ const selectPermissions = [
       permission: {
         columns: ['id', 'title', 'body', 'data', 'user_id', 'created_at'],
         filter: {
-          user_id: { _eq: 'X-Hasura-User-Id' }
+          notifications: {
+            permission: {
+              user_id: { _eq: 'X-Hasura-User-Id' }
+            }
+          }
         }
       },
-      comment: 'Users can select their own notification messages'
+      comment: 'Users can select messages they are recipients of'
     }
   },
   {
@@ -293,7 +237,7 @@ const selectPermissions = [
       table: { schema: 'public', name: 'notification_permissions' },
       role: 'admin',
       permission: {
-        columns: ['id', 'user_id', 'provider', 'device_token', 'device_info', 'created_at', 'updated_at'],
+        columns: '*',
         filter: {}
       },
       comment: 'Admins can select all notification permissions'
@@ -306,7 +250,7 @@ const selectPermissions = [
       table: { schema: 'public', name: 'notification_messages' },
       role: 'admin',
       permission: {
-        columns: ['id', 'title', 'body', 'data', 'user_id', 'created_at'],
+        columns: '*',
         filter: {}
       },
       comment: 'Admins can select all notification messages'
@@ -319,10 +263,115 @@ const selectPermissions = [
       table: { schema: 'public', name: 'notifications' },
       role: 'admin',
       permission: {
-        columns: ['id', 'message_id', 'permission_id', 'config', 'status', 'error', 'created_at', 'updated_at'],
+        columns: '*',
         filter: {}
       },
       comment: 'Admins can select all notifications'
+    }
+  },
+  // Anonymous permissions (select only ID with an impossible filter)
+  {
+    type: 'pg_create_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'notification_permissions' },
+      role: 'anonymous',
+      permission: {
+        columns: ['id'],
+        filter: { id: { _eq: "00000000-0000-0000-0000-000000000000" } }
+      },
+      comment: 'Anonymous can query table structure but not see data.'
+    }
+  },
+  {
+    type: 'pg_create_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'notification_messages' },
+      role: 'anonymous',
+      permission: {
+        columns: ['id'],
+        filter: { id: { _eq: "00000000-0000-0000-0000-000000000000" } }
+      },
+      comment: 'Anonymous can query table structure but not see data.'
+    }
+  },
+  {
+    type: 'pg_create_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'notifications' },
+      role: 'anonymous',
+      permission: {
+        columns: ['id'],
+        filter: { id: { _eq: "00000000-0000-0000-0000-000000000000" } }
+      },
+      comment: 'Anonymous can query table structure but not see data.'
+    }
+  }
+];
+
+// Table insert permissions for roles
+const insertPermissions = [
+  {
+    type: 'pg_create_insert_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'notification_permissions' },
+      role: 'user',
+      permission: {
+        columns: ['provider', 'device_token', 'device_info', 'created_at', 'updated_at', 'id', 'user_id'],
+        check: { user_id: { _eq: 'X-Hasura-User-Id' } },
+        set: { user_id: 'X-Hasura-User-Id' }
+      },
+      comment: 'Users can insert their own notification permissions'
+    }
+  },
+  {
+    type: 'pg_create_insert_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'notification_messages' },
+      role: 'user',
+      permission: {
+        columns: ['title', 'body', 'data', 'created_at', 'id', 'user_id'],
+        check: { user_id: { _eq: 'X-Hasura-User-Id' } },
+        set: { user_id: 'X-Hasura-User-Id' }
+      },
+      comment: 'Users can insert their own notification messages'
+    }
+  },
+  {
+    type: 'pg_create_insert_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'notifications' },
+      role: 'user',
+      permission: {
+        columns: ['message_id', 'permission_id', 'config', 'status', 'created_at', 'updated_at', 'id'],
+        check: {
+          permission: {
+            user_id: { _eq: 'X-Hasura-User-Id' }
+          }
+        }
+      },
+      comment: 'Users can insert notifications for their own permissions'
+    }
+  }
+];
+
+// Table delete permissions for roles
+const deletePermissions = [
+  {
+    type: 'pg_create_delete_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'notification_permissions' },
+      role: 'user',
+      permission: {
+        filter: { user_id: { _eq: 'X-Hasura-User-Id' } }
+      },
+      comment: 'Users can delete their own notification permissions'
     }
   }
 ];
@@ -334,14 +383,6 @@ export async function applySQLSchema(hasura: Hasura) {
   debug('🔧 Applying notification SQL schema...');
   await hasura.sql(sqlSchema, 'default', true);
   debug('✅ Notification SQL schema applied.');
-  
-  debug('🔧 Applying RLS and policies...');
-  await hasura.sql(rlsAndPoliciesSQL, 'default', true);
-  debug('✅ RLS and policies applied.');
-  
-  debug('🔧 Granting permissions...');
-  await hasura.sql(grantPermissionsSQL, 'default', true);
-  debug('✅ Permissions granted.');
 }
 
 /**
@@ -387,8 +428,20 @@ export async function applyPermissions(hasura: Hasura) {
   for (const permission of selectPermissions) {
     debug(`     Applying ${permission.args.role} select permission on ${permission.args.table.name}...`);
     await hasura.v1(permission);
-    // Note: hasura.v1 handles 'already defined' messages internally
   }
+
+  debug('  📝 Applying insert permissions...');
+  for (const permission of insertPermissions) {
+    debug(`     Applying ${permission.args.role} insert permission on ${permission.args.table.name}...`);
+    await hasura.v1(permission);
+  }
+
+  debug('  📝 Applying delete permissions...');
+  for (const permission of deletePermissions) {
+    debug(`     Applying ${permission.args.role} delete permission on ${permission.args.table.name}...`);
+    await hasura.v1(permission);
+  }
+
   debug('  ✅ Notification permissions applied.');
 }
 

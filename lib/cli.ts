@@ -565,7 +565,9 @@ program
           "start": "NODE_ENV=production npx -y hasyx start",
           "dev": "npx -y hasyx dev",
           "ws": "npx --yes next-ws-cli@latest patch -y",
-          "postinstall": "npm run ws -- -y"
+          "postinstall": "npm run ws -- -y",
+          "migrate": "npx hasyx migrate",
+          "unmigrate": "npx hasyx unmigrate"
         };
         
         // Check if scripts need updating

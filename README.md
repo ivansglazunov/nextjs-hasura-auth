@@ -233,7 +233,11 @@ During initialization, Hasyx ensures that the following npm scripts are added to
   "build": "NODE_ENV=production npx -y hasyx build",
   "unbuild": "npx -y hasyx unbuild",
   "start": "NODE_ENV=production npx -y hasyx start",
-  "dev": "npx -y hasyx dev"
+  "dev": "npx -y hasyx dev",
+  "ws": "npx --yes next-ws-cli@latest patch -y",
+  "postinstall": "npm run ws -- -y",
+  "migrate": "npx hasyx migrate",
+  "unmigrate": "npx hasyx unmigrate"
 }
 ```
 
@@ -325,7 +329,10 @@ Finds and executes `up.ts` migration scripts located in subdirectories of `./mig
 ```bash
 npx hasyx migrate
 ```
-It uses `npx tsx` to run the scripts. Ensure your migration scripts handle database connections and operations correctly. See [`migrations/hasyx/up.ts`](./migrations/hasyx/up.ts) for an example.
+Ensure your migration scripts handle database connections and operations correctly. See [`migrations`](./migrations/) for an example.
+
+**Important for Writing Migrations:**
+When writing your SQL or TypeScript migration scripts, always use constructs like `IF NOT EXISTS` for `CREATE TABLE`, `CREATE INDEX`, `ADD COLUMN`, etc., and `IF EXISTS` for `DROP` statements. This makes your migrations **idempotent**, meaning they can be run multiple times without causing errors or unintended side effects if the schema changes have already been applied. This is crucial for robust deployment pipelines and local development where migrations might be re-run.
 
 ---
 
@@ -336,7 +343,7 @@ Finds and executes `down.ts` migration scripts located in subdirectories of `./m
 ```bash
 npx hasyx unmigrate
 ```
-It uses `npx tsx` to run the scripts. See [`migrations/hasyx/down.ts`](./migrations/hasyx/down.ts) for an example.
+It uses `npx tsx` to run the scripts. See [`migrations`](./migrations) for an example.
 
 ---
 
