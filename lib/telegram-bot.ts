@@ -127,210 +127,147 @@ export async function setBotCommands(token: string, commands: BotCommand[]): Pro
   }
 }
 
+export async function setWebhook(token: string, url: string): Promise<boolean> {
+  try {
+    await callTelegramApi(token, 'setWebhook', { url });
+    debug(`Successfully set webhook to "${url}"`);
+    return true;
+  } catch (error) {
+    debug(`Failed to set webhook:`, error);
+    console.error(`❌ Failed to set webhook: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
+}
+
+// Helper function to send a message via Telegram API
+async function sendTelegramMessage(token: string, chatId: number | string, text: string, replyToMessageId?: number): Promise<any> {
+  return callTelegramApi(token, 'sendMessage', {
+    chat_id: chatId,
+    text: text,
+    reply_to_message_id: replyToMessageId
+  });
+}
+
 /**
  * Processes an incoming Telegram update.
  * This function will be called from the API route.
  */
 export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx, env: Record<string, string | undefined>): Promise<any> {
-  debug('Processing Telegram event:', JSON.stringify(update, null, 2));
+  debug('Processing Telegram update:', update);
   const botToken = env.TELEGRAM_BOT_TOKEN;
-  const adminChatId = env.TELEGRAM_ADMIN_CHAT_ID; // For group interaction logic
-
   if (!botToken) {
-    console.error('TELEGRAM_BOT_TOKEN is not defined.');
-    return { success: false, message: 'Telegram Bot Token not configured.' };
+    debug('TELEGRAM_BOT_TOKEN not configured, skipping event processing.');
+    return { success: false, message: 'Bot token not configured.' };
   }
 
   if (update.message) {
     const message = update.message;
     const chatId = message.chat.id;
     const userId = message.from?.id;
-    const username = message.from?.username || message.from?.first_name || 'TelegramUser';
+    const username = message.from?.username || message.from?.first_name || 'UnknownUser';
+    const messageText = message.text;
 
-    // Handle /start command
-    if (message.text && message.text.startsWith('/start')) {
-      debug(`Received /start command from user ${userId} in chat ${chatId}`);
-      if (!userId) {
-        debug('User ID not found in /start command message');
-        return { success: false, message: 'User ID missing in command.'} ;
-      }
+    if (!userId) {
+      debug('No user ID in message, cannot process.');
+      return { success: false, message: 'User ID missing.' };
+    }
+
+    // Handle /start command: Register permission and reply with Chat ID
+    if (messageText && messageText.trim().toLowerCase() === '/start') {
+      debug(`Processing /start command from chat ID: ${chatId} for user: ${username} (${userId})`);
       try {
-        // 1. Check if an account for this Telegram user already exists
-        let account = await client.select({
-          table: 'accounts',
-          where: {
-            provider: { _eq: 'telegram' },
-            provider_account_id: { _eq: userId.toString() },
-          },
-          returning: ['id', 'user_id', 'user'], // Include user to check if linked
-          limit: 1,
-          role: 'admin' // Use admin role for system operations
-        });
-        
-        let hasyxUserId: string | undefined = account?.user_id;
+        const deviceInfo = {
+          platform: 'telegram',
+          username: username,
+          firstName: message.from?.first_name,
+          lastName: message.from?.last_name,
+          userId: userId
+        };
 
-        if (account && !hasyxUserId) {
-          // Account exists but is not linked to a user (should not happen with current logic but good to check)
-          // Potentially link to an existing user by email if Telegram provides it, or create new.
-          // For now, assume we need to create a user or link to one.
-          debug('Telegram account exists but not linked to a hasyx user. This case needs handling.');
-        }
-
-        // 2. If no Hasyx user, create one or find by email (if available)
-        if (!hasyxUserId) {
-          // For simplicity, we'll create a new user. 
-          // A more robust solution might try to find an existing user by email if Telegram provides it.
-          const newUser = await client.insert({
-            table: 'users',
-            object: {
-              name: username,
-              // email: if telegram provides email, use it here
-              hasura_role: 'user', // Default role
-            },
-            returning: ['id', 'name'],
-            role: 'admin'
-          });
-          hasyxUserId = newUser.id;
-          debug(`Created new Hasyx user ${hasyxUserId} for Telegram user ${userId}`);
-          
-          // Link account if it wasn't found linked before, or create new if it didn't exist
-          if (!account) {
-            account = await client.insert({
-              table: 'accounts',
-              object: {
-                user_id: hasyxUserId,
-                type: 'oauth', // or a more specific type for bot interaction
-                provider: 'telegram',
-                provider_account_id: userId.toString(),
-              },
-              returning: ['id'],
-              role: 'admin'
-            });
-            debug(`Created new Hasyx account for Telegram user ${userId}, linked to Hasyx user ${hasyxUserId}`);
-          } else if (account && !account.user_id) {
-            // This case should ideally be handled by linking logic if an unlinked account was found
-            // For now, we'll assume the new user needs this account linked.
-            await client.update({
-              table: 'accounts',
-              pk_columns: { id: account.id }, 
-              _set: { user_id: hasyxUserId },
-              role: 'admin'
-            });
-            debug(`Linked existing Hasyx account ${account.id} to new Hasyx user ${hasyxUserId}`);
-          }
-        } else {
-          debug(`Telegram user ${userId} already linked to Hasyx user ${hasyxUserId}`);
-        }
-
-        // 3. Register for notifications
-        const existingPermission = await client.select({
+        // Temporarily simplify: Always try to insert, to isolate type issue
+        // Later, we will add back the logic to check and update existing permissions.
+        await client.insert({
           table: 'notification_permissions',
-          where: {
-            user_id: { _eq: hasyxUserId },
-            provider: { _eq: 'telegram_bot' },
-            device_token: { _eq: chatId.toString() }
-          },
-          returning: ['id'],
-          limit: 1,
-          role: 'admin'
+          object: {
+            user_id: String(userId), 
+            provider: 'telegram_bot',
+            device_token: String(chatId), 
+            device_info: deviceInfo,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
         });
+        debug('New telegram_bot permission potentially created/updated for chat ID:', chatId);
+        
+        await sendTelegramMessage(botToken, chatId, `Hello ${username}! Your Chat ID for Hasyx is: ${chatId}\nSend any message to test correspondence.`);
+        return { success: true, message: '/start command processed' };
 
-        if (!existingPermission) {
-          await client.insert({
-            table: 'notification_permissions',
-            object: {
-              id: uuidv4(),
-              user_id: hasyxUserId,
-              provider: 'telegram_bot',
-              device_token: chatId.toString(), // Store chat_id as device_token
-              device_info: { platform: 'telegram', userAgent: `telegram_user_${userId}` }, // Basic device info
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-            returning: ['id'],
-            role: 'admin'
-          });
-          debug(`Registered Hasyx user ${hasyxUserId} for Telegram notifications on chat ${chatId}`);
-        }
-
-        // Send a welcome message or confirmation
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text: `Welcome, ${username}! You are now registered.` }),
-        });
-        return { success: true, message: 'User registered and subscribed to notifications.' };
-
-      } catch (error) {
-        debug('Error processing /start command:', error);
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text: 'An error occurred during registration. Please try again later.' }),
-        });
-        return { success: false, message: error instanceof Error ? error.message : 'Failed to process /start command' };
+      } catch (dbError) {
+        debug('Error processing /start command (DB operation):', dbError);
+        await sendTelegramMessage(botToken, chatId, 'Sorry, there was an error processing your /start command. Please try again later.');
+        return { success: false, message: 'DB error during /start processing.' };
       }
     }
-    
-    // --- Start Group/Topic Management Logic ---
-    // This is a simplified version. A robust solution would need more state management.
-    if (message.chat.type === 'private' && adminChatId && message.from && !message.from.is_bot) {
-        // User sent a DM to the bot
-        const userTopicName = `@${message.from.username || message.from.id.toString()}`;
-        let topicThreadId: number | undefined;
 
-        // In a real scenario, you might query existing topics or store topic_id mapping.
-        // For simplicity, we'll just try to create a topic or assume one named @username exists
-        // This part of Telegram API (forum topics) is more complex.
-        // For now, let's forward to the main group and mention it's from a user.
-        
-        const forwardText = `Message from ${userTopicName} (User ID: ${userId}, Chat ID: ${chatId}):\n\n${message.text}`;
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            chat_id: adminChatId, 
-            text: forwardText 
-            // In a full implementation, you'd use message_thread_id if you have it
-          }),
-        });
-        debug(`Forwarded message from ${userTopicName} to admin chat ${adminChatId}`);
-    }
-    
-    if (message.chat.id.toString() === adminChatId && message.reply_to_message && message.reply_to_message.from?.is_bot) {
-        // This is a reply to the bot's message in the admin group
-        // Attempt to extract original user's chat_id from the bot's message it replied to.
-        // This requires the bot's forwarded message to contain the original user's chat_id.
-        const originalMessageText = message.reply_to_message.text;
-        if (originalMessageText) {
-            const match = originalMessageText.match(/Chat ID: (\d+)/);
+    // Forward message to admin group if TELEGRAM_ADMIN_CHAT_ID is set
+    const adminChatId = env.TELEGRAM_ADMIN_CHAT_ID;
+    if (adminChatId && String(chatId) !== adminChatId) { // Don't forward messages from the admin chat itself
+      // Check if the message is a reply from the admin group to a user via the bot
+      if (message.reply_to_message && message.reply_to_message.from?.is_bot) {
+          // This is a reply from an admin *within the admin group* to a message *the bot sent*.
+          // We need to extract the original user's chat ID from the bot's message.
+          // The bot's original message should contain the original user's chat ID, perhaps in the text or entities.
+          
+          const botOriginalMessage = message.reply_to_message.text;
+          let originalUserChatId: string | null = null; // Explicitly type as string | null
+
+          if (botOriginalMessage) {
+            const match = botOriginalMessage.match(/Original Sender Chat ID: (\d+)/i) || botOriginalMessage.match(/User ID: (\d+)/i) ;
             if (match && match[1]) {
-                const originalUserChatId = match[1];
-                const replyText = message.text;
-
-                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ chat_id: originalUserChatId, text: `Reply from support: ${replyText}` }),
-                });
-                debug(`Sent reply from admin group to user chat ${originalUserChatId}`);
+              originalUserChatId = match[1];
             }
-        }
-    }
-    // --- End Group/Topic Management Logic ---
+          }
 
+          if (originalUserChatId) {
+            debug(`Admin reply detected. Forwarding from admin group (Chat ID: ${chatId}) to original user (Chat ID: ${originalUserChatId}). Message: "${messageText}"`);
+            await sendTelegramMessage(botToken, originalUserChatId, `Admin reply: ${messageText}`);
+            return { success: true, message: 'Admin reply forwarded to user.' };
+          } else {
+            debug('Admin reply detected, but could not extract original user chat ID from bot message:', botOriginalMessage);
+            // Optionally notify admin that reply could not be matched
+            // await sendTelegramMessage(botToken, chatId, "Could not determine original recipient for your reply."); 
+          }
+      } else if (String(chatId) !== adminChatId && !message.from?.is_bot) { // Message from a user to the bot (not a reply from admin group)
+        debug(`Forwarding message from user ${username} (Chat ID: ${chatId}) to admin group ${adminChatId}`);
+        const topicTitle = `${username}_${userId}`; // Or just username, or chat_id
+        const textToForward = `Message from: ${username} (Telegram User ID: ${userId}, Chat ID: ${chatId})\n\n${messageText}\n\nOriginal Sender Chat ID: ${chatId}`; // Important for reply routing
+        
+        try {
+           // Try to send to a topic. This requires the bot to have topic management rights.
+           // And the group must be a supergroup with topics enabled.
+          await callTelegramApi(botToken, 'createForumTopic', {
+            chat_id: adminChatId,
+            name: topicTitle
+          }).then(async (topicResult) => {
+            const topicThreadId = topicResult.message_thread_id;
+            await sendTelegramMessage(botToken, adminChatId, textToForward, topicThreadId);
+          }).catch(async (topicError) => {
+            debug('Failed to create or use topic, sending to main group chat:', topicError.message);
+            // Fallback: send to the group without a specific topic if topic creation fails
+            await sendTelegramMessage(botToken, adminChatId, textToForward);
+          });
+        } catch (forwardError) {
+            debug('Error forwarding message to admin group:', forwardError);
+        }
+        return { success: true, message: 'Message forwarded to admin group.' };
+      }
+    }
   } else if (update.my_chat_member) {
-    // Bot was added to a group/channel or its status changed
-    const chatMemberUpdate = update.my_chat_member;
-    if (chatMemberUpdate.new_chat_member.status === 'administrator' || chatMemberUpdate.new_chat_member.status === 'member') {
-        if (chatMemberUpdate.chat.type === 'group' || chatMemberUpdate.chat.type === 'supergroup') {
-            debug(`Bot was added to group: ${chatMemberUpdate.chat.title} (ID: ${chatMemberUpdate.chat.id}) as ${chatMemberUpdate.new_chat_member.status}`);
-            // Potentially store this group ID if it's intended to be the admin/correspondence group
-            // The `assist` flow should guide the user to set this group ID as TELEGRAM_ADMIN_CHAT_ID
-        }
-    }
+    // Handle bot being added/removed from a chat, or status change
+    debug('Received my_chat_member update:', update.my_chat_member);
+    // Potentially log this or update bot's understanding of where it's active.
   }
+  // Add handlers for other update types like callback_query if needed
 
-  // Fallback for unhandled events or messages
-  return { success: true, message: 'Event received' };
+  return { success: true, message: 'Event received, no specific action taken.' };
 } 

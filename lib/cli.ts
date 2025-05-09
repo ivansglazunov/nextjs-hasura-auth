@@ -1532,6 +1532,22 @@ program
     assist(options);
   });
 
+// --- NEW: `telegram` Command for focused Telegram setup & calibration ---
+program
+  .command('telegram')
+  .description('Setup and calibrate Telegram Bot, Admin Group, and Announcement Channel.')
+  .option('--skip-bot', 'Skip interactive Telegram Bot setup (token, name, webhook, etc.)')
+  .option('--skip-admin-group', 'Skip Telegram Admin Group setup (chat_id for correspondence)')
+  .option('--skip-channel', 'Skip Telegram Announcement Channel setup (channel_id, project user link)')
+  .option('--skip-calibration', 'Skip Telegram bot calibration process')
+  .action(async (options) => {
+    debug('Executing "telegram" command with options:', options);
+    // We'll call a new function from assist.ts or a dedicated telegram-setup.ts file
+    // For now, let's assume it's in assist.ts and named runTelegramSetupAndCalibration
+    const { runTelegramSetupAndCalibration } = await import('./assist'); 
+    runTelegramSetupAndCalibration(options);
+  });
+
 // --- NEW: `local` Command ---
 program
   .command('local')

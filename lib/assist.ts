@@ -12,7 +12,7 @@ import { Generator } from './generator';
 import schema from '../public/hasura-schema.json'; // Adjusted path assuming script is in lib/
 import dotenv from 'dotenv'; // NEW: Import dotenv
 // Import new Telegram helper functions
-import { setBotName, setBotDescription, setBotCommands, BotCommand } from './telegram-bot';
+import { setBotName, setBotDescription, setBotCommands, BotCommand, setWebhook } from './telegram-bot'; // Added setWebhook
 
 // Ensure dotenv is configured only once, especially if assist is also used as a module
 if (require.main === module) { // This check ensures dotenv runs only if script is executed directly
@@ -1996,9 +1996,8 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
   let envVars = parseEnvFile(envPath);
   let envUpdated = false;
 
-  // Get project name for defaults
   const projectPackageJsonPath = path.join(process.cwd(), 'package.json');
-  let projectName = path.basename(process.cwd()); // Fallback to directory name
+  let projectName = path.basename(process.cwd());
   try {
     if (fs.existsSync(projectPackageJsonPath)) {
       const pkg = JSON.parse(fs.readFileSync(projectPackageJsonPath, 'utf-8'));
@@ -2008,12 +2007,11 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
     debug('Could not read project name from package.json for bot configuration', e);
   }
 
-  // Check for existing Telegram Bot Token
   if (envVars.TELEGRAM_BOT_TOKEN) {
     console.log(`ℹ️ Found existing TELEGRAM_BOT_TOKEN: ${'*'.repeat(Math.min(envVars.TELEGRAM_BOT_TOKEN.length, 10))}`);
     const correctToken = await askYesNo(rl, 'Is this TELEGRAM_BOT_TOKEN correct and an admin in the target group (if any)?', true);
     if (!correctToken) {
-      envVars.TELEGRAM_BOT_TOKEN = ''; // Clear to ask for a new one
+      envVars.TELEGRAM_BOT_TOKEN = '';
     }
   }
 
@@ -2027,9 +2025,9 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
       console.log('4. Follow the prompts to choose a name and username for your bot.');
       console.log('5. BotFather will provide you with an API token. Copy this token.');
       
-      const botToken = await askForInput(rl, 'Enter your Telegram Bot API Token');
-      if (botToken) {
-        envVars.TELEGRAM_BOT_TOKEN = botToken;
+      const botTokenInput = await askForInput(rl, 'Enter your Telegram Bot API Token');
+      if (botTokenInput) {
+        envVars.TELEGRAM_BOT_TOKEN = botTokenInput;
         console.log('✅ TELEGRAM_BOT_TOKEN set.');
         envUpdated = true;
       } else {
@@ -2040,19 +2038,48 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
     }
   }
 
-  // If bot token is set, proceed to configure bot profile and admin chat ID
   if (envVars.TELEGRAM_BOT_TOKEN) {
     const botToken = envVars.TELEGRAM_BOT_TOKEN;
 
-    // Bot Profile Picture
+    // Set Webhook URL
+    console.log('\n🔗 Configuring Telegram Bot Webhook...');
+    const existingWebhookUrl = envVars.NEXT_PUBLIC_TELEGRAM_BOT_WEBHOOK_URL;
+    if (existingWebhookUrl) {
+      console.log(`ℹ️ Found existing webhook URL: ${existingWebhookUrl}`);
+      const updateWebhook = await askYesNo(rl, 'Do you want to update the webhook URL?', false);
+      if (!updateWebhook) {
+        console.log('ℹ️ Keeping existing webhook URL.');
+      } else {
+        envVars.NEXT_PUBLIC_TELEGRAM_BOT_WEBHOOK_URL = ''; 
+      }
+    }
+
+    if (!envVars.NEXT_PUBLIC_TELEGRAM_BOT_WEBHOOK_URL) {
+      const publicBaseUrl = await askForInput(rl, 'Enter the public base URL for your bot (e.g., your Gitpod URL, Vercel URL). Example: https://your-project.gitpod.io');
+      if (publicBaseUrl) {
+        const webhookUrl = `${publicBaseUrl.replace(/\/$/, '')}/api/telegram_bot`;
+        const webhookSet = await setWebhook(botToken, webhookUrl);
+        if (webhookSet) {
+          envVars.NEXT_PUBLIC_TELEGRAM_BOT_WEBHOOK_URL = webhookUrl;
+          console.log(`✅ Webhook set to: ${webhookUrl}`);
+          console.log('ℹ️ Make sure your bot\'s API route (app/api/telegram_bot/route.ts) is deployed and publicly accessible at this URL.');
+          envUpdated = true;
+        } else {
+          console.log('⚠️ Failed to set webhook. Please check your bot token and URL accessibility.');
+          console.log('   You can try setting it manually later via Telegram Bot API or re-running this step.');
+        }
+      } else {
+        console.log('⚠️ No public base URL provided. Webhook not set. Incoming messages to the bot might not be processed.');
+      }
+    }
+
     console.log('\n🖼️ To set or change your bot\'s profile picture (avatar):');
     console.log('1. Open Telegram and search for "BotFather".');
     console.log('2. Send /mybots and select your bot.');
     console.log('3. Click "Edit Bot" and then "Edit Botpic".');
     console.log('4. Upload your desired profile picture (e.g., public/logo.png).');
 
-    // Bot Name
-    const configureName = await askYesNo(rl, `Do you want to set/update the bot's name (current default: "${projectName}")?`, true);
+    const configureName = await askYesNo(rl, `Do you want to set/update the bot\'s name (current default: "${projectName}")?`, true);
     if (configureName) {
       const botName = await askForInput(rl, 'Enter the desired name for your bot', projectName);
       if (botName) {
@@ -2067,8 +2094,7 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
       }
     }
 
-    // Bot Description
-    const configureDescription = await askYesNo(rl, "Do you want to set/update the bot's description?", true);
+    const configureDescription = await askYesNo(rl, "Do you want to set/update the bot\'s description?", true);
     if (configureDescription) {
       const botDescription = await askForInput(rl, "Enter the desired description for your bot (max 512 chars)");
       if (botDescription) {
@@ -2083,8 +2109,7 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
       }
     }
 
-    // Bot Commands
-    const configureCommands = await askYesNo(rl, "Do you want to set/update the bot's commands?", true);
+    const configureCommands = await askYesNo(rl, "Do you want to set/update the bot\'s commands?", true);
     if (configureCommands) {
       console.log('Enter commands as a JSON array, e.g., [{ "command": "start", "description": "Start bot" }, { "command": "help", "description": "Show help" }]');
       const defaultCommands: BotCommand[] = [
@@ -2110,12 +2135,11 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
       }
     }
 
-    // Admin Chat ID Configuration (existing logic)
     if (envVars.TELEGRAM_ADMIN_CHAT_ID) {
       console.log(`\nℹ️ Found existing TELEGRAM_ADMIN_CHAT_ID: ${envVars.TELEGRAM_ADMIN_CHAT_ID}`);
       const correctAdminChat = await askYesNo(rl, 'Is this TELEGRAM_ADMIN_CHAT_ID correct for user correspondence?', true);
       if (!correctAdminChat) {
-        envVars.TELEGRAM_ADMIN_CHAT_ID = ''; // Clear to ask for a new one
+        envVars.TELEGRAM_ADMIN_CHAT_ID = '';
       }
     }
 
@@ -2150,9 +2174,6 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
     console.log('✅ Telegram Bot configuration saved to .env file.');
   }
   
-  // Removed the incorrect attempt to set profile picture via 'npx tsx cli.ts assets'
-  // The user is now instructed to use BotFather for profile picture changes.
-
   debug('Telegram Bot configuration step completed');
 }
 
