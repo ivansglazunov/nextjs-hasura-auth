@@ -26,6 +26,7 @@ Hasyx takes responsibility for:
 *   Maintaining backward compatibility for UI components under `hasyx/components/ui/*` (generated via shadcn/ui) to minimize refactoring needs in downstream projects.
 *   Ensuring seamless compatibility between Vercel deployments and Hasura Cloud/Server.
 *   Structuring the `./lib/**` directory so its contents can be directly imported as if from an npm package, allowing the project to function as both a **standalone application** and a **reusable library** accessable from application by package.json name `import { anything } from 'you-project-name';` anywhere.
+*   Standardizing resource identification using [Hasyx Identifiers (HID)](HID.md).
 *   Pre-configuring Jest for TypeScript testing of files within the `./lib` directory.
 *   Integrating Resend for sending email verification messages (when `RESEND_API_KEY` is set).
 *   Interactive `npx hasyx cli js [<filePath>] [-e "<script>" | --eval "<script>"]` for quick scripting, data exploration, or debugging interactions with your Hasura backend, with the `client` object available in the global scope.

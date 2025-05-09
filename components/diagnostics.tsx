@@ -1,6 +1,6 @@
 "use client";
 
-import { Sidebar } from "@/components/sidebar";
+import { Sidebar } from "hasyx/components/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,7 +27,7 @@ import { UsersCard } from "hasyx/components/users/users-card";
 import { NotificationCard } from "hasyx/components/notify";
 import { getServerSession, Session } from "next-auth";
 import { AuthOptions } from "next-auth";
-import { SidebarData } from "@/components/sidebar";
+import { SidebarData } from "hasyx/components/sidebar";
 
 // REMOVE local SidebarItem, SidebarSection, and SidebarData type definitions
 
