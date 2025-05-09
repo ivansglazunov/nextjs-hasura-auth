@@ -26,6 +26,7 @@ interface AssistOptions {
   skipCommit?: boolean;
   skipMigrations?: boolean;
   skipFirebase?: boolean;
+  skipTelegram?: boolean;
 }
 
 /**
@@ -135,6 +136,13 @@ export async function assist(options: AssistOptions = {}) {
       await runMigrations(rl);
     } else {
       debug('Skipping migrations');
+    }
+
+    // NEW Step: Configure Telegram Bot
+    if (!options.skipTelegram) {
+      await configureTelegramBot(rl, options.skipTelegram);
+    } else {
+      debug('Skipping Telegram Bot setup');
     }
 
     console.log('✨ All done! Your project is ready to use.');
@@ -1912,6 +1920,110 @@ async function configureFirebaseNotifications(rl: readline.Interface, skip?: boo
   console.log('\n🎉 Firebase push notifications successfully configured!');
 }
 
+// NEW Step: Configure Telegram Bot
+async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
+  if (skip) {
+    debug('Skipping Telegram Bot configuration');
+    console.log('⏩ Skipping Telegram Bot configuration...');
+    return;
+  }
+
+  debug('Configuring Telegram Bot');
+  console.log('\\n🤖 Configuring Telegram Bot...');
+
+  const envPath = path.join(process.cwd(), '.env');
+  let envVars = parseEnvFile(envPath);
+  let envUpdated = false;
+
+  // Check for existing Telegram Bot Token
+  if (envVars.TELEGRAM_BOT_TOKEN) {
+    console.log(`ℹ️ Found existing TELEGRAM_BOT_TOKEN: ${"*".repeat(Math.min(envVars.TELEGRAM_BOT_TOKEN.length, 10))}`);
+    const correctToken = await askYesNo(rl, 'Is this TELEGRAM_BOT_TOKEN correct and an admin in the target group (if any)?', true);
+    if (!correctToken) {
+      envVars.TELEGRAM_BOT_TOKEN = ''; // Clear to ask for a new one
+    }
+  }
+
+  if (!envVars.TELEGRAM_BOT_TOKEN) {
+    const setupBot = await askYesNo(rl, 'Do you want to set up a Telegram Bot for this project?', true);
+    if (setupBot) {
+      console.log('\\n📜 Instructions to create a new Telegram Bot:');
+      console.log('1. Open Telegram and search for "BotFather".');
+      console.log('2. Start a chat with BotFather by sending /start.');
+      console.log('3. Send /newbot to create a new bot.');
+      console.log('4. Follow the prompts to choose a name and username for your bot.');
+      console.log('5. BotFather will provide you with an API token. Copy this token.');
+      
+      const botToken = await askForInput(rl, 'Enter your Telegram Bot API Token');
+      if (botToken) {
+        envVars.TELEGRAM_BOT_TOKEN = botToken;
+        console.log('✅ TELEGRAM_BOT_TOKEN set.');
+        envUpdated = true;
+      } else {
+        console.log('⚠️ Telegram Bot Token not provided. Skipping Telegram Bot specific features.');
+      }
+    } else {
+      console.log('ℹ️ Skipping Telegram Bot setup.');
+    }
+  }
+
+  // If bot token is set, proceed to configure admin chat ID
+  if (envVars.TELEGRAM_BOT_TOKEN) {
+    if (envVars.TELEGRAM_ADMIN_CHAT_ID) {
+      console.log(`ℹ️ Found existing TELEGRAM_ADMIN_CHAT_ID: ${envVars.TELEGRAM_ADMIN_CHAT_ID}`);
+      const correctAdminChat = await askYesNo(rl, 'Is this TELEGRAM_ADMIN_CHAT_ID correct for user correspondence?', true);
+      if (!correctAdminChat) {
+        envVars.TELEGRAM_ADMIN_CHAT_ID = ''; // Clear to ask for a new one
+      }
+    }
+
+    if (!envVars.TELEGRAM_ADMIN_CHAT_ID) {
+      const setupAdminGroup = await askYesNo(rl, 'Do you want to set up a Telegram Group for user correspondence (bot will create topics per user)?', true);
+      if (setupAdminGroup) {
+        console.log('\\n📜 Instructions to set up the Admin Correspondence Group:');
+        console.log('1. Create a new Telegram group (or use an existing one).');
+        console.log('2. Add your Telegram Bot (created in the previous step) to this group.');
+        console.log('3. Promote the bot to an administrator in the group with rights to manage topics (if using topics) and send messages.');
+        console.log('4. Send any message to the group. Then, find the Chat ID of this group.');
+        console.log('   - One way: Add a bot like "@RawDataBot" to the group temporarily, it will show group chat details including ID (usually a negative number).');
+        console.log('   - Or forward a message from the group to "@JsonDumpBot" to get group chat ID.');
+        
+        const adminChatId = await askForInput(rl, 'Enter the Chat ID of your Admin Correspondence Group');
+        if (adminChatId) {
+          envVars.TELEGRAM_ADMIN_CHAT_ID = adminChatId;
+          console.log('✅ TELEGRAM_ADMIN_CHAT_ID set.');
+          console.log('📢 The bot will now attempt to forward user messages to this group and relay replies.');
+          envUpdated = true;
+        } else {
+          console.log('⚠️ TELEGRAM_ADMIN_CHAT_ID not provided. User correspondence features will be limited.');
+        }
+      } else {
+        console.log('ℹ️ Skipping Admin Correspondence Group setup.');
+      }
+    }
+  }
+
+  if (envUpdated) {
+    writeEnvFile(envPath, envVars);
+    console.log('✅ Telegram Bot configuration saved to .env file.');
+  }
+
+  // Run assets again if Telegram bot token is set, to set bot profile picture
+  if (envVars.TELEGRAM_BOT_TOKEN) {
+    console.log('\\n🖼️ Attempting to set Telegram Bot profile picture using public/logo.png...');
+    const assetsResult = spawn.sync('npx', ['hasyx', 'assets'], {
+      stdio: 'inherit', // Show output
+      cwd: process.cwd(),
+    });
+    if (assetsResult.error || assetsResult.status !== 0) {
+      console.error('❌ Failed to run "npx hasyx assets" for Telegram bot. You may need to set the profile picture manually.');
+    } else {
+      console.log('✅ "npx hasyx assets" command completed. Check your bot\'s profile picture.');
+    }
+  }
+  debug('Telegram Bot configuration step completed');
+}
+
 // Allow direct execution for testing
 if (require.main === module) {
   const program = new Command();
@@ -1933,6 +2045,7 @@ if (require.main === module) {
     .option('--skip-commit', 'Skip commit step')
     .option('--skip-migrations', 'Skip migrations check')
     .option('--skip-firebase', 'Skip Firebase configuration')
+    .option('--skip-telegram', 'Skip Telegram Bot configuration')
     .action((options) => {
       assist(options);
     });

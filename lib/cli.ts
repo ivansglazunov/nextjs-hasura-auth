@@ -369,6 +369,8 @@ program
       'app/api/graphql/route.ts': 'app/api/graphql/route.ts',
       // Event Triggers handler (will overwrite)
       'app/api/events/[name]/route.ts': 'app/api/events/[name]/route.ts',
+      // NEW: Telegram Bot handler (will overwrite)
+      'app/api/telegram_bot/route.ts': 'app/api/telegram_bot/route.ts',
     };
     debug('Files to create or replace:', Object.keys(filesToCreateOrReplace));
 
@@ -397,6 +399,8 @@ program
       // Migration files (won't overwrite unless --reinit)
       'migrations/1746660891582-hasyx-users/up.ts': 'migrations/1746660891582-hasyx-users/up.ts',
       'migrations/1746660891582-hasyx-users/down.ts': 'migrations/1746660891582-hasyx-users/down.ts',
+      // NEW: Event trigger definition (won't overwrite unless --reinit)
+      'events/notify.json': 'events/notify.json',
     };
     debug('Files to create if not exists:', Object.keys(filesToCreateIfNotExists));
 
@@ -409,6 +413,8 @@ program
       'migrations/1746660891582-hasyx-users', // Ensure migrations directory exists
       'app/api/events/[name]', // Ensure events directory exists
       'events', // Ensure events definitions directory exists
+      // NEW: Ensure Telegram bot API directory exists
+      'app/api/telegram_bot',
     ];
     debug('Ensuring directories exist:', ensureDirs);
     for (const dir of ensureDirs) {
