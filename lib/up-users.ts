@@ -4,7 +4,7 @@ import { Hasura } from './hasura';
 import Debug from './debug';
 
 // Initialize debug
-const debug = Debug('migration:up');
+const debug = Debug('migration:up-users');
 
 const sqlSchema = `
   -- Create schema if not exists
@@ -269,10 +269,10 @@ export async function applyPermissions(hasura: Hasura) {
 }
 
 /**
- * Main migration function for hasyx
+ * Main migration function for hasyx users
  */
 export async function up(customHasura?: Hasura) {
-  debug('🚀 Starting Hasura migration UP...');
+  debug('🚀 Starting Hasura Users migration UP...');
   
   // Use provided hasura instance or create a new one
   const hasura = customHasura || new Hasura({
@@ -285,11 +285,11 @@ export async function up(customHasura?: Hasura) {
     await trackTables(hasura);
     await createRelationships(hasura);
     await applyPermissions(hasura); // Apply GQL permissions after tables/relationships
-    debug('✨ Hasura migration UP completed successfully!');
+    debug('✨ Hasura Users migration UP completed successfully!');
     return true;
   } catch (error) {
-    console.error('❗ Critical error during UP migration:', error);
-    debug('❌ UP Migration failed.');
+    console.error('❗ Critical error during Users UP migration:', error);
+    debug('❌ Users UP Migration failed.');
     return false;
   }
 } 

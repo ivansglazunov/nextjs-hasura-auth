@@ -22,6 +22,7 @@ import { SessionCard } from "hasyx/components/auth/session-card"
 import { HasuraCard } from "hasyx/components/hasura/card"
 import { ProxyCard } from "hasyx/components/proxy/card"
 import { UsersCard } from "hasyx/components/users/users-card"
+import { NotificationCard } from "hasyx/components/notify"
 
 // Imports for getting server-side session
 import authOptions from "@/app/options"
@@ -62,6 +63,7 @@ export default async function Page() {
             <CredentialsSignInCard />
             <AuthActionsCard />
             <SessionCard serverSession={session}/>
+            <NotificationCard />
             <UsersCard />
           </div>
           <div className="grid auto-rows-min gap-4 md:grid-cols-3">

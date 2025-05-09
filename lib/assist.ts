@@ -25,6 +25,7 @@ interface AssistOptions {
   skipSync?: boolean;
   skipCommit?: boolean;
   skipMigrations?: boolean;
+  skipFirebase?: boolean;
 }
 
 /**
@@ -35,17 +36,19 @@ export async function assist(options: AssistOptions = {}) {
   console.log('🚀 Starting hasyx assist...');
   debug('Starting assist with options:', options);
 
+  const rl = createRlInterface();
+
   try {
     // Step 1: Check GitHub authorization
     if (!options.skipAuth) {
-      await checkGitHubAuth();
+      await checkGitHubAuth(rl);
     } else {
       debug('Skipping GitHub auth check');
     }
 
     // Step 2: Setup repository (create new or clone existing)
     if (!options.skipRepo) {
-      await setupRepository();
+      await setupRepository(rl);
     } else {
       debug('Skipping repository setup');
     }
@@ -75,7 +78,7 @@ export async function assist(options: AssistOptions = {}) {
 
     // Step 6: Configure Hasura
     if (!options.skipHasura) {
-      await configureHasura();
+      await configureHasura(rl);
     } else {
       debug('Skipping Hasura configuration');
     }
@@ -89,21 +92,26 @@ export async function assist(options: AssistOptions = {}) {
 
     // Step 8: Configure OAuth providers
     if (!options.skipOauth) {
-      await configureOAuth();
+      await configureOAuth(rl);
     } else {
       debug('Skipping OAuth configuration');
     }
 
     // Step 9: Configure Resend email service
     if (!options.skipResend) {
-      await configureResend();
+      await configureResend(rl);
     } else {
       debug('Skipping Resend configuration');
     }
 
+    // NEW Step: Configure Firebase for Notifications
+    if (!options.skipFirebase) {
+      await configureFirebaseNotifications(rl, options.skipFirebase);
+    }
+
     // Step 10: Setup Vercel project
     if (!options.skipVercel) {
-      await setupVercel();
+      await setupVercel(rl);
     } else {
       debug('Skipping Vercel setup');
     }
@@ -117,14 +125,14 @@ export async function assist(options: AssistOptions = {}) {
 
     // Step 12: Commit changes
     if (!options.skipCommit) {
-      await commitChanges();
+      await commitChanges(rl);
     } else {
       debug('Skipping commit');
     }
 
     // Step 13: Run migrations
     if (!options.skipMigrations) {
-      await runMigrations();
+      await runMigrations(rl);
     } else {
       debug('Skipping migrations');
     }
@@ -135,6 +143,9 @@ export async function assist(options: AssistOptions = {}) {
     console.error('❌ Error during setup:', error);
     debug('Error during assist:', error);
     process.exit(1);
+  } finally {
+    rl.close();
+    debug('Closed the main readline interface.');
   }
 }
 
@@ -155,41 +166,32 @@ function createRlInterface() {
  * @param defaultValue The default value (true for yes, false for no)
  * @returns User's answer (true for yes, false for no)
  */
-async function askYesNo(question: string, defaultValue: boolean = true): Promise<boolean> {
-  const rl = createRlInterface();
-  
-  try {
+async function askYesNo(rl: readline.Interface, question: string, defaultValue: boolean = true): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
     const prompt = defaultValue 
       ? `${question} [Y/n]: `
       : `${question} [y/N]: `;
     
     debug(`Asking: ${question} (default: ${defaultValue ? 'Y' : 'N'})`);
     
-    return new Promise<boolean>((resolve) => {
-      rl.question(prompt, (answer) => {
-        const normalizedAnswer = answer.trim().toLowerCase();
-        
-        if (normalizedAnswer === '') {
-          // User pressed Enter, use default
-          resolve(defaultValue);
-        } else if (['y', 'yes'].includes(normalizedAnswer)) {
-          resolve(true);
-        } else if (['n', 'no'].includes(normalizedAnswer)) {
-          resolve(false);
-        } else {
-          // Invalid input, use default
-          console.log(`Invalid response. Using default: ${defaultValue ? 'Yes' : 'No'}`);
-          resolve(defaultValue);
-        }
-        
-        rl.close();
-      });
+    rl.question(prompt, (answer) => {
+      const normalizedAnswer = answer.trim().toLowerCase();
+      let result: boolean;
+      
+      if (normalizedAnswer === '') {
+        result = defaultValue;
+      } else if (['y', 'yes'].includes(normalizedAnswer)) {
+        result = true;
+      } else if (['n', 'no'].includes(normalizedAnswer)) {
+        result = false;
+      } else {
+        console.log(`Invalid response. Using default: ${defaultValue ? 'Yes' : 'No'}`);
+        result = defaultValue;
+      }
+      
+      resolve(result);
     });
-  } catch (error) {
-    debug(`Error asking yes/no question: ${error}`);
-    rl.close();
-    return defaultValue;
-  }
+  });
 }
 
 /**
@@ -198,42 +200,34 @@ async function askYesNo(question: string, defaultValue: boolean = true): Promise
  * @param defaultValue Default value if the user presses Enter
  * @returns User's input or defaultValue if empty
  */
-async function askForInput(prompt: string, defaultValue: string = ''): Promise<string> {
-  const rl = createRlInterface();
-  
-  try {
+async function askForInput(rl: readline.Interface, prompt: string, defaultValue: string = ''): Promise<string> {
+  return new Promise<string>((resolve) => {
     const promptText = defaultValue 
       ? `${prompt} [${defaultValue}]: `
       : `${prompt}: `;
-    
+      
     debug(`Asking for input: ${prompt} (default: ${defaultValue})`);
-    
-    return new Promise<string>((resolve) => {
-      rl.question(promptText, (answer) => {
-        const trimmedAnswer = answer.trim();
-        
-        if (trimmedAnswer === '') {
-          // User pressed Enter, use default
-          resolve(defaultValue);
-        } else {
-          resolve(trimmedAnswer);
-        }
-        
-        rl.close();
-      });
+      
+    rl.question(promptText, (answer) => {
+      const trimmedAnswer = answer.trim();
+      let result: string;
+      
+      if (trimmedAnswer === '') {
+        result = defaultValue;
+      } else {
+        result = trimmedAnswer;
+      }
+      
+      resolve(result);
     });
-  } catch (error) {
-    debug(`Error asking for input: ${error}`);
-    rl.close();
-    return defaultValue;
-  }
+  });
 }
 
 /**
  * Step 1: Check if the user is authenticated with GitHub
  * If not, prompt them to authenticate
  */
-async function checkGitHubAuth() {
+async function checkGitHubAuth(rl: readline.Interface) {
   debug('Checking GitHub authentication');
   console.log('🔑 Checking GitHub authentication...');
   
@@ -267,7 +261,7 @@ async function checkGitHubAuth() {
       console.log('❌ You are not authenticated with GitHub.');
       console.log('\nPlease login to GitHub to continue:');
       
-      const shouldLogin = await askYesNo('Do you want to login now?', true);
+      const shouldLogin = await askYesNo(rl, 'Do you want to login now?', true);
       
       if (shouldLogin) {
         console.log('\n🔐 Starting GitHub login process...');
@@ -493,7 +487,7 @@ function generateHasuraJwtSecret(): { type: string; key: string } {
 /**
  * Step 2: Setup repository (create new or clone existing)
  */
-async function setupRepository() {
+async function setupRepository(rl: readline.Interface) {
   debug('Setting up repository');
   console.log('📁 Setting up repository...');
   
@@ -509,12 +503,12 @@ async function setupRepository() {
       return;
     } else {
       console.log('⚠️ Current directory is a git repository but has no GitHub remote.');
-      const addRemote = await askYesNo('Would you like to add a GitHub remote?', true);
+      const addRemote = await askYesNo(rl, 'Would you like to add a GitHub remote?', true);
       
       if (addRemote) {
         // Create a new GitHub repository and add it as remote
         const repoName = path.basename(process.cwd());
-        const createPublic = await askYesNo('Create as public repository?', false);
+        const createPublic = await askYesNo(rl, 'Create as public repository?', false);
         
         console.log(`🔨 Creating GitHub repository: ${repoName}...`);
         
@@ -529,7 +523,7 @@ async function setupRepository() {
         
         if (createResult.error || createResult.status !== 0) {
           console.error('❌ Failed to create GitHub repository.');
-          const manualContinue = await askYesNo('Continue without GitHub remote?', false);
+          const manualContinue = await askYesNo(rl, 'Continue without GitHub remote?', false);
           if (!manualContinue) process.exit(1);
         } else {
           console.log('✅ GitHub repository created and configured as remote.');
@@ -538,7 +532,7 @@ async function setupRepository() {
     }
   } else {
     console.log('⚠️ Current directory is not a git repository.');
-    const createNew = await askYesNo('Would you like to create a new GitHub repository here?', true);
+    const createNew = await askYesNo(rl, 'Would you like to create a new GitHub repository here?', true);
     
     if (createNew) {
       // Initialize git repository
@@ -552,7 +546,7 @@ async function setupRepository() {
       
       // Create a new GitHub repository
       const repoName = path.basename(process.cwd());
-      const createPublic = await askYesNo('Create as public repository?', false);
+      const createPublic = await askYesNo(rl, 'Create as public repository?', false);
       
       console.log(`🔨 Creating GitHub repository: ${repoName}...`);
       
@@ -566,17 +560,17 @@ async function setupRepository() {
       
       if (createResult.error || createResult.status !== 0) {
         console.error('❌ Failed to create GitHub repository.');
-        const manualContinue = await askYesNo('Continue without GitHub remote?', false);
+        const manualContinue = await askYesNo(rl, 'Continue without GitHub remote?', false);
         if (!manualContinue) process.exit(1);
       } else {
         console.log('✅ GitHub repository created and configured as remote.');
       }
     } else {
       // Ask if they want to use an existing repository
-      const useExisting = await askYesNo('Do you have an existing GitHub repository you want to use?', true);
+      const useExisting = await askYesNo(rl, 'Do you have an existing GitHub repository you want to use?', true);
       
       if (useExisting) {
-        const repoUrl = await askForInput('Enter the GitHub repository URL (e.g., https://github.com/username/repo)');
+        const repoUrl = await askForInput(rl, 'Enter the GitHub repository URL (e.g., https://github.com/username/repo)');
         
         if (!repoUrl) {
           console.error('❌ No repository URL provided.');
@@ -744,14 +738,35 @@ async function initializeHasyx() {
   
   // Check if hasyx is installed
   try {
-    const hasyxResult = spawn.sync('npm', ['list', '--depth=0', 'hasyx'], {
-      stdio: 'pipe',
-      encoding: 'utf-8'
-    });
+    // --- START Check if current project IS hasyx --- 
+    let isHasyxProject = false;
+    try {
+      const packageJsonPath = path.join(process.cwd(), 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        const pkgJson = await fs.readJson(packageJsonPath);
+        if (pkgJson.name === 'hasyx') {
+          isHasyxProject = true;
+          debug('Current project is hasyx itself.');
+        }
+      }
+    } catch (pkgError) {
+      debug('Could not read package.json to check project name:', pkgError);
+    }
+    // --- END Check --- 
+
+    let isInstalled = false;
+    if (!isHasyxProject) {
+      const hasyxResult = spawn.sync('npm', ['list', '--depth=0', 'hasyx'], {
+        stdio: 'pipe',
+        encoding: 'utf-8'
+      });
+      isInstalled = !hasyxResult.stdout?.includes('empty');
+    } else {
+      console.log('ℹ️ Skipping hasyx installation check as we are in the hasyx project itself.');
+      isInstalled = true; // Assume it's available if we are in the project
+    }
     
-    const isInstalled = !hasyxResult.stdout?.includes('empty');
-    
-    if (!isInstalled) {
+    if (!isInstalled && !isHasyxProject) {
       console.log('📦 Installing hasyx...');
       const installResult = spawn.sync('npm', ['install', '--save', 'hasyx'], {
         stdio: 'inherit'
@@ -768,17 +783,19 @@ async function initializeHasyx() {
     }
     
     // Run hasyx init to initialize the project
-    console.log('🛠️ Running hasyx init...');
-    const initResult = spawn.sync('npx', ['hasyx', 'init'], {
-      stdio: 'inherit'
-    });
-    
-    if (initResult.error || initResult.status !== 0) {
-      console.error('❌ Failed to initialize hasyx.');
-      process.exit(1);
+    if (!isHasyxProject) {
+      console.log('🛠️ Running hasyx init...');
+      const initResult = spawn.sync('npx', ['hasyx', 'init'], {
+        stdio: 'inherit'
+      });
+      
+      if (initResult.error || initResult.status !== 0) {
+        console.error('❌ Failed to initialize hasyx.');
+        process.exit(1);
+      }
+      
+      console.log('✅ hasyx initialized successfully.');
     }
-    
-    console.log('✅ hasyx initialized successfully.');
   } catch (error) {
     debug('Error during hasyx initialization:', error);
     console.error('❌ Error initializing hasyx:', error);
@@ -791,7 +808,7 @@ async function initializeHasyx() {
 /**
  * Step 6: Configure Hasura
  */
-async function configureHasura() {
+async function configureHasura(rl: readline.Interface) {
   debug('Configuring Hasura');
   console.log('🔧 Configuring Hasura...');
   
@@ -805,7 +822,7 @@ async function configureHasura() {
     // Check if admin secret is missing
     if (!envVars.HASURA_ADMIN_SECRET) {
       console.log('⚠️ HASURA_ADMIN_SECRET is missing.');
-      const adminSecret = await askForInput('Enter your Hasura admin secret');
+      const adminSecret = await askForInput(rl, 'Enter your Hasura admin secret');
       
       if (adminSecret) {
         envVars.HASURA_ADMIN_SECRET = adminSecret;
@@ -818,7 +835,7 @@ async function configureHasura() {
     // Check if JWT secret is missing
     if (!envVars.HASURA_JWT_SECRET) {
       console.log('⚠️ HASURA_JWT_SECRET is missing.');
-      const shouldGenerate = await askYesNo('Generate a new JWT secret?', true);
+      const shouldGenerate = await askYesNo(rl, 'Generate a new JWT secret?', true);
       
       if (shouldGenerate) {
         const jwtSecret = generateHasuraJwtSecret();
@@ -841,20 +858,20 @@ async function configureHasura() {
     writeEnvFile(envPath, envVars);
   } else {
     // No Hasura URL - ask if we should create a new one
-    const createNew = await askYesNo('No Hasura GraphQL URL found. Would you like to create a new Hasura project?', true);
+    const createNew = await askYesNo(rl, 'No Hasura GraphQL URL found. Would you like to create a new Hasura project?', true);
     
     if (createNew) {
       console.log('🚀 Creating new Hasura Cloud project...');
       console.log('⚠️ Automatic creation not implemented yet .');
       console.log('ℹ️ Please create a project manually at https://cloud.hasura.io/');
       
-      const hasuraUrl = await askForInput('Enter your Hasura GraphQL URL');
+      const hasuraUrl = await askForInput(rl, 'Enter your Hasura GraphQL URL');
       if (!hasuraUrl) {
         console.error('❌ No Hasura GraphQL URL provided.');
         process.exit(1);
       }
       
-      const adminSecret = await askForInput('Enter your Hasura admin secret');
+      const adminSecret = await askForInput(rl, 'Enter your Hasura admin secret');
       if (!adminSecret) {
         console.error('❌ No Hasura admin secret provided.');
         process.exit(1);
@@ -884,13 +901,13 @@ async function configureHasura() {
       console.log('\n⚠️ Please set HASURA_GRAPHQL_UNAUTHORIZED_ROLE to "anonymous" in your Hasura console environment variables.');
     } else {
       // Ask for existing Hasura URL
-      const hasuraUrl = await askForInput('Enter your existing Hasura GraphQL URL');
+      const hasuraUrl = await askForInput(rl, 'Enter your existing Hasura GraphQL URL');
       if (!hasuraUrl) {
         console.error('❌ No Hasura GraphQL URL provided.');
         process.exit(1);
       }
       
-      const adminSecret = await askForInput('Enter your Hasura admin secret');
+      const adminSecret = await askForInput(rl, 'Enter your Hasura admin secret');
       if (!adminSecret) {
         console.error('❌ No Hasura admin secret provided.');
         process.exit(1);
@@ -901,13 +918,13 @@ async function configureHasura() {
       envVars.HASURA_ADMIN_SECRET = adminSecret;
       
       // Check if existing JWT secret should be generated
-      const shouldGenerateJwt = await askYesNo('Generate a new JWT secret?', true);
+      const shouldGenerateJwt = await askYesNo(rl, 'Generate a new JWT secret?', true);
       if (shouldGenerateJwt) {
         const jwtSecret = generateHasuraJwtSecret();
         envVars.HASURA_JWT_SECRET = JSON.stringify(jwtSecret);
         console.log('✅ Generated and set HASURA_JWT_SECRET.');
       } else {
-        const jwtSecretStr = await askForInput('Enter your existing JWT secret (JSON format)');
+        const jwtSecretStr = await askForInput(rl, 'Enter your existing JWT secret (JSON format)');
         if (jwtSecretStr) {
           try {
             // Validate that it's proper JSON
@@ -916,7 +933,7 @@ async function configureHasura() {
             console.log('✅ Set HASURA_JWT_SECRET.');
           } catch (e) {
             console.error('❌ Invalid JWT secret format. Must be valid JSON.');
-            const generateAnyway = await askYesNo('Generate a new JWT secret instead?', true);
+            const generateAnyway = await askYesNo(rl, 'Generate a new JWT secret instead?', true);
             if (generateAnyway) {
               const jwtSecret = generateHasuraJwtSecret();
               envVars.HASURA_JWT_SECRET = JSON.stringify(jwtSecret);
@@ -976,7 +993,7 @@ async function setupAuthSecrets() {
 /**
  * Step 8: Configure OAuth providers (Google, Yandex)
  */
-async function configureOAuth() {
+async function configureOAuth(rl: readline.Interface) {
   debug('Configuring OAuth providers');
   console.log('🔐 Configuring OAuth providers...');
   
@@ -1001,7 +1018,7 @@ async function configureOAuth() {
   
   if (hasGoogleConfig) {
     console.log('✅ Google OAuth already configured.');
-    const shouldReconfigure = await askYesNo('Do you want to reconfigure Google OAuth?', false);
+    const shouldReconfigure = await askYesNo(rl, 'Do you want to reconfigure Google OAuth?', false);
     
     if (!shouldReconfigure) {
       console.log('ℹ️ Keeping existing Google OAuth configuration.');
@@ -1009,16 +1026,21 @@ async function configureOAuth() {
       // Clear existing config to reconfigure
       envVars.GOOGLE_CLIENT_ID = '';
       envVars.GOOGLE_CLIENT_SECRET = '';
+      debug('Cleared existing Google config for re-configuration.');
     }
   }
   
+  debug('Finished checks for existing Google config.');
+  
   // Configure Google OAuth if not already set or reconfiguring
   if (!envVars.GOOGLE_CLIENT_ID || !envVars.GOOGLE_CLIENT_SECRET) {
-    const configureGoogle = await askYesNo('Do you want to configure Google OAuth now?', true);
+    debug('Entering block to potentially configure Google OAuth.');
+    const configureGoogle = await askYesNo(rl, 'Do you want to configure Google OAuth now?', true);
+    debug('After Google askYesNo for configuration, configureGoogle:', configureGoogle);
     
     if (configureGoogle) {
-      const googleClientId = await askForInput('Enter your Google Client ID');
-      const googleClientSecret = await askForInput('Enter your Google Client Secret');
+      const googleClientId = await askForInput(rl, 'Enter your Google Client ID');
+      const googleClientSecret = await askForInput(rl, 'Enter your Google Client Secret');
       
       if (googleClientId && googleClientSecret) {
         envVars.GOOGLE_CLIENT_ID = googleClientId;
@@ -1034,6 +1056,8 @@ async function configureOAuth() {
     }
   }
   
+  debug('Finished Google OAuth section. Proceeding to Yandex.');
+  
   // --- Yandex OAuth ---
   console.log('\n📱 Yandex OAuth Configuration:');
   console.log('To set up Yandex OAuth, follow these steps:');
@@ -1048,7 +1072,7 @@ async function configureOAuth() {
   
   if (hasYandexConfig) {
     console.log('✅ Yandex OAuth already configured.');
-    const shouldReconfigure = await askYesNo('Do you want to reconfigure Yandex OAuth?', false);
+    const shouldReconfigure = await askYesNo(rl, 'Do you want to reconfigure Yandex OAuth?', false);
     
     if (!shouldReconfigure) {
       console.log('ℹ️ Keeping existing Yandex OAuth configuration.');
@@ -1061,11 +1085,11 @@ async function configureOAuth() {
   
   // Configure Yandex OAuth if not already set or reconfiguring
   if (!envVars.YANDEX_CLIENT_ID || !envVars.YANDEX_CLIENT_SECRET) {
-    const configureYandex = await askYesNo('Do you want to configure Yandex OAuth now?', true);
+    const configureYandex = await askYesNo(rl, 'Do you want to configure Yandex OAuth now?', true);
     
     if (configureYandex) {
-      const yandexClientId = await askForInput('Enter your Yandex Client ID');
-      const yandexClientSecret = await askForInput('Enter your Yandex Client Secret');
+      const yandexClientId = await askForInput(rl, 'Enter your Yandex Client ID');
+      const yandexClientSecret = await askForInput(rl, 'Enter your Yandex Client Secret');
       
       if (yandexClientId && yandexClientSecret) {
         envVars.YANDEX_CLIENT_ID = yandexClientId;
@@ -1093,7 +1117,7 @@ async function configureOAuth() {
 /**
  * Step 9: Configure Resend email service
  */
-async function configureResend() {
+async function configureResend(rl: readline.Interface) {
   debug('Configuring Resend email service');
   console.log('📧 Configuring Resend email service...');
   
@@ -1109,7 +1133,7 @@ async function configureResend() {
   // Check if Resend API key already exists
   if (envVars.RESEND_API_KEY) {
     console.log('✅ Resend API key already configured.');
-    const shouldReconfigure = await askYesNo('Do you want to reconfigure the Resend API key?', false);
+    const shouldReconfigure = await askYesNo(rl, 'Do you want to reconfigure the Resend API key?', false);
     
     if (!shouldReconfigure) {
       console.log('ℹ️ Keeping existing Resend API key.');
@@ -1118,10 +1142,10 @@ async function configureResend() {
   }
   
   // Configure Resend API key
-  const configureResend = await askYesNo('Do you want to configure Resend email service now?', true);
+  const configureResend = await askYesNo(rl, 'Do you want to configure Resend email service now?', true);
   
   if (configureResend) {
-    const apiKey = await askForInput('Enter your Resend API Key');
+    const apiKey = await askForInput(rl, 'Enter your Resend API Key');
     
     if (apiKey) {
       envVars.RESEND_API_KEY = apiKey;
@@ -1274,7 +1298,7 @@ async function getVercelUrlFromRepoDescription(): Promise<string> {
 /**
  * Step 10: Setup Vercel project
  */
-async function setupVercel() {
+async function setupVercel(rl: readline.Interface) {
   debug('Setting up Vercel project');
   console.log('🌐 Setting up Vercel project...');
   
@@ -1325,7 +1349,7 @@ async function setupVercel() {
     console.log('❌ Vercel CLI is not installed.');
     console.log('Please install it with: npm install -g vercel');
     
-    const shouldContinue = await askYesNo('Continue without Vercel setup?', true);
+    const shouldContinue = await askYesNo(rl, 'Continue without Vercel setup?', true);
     if (!shouldContinue) {
       process.exit(1);
     }
@@ -1360,7 +1384,7 @@ async function setupVercel() {
     console.log('❌ Not logged in to Vercel.');
     console.log('Please login with: vercel login');
     
-    const shouldLogin = await askYesNo('Login to Vercel now?', true);
+    const shouldLogin = await askYesNo(rl, 'Login to Vercel now?', true);
     
     if (shouldLogin) {
       // Run Vercel login
@@ -1371,7 +1395,7 @@ async function setupVercel() {
       if (loginResult.error || loginResult.status !== 0) {
         console.error('❌ Failed to login to Vercel.');
         
-        const shouldContinue = await askYesNo('Continue without Vercel setup?', true);
+        const shouldContinue = await askYesNo(rl, 'Continue without Vercel setup?', true);
         if (!shouldContinue) {
           process.exit(1);
         }
@@ -1436,7 +1460,7 @@ async function setupVercel() {
     console.log('ℹ️ No linked Vercel project found.');
     
     // Check if user wants to link project
-    const shouldLink = await askYesNo('Do you want to link this project to Vercel?', true);
+    const shouldLink = await askYesNo(rl, 'Do you want to link this project to Vercel?', true);
     
     if (!shouldLink) {
       console.log('⚠️ Skipping Vercel setup.');
@@ -1489,7 +1513,7 @@ async function setupVercel() {
     if (setupResult.error || setupResult.status !== 0) {
       console.error('❌ Failed to link Vercel project.');
       
-      const shouldContinue = await askYesNo('Continue without Vercel setup?', true);
+      const shouldContinue = await askYesNo(rl, 'Continue without Vercel setup?', true);
       if (!shouldContinue) {
         process.exit(1);
       }
@@ -1554,7 +1578,7 @@ async function setupVercel() {
       
       // If still no domain, ask the user to provide one
       if (!projectDomain) {
-        projectDomain = await askForInput('Enter your Vercel project URL (e.g., https://your-project.vercel.app)');
+        projectDomain = await askForInput(rl, 'Enter your Vercel project URL (e.g., https://your-project.vercel.app)');
       } else {
         console.log(`✅ Found Vercel URL in repository description: ${projectDomain}`);
       }
@@ -1567,7 +1591,7 @@ async function setupVercel() {
     
     // Ask user for domain as fallback if still not found
     if (!projectDomain) {
-      projectDomain = await askForInput('Enter your Vercel project URL (e.g., https://your-project.vercel.app)');
+      projectDomain = await askForInput(rl, 'Enter your Vercel project URL (e.g., https://your-project.vercel.app)');
     } else {
       console.log(`✅ Found Vercel URL in repository description: ${projectDomain}`);
     }
@@ -1682,12 +1706,12 @@ async function syncEnvironmentVariables() {
 /**
  * Step 12: Commit and push changes
  */
-async function commitChanges() {
+async function commitChanges(rl: readline.Interface) {
   debug('Committing changes');
   console.log('💾 Ready to commit changes...');
   
   // Check if we should commit
-  const shouldCommit = await askYesNo('Do you want to commit and push your changes?', true);
+  const shouldCommit = await askYesNo(rl, 'Do you want to commit and push your changes?', true);
   
   if (shouldCommit) {
     // Try to get the version from package.json
@@ -1756,7 +1780,7 @@ async function commitChanges() {
 /**
  * Step 13: Run migrations if needed
  */
-async function runMigrations() {
+async function runMigrations(rl: readline.Interface) {
   debug('Checking if migrations are needed');
   console.log('🔍 Checking if database migrations are needed...');
   
@@ -1772,7 +1796,7 @@ async function runMigrations() {
   console.log('ℹ️ In a future version, this step will automatically check if your database schema is up to date.');
   console.log('For now, we will offer to run migrations manually.');
   
-  const shouldRunMigrations = await askYesNo('Do you want to run migrations now?', true);
+  const shouldRunMigrations = await askYesNo(rl, 'Do you want to run migrations now?', true);
   
   if (shouldRunMigrations) {
     console.log('🔄 Running migrations...');
@@ -1795,6 +1819,99 @@ async function runMigrations() {
   debug('Migrations step completed');
 }
 
+// Configure Firebase for notifications
+async function configureFirebaseNotifications(rl: readline.Interface, skip?: boolean): Promise<void> {
+  if (skip) {
+    console.log('⏩ Skipping Firebase notifications configuration...');
+    return;
+  }
+
+  console.log('\n🔔 Setting up Firebase for push notifications:');
+  console.log('For setting up push notifications, you will need a Firebase project.');
+  console.log('1. Go to https://console.firebase.google.com/');
+  console.log('2. Create a new project or select an existing one');
+  console.log('3. Add a web app to the project');
+  console.log('4. Enable Firebase Cloud Messaging (FCM) in the project settings (Cloud Messaging tab).');
+  console.log('5. In Project Settings > Service accounts, click "Generate new private key" to get your service account JSON file.');
+  console.log('   Store this file securely and provide its path when prompted for GOOGLE_APPLICATION_CREDENTIALS.');
+  console.log('6. In Project Settings > General, find your web app to get its configuration (API Key, Project ID, etc.)\n');
+
+  // const rl = createRlInterface(); // Remove creation here
+  
+  // Define the path to the .env file
+  const envPath = path.join(process.cwd(), '.env'); // Re-add envPath declaration
+
+  // Check existing environment variables
+  let envVars: Record<string, string> = {}; // Re-add envVars declaration
+  
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf-8');
+    envContent.split('\n').forEach(line => {
+      if (line && !line.startsWith('#')) {
+        const equalIndex = line.indexOf('=');
+        if (equalIndex > 0) {
+          const key = line.substring(0, equalIndex).trim();
+          const value = line.substring(equalIndex + 1).trim();
+          envVars[key] = value;
+        }
+      }
+    });
+  }
+
+  // Ask for Firebase Service Account JSON path
+  if (!envVars.GOOGLE_APPLICATION_CREDENTIALS) {
+    const serviceAccountPath = await askForInput(rl, 'Enter the full path to your Firebase Service Account JSON file (e.g., /path/to/your-service-account-file.json): '); // Pass rl
+    if (serviceAccountPath) {
+      if (fs.existsSync(serviceAccountPath)) {
+        envVars.GOOGLE_APPLICATION_CREDENTIALS = serviceAccountPath;
+        console.log('✅ GOOGLE_APPLICATION_CREDENTIALS set in .env to point to your service account file.');
+        console.log('ℹ️ Ensure this file is NOT committed to your repository and is securely managed.');
+      } else {
+        console.warn('⚠️ The specified file path for GOOGLE_APPLICATION_CREDENTIALS does not exist. Please check the path and set it manually in your .env file.');
+      }
+    }
+  } else {
+    console.log('🔵 GOOGLE_APPLICATION_CREDENTIALS (path to service account JSON) is already configured in .env');
+  }
+
+  // Ask for Firebase Web SDK configuration
+  const firebaseKeys = [
+    { key: 'NEXT_PUBLIC_FIREBASE_API_KEY', prompt: 'Firebase API Key: ' },
+    { key: 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', prompt: 'Firebase Auth Domain: ' },
+    { key: 'NEXT_PUBLIC_FIREBASE_PROJECT_ID', prompt: 'Firebase Project ID: ' },
+    { key: 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', prompt: 'Firebase Storage Bucket: ' },
+    { key: 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', prompt: 'Firebase Messaging Sender ID: ' },
+    { key: 'NEXT_PUBLIC_FIREBASE_APP_ID', prompt: 'Firebase App ID: ' },
+    { key: 'NEXT_PUBLIC_FIREBASE_VAPID_KEY', prompt: 'Firebase Web Push Certificate Key (VAPID): ' }
+  ];
+
+  for (const { key, prompt } of firebaseKeys) {
+    if (!envVars[key]) {
+      const value = await askForInput(rl, prompt); // Pass rl
+      if (value) {
+        envVars[key] = value;
+      }
+    } else {
+      console.log(`🔵 ${key} is already configured in .env`);
+    }
+  }
+
+  // Update .env file
+  const newEnvContent = Object.entries(envVars)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+  
+  // Filter out FIREBASE_SERVER_KEY if it exists from old configurations
+  let finalEnvLines = newEnvContent.split('\n').filter(line => !line.startsWith('FIREBASE_SERVER_KEY='));
+  const finalNewEnvContent = finalEnvLines.join('\n');
+
+  fs.writeFileSync(envPath, finalNewEnvContent);
+  console.log('✅ Firebase configuration saved to .env file');
+
+  // rl.close(); // Do NOT close here
+  console.log('\n🎉 Firebase push notifications successfully configured!');
+}
+
 // Allow direct execution for testing
 if (require.main === module) {
   const program = new Command();
@@ -1815,6 +1932,7 @@ if (require.main === module) {
     .option('--skip-sync', 'Skip environment variable sync')
     .option('--skip-commit', 'Skip commit step')
     .option('--skip-migrations', 'Skip migrations check')
+    .option('--skip-firebase', 'Skip Firebase configuration')
     .action((options) => {
       assist(options);
     });

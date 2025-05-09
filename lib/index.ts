@@ -6,6 +6,8 @@ export * from './hasura';
 export * from './hasyx';
 export * from './jwt';
 export * from './utils';
+export * from './provider';
+export * from './notify';
 
 // Re-export from auth.tsx (now including auth-next.ts indirectly)
 export * from './auth';

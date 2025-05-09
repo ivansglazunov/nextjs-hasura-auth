@@ -425,6 +425,22 @@ VERCEL_URL=https://your-project.vercel.app
 # Required if using EmailProvider or email features (like verification if implemented)
 # RESEND_API_KEY=re_your_resend_api_key
 
+# ===== Push Notifications Configuration =====
+# Path to your Firebase service account JSON file for server-side authentication with FCM v1 API
+# GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-file.json
+
+# Firebase Web SDK configuration (for client-side)
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com 
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
+NEXT_PUBLIC_FIREBASE_VAPID_KEY=your_firebase_web_push_certificate_key
+
+# Optional: Custom path to notification icon
+NEXT_PUBLIC_NOTIFICATION_ICON=/icon-192x192.png
+
 # ===== Other =====
 # NODE_ENV=development # Usually set automatically by Node/Next.js
 ```
@@ -518,6 +534,10 @@ Common WebSocket error: `TypeError: bufferUtil.mask is not a function` indicates
     1. Sign up for Resend.
     2. Create an API Key in your Resend dashboard.
     3. Add the key to your `.env`.
+
+## 📢 Push Notifications
+
+Hasyx includes a flexible system for push notifications, designed to be extensible across various platforms. For detailed information on the notification system's architecture, supported platforms, and setup instructions, please refer to our comprehensive [Push Notifications Guide (NOTIFY.md)](NOTIFY.md).
 
 ## Contributing
 

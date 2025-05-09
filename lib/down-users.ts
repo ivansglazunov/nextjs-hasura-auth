@@ -4,9 +4,9 @@ import { Hasura } from './hasura';
 import Debug from './debug';
 
 // Initialize debug
-const debug = Debug('migration:down');
+const debug = Debug('migration:down-users');
 
-// SQL for dropping tables
+// SQL for dropping users tables
 const dropTablesSQL = `
   DROP TABLE IF EXISTS public.accounts CASCADE;
   DROP TABLE IF EXISTS public.users CASCADE;
@@ -38,8 +38,9 @@ const tablesToUntrack = [
   }
 ];
 
-// Metadata for dropping anonymous permissions
-const permissionsToDropAnonymous = [
+// Metadata for dropping permissions
+const permissionsToDrop = [
+  // Anonymous permissions
   {
     type: 'pg_drop_select_permission',
     args: {
@@ -55,6 +56,40 @@ const permissionsToDropAnonymous = [
       table: { schema: 'public', name: 'accounts' },
       role: 'anonymous'
     }
+  },
+  // User permissions
+  {
+    type: 'pg_drop_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'users' },
+      role: 'user'
+    }
+  },
+  {
+    type: 'pg_drop_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'users' },
+      role: 'me'
+    }
+  },
+  // Admin permissions
+  {
+    type: 'pg_drop_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'users' },
+      role: 'admin'
+    }
+  },
+  {
+    type: 'pg_drop_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'accounts' },
+      role: 'admin'
+    }
   }
 ];
 
@@ -64,15 +99,15 @@ const permissionsToDropAnonymous = [
 export async function dropMetadata(hasura: Hasura) {
   debug('🧹 Dropping permissions and untracking tables...');
 
-  // Drop anonymous permissions first
-  debug('  🗑️ Dropping anonymous permissions...');
-  for (const dropRequest of permissionsToDropAnonymous) {
+  // Drop all permissions first
+  debug('  🗑️ Dropping permissions...');
+  for (const dropRequest of permissionsToDrop) {
     const perm = `${dropRequest.args.role} on ${dropRequest.args.table.schema}.${dropRequest.args.table.name}`;
     debug(`     Dropping select permission for ${perm}...`);
     await hasura.v1(dropRequest);
     // Note: hasura.v1 handles 'not found' messages internally
   }
-  debug('  ✅ Anonymous permissions dropped.');
+  debug('  ✅ Permissions dropped.');
 
   debug('  🗑️ Untracking tables users and accounts...');
   for (const untrackRequest of tablesToUntrack) {
@@ -94,10 +129,10 @@ export async function dropTables(hasura: Hasura) {
 }
 
 /**
- * Main migration function to remove hasyx tables
+ * Main migration function to remove hasyx users tables
  */
 export async function down(customHasura?: Hasura) {
-  debug('🚀 Starting Hasura migration DOWN...');
+  debug('🚀 Starting Hasura Users migration DOWN...');
   
   // Use provided hasura instance or create a new one
   const hasura = customHasura || new Hasura({
@@ -112,11 +147,11 @@ export async function down(customHasura?: Hasura) {
     // Then drop the tables themselves
     await dropTables(hasura);
 
-    debug('✨ Hasura migration DOWN completed successfully!');
+    debug('✨ Hasura Users migration DOWN completed successfully!');
     return true;
   } catch (error) {
-    console.error('❗ Critical error during DOWN migration:', error);
-    debug('❌ DOWN Migration failed.');
+    console.error('❗ Critical error during Users DOWN migration:', error);
+    debug('❌ Users DOWN Migration failed.');
     return false;
   }
 } 
