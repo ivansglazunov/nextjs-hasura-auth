@@ -1,3 +1,4 @@
+"use client";
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -12,6 +13,7 @@ import {
 } from "hasyx/components/ui/sidebar";
 import { ProjectAndVersion } from "hasyx/components/version-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
+import { usePathname } from 'next/navigation';
 
 export interface SidebarItem {
   title: string;
@@ -28,7 +30,8 @@ export interface SidebarData {
   navMain: SidebarItem[];
 }
 
-export function Sidebar({ activeUrl, data }: { activeUrl: string, data: SidebarData }) {
+export function Sidebar({ data }: { data: SidebarData }) {
+  const pathname = usePathname();
   return (
     <SidebarComponent>
       <SidebarHeader>
@@ -48,7 +51,7 @@ export function Sidebar({ activeUrl, data }: { activeUrl: string, data: SidebarD
               <SidebarMenu>
                 {item?.items?.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={item.url === activeUrl || item.url === activeUrl + "/"}>
+                    <SidebarMenuButton asChild isActive={item.url === pathname || item.url === pathname + "/"}>
                       <a href={item.url}>{item.title}</a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

@@ -275,6 +275,13 @@ When running `init`, Hasyx automatically patches your Next.js project for WebSoc
 │       │       └── 🔄 route.ts     # (Likely for email verification)
 │       └── graphql/
 │           └── 🔄 route.ts         # Hasyx GraphQL Proxy
+├── migrations/
+│   ├── 1746660891582-hasyx-users/
+│   │   ├── ✨ up.ts
+│   │   └── ✨ down.ts
+│   └── 1746670608552-hasyx-notify/
+│       ├── ✨ up.ts
+│       └── ✨ down.ts
 |-- public/
 │   ├── ✨ logo.svg
 │   ├── ✨ favicon.ico
@@ -413,7 +420,7 @@ VERCEL_URL=https://your-project.vercel.app
 # NEXT_PUBLIC_BASE_PATH=
 
 # Optional: URL of the *deployed* backend API for client-side builds (Capacitor, static export).
-# If set, the client build will make API calls to this URL instead of relative paths.
+# If set, the client build will make API calls to this URL instead of relative paths (/api/graphql)
 # Defaults to NEXT_PUBLIC_BASE_URL if not set.
 # NEXT_PUBLIC_MAIN_URL=
 
@@ -759,113 +766,3 @@ The `client` instance is initialized with admin privileges using `HASURA_ADMIN_S
     npx hasyx js --eval "client.select({table: 'users', limit: 1, returning: ['name']}).then(console.log)"
     ```
     Executes the provided JavaScript string. The `client` object is available. `await` can be used directly at the top level of the provided script string.
-
-# Hasura Integration
-
-## Event Triggers
-
-Hasyx includes support for Hasura Event Triggers, which allow you to automate asynchronous logic when changes are made in the database. This is useful for implementing webhook-based workflows, sending notifications, or syncing data with external systems.
-
-### How Event Triggers Work
-
-1. You define event triggers in JSON files inside the `events/` directory.
-2. Each file represents one event trigger and defines which table it watches and what operations (INSERT, UPDATE, DELETE) it responds to.
-3. When those operations occur in Hasura, it sends a webhook request to your Next.js API route at `/api/events/[name]`.
-4. Your handler in `app/api/events/[name]/route.ts` processes the webhook and performs any necessary actions.
-
-### Using Event Triggers
-
-1. **Initialize Event Triggers**
-   ```bash
-   npx hasyx events --init
-   ```
-   This creates default event trigger definitions for the `users` and `accounts` tables in the `events/` directory.
-
-2. **Clean Event Trigger Definitions**
-   ```bash
-   npx hasyx events --clean
-   ```
-   This removes any security headers from your event trigger definitions, allowing them to be added automatically during synchronization.
-
-3. **Deploy the Event Triggers to Hasura**
-   ```bash
-   npx hasyx events
-   ```
-   This reads the trigger definitions from the `events/` directory and creates or updates them in Hasura. Security headers with `HASURA_EVENT_SECRET` are automatically added to each trigger.
-
-4. **Security**
-   For security, you should set `HASURA_EVENT_SECRET` in your environment variables. This secret will be automatically added as a header to event trigger requests and verified by your handler.
-
-   Important security considerations:
-   
-   - Always set `HASURA_EVENT_SECRET` to a strong, random value in production environments
-   - The secret header is automatically added to all event triggers during synchronization
-   - In production mode, the `events` command will fail if `HASURA_EVENT_SECRET` is not set
-   - In production mode, requests without the correct secret will be denied automatically
-   - Keep your `HASURA_EVENT_SECRET` as secure as your `HASURA_ADMIN_SECRET`
-   - The `hasyxEvent` wrapper handles all security verification automatically
-   - Never expose your event handlers to public access without authentication
-   - For local development, ensure your Hasura instance can reach your local server (use tools like ngrok if needed)
-
-### Example Event Trigger Definition
-
-```json
-{
-  "name": "users",
-  "table": {
-    "schema": "public",
-    "name": "users"
-  },
-  "webhook_path": "/api/events/users",
-  "insert": {
-    "columns": "*"
-  },
-  "update": {
-    "columns": "*"
-  },
-  "delete": {
-    "columns": "*"
-  },
-  "retry_conf": {
-    "num_retries": 3,
-    "interval_sec": 15,
-    "timeout_sec": 60
-  }
-}
-```
-
-The security header with `HASURA_EVENT_SECRET` will be automatically added during synchronization - you don't need to specify it in your event definition files.
-
-For more information on Event Triggers, see the [Hasura Event Triggers documentation](https://hasura.io/docs/latest/event-triggers/index/).
-
-### Creating Custom Event Handlers
-
-To create a custom event handler for a specific trigger:
-
-1. Copy the default handler from `app/api/events/[name]/route.ts` to a new file such as `app/api/events/my-trigger-name/route.ts`
-2. Modify the new file to implement your custom logic in the handler function
-3. Make sure your event trigger definition in the `events/` directory has a matching `webhook_path` that points to your handler (e.g., `/api/events/my-trigger-name`)
-
-Example custom handler:
-
-```typescript
-import { NextResponse } from 'next/server';
-import { hasyxEvent, HasuraEventPayload } from 'hasyx/lib/events';
-
-export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
-  // Your custom logic here
-  const { event, table } = payload;
-  const { op, data } = event;
-  
-  // Example: Log to console and perform different actions based on operation type
-  console.log(`Handling ${op} operation on ${table.schema}.${table.name}`);
-  
-  if (op === 'INSERT') {
-    // Handle insert operation
-    const newRecord = data.new;
-    // Do something with the new record...
-  }
-  
-  return { success: true, message: 'Custom handler processed event' };
-});
-``` 
