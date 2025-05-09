@@ -357,19 +357,16 @@ program
     }
 
     const filesToCreateOrReplace = {
-      // GitHub Actions (will overwrite)
+      'CONTRIBUTING.md': 'CONTRIBUTING.md',
       '.github/workflows/npm-publish.yml': '.github/workflows/npm-publish.yml',
       '.github/workflows/test.yml': '.github/workflows/test.yml',
       '.github/workflows/nextjs.yml': '.github/workflows/nextjs.yml',
-      // API Routes (will overwrite)
       'app/api/auth/[...nextauth]/route.ts': 'app/api/auth/[...nextauth]/route.ts',
       'app/options.ts': 'app/options.ts',
       'app/api/auth/verify/route.ts': 'app/api/auth/verify/route.ts',
       'app/api/auth/route.ts': 'app/api/auth/route.ts',
       'app/api/graphql/route.ts': 'app/api/graphql/route.ts',
-      // Event Triggers handler (will overwrite)
       'app/api/events/[name]/route.ts': 'app/api/events/[name]/route.ts',
-      // NEW: Telegram Bot handler (will overwrite)
       'app/api/telegram_bot/route.ts': 'app/api/telegram_bot/route.ts',
     };
     debug('Files to create or replace:', Object.keys(filesToCreateOrReplace));
@@ -1747,7 +1744,9 @@ program
     if (options.eval) {
       debug(`Executing script string: ${options.eval}`);
       try {
-        const script = new vm.Script(options.eval, { filename: 'eval' });
+        // Wrap the user's script in an async IIFE to allow top-level await
+        const wrappedScript = `(async () => { ${options.eval} })();`;
+        const script = new vm.Script(wrappedScript, { filename: 'eval' });
         script.runInContext(scriptContext);
         // Consider if REPL should exit or stay open after -e. For now, it exits.
       } catch (error) {
@@ -1762,6 +1761,10 @@ program
         process.exit(1);
       }
       try {
+        // Wrap the file content in an async IIFE to allow top-level await if it's not already an ES module
+        // However, for files, it's better to let users manage async themselves or use ES modules with top-level await.
+        // For simplicity and direct execution of potentially more complex files, we don't auto-wrap file content here.
+        // If a file needs top-level await, it should be an ES module or use an IIFE itself.
         const fileContent = await fs.readFile(fullPath, 'utf-8');
         const script = new vm.Script(fileContent, { filename: fullPath });
         script.runInContext(scriptContext);

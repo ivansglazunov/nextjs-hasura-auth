@@ -30,6 +30,18 @@ We welcome contributions to Hasyx! Please follow these guidelines to help us kee
 3.  Create a pull request from your fork to the `main` branch (or the relevant feature/development branch) of the original Hasyx repository.
 4.  Provide a clear and detailed description of your changes in the PR, including the problem solved and the solution implemented.
 
+## Debugging Data Issues
+
+If you encounter unexpected behavior related to data fetching, mutations, or subscriptions:
+
+*   **Check Hasura Console:** Use the GraphiQL interface in your Hasura console to directly execute queries, mutations, and subscriptions. This helps verify if the issue is with your GraphQL operation lógica, Hasura permissions, or relationships.
+*   **Inspect Network Requests:** Use your browser's developer tools to inspect network requests to `/api/graphql` (for queries/mutations) or WebSocket messages (for subscriptions) to see the exact payloads and responses.
+*   **Use `npx hasyx js` for Quick Tests:** For quick tests of your data logic or to inspect data directly from your backend using the Hasyx client, you can use the interactive CLI. For example:
+    ```bash
+    npx hasyx js -e "console.log(await client.select({ table: 'users', where: { id: { _eq: 'your-user-id' } }, returning: ['id', 'name', 'email'] }))"
+    ```
+    This allows you to execute short snippets of code with the admin `client` instance available (and use `await` directly) to see the output immediately, helping to verify hypotheses about data or permissions.
+
 ## Writing Database Migrations
 
 When creating or modifying database migration scripts (typically located in the `migrations/` directory and written in SQL or TypeScript using the Hasyx Hasura client):

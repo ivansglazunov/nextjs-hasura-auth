@@ -249,6 +249,7 @@ When running `init`, Hasyx automatically patches your Next.js project for WebSoc
 
 ```
 .
+|-- 🔄 CONTRIBUTING.md
 ├── .github/
 │   └── workflows/
 │       ├── 🔄 npm-publish.yml  # Example CI/CD for publishing (if you fork Hasyx)
@@ -263,20 +264,22 @@ When running `init`, Hasyx automatically patches your Next.js project for WebSoc
 │   └── api/
 │       ├── events/
 │       │   ├── [name]/
-│       │   |   └── 🔄 route.ts     # Default event handler
-│       │   └── your-custom-event-handler/
-│       │       └── ? route.ts      # Your custom event handlers (copy from [name]/route.ts)
+│       │   |   └── 🔄 route.ts     # Default event handler for Hasura
 │       ├── auth/
-│       │   ├── 🔄 route.ts
+│       │   ├── 🔄 route.ts         # Auth API specific logic (if any)
 │       │   ├── [...nextauth]/
-│       │   │   ├── 🔄 route.ts
+│       │   │   ├── 🔄 route.ts     # NextAuth.js main handler
 │       │   └── verify/
-│       │       └── 🔄 route.ts     # (Likely for email verification)
-│       └── graphql/
-│           └── 🔄 route.ts         # Hasyx GraphQL Proxy
+│       │       └── 🔄 route.ts     # Email verification or similar auth actions
+│       ├── graphql/
+│       │   └── 🔄 route.ts         # Hasyx GraphQL Proxy to Hasura
+│       └── telegram_bot/
+│           └── 🔄 route.ts         # Handler for Telegram Bot webhooks
 |-- public/
-│   ├── ✨ logo.svg
-│   ├── ✨ favicon.ico
+│   ├── ✨ logo.svg             # Default logo, replace with your own
+│   ├── ✨ favicon.ico           # Default favicon
+|-- events/
+│   └── ✨ notify.json           # Default Hasura event trigger definition for notifications
 ├── ✨ .gitignore
 ├── ✨ .npmignore
 └── ✨ .npmrc
@@ -284,11 +287,15 @@ When running `init`, Hasyx automatically patches your Next.js project for WebSoc
 ├── ✨ jest.setup.js
 ├── ✨ next.config.ts
 ├── ✨ postcss.config.mjs
-├── ✨ components.json
+├── ✨ components.json         # shadcn/ui configuration
 ├── ✨ tsconfig.json
 ├── ✨ tsconfig.lib.json
+├── migrations/
+│   └── 1746660891582-hasyx-users/
+│       ├── ✨ up.ts             # Initial user schema migration
+│       └── ✨ down.ts           # Rollback for initial user schema
 ```
-*Note: GitHub workflow files are copied as examples and might need adjustment for your specific repository.*
+*Note: GitHub workflow files and `CONTRIBUTING.md` are copied as examples and might need adjustment for your specific repository.*
 
 ---
 
@@ -773,7 +780,7 @@ The `client` instance is initialized with admin privileges using `HASURA_ADMIN_S
     # or
     npx hasyx js --eval "client.select({table: 'users', limit: 1, returning: ['name']}).then(console.log)"
     ```
-    Executes the provided JavaScript string. The `client` object is available.
+    Executes the provided JavaScript string. The `client` object is available. `await` can be used directly at the top level of the provided script string.
 
 # Hasura Integration
 
