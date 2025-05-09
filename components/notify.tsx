@@ -52,7 +52,8 @@ export const useNotify = () => useContext(NotificationContext);
 // Провайдер контекста уведомлений
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
-  const userId = session?.user?.id;
+  // Более безопасное получение userId, предполагая, что id добавляется в сессию
+  const userId = (session?.user as { id?: string; name?: string | null; email?: string | null; image?: string | null })?.id;
   
   const client = useClient();
   const [loading, setLoading] = useState(false);

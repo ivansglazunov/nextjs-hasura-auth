@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.114",
+  "version": "0.1.116",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -25,8 +25,8 @@
     "test:build": "jest build.test.ts",
     "postinstall": "npm run ws -- -y",
     "ws": "npx --yes next-ws-cli@latest patch -y",
-    "hasyx:migrate": "tsx ./migrations/hasyx/up.ts; npm run hasura:schema; npm run hasura:types",
-    "hasyx:unmigrate": "tsx ./migrations/hasyx/down.ts",
+    "migrate": "tsx ./migrations/hasyx/up.ts; npm run hasura:schema; npm run hasura:types",
+    "unmigrate": "tsx ./migrations/hasyx/down.ts",
     "hasura:schema": "tsx ./lib/hasura-schema.ts",
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
     "npm-publish": "npm run build; npm publish",

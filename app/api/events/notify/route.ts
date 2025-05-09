@@ -2,8 +2,32 @@ import { NextResponse } from 'next/server';
 import { hasyxEvent, HasuraEventPayload } from 'hasyx/lib/events';
 import { Hasura } from 'hasyx/lib/hasura';
 import Debug from 'hasyx/lib/debug';
+import { GoogleAuth } from 'google-auth-library';
 
 const debug = Debug('api:events:notify');
+
+// Function to get OAuth 2.0 access token for FCM v1 API (server-side implementation)
+async function getOAuthAccessTokenForServer(): Promise<string> {
+  debug('Attempting to get OAuth 2.0 access token for FCM on server');
+  try {
+    const auth = new GoogleAuth({
+      scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+      // GOOGLE_APPLICATION_CREDENTIALS environment variable will be used automatically by the library
+    });
+    const client = await auth.getClient();
+    const accessToken = await client.getAccessToken();
+    
+    if (!accessToken || !accessToken.token) {
+      debug('Failed to retrieve access token from GoogleAuth on server');
+      throw new Error('Failed to retrieve access token from GoogleAuth. Ensure GOOGLE_APPLICATION_CREDENTIALS is set correctly.');
+    }
+    debug('Successfully retrieved OAuth 2.0 access token on server');
+    return accessToken.token;
+  } catch (error) {
+    debug('Error getting OAuth access token on server:', error);
+    throw new Error(`Error getting OAuth access token: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 /**
  * Event handler for Hasura notifications
@@ -68,7 +92,7 @@ export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
       case 'firebase':
         debug('Sending via Firebase provider');
         const { sendFirebaseNotification } = await import('hasyx/lib/notify-firebase');
-        result = await sendFirebaseNotification(permissionData, messageData, notification);
+        result = await sendFirebaseNotification(permissionData, messageData, notification, getOAuthAccessTokenForServer);
         break;
       default:
         debug(`Unsupported provider: ${permissionData.provider}`);

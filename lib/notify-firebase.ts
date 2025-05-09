@@ -1,6 +1,5 @@
 import Debug from './debug';
 import { NotificationPermission, NotificationMessage, Notification } from './notify';
-import { GoogleAuth } from 'google-auth-library';
 
 const debug = Debug('notify:firebase');
 
@@ -15,35 +14,12 @@ export interface FirebaseConfig {
   vapidKey: string;
 }
 
-// Function to get OAuth 2.0 access token for FCM v1 API
-async function getOAuthAccessToken(): Promise<string> {
-  debug('Attempting to get OAuth 2.0 access token for FCM');
-  try {
-    const auth = new GoogleAuth({
-      scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
-      // GOOGLE_APPLICATION_CREDENTIALS environment variable will be used automatically by the library
-      // if it is set to the path of your service account JSON file.
-    });
-    const client = await auth.getClient();
-    const accessToken = await client.getAccessToken();
-    
-    if (!accessToken || !accessToken.token) {
-      debug('Failed to retrieve access token from GoogleAuth');
-      throw new Error('Failed to retrieve access token from GoogleAuth. Ensure GOOGLE_APPLICATION_CREDENTIALS is set correctly.');
-    }
-    debug('Successfully retrieved OAuth 2.0 access token');
-    return accessToken.token;
-  } catch (error) {
-    debug('Error getting OAuth access token:', error);
-    throw new Error(`Error getting OAuth access token: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
 // Function to send notification through Firebase Cloud Messaging (HTTP v1 API)
 export async function sendFirebaseNotification(
   permission: NotificationPermission,
   message: NotificationMessage,
-  notification: Notification
+  notification: Notification,
+  getAccessToken: () => Promise<string>
 ): Promise<{ success: boolean; message?: string }> {
   try {
     debug('Starting notification delivery through Firebase (HTTP v1)');
@@ -54,8 +30,8 @@ export async function sendFirebaseNotification(
       throw new Error('Firebase Project ID not configured');
     }
 
-    // Get OAuth 2.0 access token
-    const accessToken = await getOAuthAccessToken();
+    // Get OAuth 2.0 access token using the provided function
+    const accessToken = await getAccessToken();
 
     const fcmEndpoint = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
     const headers = {
