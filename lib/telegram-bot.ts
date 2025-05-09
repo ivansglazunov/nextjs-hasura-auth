@@ -1,6 +1,7 @@
 import Debug from './debug';
 import { Hasyx } from './hasyx'; // Assuming Hasyx client is used for DB operations
 import { v4 as uuidv4 } from 'uuid';
+import { HasuraEventPayload } from './events';
 
 const debug = Debug('telegram_bot');
 
@@ -68,6 +69,62 @@ export interface TelegramChatInviteLink {
   expire_date?: number;
   member_limit?: number;
   pending_join_request_count?: number;
+}
+
+// Helper function to call Telegram API
+async function callTelegramApi(token: string, methodName: string, params: Record<string, any>): Promise<any> {
+  const response = await fetch(`https://api.telegram.org/bot${token}/${methodName}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  const data = await response.json();
+  if (!data.ok) {
+    debug(`Telegram API Error (${methodName}): ${data.error_code} - ${data.description}`);
+    throw new Error(`Telegram API error (${methodName} - ${data.error_code}): ${data.description}`);
+  }
+  return data.result;
+}
+
+export interface BotCommand {
+  command: string;
+  description: string;
+}
+
+export async function setBotName(token: string, name: string): Promise<boolean> {
+  try {
+    await callTelegramApi(token, 'setMyName', { name });
+    debug(`Successfully set bot name to "${name}"`);
+    return true;
+  } catch (error) {
+    debug(`Failed to set bot name:`, error);
+    console.error(`❌ Failed to set bot name: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
+}
+
+export async function setBotDescription(token: string, description: string): Promise<boolean> {
+  try {
+    await callTelegramApi(token, 'setMyDescription', { description });
+    debug(`Successfully set bot description to "${description}"`);
+    return true;
+  } catch (error) {
+    debug(`Failed to set bot description:`, error);
+    console.error(`❌ Failed to set bot description: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
+}
+
+export async function setBotCommands(token: string, commands: BotCommand[]): Promise<boolean> {
+  try {
+    await callTelegramApi(token, 'setMyCommands', { commands });
+    debug(`Successfully set bot commands:`, commands);
+    return true;
+  } catch (error) {
+    debug(`Failed to set bot commands:`, error);
+    console.error(`❌ Failed to set bot commands: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
+  }
 }
 
 /**

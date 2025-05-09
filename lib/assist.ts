@@ -10,8 +10,36 @@ import { Hasyx } from './hasyx';
 import { createApolloClient } from './apollo';
 import { Generator } from './generator';
 import schema from '../public/hasura-schema.json'; // Adjusted path assuming script is in lib/
+import dotenv from 'dotenv'; // NEW: Import dotenv
+// Import new Telegram helper functions
+import { setBotName, setBotDescription, setBotCommands, BotCommand } from './telegram-bot';
+
+// Ensure dotenv is configured only once, especially if assist is also used as a module
+if (require.main === module) { // This check ensures dotenv runs only if script is executed directly
+  try {
+    let projectRoot = process.cwd();
+    let pkgPath = path.join(projectRoot, 'package.json');
+    let maxDepth = 5;
+    while (!fs.existsSync(pkgPath) && maxDepth > 0) {
+      projectRoot = path.dirname(projectRoot);
+      pkgPath = path.join(projectRoot, 'package.json');
+      maxDepth--;
+    }
+    const envResult = dotenv.config({ path: path.join(projectRoot, '.env') });
+    if (envResult.error) {
+      Debug('assist:env')('Failed to load .env file when running directly:', envResult.error);
+    } else {
+      Debug('assist:env')('.env file loaded successfully when running directly');
+    }
+  } catch (error) {
+    Debug('assist:env')('Error loading .env file when running directly:', error);
+  }
+}
 
 // Create a debugger instance for the assist module
+// Moved Debug import here to avoid conflict if dotenv block isn't run (e.g. as module)
+// However, Debug is used within the dotenv block. This might need restructuring or conditional import.
+// For now, let's assume Debug is always available or handle its absence gracefully.
 const debug = Debug('assist');
 
 // Options interface to track which steps to skip
@@ -1962,15 +1990,27 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
   }
 
   debug('Configuring Telegram Bot');
-  console.log('\\n🤖 Configuring Telegram Bot...');
+  console.log('🤖 Configuring Telegram Bot...');
 
   const envPath = path.join(process.cwd(), '.env');
   let envVars = parseEnvFile(envPath);
   let envUpdated = false;
 
+  // Get project name for defaults
+  const projectPackageJsonPath = path.join(process.cwd(), 'package.json');
+  let projectName = path.basename(process.cwd()); // Fallback to directory name
+  try {
+    if (fs.existsSync(projectPackageJsonPath)) {
+      const pkg = JSON.parse(fs.readFileSync(projectPackageJsonPath, 'utf-8'));
+      if (pkg.name) projectName = pkg.name;
+    }
+  } catch (e) {
+    debug('Could not read project name from package.json for bot configuration', e);
+  }
+
   // Check for existing Telegram Bot Token
   if (envVars.TELEGRAM_BOT_TOKEN) {
-    console.log(`ℹ️ Found existing TELEGRAM_BOT_TOKEN: ${"*".repeat(Math.min(envVars.TELEGRAM_BOT_TOKEN.length, 10))}`);
+    console.log(`ℹ️ Found existing TELEGRAM_BOT_TOKEN: ${'*'.repeat(Math.min(envVars.TELEGRAM_BOT_TOKEN.length, 10))}`);
     const correctToken = await askYesNo(rl, 'Is this TELEGRAM_BOT_TOKEN correct and an admin in the target group (if any)?', true);
     if (!correctToken) {
       envVars.TELEGRAM_BOT_TOKEN = ''; // Clear to ask for a new one
@@ -1980,7 +2020,7 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
   if (!envVars.TELEGRAM_BOT_TOKEN) {
     const setupBot = await askYesNo(rl, 'Do you want to set up a Telegram Bot for this project?', true);
     if (setupBot) {
-      console.log('\\n📜 Instructions to create a new Telegram Bot:');
+      console.log('📜 Instructions to create a new Telegram Bot:');
       console.log('1. Open Telegram and search for "BotFather".');
       console.log('2. Start a chat with BotFather by sending /start.');
       console.log('3. Send /newbot to create a new bot.');
@@ -2000,10 +2040,79 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
     }
   }
 
-  // If bot token is set, proceed to configure admin chat ID
+  // If bot token is set, proceed to configure bot profile and admin chat ID
   if (envVars.TELEGRAM_BOT_TOKEN) {
+    const botToken = envVars.TELEGRAM_BOT_TOKEN;
+
+    // Bot Profile Picture
+    console.log('\n🖼️ To set or change your bot\'s profile picture (avatar):');
+    console.log('1. Open Telegram and search for "BotFather".');
+    console.log('2. Send /mybots and select your bot.');
+    console.log('3. Click "Edit Bot" and then "Edit Botpic".');
+    console.log('4. Upload your desired profile picture (e.g., public/logo.png).');
+
+    // Bot Name
+    const configureName = await askYesNo(rl, `Do you want to set/update the bot's name (current default: "${projectName}")?`, true);
+    if (configureName) {
+      const botName = await askForInput(rl, 'Enter the desired name for your bot', projectName);
+      if (botName) {
+        const nameSet = await setBotName(botToken, botName);
+        if (nameSet) {
+          console.log(`✅ Bot name updated to "${botName}".`);
+        } else {
+          console.log('⚠️ Failed to update bot name. Please check the token and bot status.');
+        }
+      } else {
+        console.log('ℹ️ No name entered, skipping bot name update.');
+      }
+    }
+
+    // Bot Description
+    const configureDescription = await askYesNo(rl, "Do you want to set/update the bot's description?", true);
+    if (configureDescription) {
+      const botDescription = await askForInput(rl, "Enter the desired description for your bot (max 512 chars)");
+      if (botDescription) {
+        const descriptionSet = await setBotDescription(botToken, botDescription);
+        if (descriptionSet) {
+          console.log('✅ Bot description updated.');
+        } else {
+          console.log('⚠️ Failed to update bot description.');
+        }
+      } else {
+        console.log('ℹ️ No description entered, skipping bot description update.');
+      }
+    }
+
+    // Bot Commands
+    const configureCommands = await askYesNo(rl, "Do you want to set/update the bot's commands?", true);
+    if (configureCommands) {
+      console.log('Enter commands as a JSON array, e.g., [{ "command": "start", "description": "Start bot" }, { "command": "help", "description": "Show help" }]');
+      const defaultCommands: BotCommand[] = [
+        { command: 'start', description: 'Start interaction / Почати взаємодію' },
+        { command: 'help', description: 'Show help message / Показати допомогу' },
+      ];
+      const commandsInput = await askForInput(rl, 'Enter bot commands (JSON format)', JSON.stringify(defaultCommands));
+      try {
+        const commands: BotCommand[] = JSON.parse(commandsInput);
+        if (commands && commands.length > 0) {
+          const commandsSet = await setBotCommands(botToken, commands);
+          if (commandsSet) {
+            console.log('✅ Bot commands updated.');
+          } else {
+            console.log('⚠️ Failed to update bot commands.');
+          }
+        } else {
+          console.log('ℹ️ No commands entered or invalid format, skipping bot commands update.');
+        }
+      } catch (e) {
+        console.error('❌ Invalid JSON format for commands. Skipping bot commands update.', e);
+        debug('Invalid JSON for bot commands:', commandsInput);
+      }
+    }
+
+    // Admin Chat ID Configuration (existing logic)
     if (envVars.TELEGRAM_ADMIN_CHAT_ID) {
-      console.log(`ℹ️ Found existing TELEGRAM_ADMIN_CHAT_ID: ${envVars.TELEGRAM_ADMIN_CHAT_ID}`);
+      console.log(`\nℹ️ Found existing TELEGRAM_ADMIN_CHAT_ID: ${envVars.TELEGRAM_ADMIN_CHAT_ID}`);
       const correctAdminChat = await askYesNo(rl, 'Is this TELEGRAM_ADMIN_CHAT_ID correct for user correspondence?', true);
       if (!correctAdminChat) {
         envVars.TELEGRAM_ADMIN_CHAT_ID = ''; // Clear to ask for a new one
@@ -2013,7 +2122,7 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
     if (!envVars.TELEGRAM_ADMIN_CHAT_ID) {
       const setupAdminGroup = await askYesNo(rl, 'Do you want to set up a Telegram Group for user correspondence (bot will create topics per user)?', true);
       if (setupAdminGroup) {
-        console.log('\\n📜 Instructions to set up the Admin Correspondence Group:');
+        console.log('\n📜 Instructions to set up the Admin Correspondence Group:');
         console.log('1. Create a new Telegram group (or use an existing one).');
         console.log('2. Add your Telegram Bot (created in the previous step) to this group.');
         console.log('3. Promote the bot to an administrator in the group with rights to manage topics (if using topics) and send messages.');
@@ -2040,20 +2149,10 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
     writeEnvFile(envPath, envVars);
     console.log('✅ Telegram Bot configuration saved to .env file.');
   }
+  
+  // Removed the incorrect attempt to set profile picture via 'npx tsx cli.ts assets'
+  // The user is now instructed to use BotFather for profile picture changes.
 
-  // Run assets again if Telegram bot token is set, to set bot profile picture
-  if (envVars.TELEGRAM_BOT_TOKEN) {
-    console.log('\\n🖼️ Attempting to set Telegram Bot profile picture using public/logo.png...');
-    const assetsResult = spawn.sync('npx', ['hasyx', 'assets'], {
-      stdio: 'inherit', // Show output
-      cwd: process.cwd(),
-    });
-    if (assetsResult.error || assetsResult.status !== 0) {
-      console.error('❌ Failed to run "npx hasyx assets" for Telegram bot. You may need to set the profile picture manually.');
-    } else {
-      console.log('✅ "npx hasyx assets" command completed. Check your bot\'s profile picture.');
-    }
-  }
   debug('Telegram Bot configuration step completed');
 }
 
