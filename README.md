@@ -444,6 +444,17 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 NEXT_PUBLIC_FIREBASE_VAPID_KEY=your_firebase_web_push_certificate_key
 
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_API_TOKEN
+# Optional: Chat ID for admin correspondence group
+TELEGRAM_ADMIN_CHAT_ID=YOUR_ADMIN_GROUP_CHAT_ID 
+
+# Telegram Channel & Project User Configuration
+# User ID in your Hasyx database representing the project itself (set via `npx hasyx assist`)
+NEXT_PUBLIC_PROJECT_USER_ID=your_hasyx_project_user_uuid
+# ID or username of your Telegram Channel for announcements (set via `npx hasyx assist`)
+TELEGRAM_CHANNEL_ID=@your_channel_username_or_numerical_id
+
 # Optional: Custom path to notification icon
 NEXT_PUBLIC_NOTIFICATION_ICON=/icon-192x192.png
 
@@ -544,6 +555,11 @@ Common WebSocket error: `TypeError: bufferUtil.mask is not a function` indicates
 ## 📢 Push Notifications
 
 Hasyx includes a flexible system for push notifications, designed to be extensible across various platforms. For detailed information on the notification system's architecture, supported platforms, and setup instructions, please refer to our comprehensive [Push Notifications Guide (NOTIFY.md)](NOTIFY.md).
+
+Key features include:
+- Firebase Cloud Messaging (FCM) for Web Push.
+- Telegram Bot integration for direct user messages and admin correspondence.
+- Telegram Channel integration for project announcements.
 
 ## Contributing
 

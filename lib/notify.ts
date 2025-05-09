@@ -168,11 +168,15 @@ export async function handleNotificationEvent(payload: HasuraEventPayload, clien
         const { sendFirebaseNotification } = await import('./notify-firebase');
         result = await sendFirebaseNotification(permission, message, notification);
         break;
-      // Future providers can be added here
       case 'telegram_bot':
         debug('Sending via Telegram Bot provider');
         const { sendTelegramNotification } = await import('./notify-telegram');
         result = await sendTelegramNotification(permission, message, notification);
+        break;
+      case 'telegram_channel':
+        debug('Sending via Telegram Channel provider');
+        const { sendTelegramChannelNotification } = await import('./notify-telegram-channel');
+        result = await sendTelegramChannelNotification(permission, message, notification);
         break;
       default:
         debug(`Unsupported provider: ${permission.provider}`);
@@ -269,6 +273,11 @@ export async function handleClientNotificationEvent(payload: HasuraEventPayload,
         debug('Sending via Telegram Bot provider');
         const { sendTelegramNotification } = await import('./notify-telegram');
         result = await sendTelegramNotification(permission, message, notification);
+        break;
+      case 'telegram_channel':
+        debug('Sending via Telegram Channel provider');
+        const { sendTelegramChannelNotification } = await import('./notify-telegram-channel');
+        result = await sendTelegramChannelNotification(permission, message, notification);
         break;
       default:
         debug(`Unsupported provider: ${permission.provider}`);

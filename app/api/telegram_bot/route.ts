@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { processTelegramEvent, TelegramUpdate } from 'hasyx/lib/telegram_bot';
+import { processTelegramEvent, TelegramUpdate } from 'hasyx/lib/telegram-bot';
 import { Hasyx } from 'hasyx/lib/hasyx';
 import { createApolloClient } from 'hasyx/lib/apollo'; // Standard Apollo client creation
 import { Generator } from 'hasyx/lib/generator'; // Import Generator

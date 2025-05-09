@@ -6,6 +6,10 @@ import path from 'path';
 import spawn from 'cross-spawn';
 import Debug from './debug';
 import readline from 'readline';
+import { Hasyx } from './hasyx';
+import { createApolloClient } from './apollo';
+import { Generator } from './generator';
+import schema from '../public/hasura-schema.json'; // Adjusted path assuming script is in lib/
 
 // Create a debugger instance for the assist module
 const debug = Debug('assist');
@@ -27,6 +31,8 @@ interface AssistOptions {
   skipMigrations?: boolean;
   skipFirebase?: boolean;
   skipTelegram?: boolean;
+  skipProjectUser?: boolean; // New
+  skipTelegramChannel?: boolean; // New
 }
 
 /**
@@ -138,11 +144,24 @@ export async function assist(options: AssistOptions = {}) {
       debug('Skipping migrations');
     }
 
-    // NEW Step: Configure Telegram Bot
+    // NEW: Configure Project User
+    if (!options.skipProjectUser) {
+      await configureProjectUser(rl, options.skipProjectUser);
+    } else {
+      debug('Skipping Project User setup');
+    }
+
     if (!options.skipTelegram) {
       await configureTelegramBot(rl, options.skipTelegram);
     } else {
       debug('Skipping Telegram Bot setup');
+    }
+    
+    // NEW: Configure Telegram Channel
+    if (!options.skipTelegramChannel) {
+      await configureTelegramChannel(rl, options.skipTelegramChannel);
+    } else {
+      debug('Skipping Telegram Channel setup');
     }
 
     console.log('✨ All done! Your project is ready to use.');
@@ -667,6 +686,12 @@ async function setupEnvironment() {
     
     envVars.NEXT_PUBLIC_WS = '1';
     console.log('✅ Set NEXT_PUBLIC_WS=1.');
+    
+    // Placeholders for Telegram & Project User ENV vars
+    if (!envVars.TELEGRAM_BOT_TOKEN) { /* handled interactively */ }
+    if (!envVars.TELEGRAM_ADMIN_CHAT_ID) { /* handled interactively */ }
+    if (!envVars.NEXT_PUBLIC_PROJECT_USER_ID) { /* handled interactively */ }
+    if (!envVars.TELEGRAM_CHANNEL_ID) { /* handled interactively */ }
     
     // Write the new .env file
     writeEnvFile(envPath, envVars);
@@ -1650,7 +1675,8 @@ async function syncEnvironmentVariables() {
     'NEXT_PUBLIC_HASURA_GRAPHQL_URL',
     'NEXT_PUBLIC_MAIN_URL',
     'NEXTAUTH_URL',
-    'NEXT_PUBLIC_API_URL'
+    'NEXT_PUBLIC_API_URL',
+    'NEXT_PUBLIC_PROJECT_USER_ID' // Add to public vars
   ];
   
   for (const varName of githubPublicVars) {
@@ -1670,7 +1696,10 @@ async function syncEnvironmentVariables() {
     'GOOGLE_CLIENT_SECRET',
     'YANDEX_CLIENT_ID',
     'YANDEX_CLIENT_SECRET',
-    'RESEND_API_KEY'
+    'RESEND_API_KEY',
+    'TELEGRAM_BOT_TOKEN',
+    'TELEGRAM_ADMIN_CHAT_ID',
+    'TELEGRAM_CHANNEL_ID' // Add to secrets to be synced
   ];
   
   for (const varName of githubSecretVars) {
@@ -1695,7 +1724,11 @@ async function syncEnvironmentVariables() {
     'GOOGLE_CLIENT_SECRET',
     'YANDEX_CLIENT_ID',
     'YANDEX_CLIENT_SECRET',
-    'RESEND_API_KEY'
+    'RESEND_API_KEY',
+    'TELEGRAM_BOT_TOKEN',
+    'TELEGRAM_ADMIN_CHAT_ID',
+    'TELEGRAM_CHANNEL_ID', // Add to Vercel vars to be synced
+    'NEXT_PUBLIC_PROJECT_USER_ID' // Add to Vercel vars to be synced
   ];
   
   for (const varName of vercelVars) {
@@ -2024,6 +2057,258 @@ async function configureTelegramBot(rl: readline.Interface, skip?: boolean) {
   debug('Telegram Bot configuration step completed');
 }
 
+async function configureProjectUser(rl: readline.Interface, skip?: boolean) {
+  if (skip) {
+    debug('Skipping Project User configuration');
+    console.log('⏩ Skipping Project User configuration...');
+    return;
+  }
+  debug('Configuring Project User');
+  console.log('\n👤 Configuring Project User...');
+
+  const envPath = path.join(process.cwd(), '.env');
+  let envVars = parseEnvFile(envPath);
+  let envUpdated = false;
+
+  const projectPackageJsonPath = path.join(process.cwd(), 'package.json');
+  let projectName = path.basename(process.cwd()); // Fallback to directory name
+  try {
+    if (fs.existsSync(projectPackageJsonPath)) {
+      const pkg = JSON.parse(fs.readFileSync(projectPackageJsonPath, 'utf-8'));
+      if (pkg.name) projectName = pkg.name;
+    }
+  } catch (e) {
+    debug('Could not read project name from package.json', e);
+  }
+
+  console.log(`ℹ️ Using project name: ${projectName}`);
+
+  // Initialize Hasyx client for DB operations
+  if (!process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL || !process.env.HASURA_ADMIN_SECRET) {
+    console.error('❌ Hasura URL or Admin Secret not set. Cannot configure project user.');
+    debug('Hasura credentials missing for project user setup.');
+    return;
+  }
+  const apolloAdminClient = createApolloClient({
+    url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL,
+    secret: process.env.HASURA_ADMIN_SECRET,
+  });
+  const generator = Generator(schema as any);
+  const client = new Hasyx(apolloAdminClient, generator);
+
+  let projectUserId = envVars.NEXT_PUBLIC_PROJECT_USER_ID;
+
+  if (projectUserId) {
+    console.log(`Found existing NEXT_PUBLIC_PROJECT_USER_ID: ${projectUserId}`);
+    const updateExisting = await askYesNo(rl, 'Do you want to update this project user\'s name and avatar?', true);
+    if (updateExisting) {
+      try {
+        await client.update({
+          table: 'users',
+          pk_columns: { id: projectUserId },
+          _set: { 
+            name: projectName, 
+            image: '/logo.png' // Assumes npx hasyx assets created this
+          },
+          role: 'admin' 
+        });
+        console.log(`✅ Updated project user (${projectUserId}) name to "${projectName}" and image to /logo.png.`);
+      } catch (e) {
+        console.error(`❌ Failed to update project user: ${e}`);
+        debug('Error updating project user:', e);
+      }
+    } else {
+      console.log('ℹ️ Keeping existing project user as is.');
+    }
+  } else {
+    const createNew = await askYesNo(rl, `No NEXT_PUBLIC_PROJECT_USER_ID found. Create a new user for project "${projectName}"?`, true);
+    if (createNew) {
+      try {
+        const newUser = await client.insert({
+          table: 'users',
+          object: {
+            name: projectName,
+            image: '/logo.png',
+            email: `${projectName.toLowerCase().replace(/\s+/g, '.')}@project.local`, // Dummy email
+            is_admin: true, // Project user could be an admin
+            hasura_role: 'admin' // or a specific 'project' role if defined
+          },
+          returning: ['id'],
+          role: 'admin' 
+        });
+        projectUserId = newUser.id;
+        envVars.NEXT_PUBLIC_PROJECT_USER_ID = projectUserId;
+        console.log(`✅ Created new project user "${projectName}" with ID: ${projectUserId}`);
+        console.log(`   Set NEXT_PUBLIC_PROJECT_USER_ID=${projectUserId}`);
+        envUpdated = true;
+      } catch (e) {
+        console.error(`❌ Failed to create project user: ${e}`);
+        debug('Error creating project user:', e);
+        // projectUserId is already undefined or remains as before if not created
+      }
+    }
+  }
+
+  // Only write to env if projectUserId was successfully obtained and newly set
+  if (envUpdated && envVars.NEXT_PUBLIC_PROJECT_USER_ID) {
+    writeEnvFile(envPath, envVars);
+    console.log('✅ Project User configuration saved to .env file.');
+  } else if (envUpdated && !envVars.NEXT_PUBLIC_PROJECT_USER_ID) {
+    // This case implies creation was attempted, failed, and projectUserId was not set.
+    // We don't want to write an empty/undefined NEXT_PUBLIC_PROJECT_USER_ID to the .env if it wasn't there before.
+    // However, if it *was* there and now it's cleared due to a desire to re-create, that is different.
+    // The current logic only sets envUpdated = true if a *new* ID is set.
+    // If an existing ID was present and not changed, envUpdated remains false from this block.
+    console.log('ℹ️ NEXT_PUBLIC_PROJECT_USER_ID was not set or changed in .env file during this step.');
+  }
+  debug('Project User configuration step completed.');
+}
+
+async function configureTelegramChannel(rl: readline.Interface, skip?: boolean) {
+  if (skip) {
+    debug('Skipping Telegram Channel configuration');
+    console.log('⏩ Skipping Telegram Channel configuration...');
+    return;
+  }
+
+  debug('Configuring Telegram Channel');
+  console.log('\n📢 Configuring Telegram Channel for project announcements...');
+
+  const envPath = path.join(process.cwd(), '.env');
+  let envVars = parseEnvFile(envPath);
+  let envUpdated = false;
+
+  const projectUserId = envVars.NEXT_PUBLIC_PROJECT_USER_ID;
+  const botToken = envVars.TELEGRAM_BOT_TOKEN;
+
+  if (!projectUserId) {
+    console.log('⚠️ NEXT_PUBLIC_PROJECT_USER_ID is not set. Skipping Telegram Channel setup.');
+    debug('Project User ID not found, cannot setup channel permission.');
+    return;
+  }
+  if (!botToken) {
+    console.log('⚠️ TELEGRAM_BOT_TOKEN is not set. Skipping Telegram Channel setup.');
+    debug('Telegram Bot Token not found, cannot setup channel.');
+    return;
+  }
+
+  const projectPackageJsonPath = path.join(process.cwd(), 'package.json');
+  let projectName = path.basename(process.cwd());
+  try {
+    if (fs.existsSync(projectPackageJsonPath)) {
+      const pkg = JSON.parse(fs.readFileSync(projectPackageJsonPath, 'utf-8'));
+      if (pkg.name) projectName = pkg.name;
+    }
+  } catch (e) { /* ignore */ }
+
+  // Initialize Hasyx client for DB operations
+  const apolloAdminClient = createApolloClient({
+    url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
+    secret: process.env.HASURA_ADMIN_SECRET!,
+  });
+  const generator = Generator(schema as any);
+  const client = new Hasyx(apolloAdminClient, generator);
+
+  // Check for existing Telegram Channel ID
+  if (envVars.TELEGRAM_CHANNEL_ID) {
+    console.log(`ℹ️ Found existing TELEGRAM_CHANNEL_ID: ${envVars.TELEGRAM_CHANNEL_ID}`);
+    const correctChannel = await askYesNo(rl, 'Is this TELEGRAM_CHANNEL_ID correct for project announcements?', true);
+    if (!correctChannel) {
+      envVars.TELEGRAM_CHANNEL_ID = ''; // Clear to ask for a new one
+    }
+  }
+
+  if (!envVars.TELEGRAM_CHANNEL_ID) {
+    const setupChannel = await askYesNo(rl, 'Do you want to set up a Telegram Channel for project announcements?', true);
+    if (setupChannel) {
+      console.log('\n📜 Instructions to set up the Telegram Channel:');
+      console.log('1. Create a new Public or Private Telegram Channel.');
+      console.log('2. Add your Telegram Bot (from previous step) as an Administrator to this channel.');
+      console.log('   Ensure the bot has permissions to Post Messages. Other admin rights might be needed to change channel info.');
+      console.log('3. Get the Channel ID:');
+      console.log('   - For public channels: it is usually `@YourChannelUsername`.');
+      console.log('   - For private channels: send any message to the channel, then forward it to a bot like `@JsonDumpBot` or `@RawDataBot`. Look for `chat.id` (usually a negative number starting with -100).');
+      
+      const channelIdInput = await askForInput(rl, 'Enter your Telegram Channel ID (e.g., @channelUsername or -100xxxxxxxxxx)');
+      if (channelIdInput) {
+        envVars.TELEGRAM_CHANNEL_ID = channelIdInput;
+        console.log('✅ TELEGRAM_CHANNEL_ID set.');
+        envUpdated = true;
+      } else {
+        console.log('⚠️ Telegram Channel ID not provided. Skipping channel specific features.');
+      }
+    } else {
+      console.log('ℹ️ Skipping Telegram Channel setup.');
+    }
+  }
+
+  if (envVars.TELEGRAM_CHANNEL_ID) {
+    // Register notification permission for the project user and this channel
+    try {
+      const existingPermission = await client.select({
+        table: 'notification_permissions',
+        where: {
+          user_id: { _eq: projectUserId },
+          provider: { _eq: 'telegram_channel' },
+          device_token: { _eq: envVars.TELEGRAM_CHANNEL_ID }
+        },
+        returning: ['id'],
+        limit: 1,
+        role: 'admin'
+      });
+
+      if (!existingPermission) {
+        await client.insert({
+          table: 'notification_permissions',
+          object: {
+            user_id: projectUserId,
+            provider: 'telegram_channel',
+            device_token: envVars.TELEGRAM_CHANNEL_ID,
+            device_info: { platform: 'telegram_channel', name: projectName },
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          returning: ['id'],
+          role: 'admin'
+        });
+        console.log(`✅ Registered notification permission for project user ${projectUserId} to post to channel ${envVars.TELEGRAM_CHANNEL_ID}.`);
+      } else {
+        console.log('ℹ️ Notification permission for this channel already exists.');
+      }
+    } catch (e) {
+      console.error(`❌ Failed to register notification permission for channel: ${e}`);
+      debug('Error registering channel notification permission:', e);
+    }
+
+    // Offer to update channel name and photo
+    const updateConfirm = await askYesNo(rl, `Do you want to try to update the channel name to "${projectName}" and set its photo using public/logo.png (bot must be admin)?`, true);
+    if (updateConfirm) {
+      const { setTelegramChannelTitle, setTelegramChannelPhoto } = await import('./telegram-channel');
+      await setTelegramChannelTitle(botToken, envVars.TELEGRAM_CHANNEL_ID, projectName);
+      // Set photo
+      const logoPath = path.join(process.cwd(), 'public', 'logo.png');
+      if (fs.existsSync(logoPath)) {
+        try {
+          const photoBuffer = fs.readFileSync(logoPath);
+          await setTelegramChannelPhoto(botToken, envVars.TELEGRAM_CHANNEL_ID, photoBuffer, 'logo.png');
+          console.log('✅ Attempted to set channel photo. Check your Telegram channel.');
+        } catch (e) {
+          console.error('❌ Failed to read logo.png or set channel photo:', e);
+          debug('Error setting channel photo from logo.png:', e);
+        }
+      } else {
+        console.log('⚠️ public/logo.png not found. Skipping setting channel photo.');
+      }
+    }
+  }
+
+  if (envUpdated) {
+    writeEnvFile(envPath, envVars);
+    console.log('✅ Telegram Channel configuration saved to .env file.');
+  }
+  debug('Telegram Channel configuration step completed.');
+}
+
 // Allow direct execution for testing
 if (require.main === module) {
   const program = new Command();
@@ -2046,6 +2331,8 @@ if (require.main === module) {
     .option('--skip-migrations', 'Skip migrations check')
     .option('--skip-firebase', 'Skip Firebase configuration')
     .option('--skip-telegram', 'Skip Telegram Bot configuration')
+    .option('--skip-project-user', 'Skip setting up project user')
+    .option('--skip-telegram-channel', 'Skip setting up Telegram channel')
     .action((options) => {
       assist(options);
     });
