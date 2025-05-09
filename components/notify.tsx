@@ -1,3 +1,5 @@
+"use client"
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useClient, useInsert, useSelect, useSubscription } from 'hasyx/lib/hasyx-client';
 import { getDeviceInfo, NotificationPermission } from 'hasyx/lib/notify';
