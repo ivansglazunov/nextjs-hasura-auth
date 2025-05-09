@@ -249,6 +249,7 @@ When running `init`, Hasyx automatically patches your Next.js project for WebSoc
 
 ```
 .
+|-- 🔄 CONTRIBUTING.md
 ├── .github/
 │   └── workflows/
 │       ├── 🔄 npm-publish.yml  # Example CI/CD for publishing (if you fork Hasyx)
@@ -757,7 +758,7 @@ The `client` instance is initialized with admin privileges using `HASURA_ADMIN_S
     # or
     npx hasyx js --eval "client.select({table: 'users', limit: 1, returning: ['name']}).then(console.log)"
     ```
-    Executes the provided JavaScript string. The `client` object is available.
+    Executes the provided JavaScript string. The `client` object is available. `await` can be used directly at the top level of the provided script string.
 
 # Hasura Integration
 
