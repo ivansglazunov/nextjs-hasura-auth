@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.113",
+  "version": "0.1.114",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -10,16 +10,16 @@
     "url": "https://github.com/ivansglazunov/hasyx.git"
   },
   "scripts": {
-    "dev": "npx -y hasyx dev",
-    "build": "NODE_ENV=production npx -y hasyx build",
+    "dev": "next dev --turbopack",
+    "build": "npm run build:lib && npm run build:css && NODE_ENV=production npm run build:next",
     "build:lib": "tsc -p tsconfig.lib.json",
     "build:css": "tailwindcss -i ./app/globals.css -o ./lib/styles.css",
-    "unbuild": "npx -y hasyx unbuild",
+    "unbuild": "find lib components hooks -type f \\( -name '*.js' -o -name '*.d.ts' \\) -not -path \"*/types/*\" -print -delete; rm -rf tsconfig.lib.tsbuildinfo; echo '✅ Cleaned compiled files (types directory preserved)'",
     "build:next": "next build --turbopack",
     "client": "tsx lib/build-client.ts",
     "build:android": "npm run build:client && npm run cli -- assets && npx cap sync android",
     "build:ios": "npm run build:client && npm run cli -- assets && npx cap sync ios",
-    "start": "NODE_ENV=production npx -y hasyx start",
+    "start": "next start --turbopack",
     "lint": "next lint --turbopack",
     "test": "jest",
     "test:build": "jest build.test.ts",
