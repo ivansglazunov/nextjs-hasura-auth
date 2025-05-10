@@ -396,7 +396,7 @@ export class Hasyx {
     const hasyxDebugEnabled = typeof process !== 'undefined' && typeof process.env !== 'undefined' && !!+(process.env.HASYX_DEBUG || '0');
 
     // Check for admin secret via the _options property
-    const isAdminContext = !!this._options?.secret;
+    const isAdminContext = !!this?.apolloClient?._options?.secret;
 
     if (hasyxDebugEnabled && isAdminContext) {
       debug('Executing debug log insert with value:', value);
