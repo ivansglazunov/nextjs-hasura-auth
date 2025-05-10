@@ -59,6 +59,7 @@ export interface WebhookHandlingResult {
   newPaymentStatus?: string; // New status for our payment
   newSubscriptionStatus?: string; // New status for our subscription
   processed: boolean; // Whether the webhook was successfully processed by the handler
+  providerResponse?: any; // Raw response or parsed data from the provider
   error?: string; // Error message if processing failed
   messageToProvider?: string; // What to respond to the provider (e.g., 'OK' or JSON)
 }
@@ -118,6 +119,7 @@ export interface AddPaymentMethodResult {
   status: PaymentMethodStatus; // "active", "pending_verification"
   detailsForUser?: Record<string, any>; // e.g. last4, brand
   isRecurrentReady: boolean;
+  redirectUrl?: string; // Added for provider-specific redirects (e.g. 3DS for card linking)
   errorMessage?: string;
   /**
    * Adds a new payment method for a user (e.g., tokenizing a card).

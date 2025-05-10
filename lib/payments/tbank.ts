@@ -16,7 +16,8 @@ import {
   AddPaymentMethodResult,
   PaymentMethodStatus,
 } from './base';
-import Debug from '@/lib/debug';
+import Debug from '../debug';
+import { TBankProcessorOptions, defaultTBankOptions, GenerateReceiptArgs, ReceiptOperationType } from './tbank/options';
 
 const debug = Debug('payment:tbank');
 
@@ -201,6 +202,8 @@ interface TBankReceiptItem {
   SupplierInfo?: any; // SupplierInfo object
 }
 
+// Exporting types needed by options.ts
+export type { TBankReceipt, TBankReceiptItem };
 
 export class TBankPaymentProcessor implements IPaymentProcessor {
   readonly providerName = 'tbank';
@@ -208,17 +211,20 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
   private secretKey: string;
   private useTestMode: boolean; // To potentially use different keys or slightly different logic if needed
   private appBaseUrl: string;
+  private options: TBankProcessorOptions;
 
   constructor(config: {
     terminalKey: string;
     secretKey: string;
     useTestMode?: boolean;
     appBaseUrl?: string;
+    options?: TBankProcessorOptions;
   }) {
     this.terminalKey = config.terminalKey;
     this.secretKey = config.secretKey;
     this.useTestMode = config.useTestMode || false;
     this.appBaseUrl = config.appBaseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    this.options = { ...defaultTBankOptions, ...config.options };
 
     if (!this.terminalKey || !this.secretKey) {
       throw new Error('TBank terminalKey or secretKey is missing.');
@@ -537,29 +543,49 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
     }
   }
   
-  // Placeholder for Confirm (for two-stage payments)
-  async confirmPayment(externalPaymentId: string, amount?: number): Promise<TBankCommonResponse> {
+  async confirmPayment(externalPaymentId: string, amount?: number, receiptArgs?: GenerateReceiptArgs): Promise<TBankCommonResponse> {
     debug(`TBank: confirmPayment called for externalId: ${externalPaymentId}, amount: ${amount}`);
     const requestPayload: Omit<TBankConfirmRequest, 'Token' | 'TerminalKey'> = {
       PaymentId: externalPaymentId,
     };
-    if (amount) {
-      requestPayload.Amount = Math.round(amount * 100);
+    if (typeof amount === 'number') {
+      requestPayload.Amount = Math.round(amount * 100); // Amount in kopecks
     }
-    // TODO: Add Receipt if needed for confirmation with fiscalization
+
+    if (this.options.generateReceipt && receiptArgs) {
+      const receipt = this.options.generateReceipt(receiptArgs, 'confirmation');
+      if (receipt) {
+        requestPayload.Receipt = receipt;
+      }
+    }
+    // TODO: Ensure receiptArgs are correctly passed or constructed if fiscalization is needed here.
+    // If amount for confirmation differs from initial, receipt might be mandatory.
+
     return this.makeRequest<TBankConfirmRequest, TBankCommonResponse>('Confirm', requestPayload);
   }
 
-  // Placeholder for Cancel (can be reversal or refund)
-  async cancelPayment(externalPaymentId: string, amount?: number): Promise<TBankCommonResponse> {
+  async cancelPayment(externalPaymentId: string, amount?: number, receiptArgs?: GenerateReceiptArgs): Promise<TBankCommonResponse> {
     debug(`TBank: cancelPayment called for externalId: ${externalPaymentId}, amount: ${amount}`);
     const requestPayload: Omit<TBankCancelRequest, 'Token' | 'TerminalKey'> = {
       PaymentId: externalPaymentId,
     };
-    if (amount) {
-      requestPayload.Amount = Math.round(amount * 100);
+    if (typeof amount === 'number') {
+      requestPayload.Amount = Math.round(amount * 100); // Amount in kopecks, for partial refund/cancel
     }
-    // TODO: Add Receipt if needed for refund with fiscalization
+
+    // For refunds (Cancel after CONFIRMED), a receipt is often required by fiscal law.
+    // For reversals (Cancel before CONFIRMED), a receipt might not be needed or allowed by TBank.
+    // This logic assumes receiptArgs are provided when a fiscalized refund is intended.
+    if (this.options.generateReceipt && receiptArgs) {
+      const receipt = this.options.generateReceipt(receiptArgs, 'refund');
+      if (receipt) {
+        requestPayload.Receipt = receipt;
+      }
+    }
+    // TODO: Determine if receipt is for reversal or refund based on payment status before calling this.
+    // TBank documentation for Cancel: "Для возврата используется тот же метод Cancel, что и для отмены.
+    // Отличие только в том, что для возврата необходимо передавать объект Receipt." 
+
     return this.makeRequest<TBankCancelRequest, TBankCommonResponse>('Cancel', requestPayload);
   }
 
@@ -711,28 +737,16 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
       const response = await this.makeRequest<TBankAddCardInitRequest, TBankAddCardInitResponse & TBankCommonResponse>('AddCard', requestPayload);
 
       if (response.Success && response.PaymentURL && response.RequestKey) {
-        // User needs to be redirected. The `redirectUrl` (response.PaymentURL)
-        // is not part of AddPaymentMethodResult. This is a limitation.
-        // The RequestKey should be stored temporarily (e.g., in session or a temporary DB record)
-        // associated with the user/customerKey to verify the callback/webhook.
         debug(`TBank AddCard: User redirection needed to: ${response.PaymentURL}. RequestKey: ${response.RequestKey}`);
-        
-        // Since we cannot return redirectUrl, we return PENDING_USER_ACTION.
-        // The calling layer must know how to handle this (e.g. by having separately obtained the redirectUrl
-        // or by listening to an event, or the TBank form is embedded and handles this client-side).
-        // For now, we fulfill the interface, assuming the actual card details (CardId, RebillId)
-        // will be saved after successful webhook/callback processing based on RequestKey/CustomerKey.
         return {
-          paymentMethodId: '', // Placeholder: Real ID will be set after webhook/confirmation
-          externalId: undefined, // Placeholder: Real CardId after confirmation
+          paymentMethodId: '', 
+          externalId: undefined, 
           status: PaymentMethodStatus.PENDING_USER_ACTION,
-          isRecurrentReady: false, // Will be true after confirmation if card supports it
+          isRecurrentReady: false, 
           detailsForUser: { message: 'Redirect to TBank page required.', requestKey: response.RequestKey },
-          // errorMessage: undefined,
+          redirectUrl: response.PaymentURL, // Populate redirectUrl
         };
       } else if (response.Success && !response.PaymentURL && response.RequestKey) {
-        // This case (e.g. CheckType=NO, or card added without redirect) is less common for 3DS/HOLD.
-        // We still need to await webhook confirmation.
         debug(`TBank AddCard: Initiated, awaiting confirmation. RequestKey: ${response.RequestKey}`);
         return {
             paymentMethodId: '', 
@@ -740,10 +754,10 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
             status: PaymentMethodStatus.PENDING_CONFIRMATION, 
             isRecurrentReady: false,
             detailsForUser: { message: 'Card addition initiated, awaiting confirmation.', requestKey: response.RequestKey },
+            // redirectUrl is not available in this case
         };
       }
       else {
-        // TBankAddCardInitResponse has Message. TBankCommonResponse (which it extends via makeRequest) has Details.
         const errorMessage = response.Message || response.Details || `TBank AddCard failed with ErrorCode: ${response.ErrorCode}`;
         throw new Error(errorMessage);
       }
