@@ -566,7 +566,8 @@ program
           "ws": "npx --yes next-ws-cli@latest patch -y",
           "postinstall": "npm run ws -- -y",
           "migrate": "npx hasyx migrate",
-          "unmigrate": "npx hasyx unmigrate"
+          "unmigrate": "npx hasyx unmigrate",
+          "npm-publish": "npm run build; npm publish",
         };
         
         // Check if scripts need updating
