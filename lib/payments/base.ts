@@ -106,7 +106,7 @@ export interface CancelSubscriptionResult {
 
 export interface AddPaymentMethodArgs {
   userId: string;
-  providerName: string; // "dummy", "tbank" etc.
+  providerName: string; // "tbank", "linkcom", "ton_api"
   type: string; // "card", "wallet"
   details: Record<string, any>; // e.g. card token from client-side SDK
   setAsDefault?: boolean;

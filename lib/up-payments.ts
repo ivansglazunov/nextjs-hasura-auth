@@ -23,7 +23,7 @@ const sqlSchema = `
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE,
       UNIQUE ("user_id", "provider_name", "external_id", "type")
   );
-  COMMENT ON COLUMN "public"."payment_methods"."provider_name" IS 'e.g., "dummy", "tbank", "linkcom", "ton_api"';
+  COMMENT ON COLUMN "public"."payment_methods"."provider_name" IS 'e.g., "tbank", "linkcom", "ton_api"';
   COMMENT ON COLUMN "public"."payment_methods"."external_id" IS 'Payment method ID in the external system';
   COMMENT ON COLUMN "public"."payment_methods"."type" IS 'e.g., "card", "ton_wallet", "sbp"';
   COMMENT ON COLUMN "public"."payment_methods"."details" IS 'Partially masked data for display';
@@ -75,7 +75,7 @@ const sqlSchema = `
       FOREIGN KEY ("payment_method_id") REFERENCES "public"."payment_methods"("id") ON UPDATE CASCADE ON DELETE RESTRICT,
       FOREIGN KEY ("plan_id") REFERENCES "public"."subscription_plans"("id") ON UPDATE CASCADE ON DELETE SET NULL
   );
-  COMMENT ON COLUMN "public"."subscriptions"."provider_name" IS 'e.g., "dummy", "tbank", "internal"';
+  COMMENT ON COLUMN "public"."subscriptions"."provider_name" IS 'e.g., "tbank", "internal"';
   COMMENT ON COLUMN "public"."subscriptions"."external_subscription_id" IS 'Subscription ID in the external system, if any';
   COMMENT ON COLUMN "public"."subscriptions"."status" IS 'e.g., "trialing", "active", "past_due", "unpaid", "canceled", "ended", "paused"';
 
