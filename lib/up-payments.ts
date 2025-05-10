@@ -178,6 +178,23 @@ const relationshipsPayload = [
   {
     type: "pg_create_object_relationship",
     args: { table: { schema: "public", name: "payments" }, name: "subscription", using: { foreign_key_constraint_on: "subscription_id" } }
+  },
+  // Array relationships from users table
+  {
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "public", name: "users" }, name: "payment_methods", using: { foreign_key_constraint_on: { table: { schema: "public", name: "payment_methods" }, column: "user_id" } } }
+  },
+  {
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "public", name: "users" }, name: "payments", using: { foreign_key_constraint_on: { table: { schema: "public", name: "payments" }, column: "user_id" } } }
+  },
+  {
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "public", name: "users" }, name: "subscription_plans_created", using: { foreign_key_constraint_on: { table: { schema: "public", name: "subscription_plans" }, column: "user_id" } } } // Renamed to avoid conflict if users subscribe to plans
+  },
+  {
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "public", name: "users" }, name: "subscriptions", using: { foreign_key_constraint_on: { table: { schema: "public", name: "subscriptions" }, column: "user_id" } } }
   }
 ];
 

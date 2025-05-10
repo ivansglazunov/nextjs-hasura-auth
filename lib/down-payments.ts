@@ -34,6 +34,25 @@ const untrackTablesPayload = [
     }
 ];
 
+const relationshipsToDropPayload = [
+  // Existing relationships to drop (if any, from payment_methods, etc. TO user)
+  // Assuming these might exist based on the up-migration's object relationships
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "payment_methods" }, relationship: "user" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "subscription_plans" }, relationship: "user" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "subscriptions" }, relationship: "user" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "subscriptions" }, relationship: "payment_method" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "subscriptions" }, relationship: "plan" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "payments" }, relationship: "user" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "payments" }, relationship: "payment_method" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "payments" }, relationship: "subscription" } },
+
+  // New array relationships from users to drop
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "users" }, relationship: "payment_methods" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "users" }, relationship: "payments" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "users" }, relationship: "subscription_plans_created" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "users" }, relationship: "subscriptions" } }
+];
+
 export async function down(customHasura?: Hasura) {
   debug(`Starting migration: ${MIGRATION_NAME} - DOWN`);
   const hasura = customHasura || new Hasura({
@@ -42,13 +61,16 @@ export async function down(customHasura?: Hasura) {
   });
 
   try {
-    debug('Removing Hasura metadata (untracking tables, which should cascade to relationships and permissions)...');
-    // It is generally safer to untrack tables first. 
-    // The `cascade: true` option in pg_untrack_table should handle removing dependent items like relationships and permissions.
-    // If specific order or more granular control is needed, individual drop commands for permissions/relationships would be added here.
-    const argsWithSource = untrackTablesPayload.map(payload => ({ ...payload, source: "default" }));
-    await hasura.v1({ type: "bulk", args: argsWithSource });
-    debug('Hasura metadata related to tables removed successfully.');
+    debug('Removing Hasura metadata (dropping relationships, then untracking tables)...');
+    // It's often safer to drop relationships explicitly before untracking if `cascade: true` on untrack is not fully relied upon
+    // or if specific order is needed.
+    const dropRelArgs = relationshipsToDropPayload.map(payload => ({ ...payload, source: "default" }));
+    await hasura.v1({ type: "bulk", args: dropRelArgs });
+    debug('Relationships dropped successfully.');
+
+    const untrackArgs = untrackTablesPayload.map(payload => ({ ...payload, source: "default" }));
+    await hasura.v1({ type: "bulk", args: untrackArgs });
+    debug('Hasura metadata related to tables removed successfully (untracked).');
 
     debug('Dropping SQL schema (tables)... ');
     await hasura.sql(sqlSchemaDown, 'default', true); // cascade = true in SQL DROP TABLE as well, for safety
