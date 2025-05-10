@@ -403,6 +403,7 @@ program
       'migrations/1746670608552-hasyx-notify/down.ts': 'migrations/1746670608552-hasyx-notify/down.ts',
       'migrations/1746837333136-hasyx-debug/up.ts': 'migrations/1746837333136-hasyx-debug/up.ts',
       'migrations/1746837333136-hasyx-debug/down.ts': 'migrations/1746837333136-hasyx-debug/down.ts',
+      'events/notify.json': 'events/notify.json',
     };
     debug('Files to create if not exists:', Object.keys(filesToCreateIfNotExists));
 
