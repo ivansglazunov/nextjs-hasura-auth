@@ -58,37 +58,103 @@ export class Hasura {
     debug(`🚀 Sending request to /v1/metadata: ${request.type}`);
     try {
       const response = await this.clientInstance.post('/v1/metadata', request);
+      // Ensure that if Hasura returns a 2xx status but with an error in the body (e.g. for bulk operations with allow_inconsistent_metadata)
+      // we still check for it. However, typically Hasura non-2xx status means an error.
+      // For now, we assume non-2xx is caught by catch block, and 2xx with error payload is handled by callers if necessary.
       debug(`✅ /v1/metadata request successful for type: ${request.type}`);
       return response.data;
     } catch (error: any) {
-       // Log specific Hasura errors if available, otherwise log the general error
-       const hasuraError = error.response?.data?.error || error.response?.data?.message || error.message;
-       const errorCode = error.response?.data?.code;
-       const requestType = request.type; // Get the type of the request
+       const responseData = error.response?.data;
+       const requestType = request.type;
 
-       // Don't throw an error for common "already exists/tracked/not found/defined" issues
-       const ignorableErrors = [
-           'already exists',
-           'already tracked',
-           'not found',
-           'already defined', // for permissions creation
+       // Extract error message and code carefully
+       let mainErrorMessage = 'Unknown Hasura API error';
+       let mainErrorCode = 'unknown';
+
+       if (responseData) {
+         // Handle cases where responseData is an array (e.g., some bulk responses)
+         if (Array.isArray(responseData) && responseData.length > 0) {
+           const firstError = responseData.find(item => item.error || item.message || item.code);
+           if (firstError) {
+             mainErrorMessage = firstError.message || firstError.error || 'Error in bulk operation array';
+             mainErrorCode = firstError.code || 'unknown';
+           } else {
+             mainErrorMessage = 'Error in bulk response array structure';
+           }
+         } else if (typeof responseData === 'object') {
+           mainErrorMessage = responseData.message || responseData.error || (responseData.errors && responseData.errors[0]?.message) || error.message || mainErrorMessage;
+           mainErrorCode = responseData.code || (responseData.internal && responseData.internal[0]?.code) || (responseData.error?.code) || (responseData.errors && responseData.errors[0]?.extensions?.code) || mainErrorCode;
+           // Specific for error "view/table already untracked: "payments" (Code: already-untracked)" where type is bulk
+           if (requestType === 'bulk' && typeof mainErrorMessage === 'string' && !mainErrorCode && mainErrorMessage.includes('(Code: ')) {
+             const codeMatch = mainErrorMessage.match(/\(Code: ([\w-]+)\)/);
+             if (codeMatch && codeMatch[1]) {
+               mainErrorCode = codeMatch[1];
+             }
+           }
+         } else {
+           mainErrorMessage = error.message || mainErrorMessage;
+         }
+       } else {
+         mainErrorMessage = error.message || mainErrorMessage;
+       }
+       
+       // Standardized ignorable error codes from Hasura
+       const ignorableErrorCodes = [
+           'already-exists',
+           'already-tracked',
+           'already-untracked', // Added
+           'not-found', // Can be ignorable for drop/delete operations
+           'already-defined',
+           // 'permission-denied', // Handle this more specifically below
        ];
 
-       let isIgnorable = typeof hasuraError === 'string' && ignorableErrors.some(phrase => hasuraError.includes(phrase));
+       let isIgnorable = ignorableErrorCodes.includes(mainErrorCode);
 
-       // Specifically ignore 'permission-denied' ONLY for drop/untrack operations, as it likely means "not found" in this context
-       if (!isIgnorable && errorCode === 'permission-denied' && (requestType.startsWith('pg_drop_') || requestType.startsWith('pg_untrack_'))) {
-           debug(`📝 Note: Ignoring 'permission-denied' for ${requestType}, likely means target object was not found.`);
-           isIgnorable = true;
+       // Specifically ignore 'permission-denied' or 'not-found' for drop/untrack/delete operations
+       if (!isIgnorable && (mainErrorCode === 'permission-denied' || mainErrorCode === 'not-found')) {
+           if (requestType.startsWith('pg_drop_') || requestType.startsWith('pg_untrack_') || requestType.startsWith('delete_') || requestType.endsWith('_delete_permission')) {
+               debug(`📝 Note: Ignoring '${mainErrorCode}' for ${requestType}, likely means target object was not found or permission did not exist.`);
+               isIgnorable = true;
+           }
+       }
+       
+       // If type is bulk and we got a generic bulk error code, inspect internal errors if any
+       if (requestType === 'bulk' && (mainErrorCode === 'bulk-error' || mainErrorCode === 'pg-error') && responseData?.internal) {
+           const internalErrors = Array.isArray(responseData.internal) ? responseData.internal : [responseData.internal];
+           let allInternalIgnorable = internalErrors.length > 0;
+           for (const internalItem of internalErrors) {
+               const internalCode = internalItem.code || (internalItem.error?.code);
+               let currentInternalIgnorable = ignorableErrorCodes.includes(internalCode);
+               if (!currentInternalIgnorable && (internalCode === 'permission-denied' || internalCode === 'not-found')) {
+                   // Assuming items in bulk args have a 'type' field to check if it's a drop op. This is a simplification.
+                   // For simplicity, we'll be more lenient with permission-denied/not-found inside bulk for now.
+                   currentInternalIgnorable = true; 
+               }
+               if (!currentInternalIgnorable) {
+                   allInternalIgnorable = false;
+                   // Update main error message to be more specific if a non-ignorable internal error is found
+                   mainErrorMessage = internalItem.message || internalItem.error || mainErrorMessage;
+                   mainErrorCode = internalCode || mainErrorCode;
+                   break;
+               }
+           }
+           if (allInternalIgnorable) isIgnorable = true;
        }
 
+
        if (isIgnorable) {
-           debug(`📝 Note: Non-critical issue for ${requestType} - ${hasuraError} ${errorCode ? `(Code: ${errorCode})` : ''}`);
-           return error.response?.data || { info: hasuraError }; // Return info instead of throwing
+           const logMessage = `📝 Note: Non-critical Hasura issue for type '${requestType}' - ${mainErrorMessage} (Code: ${mainErrorCode}). Proceeding.`;
+           console.warn(logMessage); // Make it more visible
+           debug(logMessage, `Raw response data: ${JSON.stringify(responseData, null, 2)}`);
+           // Return the original response data as if it were a success, or a generic success object.
+           // This makes the calling function not misinterpret it as an error structure.
+           // If the original success returns response.data, we should mimic that.
+           // error.response.data might be the actual data Hasura sent with the "ignorable error".
+           return responseData || { success: true, info: mainErrorMessage, code: mainErrorCode };
        } else {
-           const errorMessage = `❌ Error in /v1/metadata for type ${requestType}: ${hasuraError} ${errorCode ? `(Code: ${errorCode})` : ''}`;
-           debug(errorMessage, error.response?.data || error);
-           throw new Error(errorMessage); // Re-throw critical errors
+           const errorMessageToThrow = `❌ Error in /v1/metadata for type ${requestType}: ${mainErrorMessage} (Code: ${mainErrorCode})`;
+           debug(errorMessageToThrow, `Raw response data: ${JSON.stringify(responseData, null, 2)}`, error);
+           throw new Error(errorMessageToThrow); // Re-throw critical errors
        }
     }
   }

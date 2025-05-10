@@ -41,15 +41,17 @@ interface ClientMethodOptions extends Omit<GenerateOptions, 'operation'> {
 }
 
 export class Hasyx {
-  private apolloClient: HasyxApolloClient;
-  private generate: Generate;
+  public apolloClient: HasyxApolloClient;
+  public generate: Generate;
+  private _options?: { secret?: string };
 
-  constructor(apolloClient: HasyxApolloClient, generate: Generate) {
+  constructor(apolloClient: HasyxApolloClient, generate: Generate, options?: { secret?: string }) {
     if (!apolloClient) {
       throw new Error('❌ ApolloClient instance must be provided to the Client constructor.');
     }
     this.apolloClient = apolloClient;
     this.generate = generate; // Use the imported generator function
+    this._options = options; // Store options, including a potential admin secret
     debug('Client class initialized with ApolloClient instance.');
   }
 
@@ -381,6 +383,44 @@ export class Hasyx {
   ): QueryResult<TData, TVariables> {
     // This is just a stub - actual implementation is in hasyx-client.tsx
     throw new Error("This method should not be called directly from the server component.");
+  }
+
+  /**
+   * Inserts a debug log entry if HASYX_DEBUG is enabled and admin secret is present.
+   * This method is intended for server-side admin use only.
+   * @param value - The JSONB value to log.
+   * @returns The result of the insert operation promise, or undefined if not executed.
+   */
+  debug(value: any): Promise<any> | undefined {
+    // Check for HASYX_DEBUG environment variable
+    const hasyxDebugEnabled = typeof process !== 'undefined' && typeof process.env !== 'undefined' && !!+(process.env.HASYX_DEBUG || '0');
+
+    // Check for admin secret via the _options property
+    const isAdminContext = !!this._options?.secret;
+
+    if (hasyxDebugEnabled && isAdminContext) {
+      debug('Executing debug log insert with value:', value);
+      try {
+        // Return the promise directly without await, fire-and-forget style
+        return this.insert<any>({ 
+          table: 'debug', 
+          object: { value: value } 
+        });
+      } catch (error) {
+        // Log error but don't throw, as it's fire-and-forget
+        console.error('Error during debug insert (fire-and-forget):', error);
+        debug('Error during debug insert (fire-and-forget):', error);
+        return undefined;
+      }
+    } else {
+      if (!hasyxDebugEnabled) {
+        debug('Debug insert skipped: HASYX_DEBUG is not enabled.');
+      }
+      if (!isAdminContext) {
+        debug('Debug insert skipped: Not in admin context (no admin secret found in Hasyx options).');
+      }
+      return undefined;
+    }
   }
 }
 

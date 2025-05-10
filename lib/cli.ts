@@ -398,20 +398,23 @@ program
       'migrations/1746660891582-hasyx-users/down.ts': 'migrations/1746660891582-hasyx-users/down.ts',
       'migrations/1746670608552-hasyx-notify/up.ts': 'migrations/1746670608552-hasyx-notify/up.ts',
       'migrations/1746670608552-hasyx-notify/down.ts': 'migrations/1746670608552-hasyx-notify/down.ts',
+      'migrations/1746837333136-hasyx-debug/up.ts': 'migrations/1746837333136-hasyx-debug/up.ts',
+      'migrations/1746837333136-hasyx-debug/down.ts': 'migrations/1746837333136-hasyx-debug/down.ts',
+      'events/notify.json': 'events/notify.json',
     };
     debug('Files to create if not exists:', Object.keys(filesToCreateIfNotExists));
 
     // Ensure directories exist
     const ensureDirs = [
-      '.github/workflows', // Ensure workflows directory exists
+      '.github/workflows',
       'app/api/auth/[...nextauth]',
       'app/api/auth/verify',
       'app/api/graphql',
-      'migrations/1746660891582-hasyx-users', // Ensure migrations directory exists
-      'migrations/1746670608552-hasyx-notify', // Ensure notify migrations directory exists
-      'app/api/events/[name]', // Ensure events directory exists
-      'events', // Ensure events definitions directory exists
-      // NEW: Ensure Telegram bot API directory exists
+      'migrations/1746660891582-hasyx-users',
+      'migrations/1746670608552-hasyx-notify',
+      'migrations/1746837333136-hasyx-debug',
+      'app/api/events/[name]',
+      'events',
       'app/api/telegram_bot',
     ];
     debug('Ensuring directories exist:', ensureDirs);
@@ -565,7 +568,8 @@ program
           "ws": "npx --yes next-ws-cli@latest patch -y",
           "postinstall": "npm run ws -- -y",
           "migrate": "npx hasyx migrate",
-          "unmigrate": "npx hasyx unmigrate"
+          "unmigrate": "npx hasyx unmigrate",
+          "npm-publish": "npm run build; npm publish",
         };
         
         // Check if scripts need updating

@@ -33,6 +33,7 @@ export interface ApolloOptions {
 
 export interface HasyxApolloClient extends ApolloClient<any> {
   Provider: React.ComponentType<{ children: React.ReactNode }>;
+  _options: ApolloOptions;
   hasyxGenerator: Generate;
 }
 
@@ -221,6 +222,13 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
   apolloClient.Provider = function Provider({ children }: { children: React.ReactNode }) {
     return <ApolloProvider client={apolloClient}>{children}</ApolloProvider>;
   }
+
+  apolloClient._options = {
+    url,
+    ws,
+    token,
+    secret,
+  };
 
   return apolloClient as HasyxApolloClient;
 }
