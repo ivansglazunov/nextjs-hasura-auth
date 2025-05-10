@@ -419,6 +419,9 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
   }
+  .\!table {
+    display: table !important;
+  }
   .block {
     display: block;
   }
