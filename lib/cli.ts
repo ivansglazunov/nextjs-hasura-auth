@@ -1542,10 +1542,14 @@ program
   .option('--skip-calibration', 'Skip Telegram bot calibration process')
   .action(async (options) => {
     debug('Executing "telegram" command with options:', options);
-    // We'll call a new function from assist.ts or a dedicated telegram-setup.ts file
-    // For now, let's assume it's in assist.ts and named runTelegramSetupAndCalibration
-    const { runTelegramSetupAndCalibration } = await import('./assist'); 
-    runTelegramSetupAndCalibration(options);
+    // Changed import method to potentially resolve TS error
+    const assistModule = await import('./assist'); 
+    if (!assistModule.runTelegramSetupAndCalibration) {
+        console.error('FATAL: runTelegramSetupAndCalibration function not found in assist module. Build might be corrupted or export is missing.');
+        debug('runTelegramSetupAndCalibration not found on assistModule:', assistModule);
+        process.exit(1);
+    }
+    assistModule.runTelegramSetupAndCalibration(options);
   });
 
 // --- NEW: `local` Command ---
