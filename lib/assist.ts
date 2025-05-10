@@ -13,6 +13,7 @@ import schema from '../public/hasura-schema.json';
 import dotenv from 'dotenv';
 import { setBotName, setBotDescription, setBotCommands, BotCommand, setWebhook } from './telegram-bot';
 import { setTelegramChannelTitle, setTelegramChannelPhoto } from './telegram-channel';
+import { assistTbank } from './assist-tbank';
 
 // Ensure dotenv is configured only once
 if (require.main === module) {
@@ -84,6 +85,9 @@ async function assist(options: AssistOptions = {}) {
     if (!options.skipProjectUser) await configureProjectUser(rl, options.skipProjectUser); else debug('Skipping Project User setup');
     if (!options.skipTelegram) await configureTelegramBot(rl, options.skipTelegram); else debug('Skipping Telegram Bot setup');
     if (!options.skipTelegramChannel) await configureTelegramChannel(rl, options.skipTelegramChannel); else debug('Skipping Telegram Channel setup');
+    
+    // Add TBank setup
+    await assistTbank();
 
     console.log('✨ All done! Your project is ready to use.');
     debug('Assist command completed successfully');
@@ -314,7 +318,135 @@ async function configureFirebaseNotifications(rl: readline.Interface, skip?: boo
    console.log('✅ Firebase config (basic) noted. Ensure all keys are set in .env');
 }
 async function setupVercel(rl: readline.Interface) { /* Placeholder */ console.log('🌍 Vercel config placeholder. Skipped.');}
-async function syncEnvironmentVariables() { /* Placeholder */ console.log('🔄 Sync env vars placeholder. Skipped.');}
+async function syncEnvironmentVariables() {
+  debug('Syncing environment variables...');
+  console.log('🔄 Syncing environment variables to Vercel and GitHub...');
+  const envPath = path.join(process.cwd(), '.env');
+  const envVars = parseEnvFile(envPath);
+
+  const mainUrl = envVars.MAIN_URL || envVars.NEXT_PUBLIC_APP_URL;
+
+  const varsToSync: Record<string, string> = {};
+  const githubSecrets: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(envVars)) {
+    if (key.startsWith('#') || !value) continue; // Skip comments and empty values
+
+    // Replace localhost with MAIN_URL for certain variables
+    let syncValue = value;
+    if (mainUrl && (key.endsWith('_URL') || key.endsWith('_URI') || key.includes('RETURN_URL') || key.includes('CALLBACK_URL') || key.includes('WEBHOOK_URL'))) {
+      syncValue = value.replace(/http:\/\/localhost(:[0-9]+)?/g, mainUrl);
+      syncValue = syncValue.replace(/https:\/\/localhost(:[0-9]+)?/g, mainUrl); // for https localhost
+    }
+    
+    // Exclude purely local dev variables or sensitive ones that shouldn't be broadly synced without explicit handling
+    // Example: TEST_TOKEN, local database URLs not meant for prod/staging, etc.
+    if (key === 'TEST_TOKEN' || key.startsWith('DATABASE_LOCAL_')) {
+        debug(`Skipping sync for local/test variable: ${key}`);
+        continue;
+    }
+
+    varsToSync[key] = syncValue;
+    if (!key.startsWith('NEXT_PUBLIC_')) { // Non-public variables go to GitHub secrets
+      githubSecrets[key] = syncValue;
+    }
+  }
+
+  // Sync to Vercel
+  console.log('\n🌍 Syncing to Vercel...');
+  const vercelProjectName = getVercelProjectName(); // Assume this helper exists or can be implemented
+  if (vercelProjectName) {
+    for (const [key, value] of Object.entries(varsToSync)) {
+      // Vercel environments: Development, Preview, Production
+      // Sync all to Preview and Production for simplicity, Development can be set manually or use local .env
+      // Vercel CLI command: `vercel env add <name> <value> [environment]`
+      // Note: Vercel may require linking the project first (`vercel link`)
+      // This is a simplified approach. Real implementation needs error handling and possibly selection of environments.
+      console.log(`Adding/Updating Vercel env var: ${key} for Production`);
+      let vercelCmd = spawn.sync('vercel', ['env', 'add', key, value, 'Production', '--scope', vercelProjectName, '-y'], { stdio: 'pipe', encoding: 'utf-8' });
+      if (vercelCmd.status !== 0) console.error(`Failed to set Vercel Production env var ${key}: ${vercelCmd.stderr || vercelCmd.stdout}`);
+      else console.log(`Set ${key} for Production on Vercel.`);
+      
+      console.log(`Adding/Updating Vercel env var: ${key} for Preview`);
+      vercelCmd = spawn.sync('vercel', ['env', 'add', key, value, 'Preview', '--scope', vercelProjectName, '-y'], { stdio: 'pipe', encoding: 'utf-8' });
+      if (vercelCmd.status !== 0) console.error(`Failed to set Vercel Preview env var ${key}: ${vercelCmd.stderr || vercelCmd.stdout}`);
+      else console.log(`Set ${key} for Preview on Vercel.`);
+    }
+    console.log('✅ Vercel environment variables sync attempt complete.');
+  } else {
+    console.warn('⚠️ Vercel project not detected or linked. Skipping Vercel env sync.');
+    console.log('   Run `vercel link` in your project directory if you use Vercel.');
+  }
+
+  // Sync to GitHub Secrets
+  console.log('\n🔒 Syncing to GitHub Secrets...');
+  const ghRepo = getGitHubRemoteUrl(); // Assume this helper exists
+  if (ghRepo) {
+    for (const [key, value] of Object.entries(githubSecrets)) {
+      // GitHub CLI command: `gh secret set <name> -b "<value>" -R <repo>`
+      console.log(`Setting GitHub secret: ${key}`);
+      const secretCmd = spawn.sync('gh', ['secret', 'set', key, '--body', value, '--repo', ghRepo], { stdio: 'pipe', encoding: 'utf-8' });
+      if (secretCmd.status !== 0) console.error(`Failed to set GitHub secret ${key}: ${secretCmd.stderr || secretCmd.stdout}`);
+      else console.log(`Set GitHub secret ${key}.`);
+    }
+    console.log('✅ GitHub secrets sync attempt complete.');
+  } else {
+    console.warn('⚠️ GitHub repository not detected. Skipping GitHub secrets sync.');
+  }
+  console.log('🔄 Environment variable sync process finished.');
+}
+
+function getVercelProjectName(): string | null {
+    // Try to get from .vercel/project.json
+    try {
+        const projectJsonPath = path.join(process.cwd(), '.vercel', 'project.json');
+        if (fs.existsSync(projectJsonPath)) {
+            const projectConfig = JSON.parse(fs.readFileSync(projectJsonPath, 'utf-8'));
+            // Heuristic: Look for projectId or orgId to confirm it's linked.
+            // The actual project name for `vercel env --scope <name>` might be different.
+            // `vercel link` usually sets this up. For `vercel env add` without `--scope` it uses the linked project.
+            // For simplicity, if the file exists and has orgId/projectId, we assume it's linked.
+            // A more robust way is to parse `vercel link -V 1` or `vercel project ls` output, which is complex here.
+            // If --scope is needed, it's usually `[org-slug]/[project-name]` or just `[project-name]` if personal account.
+            // For now, we'll attempt without explicit scope if not easily found, relying on `vercel link`.
+            if (projectConfig.projectId && projectConfig.orgId) {
+                 // Vercel CLI uses project name from current directory if linked, or requires --scope
+                 // We'll rely on the implicit linking and not pass --scope for now, as getting the exact scope name is tricky.
+                 // If this fails, user needs to ensure `vercel link` was run.
+                 // Let's try to get the project name from package.json as a fallback for scope if needed
+                 let pkgName = path.basename(process.cwd()).toLowerCase().replace(/[^a-z0-9-]/g, '');
+                 try {
+                    const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8'));
+                    if (pkg.name) pkgName = pkg.name.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                 } catch {}
+                 return projectConfig.name || pkgName; // project.json might have 'name'
+            }
+        }
+    } catch (e) {
+        debug('Error reading .vercel/project.json:', e);
+    }
+    debug('Vercel project linking not detected via .vercel/project.json.');
+    return null; 
+}
+
+function getGitHubRemoteUrl(): string | null {
+    try {
+        const result = spawn.sync('git', ['config', '--get', 'remote.origin.url'], { encoding: 'utf-8' });
+        if (result.status === 0 && result.stdout) {
+            const url = result.stdout.trim();
+            // Extract owner/repo from URL like git@github.com:owner/repo.git or https://github.com/owner/repo.git
+            const match = url.match(/github\.com[\:|\/]([^\/]+\/[^\/]+?)(\.git)?$/);
+            if (match && match[1]) {
+                return match[1];
+            }
+        }
+    } catch (e) {
+        debug('Error getting GitHub remote URL:', e);
+    }
+    debug('GitHub remote URL not found or not in expected format.');
+    return null;
+}
+
 async function commitChanges(rl: readline.Interface) { /* Placeholder */ console.log('💾 Commit placeholder. Skipped.');}
 async function runMigrations(rl: readline.Interface) {
   if (await askYesNo(rl, 'Do you want to run migrations now?', true)) {

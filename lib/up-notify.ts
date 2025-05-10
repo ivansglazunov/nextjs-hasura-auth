@@ -15,8 +15,8 @@ const sqlSchema = `
       "provider" text NOT NULL,
       "device_token" text NOT NULL,
       "device_info" jsonb NOT NULL DEFAULT '{}'::jsonb,
-      "created_at" timestamptz NOT NULL,
-      "updated_at" timestamptz NOT NULL,
+      "created_at" timestamptz NOT NULL DEFAULT now(),
+      "updated_at" timestamptz NOT NULL DEFAULT now(),
       PRIMARY KEY ("id"),
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE
   );
@@ -32,7 +32,7 @@ const sqlSchema = `
       "body" text NOT NULL,
       "data" jsonb DEFAULT NULL,
       "user_id" uuid NOT NULL,
-      "created_at" timestamptz NOT NULL,
+      "created_at" timestamptz NOT NULL DEFAULT now(),
       PRIMARY KEY ("id"),
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE
   );
@@ -48,8 +48,8 @@ const sqlSchema = `
       "config" jsonb DEFAULT NULL,
       "status" text NOT NULL DEFAULT 'pending',
       "error" text DEFAULT NULL,
-      "created_at" timestamptz NOT NULL,
-      "updated_at" timestamptz NOT NULL,
+      "created_at" timestamptz NOT NULL DEFAULT now(),
+      "updated_at" timestamptz NOT NULL DEFAULT now(),
       PRIMARY KEY ("id"),
       FOREIGN KEY ("message_id") REFERENCES "public"."notification_messages"("id") ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY ("permission_id") REFERENCES "public"."notification_permissions"("id") ON UPDATE CASCADE ON DELETE CASCADE
@@ -59,6 +59,46 @@ const sqlSchema = `
   CREATE INDEX IF NOT EXISTS "idx_notifications_status" ON "public"."notifications" ("status");
   CREATE INDEX IF NOT EXISTS "idx_notifications_message_id" ON "public"."notifications" ("message_id");
   CREATE INDEX IF NOT EXISTS "idx_notifications_permission_id" ON "public"."notifications" ("permission_id");
+
+  -- Trigger function to update 'updated_at' timestamp
+  CREATE OR REPLACE FUNCTION "public"."set_current_timestamp_updated_at"()
+  RETURNS TRIGGER AS $$
+  DECLARE
+    _new RECORD;
+  BEGIN
+    _new := NEW;
+    _new."updated_at" = NOW();
+    RETURN _new;
+  END;
+  $$ LANGUAGE plpgsql;
+
+  -- Trigger for notification_permissions
+  DROP TRIGGER IF EXISTS "set_public_notification_permissions_updated_at" ON "public"."notification_permissions";
+  CREATE TRIGGER "set_public_notification_permissions_updated_at"
+  BEFORE UPDATE ON "public"."notification_permissions"
+  FOR EACH ROW
+  EXECUTE PROCEDURE "public"."set_current_timestamp_updated_at"();
+  COMMENT ON TRIGGER "set_public_notification_permissions_updated_at" ON "public"."notification_permissions"
+  IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+
+  -- Trigger for notification_messages (if it had an updated_at column, it would go here)
+  -- For now, notification_messages only has created_at. If updated_at is added, add trigger:
+  -- DROP TRIGGER IF EXISTS "set_public_notification_messages_updated_at" ON "public"."notification_messages";
+  -- CREATE TRIGGER "set_public_notification_messages_updated_at"
+  -- BEFORE UPDATE ON "public"."notification_messages"
+  -- FOR EACH ROW
+  -- EXECUTE PROCEDURE "public"."set_current_timestamp_updated_at"();
+  -- COMMENT ON TRIGGER "set_public_notification_messages_updated_at" ON "public"."notification_messages"
+  -- IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+
+  -- Trigger for notifications
+  DROP TRIGGER IF EXISTS "set_public_notifications_updated_at" ON "public"."notifications";
+  CREATE TRIGGER "set_public_notifications_updated_at"
+  BEFORE UPDATE ON "public"."notifications"
+  FOR EACH ROW
+  EXECUTE PROCEDURE "public"."set_current_timestamp_updated_at"();
+  COMMENT ON TRIGGER "set_public_notifications_updated_at" ON "public"."notifications"
+  IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 `;
 
 // Tables to track in Hasura
