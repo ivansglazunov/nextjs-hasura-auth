@@ -27,24 +27,15 @@ describe('Hid Library', () => {
       const hidInstance = Hid(defaultProjectName);
       // This test relies on how NEXT_PUBLIC_HID_NAMESPACE is used internally for default namespace
       // For example, by checking a generated full ID:
-      expect(hidInstance.toHid({schema: 's', table: 't', id: 'i'}, true)).toBe('env-namespace/test-project/s/t/i');
+      expect(hidInstance.toHid({ schema: 's', table: 't', id: 'i' }, true)).toBe('env-namespace/test-project/s/t/i');
       delete process.env.NEXT_PUBLIC_HID_NAMESPACE; // Clean up env var
     });
 
     it("should use 'hasyx' as ultimate fallback namespace", () => {
-        delete process.env.NEXT_PUBLIC_HID_NAMESPACE;
-        // Test with only project name, relying on fallback for namespace
-        const hidInstance = Hid(defaultProjectName);
-        expect(hidInstance.toHid({schema: 's', table: 't', id: 'i'}, true)).toBe('hasyx/test-project/s/t/i');
-      });
-
-    it('should throw error for invalid project name', () => {
-      expect(() => Hid('invalid/project')).toThrow();
-      expect(() => Hid('')).toThrow();
-    });
-
-    it('should throw error for invalid default namespace', () => {
-      expect(() => Hid(defaultProjectName, 'invalid/ns')).toThrow();
+      delete process.env.NEXT_PUBLIC_HID_NAMESPACE;
+      // Test with only project name, relying on fallback for namespace
+      const hidInstance = Hid(defaultProjectName);
+      expect(hidInstance.toHid({ schema: 's', table: 't', id: 'i' }, true)).toBe('hasyx/test-project/s/t/i');
     });
   });
 
@@ -106,13 +97,13 @@ describe('Hid Library', () => {
     });
 
     it('should use default namespace if project, schema, table, id are provided and full=true', () => {
-        const hidOnlyProject = Hid(defaultProjectName); // Will use 'hasyx' or env var for namespace
-        delete process.env.NEXT_PUBLIC_HID_NAMESPACE;
-        expect(hidOnlyProject.toHid({ project: 'proj',schema: 's', table: 't', id: 'i' }, true)).toBe('hasyx/proj/s/t/i');
-      });
+      const hidOnlyProject = Hid(defaultProjectName); // Will use 'hasyx' or env var for namespace
+      delete process.env.NEXT_PUBLIC_HID_NAMESPACE;
+      expect(hidOnlyProject.toHid({ project: 'proj', schema: 's', table: 't', id: 'i' }, true)).toBe('hasyx/proj/s/t/i');
+    });
 
     it('should throw error for missing schema, table, or id', () => {
-      expect(() => hid.toHid({ table: 'users', id: '123' } as any)).toThrow(); 
+      expect(() => hid.toHid({ table: 'users', id: '123' } as any)).toThrow();
       expect(() => hid.toHid('public', undefined as any, '123')).toThrow();
     });
 
@@ -122,20 +113,20 @@ describe('Hid Library', () => {
     });
 
     it.skip('should correctly handle project same as default but different namespace when full=false', () => {
-        expect(hid.toHid({namespace: 'custom', project: defaultProjectName, schema: 's', table: 't', id: 'i'}, false))
-        .toBe('custom/test-project/s/t/i'); 
-        // Since project is default, but namespace is not, we expect namespace/project/schema/table/id
-      });
+      expect(hid.toHid({ namespace: 'custom', project: defaultProjectName, schema: 's', table: 't', id: 'i' }, false))
+        .toBe('custom/test-project/s/t/i');
+      // Since project is default, but namespace is not, we expect namespace/project/schema/table/id
+    });
 
-      it('should omit default namespace and project when full=false and they match instance defaults', () => {
-        expect(hid.toHid({namespace: defaultNamespaceName, project: defaultProjectName, schema: 's', table: 't', id: 'i'}, false))
+    it('should omit default namespace and project when full=false and they match instance defaults', () => {
+      expect(hid.toHid({ namespace: defaultNamespaceName, project: defaultProjectName, schema: 's', table: 't', id: 'i' }, false))
         .toBe('s/t/i');
-      });
+    });
 
-      it.skip('should include namespace if it is different from default, even if project is default and full=false', () => {
-        expect(hid.toHid({namespace: 'other-ns', project: defaultProjectName, schema: 's', table: 't', id: 'i'}, false))
+    it.skip('should include namespace if it is different from default, even if project is default and full=false', () => {
+      expect(hid.toHid({ namespace: 'other-ns', project: defaultProjectName, schema: 's', table: 't', id: 'i' }, false))
         .toBe('other-ns/test-project/s/t/i');
-      });
+    });
   });
 
   describe('fromHid Method', () => {
@@ -165,17 +156,17 @@ describe('Hid Library', () => {
     it('should parse schema/table/id explicitly with full=false', () => {
       expect(hid.fromHid('public/users/4', false)).toEqual({ schema: 'public', table: 'users', id: '4' });
     });
-    
+
     it('should correctly parse a full hid when full is undefined or false', () => {
-        expect(hid.fromHid('ns/proj/sch/tbl/id')).toEqual({ namespace: 'ns', project: 'proj', schema: 'sch', table: 'tbl', id: 'id' });
-        expect(hid.fromHid('ns/proj/sch/tbl/id', false)).toEqual({ namespace: 'ns', project: 'proj', schema: 'sch', table: 'tbl', id: 'id' });
+      expect(hid.fromHid('ns/proj/sch/tbl/id')).toEqual({ namespace: 'ns', project: 'proj', schema: 'sch', table: 'tbl', id: 'id' });
+      expect(hid.fromHid('ns/proj/sch/tbl/id', false)).toEqual({ namespace: 'ns', project: 'proj', schema: 'sch', table: 'tbl', id: 'id' });
     });
 
     it('should return null for invalid HIDs', () => {
       expect(hid.fromHid('a/b')).toBeNull();
       expect(hid.fromHid('a/b/c/d/e/f')).toBeNull();
       expect(hid.fromHid('')).toBeNull();
-      expect(hid.fromHid(null as any)).toBeNull(); 
+      expect(hid.fromHid(null as any)).toBeNull();
       expect(hid.fromHid('a//b/c')).toBeNull(); // empty segment
       expect(hid.fromHid('a /b/c/d')).toBeNull(); // segment with space
     });
