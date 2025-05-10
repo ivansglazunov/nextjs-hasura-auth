@@ -61,6 +61,7 @@ export class Hasura {
       // Ensure that if Hasura returns a 2xx status but with an error in the body (e.g. for bulk operations with allow_inconsistent_metadata)
       // we still check for it. However, typically Hasura non-2xx status means an error.
       // For now, we assume non-2xx is caught by catch block, and 2xx with error payload is handled by callers if necessary.
+      // For now, we assume non-2xx is caught by catch block, and 2xx with error payload is handled by callers if necessary.
       debug(`✅ /v1/metadata request successful for type: ${request.type}`);
       return response.data;
     } catch (error: any) {
@@ -102,9 +103,10 @@ export class Hasura {
        const ignorableErrorCodes = [
            'already-exists',
            'already-tracked',
-           'already-untracked', // Added
+           'already-untracked',
            'not-found', // Can be ignorable for drop/delete operations
            'already-defined',
+           'not-exists', // Added for cases like trying to drop something that isn't there
            // 'permission-denied', // Handle this more specifically below
        ];
 

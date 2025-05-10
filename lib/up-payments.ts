@@ -96,6 +96,7 @@ const sqlSchema = `
       "error_message" text,
       "initiated_at" timestamptz DEFAULT now(),
       "paid_at" timestamptz,
+      "metadata" jsonb,
       "created_at" timestamptz NOT NULL DEFAULT now(),
       "updated_at" timestamptz NOT NULL DEFAULT now(),
       PRIMARY KEY ("id"),
@@ -128,55 +129,55 @@ const tablesToTrackPayload = [
 const relationshipsPayload = [
   // Relationships for payment_methods
   {
-      type: "pg_create_object_relationship",
-      args: { table: {schema: "public", name: "payment_methods"}, name: "user", using: { foreign_key_constraint_on: "user_id" } }
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "public", name: "payment_methods" }, name: "user", using: { foreign_key_constraint_on: "user_id" } }
   },
   {
-      type: "pg_create_array_relationship",
-      args: { table: {schema: "public", name: "payment_methods"}, name: "subscriptions", using: { foreign_key_constraint_on: { table: {schema: "public", name: "subscriptions"}, column: "payment_method_id" } } }
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "public", name: "payment_methods" }, name: "subscriptions", using: { foreign_key_constraint_on: { table: { schema: "public", name: "subscriptions" }, column: "payment_method_id" } } }
   },
   {
-      type: "pg_create_array_relationship",
-      args: { table: {schema: "public", name: "payment_methods"}, name: "payments", using: { foreign_key_constraint_on: { table: {schema: "public", name: "payments"}, column: "payment_method_id" } } }
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "public", name: "payment_methods" }, name: "payments", using: { foreign_key_constraint_on: { table: { schema: "public", name: "payments" }, column: "payment_method_id" } } }
   },
   // Relationships for subscription_plans
   {
-      type: "pg_create_object_relationship",
-      args: { table: {schema: "public", name: "subscription_plans"}, name: "user", using: { foreign_key_constraint_on: "user_id" } }
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "public", name: "subscription_plans" }, name: "user", using: { foreign_key_constraint_on: "user_id" } }
   },
   {
-      type: "pg_create_array_relationship",
-      args: { table: {schema: "public", name: "subscription_plans"}, name: "subscriptions", using: { foreign_key_constraint_on: { table: {schema: "public", name: "subscriptions"}, column: "plan_id" } } }
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "public", name: "subscription_plans" }, name: "subscriptions", using: { foreign_key_constraint_on: { table: { schema: "public", name: "subscriptions" }, column: "plan_id" } } }
   },
   // Relationships for subscriptions
   {
-      type: "pg_create_object_relationship",
-      args: { table: {schema: "public", name: "subscriptions"}, name: "user", using: { foreign_key_constraint_on: "user_id" } }
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "public", name: "subscriptions" }, name: "user", using: { foreign_key_constraint_on: "user_id" } }
   },
   {
-      type: "pg_create_object_relationship",
-      args: { table: {schema: "public", name: "subscriptions"}, name: "payment_method", using: { foreign_key_constraint_on: "payment_method_id" } }
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "public", name: "subscriptions" }, name: "payment_method", using: { foreign_key_constraint_on: "payment_method_id" } }
   },
   {
-      type: "pg_create_object_relationship",
-      args: { table: {schema: "public", name: "subscriptions"}, name: "plan", using: { foreign_key_constraint_on: "plan_id" } }
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "public", name: "subscriptions" }, name: "plan", using: { foreign_key_constraint_on: "plan_id" } }
   },
   {
-      type: "pg_create_array_relationship",
-      args: { table: {schema: "public", name: "subscriptions"}, name: "payments", using: { foreign_key_constraint_on: { table: {schema: "public", name: "payments"}, column: "subscription_id" } } }
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "public", name: "subscriptions" }, name: "payments", using: { foreign_key_constraint_on: { table: { schema: "public", name: "payments" }, column: "subscription_id" } } }
   },
   // Relationships for payments
   {
-      type: "pg_create_object_relationship",
-      args: { table: {schema: "public", name: "payments"}, name: "user", using: { foreign_key_constraint_on: "user_id" } }
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "public", name: "payments" }, name: "user", using: { foreign_key_constraint_on: "user_id" } }
   },
   {
-      type: "pg_create_object_relationship",
-      args: { table: {schema: "public", name: "payments"}, name: "payment_method", using: { foreign_key_constraint_on: "payment_method_id" } }
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "public", name: "payments" }, name: "payment_method", using: { foreign_key_constraint_on: "payment_method_id" } }
   },
   {
-      type: "pg_create_object_relationship",
-      args: { table: {schema: "public", name: "payments"}, name: "subscription", using: { foreign_key_constraint_on: "subscription_id" } }
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "public", name: "payments" }, name: "subscription", using: { foreign_key_constraint_on: "subscription_id" } }
   }
 ];
 
@@ -185,113 +186,113 @@ const permissionsPayload = [
   // payment_methods
   {
     type: "pg_create_select_permission",
-    args: { table: {schema: "public", name: "payment_methods"}, role: "user", permission: { columns: "*", filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
+    args: { table: { schema: "public", name: "payment_methods" }, role: "user", permission: { columns: "*", filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
   },
   {
     type: "pg_create_insert_permission",
-    args: { table: {schema: "public", name: "payment_methods"}, role: "user", permission: { check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, set: {"user_id": "X-Hasura-User-Id"}, columns: ["provider_name", "external_id", "type", "details", "is_default", "is_recurrent_ready", "recurrent_details", "expires_at", "status"] } }
+    args: { table: { schema: "public", name: "payment_methods" }, role: "user", permission: { check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, set: { "user_id": "X-Hasura-User-Id" }, columns: ["provider_name", "external_id", "type", "details", "is_default", "is_recurrent_ready", "recurrent_details", "expires_at", "status"] } }
   },
   {
     type: "pg_create_update_permission",
-    args: { table: {schema: "public", name: "payment_methods"}, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } }, check: {}, columns: ["details", "is_default", "is_recurrent_ready", "recurrent_details", "expires_at", "status"] } }
+    args: { table: { schema: "public", name: "payment_methods" }, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } }, check: {}, columns: ["details", "is_default", "is_recurrent_ready", "recurrent_details", "expires_at", "status"] } }
   },
   {
     type: "pg_create_delete_permission",
-    args: { table: {schema: "public", name: "payment_methods"}, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
+    args: { table: { schema: "public", name: "payment_methods" }, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
   },
   // subscription_plans
   {
     type: "pg_create_select_permission",
-    args: { table: {schema: "public", name: "subscription_plans"}, role: "user", permission: { columns: "*", filter: { "_or": [{ "user_id": { "_is_null": true } }, { "user_id": { "_eq": "X-Hasura-User-Id" } }] } } }
+    args: { table: { schema: "public", name: "subscription_plans" }, role: "user", permission: { columns: "*", filter: { "_or": [{ "user_id": { "_is_null": true } }, { "user_id": { "_eq": "X-Hasura-User-Id" } }] } } }
   },
   // subscriptions
   {
     type: "pg_create_select_permission",
-    args: { table: {schema: "public", name: "subscriptions"}, role: "user", permission: { columns: "*", filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
+    args: { table: { schema: "public", name: "subscriptions" }, role: "user", permission: { columns: "*", filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
   },
   {
     type: "pg_create_insert_permission", // User can create subscriptions for themselves
-    args: { table: {schema: "public", name: "subscriptions"}, role: "user", permission: { check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, set: {"user_id": "X-Hasura-User-Id"}, columns: ["payment_method_id", "plan_id", "provider_name", "status", "current_period_start", "current_period_end", "trial_ends_at", "object_hid", "metadata"] } }
+    args: { table: { schema: "public", name: "subscriptions" }, role: "user", permission: { check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, set: { "user_id": "X-Hasura-User-Id" }, columns: ["payment_method_id", "plan_id", "provider_name", "status", "current_period_start", "current_period_end", "trial_ends_at", "object_hid", "metadata"] } }
   },
   {
     type: "pg_create_update_permission", // User can update specific fields like cancel_at_period_end
-    args: { table: {schema: "public", name: "subscriptions"}, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } }, check: {}, columns: ["payment_method_id", "cancel_at_period_end", "metadata"] } }
+    args: { table: { schema: "public", name: "subscriptions" }, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } }, check: {}, columns: ["payment_method_id", "cancel_at_period_end", "metadata"] } }
   },
   // payments
   {
     type: "pg_create_select_permission",
-    args: { table: {schema: "public", name: "payments"}, role: "user", permission: { columns: "*", filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
+    args: { table: { schema: "public", name: "payments" }, role: "user", permission: { columns: "*", filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
   },
   {
     type: "pg_create_insert_permission",
-    args: { table: {schema: "public", name: "payments"}, role: "user", permission: { check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, set: {"user_id": "X-Hasura-User-Id"}, columns: ["payment_method_id", "provider_name", "subscription_id", "amount", "currency", "status", "description", "object_hid", "initiated_at", "metadata"] } }
+    args: { table: { schema: "public", name: "payments" }, role: "user", permission: { check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, set: { "user_id": "X-Hasura-User-Id" }, columns: ["payment_method_id", "provider_name", "subscription_id", "amount", "currency", "status", "description", "object_hid", "initiated_at", "metadata"] } }
   },
   // User cannot update or delete payments directly, only through provider actions/webhooks
 
   // --- Permissions for role 'admin' (full access example) ---
   {
     type: "pg_create_select_permission",
-    args: { table: {schema: "public", name: "payment_methods"}, role: "admin", permission: { columns: "*", filter: {} } }
+    args: { table: { schema: "public", name: "payment_methods" }, role: "admin", permission: { columns: "*", filter: {} } }
   },
   {
     type: "pg_create_insert_permission",
-    args: { table: {schema: "public", name: "payment_methods"}, role: "admin", permission: { check: {}, columns: "*" } }
+    args: { table: { schema: "public", name: "payment_methods" }, role: "admin", permission: { check: {}, columns: "*" } }
   },
   {
     type: "pg_create_update_permission",
-    args: { table: {schema: "public", name: "payment_methods"}, role: "admin", permission: { check: {}, columns: "*" } }
+    args: { table: { schema: "public", name: "payment_methods" }, role: "admin", permission: { filter: {}, check: {}, columns: "*" } }
   },
   {
     type: "pg_create_delete_permission",
-    args: { table: {schema: "public", name: "payment_methods"}, role: "admin", permission: { filter: {} } }
+    args: { table: { schema: "public", name: "payment_methods" }, role: "admin", permission: { filter: {} } }
   },
   {
     type: "pg_create_select_permission",
-    args: { table: {schema: "public", name: "subscription_plans"}, role: "admin", permission: { columns: "*", filter: {} } }
+    args: { table: { schema: "public", name: "subscription_plans" }, role: "admin", permission: { columns: "*", filter: {} } }
   },
   {
     type: "pg_create_insert_permission",
-    args: { table: {schema: "public", name: "subscription_plans"}, role: "admin", permission: { check: {}, columns: "*" } }
+    args: { table: { schema: "public", name: "subscription_plans" }, role: "admin", permission: { check: {}, columns: "*" } }
   },
   {
     type: "pg_create_update_permission",
-    args: { table: {schema: "public", name: "subscription_plans"}, role: "admin", permission: { check: {}, columns: "*" } }
+    args: { table: { schema: "public", name: "subscription_plans" }, role: "admin", permission: { filter: {}, check: {}, columns: "*" } }
   },
   {
     type: "pg_create_delete_permission",
-    args: { table: {schema: "public", name: "subscription_plans"}, role: "admin", permission: { filter: {} } }
+    args: { table: { schema: "public", name: "subscription_plans" }, role: "admin", permission: { filter: {} } }
   },
   {
     type: "pg_create_select_permission",
-    args: { table: {schema: "public", name: "subscriptions"}, role: "admin", permission: { columns: "*", filter: {} } }
+    args: { table: { schema: "public", name: "subscriptions" }, role: "admin", permission: { columns: "*", filter: {} } }
   },
   {
     type: "pg_create_insert_permission",
-    args: { table: {schema: "public", name: "subscriptions"}, role: "admin", permission: { check: {}, columns: "*" } }
+    args: { table: { schema: "public", name: "subscriptions" }, role: "admin", permission: { check: {}, columns: "*" } }
   },
   {
     type: "pg_create_update_permission",
-    args: { table: {schema: "public", name: "subscriptions"}, role: "admin", permission: { check: {}, columns: "*" } }
+    args: { table: { schema: "public", name: "subscriptions" }, role: "admin", permission: { filter: {}, check: {}, columns: "*" } }
   },
   {
     type: "pg_create_delete_permission",
-    args: { table: {schema: "public", name: "subscriptions"}, role: "admin", permission: { filter: {} } }
+    args: { table: { schema: "public", name: "subscriptions" }, role: "admin", permission: { filter: {} } }
   },
   {
     type: "pg_create_select_permission",
-    args: { table: {schema: "public", name: "payments"}, role: "admin", permission: { columns: "*", filter: {} } }
+    args: { table: { schema: "public", name: "payments" }, role: "admin", permission: { columns: "*", filter: {} } }
   },
   {
     type: "pg_create_insert_permission",
-    args: { table: {schema: "public", name: "payments"}, role: "admin", permission: { check: {}, columns: "*" } }
+    args: { table: { schema: "public", name: "payments" }, role: "admin", permission: { check: {}, columns: "*" } }
   },
   {
     type: "pg_create_update_permission",
-    args: { table: {schema: "public", name: "payments"}, role: "admin", permission: { check: {}, columns: "*" } }
+    args: { table: { schema: "public", name: "payments" }, role: "admin", permission: { filter: {}, check: {}, columns: "*" } }
   },
   {
     type: "pg_create_delete_permission",
-    args: { table: {schema: "public", name: "payments"}, role: "admin", permission: { filter: {} } }
+    args: { table: { schema: "public", name: "payments" }, role: "admin", permission: { filter: {} } }
   }
 ];
 

@@ -204,7 +204,7 @@ export async function proxySOCKET(
   let hasuraWs: WebSocket | null = null;
   let clientConnectionInitialized = false;
   let hasuraConnectionInitialized = false;
-  // Буфер для хранения сообщений от клиента до установления соединения с Hasura
+  // Buffer for storing messages from the client until connection with Hasura is established
   const messageBuffer: string[] = [];
 
   const closeConnections = (code = 1000, reason = 'Closing connection') => {
@@ -218,7 +218,7 @@ export async function proxySOCKET(
     debugGraphql(`[${clientId}] Connections closed.`);
   };
 
-  // Функция для обработки буферизированных сообщений
+  // Function to process buffered messages
   const processBufferedMessages = () => {
     if (messageBuffer.length > 0) {
       debugGraphql(`🔄 [${clientId}] Processing ${messageBuffer.length} buffered messages`);
@@ -322,7 +322,7 @@ export async function proxySOCKET(
           return;
         }
 
-        // Проверка готовности соединения с Hasura и буферизация сообщений
+        // Check Hasura connection readiness and buffer messages
         if (!hasuraWs || hasuraWs.readyState !== WebSocket.OPEN || !hasuraConnectionInitialized) {
           if (['start', 'stop', 'subscribe', 'complete'].includes(type)) {
             debugGraphql(`🔄 [${clientId}] Buffering ${type} message until Hasura connection is ready`);
@@ -361,10 +361,10 @@ export async function proxySOCKET(
           if (clientConnectionInitialized) {
             debugGraphql(`🤝 [${clientId}] Sending connection_ack to client (Hasura just acked).`);
             client.send(JSON.stringify({ type: 'connection_ack' }));
-            
-            // Обработка буферизированных сообщений после установления соединения
+
+            // Process buffered messages after connection establishment
             if (messageBuffer.length > 0) {
-              setTimeout(() => processBufferedMessages(), 50); // Небольшая задержка для гарантии
+              setTimeout(() => processBufferedMessages(), 50); // Small delay to ensure
             }
           }
           return;

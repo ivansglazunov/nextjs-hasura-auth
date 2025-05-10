@@ -160,4 +160,4 @@ If neither `defaultNamespace` argument nor the environment variable is set, `'ha
 *   Uniquely identifying database records in logs, events, or API responses.
 *   Creating stable and predictable identifiers for resources that can be parsed programmatically.
 *   Linking resources across different microservices or modules if they share the same HID generation/parsing logic and default namespace/project context.
-*   As the `subject_hid` in payment transactions or subscriptions to link them to a specific billable item. 
+*   As the `object_hid` in payment transactions or subscriptions to link them to a specific billable item. 

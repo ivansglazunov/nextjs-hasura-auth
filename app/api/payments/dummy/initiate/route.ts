@@ -4,11 +4,11 @@ import { PaymentDetailsArgs } from '@/lib/payments/base';
 import { v4 as uuidv4 } from 'uuid';
 import { getServerSession } from "next-auth/next"
 import authOptions from "@/app/options"
-import { Hasura } from '@/lib/hasura'; // Для записи в БД
+import { Hasura } from '@/lib/hasura'; // For writing to the DB
 import Debug from '@/lib/debug';
 
 const debug = Debug('api:payments:dummy:initiate');
-const processor = new DummyPaymentProcessor({ baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000' });
+const processor = new DummyPaymentProcessor(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000');
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
@@ -27,66 +27,70 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields: amount, currency, objectHid' }, { status: 400 });
     }
 
-    const paymentId = uuidv4(); // Генерируем наш внутренний ID платежа
-    paymentIdForErrorHandling = paymentId; // Сохраняем для возможной обработки ошибок
+    const paymentId = uuidv4(); // Generate our internal payment ID
+    paymentIdForErrorHandling = paymentId; // Save for possible error handling
     const userId = session.user.id;
 
-    // 1. Создаем запись о платеже в нашей БД со статусом 'pending_initiation'
+    // 1. Create a payment record in our DB with status 'pending_initiation'
     const hasura = new Hasura({
-        url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
-        secret: process.env.HASURA_ADMIN_SECRET!
-    }); 
-    const createPaymentArgs = {
-        id: paymentId,
-        user_id: userId,
-        provider_name: processor.providerName,
-        amount: amount,
-        currency: currency,
-        status: 'pending_initiation',
-        object_hid: objectHid,
-        description: description || `Payment for ${objectHid}`,
-        initiated_at: new Date().toISOString(),
-        payment_method_id: paymentMethodId || null,
-        metadata: metadata || null,
-    };
-    debug('Creating payment record in DB:', createPaymentArgs);
-    await hasura.v1({
-        type: 'insert',
-        args: {
-            table: 'payments',
-            objects: [createPaymentArgs]
-        }
+      url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
+      secret: process.env.HASURA_ADMIN_SECRET!,
     });
 
-    // 2. Инициируем платеж через процессор
+    const initialDbRecord = {
+      id: paymentId,
+      user_id: userId,
+      provider_name: processor.providerName,
+      amount,
+      currency,
+      status: 'pending_initiation',
+      description: description || `Payment for ${objectHid}`,
+      object_hid: objectHid,
+      initiated_at: new Date().toISOString(),
+      // provider_request_details: { amount, currency, description, objectHid } // Log initial request details
+    };
+    debug('Attempting to insert initial payment record:', initialDbRecord);
+    await hasura.v1({
+      type: 'insert_one_payments', // Assuming your Hasura insert mutation is named this way
+      args: {
+        object: initialDbRecord
+      }
+    });
+    debug('Initial payment record inserted successfully.');
+
+    // 2. Initiate payment through the processor
     const paymentArgs: PaymentDetailsArgs = {
       amount,
       currency,
+      description: description || `Payment for ${objectHid}`,
       objectHid,
       userId,
-      paymentId, // Передаем наш ID
-      description: description || `Payment for ${objectHid}`,
-      returnUrl: returnUrl || process.env.NEXT_PUBLIC_MAIN_URL || '/',
-      paymentMethodId,
-      metadata
+      paymentId, // Pass our ID
+      // paymentMethodId, // if applicable
+      // customerId, // if applicable
     };
 
     const result = await processor.initiatePayment(paymentArgs);
+    debug('Payment initiation result from processor:', result);
 
-    // 3. Обновляем статус платежа в БД (если нужно, например, external_payment_id)
+    // 3. Update the payment status in the DB (if necessary, e.g., external_payment_id)
     if (result.externalPaymentId || result.status !== 'pending_initiation') {
-        await hasura.v1({
-            type: 'update',
-            args: {
-                table: 'payments',
-                where: { id: { _eq: paymentId } },
-                _set: {
-                    status: result.status,
-                    external_payment_id: result.externalPaymentId,
-                    provider_response_details: result.providerResponse
-                }
-            }
-        });
+      const updatePayload: any = { status: result.status };
+      if (result.externalPaymentId) {
+        updatePayload.external_payment_id = result.externalPaymentId;
+      }
+      // Optionally log provider_response_details from result if it contains useful info
+      // updatePayload.provider_response_details = result.providerResponseDetails; 
+
+      debug('Updating payment record with external ID and new status:', updatePayload);
+      await hasura.v1({
+        type: 'update_payments_by_pk', // Assuming your Hasura update mutation is named this way
+        args: {
+          pk_columns: { id: paymentId },
+          _set: updatePayload
+        }
+      });
+      debug('Payment record updated successfully.');
     }
 
     if (result.redirectUrl) {
@@ -101,28 +105,11 @@ export async function POST(request: Request) {
 
   } catch (error) {
     debug('[DUMMY_INITIATE_ERROR]', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to initiate dummy payment';
-    if (paymentIdForErrorHandling) {
-        try {
-            const hasura = new Hasura({
-                url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
-                secret: process.env.HASURA_ADMIN_SECRET!
-            });
-            await hasura.v1({
-                type: 'update',
-                args: {
-                    table: 'payments',
-                    where: { id: { _eq: paymentIdForErrorHandling } },
-                    _set: {
-                        status: 'failed',
-                        error_message: `Initiation failed: ${errorMessage}`
-                    }
-                }
-            });
-        } catch (dbError) {
-            debug('[DUMMY_INITIATE_DB_ERROR_ON_FAIL]', dbError);
-        }
-    }
-    return NextResponse.json({ error: errorMessage, paymentId: paymentIdForErrorHandling }, { status: 500 });
+    paymentIdForErrorHandling = 'db_log_error_failed'; // Last resort error ID
+    // Fallback logging if DB log fails or isn't called
+    debug('Critical error during payment initiation, and DB log may have failed:', error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    // await logPaymentError('initiate_payment_general_error', error.message, paymentIdForErrorHandling, undefined, { body });
+    return NextResponse.json({ error: "Failed to initiate payment", details: errorMessage }, { status: 500 });
   }
 } 

@@ -2,20 +2,21 @@ export interface PaymentDetailsArgs {
   amount: number;
   currency: string;
   description?: string;
-  objectHid: string;
+  objectHid: string; // HID of the object being paid for (e.g., product, service, order)
   userId: string;
-  paymentId: string; // наш внутренний ID платежа, который создается до инициации
-  paymentMethodId?: string; 
-  returnUrl?: string; 
+  paymentId: string; // our internal payment ID, created before initiation
+  paymentMethodId?: string;
+  customerId?: string; // External customer ID from the payment provider
+  returnUrl?: string;
   metadata?: Record<string, any>;
 }
 
 export interface InitiatePaymentResult {
-  paymentId: string; 
-  externalPaymentId?: string; 
-  status: string; 
+  paymentId: string;
+  externalPaymentId?: string;
+  status: string;
   redirectUrl?: string;
-  sdkData?: any; 
+  sdkData?: any;
   providerResponse?: any;
   errorMessage?: string;
 }
@@ -31,39 +32,42 @@ export interface WebhookPayload {
 }
 
 export interface WebhookHandlingResult {
-  paymentId?: string; 
-  subscriptionId?: string; 
-  newPaymentStatus?: string; // Новый статус для нашего платежа
-  newSubscriptionStatus?: string; // Новый статус для нашей подписки
-  processed: boolean; 
-  error?: string; 
-  messageToProvider?: string; // Что ответить провайдеру (например, 'OK' или JSON)
+  providerName: string;
+  paymentId?: string; // our internal ID
+  externalPaymentId?: string;
+  subscriptionId?: string;
+  newPaymentStatus?: string; // New status for our payment
+  newSubscriptionStatus?: string; // New status for our subscription
+  processed: boolean; // Whether the webhook was successfully processed by the handler
+  error?: string; // Error message if processing failed
+  messageToProvider?: string; // What to respond to the provider (e.g., 'OK' or JSON)
 }
 
 export interface PaymentStatusResult {
   internalPaymentId: string;
-  status: string; 
+  status: string;
   providerStatus?: string;
-  paidAt?: Date | string; 
+  paidAt?: Date | string;
   error?: string;
   providerResponse?: any;
 }
 
 export interface SubscriptionDetailsArgs {
+  objectHid: string; // HID of the object/service being subscribed to
   userId: string;
-  planId: string; // Наш внутренний ID плана
-  paymentMethodId?: string; // Если метод оплаты уже есть
+  planId: string; // Our internal plan ID
+  paymentMethodId?: string; // If payment method already exists
   trialDays?: number;
-  objectHid: string;
+  couponCode?: string;
   metadata?: Record<string, any>;
 }
 
 export interface CreateSubscriptionResult {
-  subscriptionId: string; // Наш внутренний ID подписки
+  subscriptionId: string; // Our internal subscription ID
   externalSubscriptionId?: string;
-  status: string; // Наш внутренний статус подписки
-  paymentRequired?: boolean; // Нужен ли первичный платеж
-  initialPaymentResult?: InitiatePaymentResult; // Если нужен первичный платеж
+  status: string; // Our internal subscription status (e.g., 'trialing', 'active', 'pending_payment')
+  paymentRequired?: boolean; // Is initial payment required
+  initialPaymentResult?: InitiatePaymentResult; // If initial payment is required
   errorMessage?: string;
 }
 
@@ -89,12 +93,17 @@ export interface AddPaymentMethodArgs {
 }
 
 export interface AddPaymentMethodResult {
-  paymentMethodId: string; // Наш ID сохраненного метода
-  externalId?: string; // ID от провайдера
+  paymentMethodId: string; // Our ID for the saved method
+  externalId?: string; // ID from the provider
   status: string; // "active", "pending_verification"
   detailsForUser?: Record<string, any>; // e.g. last4, brand
-  isRecurrentReady?: boolean;
+  isRecurrentReady: boolean;
   errorMessage?: string;
+  /**
+   * Adds a new payment method for a user (e.g., tokenizing a card).
+   */
+  addPaymentMethod?(args: AddPaymentMethodArgs): Promise<AddPaymentMethodResult>;
+  // Other methods can be added, for example, for refunds, getting a list of methods, etc.
 }
 
 export interface IPaymentProcessor {
@@ -105,5 +114,5 @@ export interface IPaymentProcessor {
   createSubscription?(args: SubscriptionDetailsArgs): Promise<CreateSubscriptionResult>;
   cancelSubscription?(args: CancelSubscriptionArgs): Promise<CancelSubscriptionResult>;
   addPaymentMethod?(args: AddPaymentMethodArgs): Promise<AddPaymentMethodResult>;
-  // Можно добавить и другие методы, например, для возвратов, получения списка методов и т.д.
+  // Other methods can be added, for example, for refunds, getting a list of methods, etc.
 } 

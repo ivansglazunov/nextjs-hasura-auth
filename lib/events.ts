@@ -103,7 +103,7 @@ export async function loadEventTriggerDefinitions(eventsDir: string): Promise<Ev
         const filePath = path.join(eventsDir, file);
         const content = await fs.readFile(filePath, 'utf8');
         const triggerDef: EventTriggerDefinition = JSON.parse(content);
-        
+
         // Use filename (without extension) as trigger name if not specified
         if (!triggerDef.name) {
           triggerDef.name = path.basename(file, '.json');
@@ -133,7 +133,7 @@ export async function loadEventTriggerDefinitions(eventsDir: string): Promise<Ev
  * Creates or updates an event trigger in Hasura
  */
 export async function createOrUpdateEventTrigger(
-  hasura: Hasura, 
+  hasura: Hasura,
   trigger: EventTriggerDefinition,
   baseUrl?: string
 ): Promise<boolean> {
@@ -150,15 +150,15 @@ export async function createOrUpdateEventTrigger(
           return false;
         }
       }
-      
+
       // Normalize base URL to not end with slash
       baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-      
+
       // Normalize webhook_path to start with slash
-      const webhookPath = trigger.webhook_path.startsWith('/') 
-        ? trigger.webhook_path 
+      const webhookPath = trigger.webhook_path.startsWith('/')
+        ? trigger.webhook_path
         : `/${trigger.webhook_path}`;
-      
+
       webhookUrl = `${baseUrl}${webhookPath}`;
       debug(`Constructed webhook URL: ${webhookUrl}`);
     }
@@ -177,12 +177,12 @@ export async function createOrUpdateEventTrigger(
     if (existingTriggersResponse?.metadata?.sources) {
       for (const sourceObj of existingTriggersResponse.metadata.sources) {
         if (sourceObj.name !== source) continue;
-        
+
         if (sourceObj.tables) {
           for (const table of sourceObj.tables) {
-            if (table.table.schema === trigger.table.schema && 
-                table.table.name === trigger.table.name &&
-                table.event_triggers) {
+            if (table.table.schema === trigger.table.schema &&
+              table.table.name === trigger.table.name &&
+              table.event_triggers) {
               triggerExists = table.event_triggers.some((et: { name: string }) => et.name === trigger.name);
               if (triggerExists) {
                 debug(`Event trigger ${trigger.name} already exists, updating...`);
@@ -191,7 +191,7 @@ export async function createOrUpdateEventTrigger(
             }
           }
         }
-        
+
         if (triggerExists) break;
       }
     }
@@ -209,22 +209,22 @@ export async function createOrUpdateEventTrigger(
     if (trigger.update) args.update = trigger.update;
     if (trigger.delete) args.delete = trigger.delete;
     if (trigger.enable_manual !== undefined) args.enable_manual = trigger.enable_manual;
-    
+
     // Add retry configuration if specified
     if (trigger.retry_conf) args.retry_conf = trigger.retry_conf;
-    
+
     // Get the HASURA_EVENT_SECRET from environment
     const eventSecret = process.env.HASURA_EVENT_SECRET;
-    
+
     // Clone the headers array from the trigger definition or create a new one
     const headers = trigger.headers ? [...trigger.headers] : [];
-    
+
     // Check if the event secret header already exists in the array
-    const hasEventSecretHeader = headers.some(h => 
-      h.name.toLowerCase() === 'x-hasura-event-secret' && 
+    const hasEventSecretHeader = headers.some(h =>
+      h.name.toLowerCase() === 'x-hasura-event-secret' &&
       (h.value_from_env === 'HASURA_EVENT_SECRET' || h.value === eventSecret)
     );
-    
+
     // Add the event secret header if it doesn't exist and the secret is set
     if (!hasEventSecretHeader && eventSecret) {
       headers.push({
@@ -235,10 +235,10 @@ export async function createOrUpdateEventTrigger(
     } else if (!hasEventSecretHeader) {
       debug('WARNING: HASURA_EVENT_SECRET not set in environment, skipping secret header');
     }
-    
+
     // Add headers to args if any exist
     if (headers.length > 0) args.headers = headers;
-    
+
     // Set replace to true if the trigger already exists
     args.replace = triggerExists;
 
@@ -263,7 +263,7 @@ export async function createOrUpdateEventTrigger(
 export async function deleteEventTrigger(hasura: Hasura, name: string, source: string = 'default'): Promise<boolean> {
   try {
     debug(`Deleting event trigger: ${name}`);
-    
+
     const result = await hasura.v1({
       type: 'pg_delete_event_trigger',
       args: {
@@ -271,7 +271,7 @@ export async function deleteEventTrigger(hasura: Hasura, name: string, source: s
         source
       }
     });
-    
+
     debug(`Event trigger ${name} deleted successfully`);
     return true;
   } catch (error) {
@@ -286,14 +286,14 @@ export async function deleteEventTrigger(hasura: Hasura, name: string, source: s
 export async function getExistingEventTriggers(hasura: Hasura): Promise<Record<string, EventTriggerDefinition>> {
   try {
     debug('Getting existing event triggers');
-    
+
     const response = await hasura.v1({
       type: 'export_metadata',
       args: {}
     });
-    
+
     const existingTriggers: Record<string, EventTriggerDefinition> = {};
-    
+
     if (response?.metadata?.sources) {
       for (const source of response.metadata.sources) {
         if (source.tables) {
@@ -317,7 +317,7 @@ export async function getExistingEventTriggers(hasura: Hasura): Promise<Record<s
         }
       }
     }
-    
+
     return existingTriggers;
   } catch (error) {
     debug(`Error getting existing event triggers: ${error}`);
@@ -334,22 +334,22 @@ export async function getExistingEventTriggers(hasura: Hasura): Promise<Record<s
 export async function syncEventTriggers(hasura: Hasura, localTriggers: EventTriggerDefinition[], baseUrl?: string): Promise<void> {
   try {
     debug('Starting event trigger synchronization');
-    
+
     // Get existing triggers from Hasura
     const existingTriggers = await getExistingEventTriggers(hasura);
-    
+
     // Create a map of local triggers by name for easy lookup
     const localTriggerMap: Record<string, EventTriggerDefinition> = {};
     for (const trigger of localTriggers) {
       localTriggerMap[trigger.name] = trigger;
     }
-    
+
     // Create or update local triggers
     debug(`Processing ${localTriggers.length} local triggers`);
     for (const trigger of localTriggers) {
       await createOrUpdateEventTrigger(hasura, trigger, baseUrl);
     }
-    
+
     // Delete triggers that exist in Hasura but not locally
     for (const [name, trigger] of Object.entries(existingTriggers)) {
       if (!localTriggerMap[name]) {
@@ -357,7 +357,7 @@ export async function syncEventTriggers(hasura: Hasura, localTriggers: EventTrig
         await deleteEventTrigger(hasura, name, trigger.source);
       }
     }
-    
+
     debug('Event trigger synchronization completed');
   } catch (error) {
     debug(`Error synchronizing event triggers: ${error}`);
@@ -369,35 +369,35 @@ export async function syncEventTriggers(hasura: Hasura, localTriggers: EventTrig
  */
 export async function syncEventTriggersFromDirectory(eventsDir: string, hasuraUrl?: string, hasuraSecret?: string, baseUrl?: string): Promise<void> {
   debug('Synchronizing event triggers from directory');
-  
+
   // Check if HASURA_EVENT_SECRET is set
   const eventSecret = process.env.HASURA_EVENT_SECRET;
   if (!eventSecret) {
     debug('HASURA_EVENT_SECRET not set in environment');
     console.warn('⚠️ WARNING: HASURA_EVENT_SECRET is not set. This is required for secure event trigger handling.');
     console.warn('   Please set HASURA_EVENT_SECRET in your environment variables.');
-    
+
     // In production, we should fail if the secret is not set
     if (process.env.NODE_ENV === 'production') {
       throw new Error('HASURA_EVENT_SECRET is required for event trigger synchronization in production');
     }
   }
-  
+
   // Create a Hasura client
   const url = hasuraUrl || process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
   const secret = hasuraSecret || process.env.HASURA_ADMIN_SECRET;
-  
+
   if (!url || !secret) {
     debug('Missing Hasura URL or admin secret');
     throw new Error('NEXT_PUBLIC_HASURA_GRAPHQL_URL and HASURA_ADMIN_SECRET are required for event trigger synchronization');
   }
-  
+
   const hasura = new Hasura({ url, secret });
-  
+
   // Load trigger definitions from the directory
   const triggers = await loadEventTriggerDefinitions(eventsDir);
   debug(`Loaded ${triggers.length} event trigger definitions`);
-  
+
   // Synchronize the triggers with Hasura
   await syncEventTriggers(hasura, triggers, baseUrl);
 }
@@ -409,7 +409,7 @@ export async function syncEventTriggersFromDirectory(eventsDir: string, hasuraUr
 export function verifyHasuraRequest(headers: Record<string, string | string[] | undefined>, secret?: string): boolean {
   // If no secret is provided, use the HASURA_EVENT_SECRET environment variable
   const secretKey = secret || process.env.HASURA_EVENT_SECRET;
-  
+
   // If no secret is configured, we should log a warning
   if (!secretKey) {
     // In production, this is a security risk, so we should fail the verification
@@ -417,24 +417,24 @@ export function verifyHasuraRequest(headers: Record<string, string | string[] | 
       debug('SECURITY WARNING: No HASURA_EVENT_SECRET configured in production environment! Request denied.');
       return false;
     }
-    
+
     // In development, allow requests but log a warning
     debug('SECURITY WARNING: No HASURA_EVENT_SECRET configured! ANYONE can trigger your event handlers.');
     debug('Set HASURA_EVENT_SECRET in your .env file for secure event trigger handling.');
     return true;
   }
-  
+
   // Get the secret from the request header
   const requestSecret = headers['x-hasura-event-secret'];
   const secretValue = Array.isArray(requestSecret) ? requestSecret[0] : requestSecret;
-  
+
   // Compare the secrets
   const isValid = secretValue === secretKey;
-  
+
   if (!isValid) {
     debug('Invalid event secret provided in request');
   }
-  
+
   return isValid;
 }
 
@@ -443,10 +443,10 @@ export function verifyHasuraRequest(headers: Record<string, string | string[] | 
  */
 export async function createDefaultEventTriggers(eventsDir: string): Promise<void> {
   debug(`Creating default event trigger definitions in ${eventsDir}`);
-  
+
   // Ensure the events directory exists
   await fs.ensureDir(eventsDir);
-  
+
   // Default users event trigger
   const usersEventTrigger: EventTriggerDefinition = {
     name: 'users',
@@ -470,7 +470,7 @@ export async function createDefaultEventTriggers(eventsDir: string): Promise<voi
       timeout_sec: 60
     }
   };
-  
+
   // Default accounts event trigger
   const accountsEventTrigger: EventTriggerDefinition = {
     name: 'accounts',
@@ -494,18 +494,18 @@ export async function createDefaultEventTriggers(eventsDir: string): Promise<voi
       timeout_sec: 60
     }
   };
-  
+
   // Write the trigger definitions to files
   await fs.writeFile(
     path.join(eventsDir, 'users.json'),
     JSON.stringify(usersEventTrigger, null, 2)
   );
-  
+
   await fs.writeFile(
     path.join(eventsDir, 'accounts.json'),
     JSON.stringify(accountsEventTrigger, null, 2)
   );
-  
+
   debug('Default event trigger definitions created');
 }
 
@@ -551,7 +551,7 @@ export function hasyxEvent(
   return async (request: NextRequest, context?: any) => {
     const triggerName = context?.params?.name || 'unknown';
     debug(`Received event trigger for ${triggerName}`);
-    
+
     // Verify that the request is from Hasura
     if (!verifyHasuraRequest(Object.fromEntries(request.headers))) {
       debug(`Unauthorized request for event trigger ${triggerName}`);
@@ -560,54 +560,56 @@ export function hasyxEvent(
         { status: 401 }
       );
     }
-    
+
     try {
       // Parse the request body
       const body = await request.json();
       debug(`Raw request body for ${triggerName}:`, body);
-      
+
       let actualPayload: HasuraEventPayload | null = null;
 
-      // <<< АДАПТИВНОЕ ИЗВЛЕЧЕНИЕ PAYLOAD >>>
+      // <<< ADAPTIVE PAYLOAD EXTRACTION >>>
       if (body && typeof body === 'object') {
         if ('payload' in body && body.payload && typeof body.payload === 'object') {
-          // Стандартный случай: Hasura отправила { payload: { ... } }
+          // Standard case: Hasura sent { payload: { ... } }
           debug('Detected payload wrapped in top-level \'payload\' key.');
           actualPayload = body.payload as HasuraEventPayload;
         } else if ('event' in body && 'table' in body && 'trigger' in body) {
-          // Нестандартный случай: Похоже, внешний 'payload' был распакован где-то
+          // Non-standard case: It seems the outer 'payload' was unwrapped somewhere
           debug('Detected payload structure directly in request body (outer \'payload\' key possibly unwrapped).');
-          actualPayload = body as HasuraEventPayload; // Считаем body самим payload
-        } 
+          actualPayload = body as HasuraEventPayload; // Consider body as the payload itself
+        }
       }
 
-      // Проверка, удалось ли извлечь payload и его базовую структуру
+      // Check if payload was extracted and has basic structure
       if (!actualPayload || !actualPayload.event || !actualPayload.table || !actualPayload.trigger) {
         const receivedBodyType = typeof body;
         const receivedBodyKeys = (body && typeof body === 'object') ? Object.keys(body) : null;
         const contentType = request.headers.get('content-type');
-        
+
         const errorDetails = {
           message: 'Invalid or unrecognized payload structure received.',
           receivedBodyType: receivedBodyType,
           receivedBodyKeys: receivedBodyKeys,
           contentTypeHeader: contentType
         };
-        
+
         debug('Invalid event payload details:', errorDetails);
         return NextResponse.json(
           errorDetails,
           { status: 400 }
         );
       }
-      // <<< КОНЕЦ АДАПТИВНОГО ИЗВЛЕЧЕНИЯ >>>
+      // <<< END OF ADAPTIVE EXTRACTION >>>
 
-      debug(`Extracted event payload for ${triggerName}:`, actualPayload); 
-      
+      const { event, table, trigger } = actualPayload;
+
+      debug(`Extracted event payload for ${triggerName}:`, actualPayload);
+
       // Log details about the operation
-      const { op, data } = actualPayload.event;
-      const tableInfo = `${actualPayload.table.schema}.${actualPayload.table.name}`;
-      
+      const { op, data } = event;
+      const tableInfo = `${table.schema}.${table.name}`;
+
       // Extract the ID or primary key information for logging
       let recordInfo = '';
       if (op === 'INSERT' && data.new) {
@@ -617,17 +619,17 @@ export function hasyxEvent(
       } else if (op === 'DELETE' && data.old) {
         recordInfo = data.old.id ? `id:${data.old.id}` : JSON.stringify(data.old);
       }
-      
+
       debug(`Processing ${op} on ${tableInfo} ${recordInfo}`);
-      
+
       // Call the handler with the *extracted* payload
       const result = await handler(actualPayload);
-      
+
       // Convert the result to a NextResponse if it's not already
       if (!(result instanceof Response) && !(result instanceof NextResponse)) {
         return NextResponse.json(result || { success: true });
       }
-      
+
       return result;
     } catch (error) {
       debug(`Error processing ${triggerName} event:`, error);

@@ -1,4 +1,5 @@
 import pckg from '../package.json';
+import Debug from './debug';
 
 const DEFAULT_NAMESPACE = 'hasyx';
 const DEFAULT_PROJECT = pckg.name || 'unknown_project';
@@ -26,36 +27,33 @@ export interface HidInstance {
   fromHid: (hid: string, full?: boolean) => HidParts | FullHidParts | null;
 }
 
+const debug = Debug('lib:hid');
+
 export function Hid(projectName: string, defaultNamespace?: string): HidInstance {
-  // Обработка краевых случаев конструктора
+  // Handle constructor edge cases
   if (defaultNamespace === '') {
-    throw new Error('Empty default namespace is not allowed');
+    debug("Warning: defaultNamespace cannot be an empty string. Falling back to 'hasyx'.");
+    defaultNamespace = 'hasyx';
+  }
+  if (!projectName || typeof projectName !== 'string') {
+    const err = "Project name is required and must be a string for Hid generator.";
+    debug(`Error: ${err}`);
+    throw new Error(err);
   }
 
-  if (projectName === '') {
-    throw new Error('Empty project name is not allowed');
-  }
-
-  if (projectName.includes('/')) {
-    throw new Error('Project name cannot contain "/"');
-  }
-
-  if (defaultNamespace && defaultNamespace.includes('/')) {
-    throw new Error('Default namespace cannot contain "/"');
-  }
-
-  // Сохранение данных экземпляра
+  // Save instance data
   const instanceProject = projectName;
-  const instanceDefaultNamespace = defaultNamespace || process.env.NEXT_PUBLIC_HID_NAMESPACE || DEFAULT_NAMESPACE;
-  
-  // Определение fromHid
+  const instanceDefaultNamespace = defaultNamespace || process.env.NEXT_PUBLIC_HID_NAMESPACE || 'hasyx';
+
+  // Definition of fromHid
   function fromHid(hid: string, full: true): FullHidParts | null;
   function fromHid(hid: string, full?: false): HidParts | null;
   function fromHid(hid: string): HidParts | null;
 
   function fromHid(hid: string, full?: boolean): HidParts | FullHidParts | null {
-    // Основная логика
+    // Main logic
     if (!hid || typeof hid !== 'string') {
+      debug('fromHid: Invalid HID input, not a non-empty string:', hid);
       return null;
     }
 
@@ -84,7 +82,7 @@ export function Hid(projectName: string, defaultNamespace?: string): HidInstance
     return null;
   }
 
-  // Определение ToHidOptions
+  // Definition of ToHidOptions
   interface ToHidOptions {
     schema: string;
     table: string;
@@ -93,16 +91,18 @@ export function Hid(projectName: string, defaultNamespace?: string): HidInstance
     namespace?: string;
   }
 
-  // Определение toHid
+  // Definition of toHid
   function toHid(options: ToHidOptions, full?: boolean): string;
   function toHid(schema: string, table: string, id: string, full?: boolean): string;
   function toHid(project: string, schema: string, table: string, id: string, full?: boolean): string;
   function toHid(namespace: string, project: string, schema: string, table: string, id: string, full?: boolean): string;
 
   function toHid(...args: any[]): string {
-    // Основная логика
+    // Main logic
     let options: ToHidOptions;
+    let inputNamespace: string | undefined;
     let generateFull = false;
+    let inputProject: string | undefined;
 
     const lastArg = args[args.length - 1];
     let actualArgs = args;
@@ -127,8 +127,8 @@ export function Hid(projectName: string, defaultNamespace?: string): HidInstance
     }
 
     const { schema, table, id } = options;
-    const inputProject = options.project;
-    const inputNamespace = options.namespace;
+    inputProject = options.project;
+    inputNamespace = options.namespace;
 
     if (!isValidSegment(schema) || !isValidSegment(table) || !isValidSegment(id)) {
       throw new Error('Schema, table, and id must be valid non-empty strings without "/".');
@@ -143,15 +143,15 @@ export function Hid(projectName: string, defaultNamespace?: string): HidInstance
     const parts: string[] = [];
 
     if (generateFull) {
-      // В полном режиме всегда добавляем namespace и project
+      // In full mode, always add namespace and project
       parts.push(inputNamespace || instanceDefaultNamespace);
       parts.push(inputProject || instanceProject);
     } else {
-      // В сокращенном режиме применяем логику опускания дефолтных значений
+      // In short mode, apply logic for omitting default values
       if (inputNamespace !== undefined && inputNamespace !== instanceDefaultNamespace) {
         parts.push(inputNamespace);
       }
-      
+
       if (inputProject !== undefined && inputProject !== instanceProject) {
         parts.push(inputProject);
       }
@@ -161,18 +161,20 @@ export function Hid(projectName: string, defaultNamespace?: string): HidInstance
     parts.push(table);
     parts.push(id);
 
-    return parts.join(SEPARATOR);
+    const resultHid = parts.join(SEPARATOR);
+    debug('toHid: Generated HID:', resultHid, 'from options:', options, 'with args:', args);
+    return resultHid;
   }
 
-  // Возвращаем интерфейс
+  // Return the interface
   return { toHid, fromHid };
 }
 
-// Пример использования (не часть библиотечного кода, для иллюстрации)
+// Usage example (not part of the library code, for illustration purposes)
 /*
 const specificHid = Hid('myCoolProject', 'myCompany');
 
-const id1 = specificHid.toHid('public', 'users', '123'); 
+const id1 = specificHid.toHid('public', 'users', '123');
 // myCompany/myCoolProject/public/users/123 (if NEXT_PUBLIC_HID_NAMESPACE is not set or is 'myCompany')
 // OR myCoolProject/public/users/123 (if NEXT_PUBLIC_HID_NAMESPACE is not 'myCompany' and defaultNamespace was not 'myCompany') - needs refinement
 
@@ -195,7 +197,6 @@ const id4 = genericHid.toHid('data', 'entries', '789', true);
 
 */
 
-// Также экспортируем из lib/index.ts
-// Необходимо будет добавить export const Hid = ... в lib/index.ts (или default export)
-// и потом export * from './hid'; 
-// и потом export * from './hid'; 
+// Also export from lib/index.ts
+// It will be necessary to add export const Hid = ... in lib/index.ts (or default export)
+// and then export * from './hid'; 
