@@ -11,7 +11,8 @@ import {
   CancelSubscriptionArgs,
   CancelSubscriptionResult,
   AddPaymentMethodArgs,
-  AddPaymentMethodResult
+  AddPaymentMethodResult,
+  PaymentMethodStatus
 } from './base';
 import Debug from '@/lib/debug';
 
@@ -257,7 +258,7 @@ export class DummyPaymentProcessor implements IPaymentProcessor {
     return {
       paymentMethodId: `dummy_pm_${uuidv4()}`,
       externalId: `dummy_ext_pm_${uuidv4()}`,
-      status: 'active',
+      status: PaymentMethodStatus.ACTIVE,
       detailsForUser: { info: 'Dummy payment method', type: args.type },
       isRecurrentReady: true, // Always ready for dummy
     };

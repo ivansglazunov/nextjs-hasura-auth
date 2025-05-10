@@ -1,3 +1,23 @@
+export enum PaymentStatus {
+  PENDING_USER_ACTION = 'pending_user_action',
+  PENDING_CONFIRMATION = 'pending_confirmation',
+  SUCCEEDED = 'succeeded',
+  FAILED = 'failed',
+  CANCELED = 'canceled',
+  REFUNDED = 'refunded',
+  ERROR = 'error',
+  UNKNOWN = 'unknown'
+}
+
+export enum PaymentMethodStatus {
+  ACTIVE = 'active',
+  PENDING_VERIFICATION = 'pending_verification',
+  PENDING_USER_ACTION = 'pending_user_action',
+  PENDING_CONFIRMATION = 'pending_confirmation',
+  FAILED = 'failed',
+  ERROR = 'error',
+}
+
 export interface PaymentDetailsArgs {
   amount: number;
   currency: string;
@@ -95,7 +115,7 @@ export interface AddPaymentMethodArgs {
 export interface AddPaymentMethodResult {
   paymentMethodId: string; // Our ID for the saved method
   externalId?: string; // ID from the provider
-  status: string; // "active", "pending_verification"
+  status: PaymentMethodStatus; // "active", "pending_verification"
   detailsForUser?: Record<string, any>; // e.g. last4, brand
   isRecurrentReady: boolean;
   errorMessage?: string;

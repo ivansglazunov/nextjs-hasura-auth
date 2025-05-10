@@ -339,13 +339,12 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
 
   async initiatePayment(args: PaymentDetailsArgs): Promise<InitiatePaymentResult> {
     debug('TBank: initiatePayment called with:', args);
-    const { paymentId, amount, currency, description, userId, objectHid, returnUrl, metadata, payType } = args;
+    const { paymentId, amount, currency, description, userId, objectHid, returnUrl, metadata } = args;
 
     if (currency !== 'RUB') {
       // TBank Amount is in kopecks (integer). Assuming currency is always RUB from provider perspective.
       // Or we need to convert, but API docs imply RUB.
       // For now, let's assume amount is passed in major units (rubles) and convert here.
-      // throw new Error('TBank only supports RUB currency.');
       debug('Warning: TBank currency is usually RUB. Amount is expected in kopecks.');
     }
     const amountInKopecks = Math.round(amount * 100);
@@ -358,7 +357,6 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
       Description: description,
       NotificationURL: notificationUrl,
       Language: 'ru',
-      // PayType: payType === 'two_stage' ? 'T' : 'O', // Default to 'O' (one-stage) if not specified
       DATA: {
         userId: userId || '',
         objectHid: objectHid || '',
@@ -368,8 +366,11 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
       ...(metadata?.isRecurrent && { Recurrent: 'Y' }), // For registering this payment as first recurrent
       ...(returnUrl && { ReturnUrl: returnUrl }), // For redirecting user after payment form
     };
-     if (payType) {
-        requestPayload.PayType = payType === 'two_stage' ? 'T' : 'O';
+    // Expect payType from metadata if provided e.g. metadata.tbankPayType = 'T' or 'O'
+    if (metadata?.tbankPayType === 'T' || metadata?.tbankPayType === 'O') {
+        requestPayload.PayType = metadata.tbankPayType;
+    } else {
+        requestPayload.PayType = 'O'; // Default to one-stage
     }
 
 
@@ -383,25 +384,14 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
           status: PaymentStatus.PENDING_USER_ACTION, // User needs to go to PaymentURL
           redirectUrl: response.PaymentURL,
           providerResponse: response,
-          rebillId: response.RebillId, // If recurrent was requested
-          cardId: response.CardId, // If card was bound or used
         };
       } else if (response.Success && response.Status === 'NEW' && response.RebillId && metadata?.isRecurrent) {
-         // This case might be for "Init" with "Recurrent=Y" for an existing card (CustomerKey + CardId in DATA?)
-         // or if the card is automatically charged via RebillId specified in Init (unlikely for Init).
-         // More likely, if Init is used with Recurrent=Y, and an existing card is NOT specified,
-         // PaymentURL is provided to bind a new card and make the first payment.
-         // If payment is made via RebillId directly, that's a 'Charge' operation, not 'Init'.
-         // For now, if PaymentURL is not present, it's an issue unless it's a successful direct charge (unlikely for Init).
-         // Let's assume for Init with Recurrent=Y and no PaymentURL implies a direct charge attempt that we need to check
-         // This might happen if a card was already linked to the customerKey
         const statusCheck = await this.getPaymentStatus(paymentId, response.PaymentId);
          return {
             paymentId,
             externalPaymentId: response.PaymentId,
             status: statusCheck.status,
             providerResponse: response,
-            rebillId: response.RebillId,
         };
 
       } else {
@@ -483,12 +473,11 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
         paymentId: internalPaymentId,
         externalPaymentId,
         newPaymentStatus,
-        amount, // Send converted amount if available
-        providerStatus: tbankStatus,
         providerResponse: payload,
-        messageToProvider: 'OK', // Tell TBank we got it
-        rebillId: payload.RebillId, // If it's a recurrent payment notification or first payment with recurrent
-        cardId: payload.CardId, // If a card was involved
+        messageToProvider: 'OK',
+        ...(payload.RebillId && { subscriptionId: payload.OrderId }),
+        ...(payload.RebillId && tbankStatus === TBANK_STATUS_CONFIRMED && { newSubscriptionStatus: 'active' }),
+        ...(payload.RebillId && (tbankStatus === TBANK_STATUS_REJECTED) && { newSubscriptionStatus: 'past_due' })
       };
 
     } catch (e: any) {
@@ -506,13 +495,10 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
   async getPaymentStatus(internalPaymentId: string, externalPaymentId?: string): Promise<PaymentStatusResult> {
     debug(`TBank: getPaymentStatus called for internalId: ${internalPaymentId}, externalId: ${externalPaymentId}`);
     if (!externalPaymentId) {
-      // In TBank, PaymentId (external) is crucial for GetState. OrderId (internal) might not be enough.
-      // If only internalPaymentId is available, we might need to look it up in our DB first.
-      // For now, we assume externalPaymentId is usually known or passed.
       return {
         internalPaymentId,
         status: PaymentStatus.UNKNOWN,
-        errorMessage: 'External Payment ID (PaymentId) is required for TBank GetState.',
+        error: 'External Payment ID (PaymentId) is required for TBank GetState.',
       };
     }
 
@@ -527,28 +513,25 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
         const currentStatus = this.mapTBankStatusToInternal(response.Status);
         return {
           internalPaymentId: response.OrderId || internalPaymentId,
-          externalPaymentId: response.PaymentId,
           status: currentStatus,
           providerStatus: response.Status,
-          amount: response.Amount ? response.Amount / 100 : undefined,
+          paidAt: currentStatus === PaymentStatus.SUCCEEDED ? new Date().toISOString() : undefined,
           providerResponse: response,
         };
       } else {
         return {
           internalPaymentId,
-          externalPaymentId,
           status: PaymentStatus.UNKNOWN, // Or map ErrorCode to a status if possible
           providerStatus: response.Status, // May contain an error status
-          errorMessage: response.Message || `TBank GetState failed with ErrorCode: ${response.ErrorCode}`,
+          error: response.Message || `TBank GetState failed with ErrorCode: ${response.ErrorCode}`,
           providerResponse: response,
         };
       }
     } catch (error: any) {
       return {
         internalPaymentId,
-        externalPaymentId,
         status: PaymentStatus.ERROR,
-        errorMessage: error.message,
+        error: error.message,
         providerResponse: error,
       };
     }
@@ -583,24 +566,31 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
 
   async createSubscription(args: SubscriptionDetailsArgs): Promise<CreateSubscriptionResult> {
     debug('TBank: createSubscription (initiating first recurrent payment) called with:', args);
-    // For TBank, creating a "subscription" means making the first payment with Recurrent='Y'
-    // and getting a RebillId. Or, if a card is already linked to CustomerKey,
-    // using Init with Recurrent='Y' and the CustomerKey might directly create the RebillId
-    // without a new payment page, if the linked card is used.
 
-    const { planId, userId, paymentMethodId, objectHid, initialAmount, currency, description, customerKey, returnUrl } = args;
+    const { planId, userId, paymentMethodId, objectHid, metadata /*, trialDays, couponCode */ } = args;
+
+    // Essential TBank params must now come from metadata
+    const customerKey = metadata?.tbankCustomerKey as string | undefined;
+    const initialAmount = metadata?.tbankInitialAmount as number | undefined;
+    const currency = metadata?.tbankCurrency as string | undefined || 'RUB'; // Default to RUB
+    const description = metadata?.tbankDescription as string | undefined;
+    const returnUrl = metadata?.tbankReturnUrl as string | undefined;
 
     if (!customerKey) {
-        return {
-            errorMessage: 'customerKey is required for TBank subscriptions.',
-            status: 'failed',
-        };
+        // Correctly throw an error as the return type must be CreateSubscriptionResult
+        throw new Error('tbankCustomerKey is required in metadata for TBank subscriptions.');
+    }
+    if (typeof initialAmount !== 'number') {
+        throw new Error('tbankInitialAmount (number) is required in metadata for TBank subscriptions.');
     }
 
+    // Unique OrderId for the initial payment, using a combination that should be unique.
+    const initialPaymentId = `sub_init_${userId}_${planId}_${Date.now()}`;
+
     // The first payment will register the recurrent profile (RebillId)
-    const initResult = await this.initiatePayment({
-      paymentId: `sub_init_${userId}_${Date.now()}`, // Unique OrderId for the initial payment
-      amount: initialAmount, // Amount for the first payment
+    const initArgs: PaymentDetailsArgs = {
+      paymentId: initialPaymentId,
+      amount: initialAmount,
       currency,
       description: description || `Initial payment for plan ${planId}`,
       userId,
@@ -609,39 +599,36 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
       metadata: {
         isRecurrent: true, // This signals Init to set Recurrent='Y'
         customerKey: customerKey, // Important for linking future payments
-        // If paymentMethodId corresponds to an existing TBank CardId, it should be passed in DATA
-        ...(paymentMethodId && { tbankCardId: paymentMethodId } ) // Assuming paymentMethodId IS the TBank CardId
+        ...(paymentMethodId && { tbankCardId: paymentMethodId }), // Assuming paymentMethodId IS the TBank CardId
+        tbankPayType: 'O', // Usually initial recurrent payment is one-stage, ensure it is passed to initiatePayment
       },
-      payType: 'O', // Usually initial recurrent payment is one-stage
-    });
+      // paymentMethodId and customerId are also available in PaymentDetailsArgs if needed
+      ...(paymentMethodId && { paymentMethodId }),
+      customerId: customerKey, // TBank's CustomerKey can be considered the customerId here
+    };
+
+    const initResult = await this.initiatePayment(initArgs);
 
     if (initResult.status === PaymentStatus.PENDING_USER_ACTION || initResult.status === PaymentStatus.SUCCEEDED) {
-      // If SUCCEEDED directly, it means a previously linked card was charged.
-      // If PENDING_USER_ACTION, user needs to complete payment on TBank page.
-      // The RebillId should be in initResult.providerResponse.RebillId or initResult.rebillId
-      const rebillId = initResult.rebillId || (initResult.providerResponse as TBankInitResponse)?.RebillId;
+      const tbankInitResponse = initResult.providerResponse as TBankInitResponse | undefined;
+      const rebillId = tbankInitResponse?.RebillId;
 
       if (rebillId) {
         return {
+          subscriptionId: initialPaymentId, // Using the initial payment ID as a temporary subscription ID placeholder
+                                         // Or generate a new UUID here if this needs to be distinct before DB insertion.
+                                         // This should ideally be the ID from *our* subscriptions table after creation.
           externalSubscriptionId: rebillId, // This is the RebillId
           status: initResult.redirectUrl ? 'pending_initial_payment' : 'active', // 'active' if no redirect and succeeded
-          paymentRequired: !!initResult.redirectUrl, // If redirect, payment is still pending
+          paymentRequired: !!initResult.redirectUrl,
           initialPaymentResult: initResult,
-          customerKey: customerKey,
+          // customerKey: customerKey, // Removed: Not in CreateSubscriptionResult base type
         };
       } else {
-        return {
-          status: 'failed',
-          errorMessage: 'Failed to obtain RebillId from TBank after initial payment.',
-          initialPaymentResult: initResult,
-        };
+         throw new Error('Failed to obtain RebillId from TBank after initial payment. Provider response: ' + JSON.stringify(initResult.providerResponse));
       }
     } else {
-      return {
-        status: 'failed',
-        errorMessage: initResult.errorMessage || 'Failed to initiate first recurrent payment with TBank.',
-        initialPaymentResult: initResult,
-      };
+      throw new Error(initResult.errorMessage || 'Failed to initiate first recurrent payment with TBank. Status: ' + initResult.status);
     }
   }
   
@@ -680,75 +667,89 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
     // The RebillId is usually linked to a specific card (CardId).
     // If we want to prevent future charges, we might remove the card if it's only for this sub.
     
-    // For now, this will be a soft cancellation in our system.
-    // If an actual "deactivate rebill" API is found, implement it here.
-    // The documentation does not explicitly state an API to deactivate a RebillId.
-    // It seems RebillIds are active as long as the card is active.
-    // One could call `RemoveCard` if the CardId associated with the RebillId is known.
+    // The externalSubscriptionId (RebillId) would typically be retrieved from your DB
+    // using args.internalSubscriptionId if you needed to interact with TBank for cancellation.
+    // Since TBank has no such direct API, this is a soft cancellation.
 
     return {
       subscriptionId: args.internalSubscriptionId, // This is our internal ID
-      externalSubscriptionId: args.externalSubscriptionId, // This is the RebillId
       newStatus: 'canceled', // Soft cancel
-      message: 'Subscription marked as canceled in our system. TBank RebillId remains active until card expires or is removed.',
       canceledAt: new Date().toISOString(),
+      // errorMessage can be added if there was a failure updating internal state and it is part of CancelSubscriptionResult.
+      // Checking base.ts, errorMessage IS part of CancelSubscriptionResult.
     };
   }
 
   async addPaymentMethod(args: AddPaymentMethodArgs): Promise<AddPaymentMethodResult> {
     debug('TBank: addPaymentMethod called with:', args);
-    const { userId, customerKey, returnUrl, type } = args; // type is 'card'
+    const { userId, providerName, type, details, setAsDefault } = args; // Standard args
 
+    // TBank specific parameters must come from args.details
+    const customerKey = details?.tbankCustomerKey as string | undefined;
+    const returnUrlFromDetails = details?.tbankReturnUrl as string | undefined;
+    const checkType = (details?.tbankCheckType as 'NO' | 'HOLD' | '3DS') || '3DS'; // Default to 3DS
+
+    if (type !== 'card') {
+      throw new Error('TBank provider currently only supports adding card payment methods.');
+    }
     if (!customerKey) {
-      return { status: PaymentMethodStatus.FAILED, errorMessage: 'customerKey is required to add a payment method with TBank.' };
+      throw new Error('tbankCustomerKey is required in details to add a payment method with TBank.');
     }
 
-    const notificationUrl = `${this.appBaseUrl}/api/payments/tbank/card-webhook`; // Dedicated webhook for card operations
+    const notificationUrl = `${this.appBaseUrl}/api/payments/tbank/card-webhook`; // Dedicated webhook
+    const finalReturnUrl = returnUrlFromDetails || `${this.appBaseUrl}/payment-methods/tbank/callback?customerKey=${customerKey}`;
 
     const requestPayload: Omit<TBankAddCardInitRequest, 'Token' | 'TerminalKey'> = {
       CustomerKey: customerKey,
-      CheckType: '3DS', // Recommended for security. 'HOLD' is also an option. 'NO' is not safe.
+      CheckType: checkType,
       NotificationURL: notificationUrl,
-      ReturnUrl: returnUrl || `${this.appBaseUrl}/payment-methods/tbank/callback?customerKey=${customerKey}`,
+      ReturnUrl: finalReturnUrl,
       DATA: { userId: userId || '' }
     };
 
     try {
-      const response = await this.makeRequest<TBankAddCardInitRequest, TBankAddCardInitResponse>('AddCard', requestPayload);
+      const response = await this.makeRequest<TBankAddCardInitRequest, TBankAddCardInitResponse & TBankCommonResponse>('AddCard', requestPayload);
 
       if (response.Success && response.PaymentURL && response.RequestKey) {
-        // User needs to be redirected to PaymentURL to complete card addition (e.g., 3DS)
+        // User needs to be redirected. The `redirectUrl` (response.PaymentURL)
+        // is not part of AddPaymentMethodResult. This is a limitation.
+        // The RequestKey should be stored temporarily (e.g., in session or a temporary DB record)
+        // associated with the user/customerKey to verify the callback/webhook.
+        debug(`TBank AddCard: User redirection needed to: ${response.PaymentURL}. RequestKey: ${response.RequestKey}`);
+        
+        // Since we cannot return redirectUrl, we return PENDING_USER_ACTION.
+        // The calling layer must know how to handle this (e.g. by having separately obtained the redirectUrl
+        // or by listening to an event, or the TBank form is embedded and handles this client-side).
+        // For now, we fulfill the interface, assuming the actual card details (CardId, RebillId)
+        // will be saved after successful webhook/callback processing based on RequestKey/CustomerKey.
         return {
+          paymentMethodId: '', // Placeholder: Real ID will be set after webhook/confirmation
+          externalId: undefined, // Placeholder: Real CardId after confirmation
           status: PaymentMethodStatus.PENDING_USER_ACTION,
-          redirectUrl: response.PaymentURL,
-          providerData: { requestKey: response.RequestKey, customerKey }, // Store RequestKey for webhook/callback
+          isRecurrentReady: false, // Will be true after confirmation if card supports it
+          detailsForUser: { message: 'Redirect to TBank page required.', requestKey: response.RequestKey },
+          // errorMessage: undefined,
         };
       } else if (response.Success && !response.PaymentURL && response.RequestKey) {
-         // This might happen if CheckType=NO (not used here) or if some other flow occurs.
-         // For CheckType=3DS or HOLD, PaymentURL is expected.
-         // If AddCard directly returns success without PaymentURL, it implies the card was added without user action,
-         // which is unusual for a new card unless it's an import or special scenario.
-         // The webhook or GetCardList should confirm.
-         // For now, assume PENDING_CONFIRMATION by webhook.
+        // This case (e.g. CheckType=NO, or card added without redirect) is less common for 3DS/HOLD.
+        // We still need to await webhook confirmation.
+        debug(`TBank AddCard: Initiated, awaiting confirmation. RequestKey: ${response.RequestKey}`);
         return {
-            status: PaymentMethodStatus.PENDING_CONFIRMATION, // Awaiting webhook
-            providerData: { requestKey: response.RequestKey, customerKey },
-            message: "Card addition initiated, awaiting confirmation."
-        }
-      }
-      else {
-        return {
-          status: PaymentMethodStatus.FAILED,
-          errorMessage: response.Message || `TBank AddCard failed with ErrorCode: ${response.ErrorCode}`,
-          providerResponse: response,
+            paymentMethodId: '', 
+            externalId: undefined,
+            status: PaymentMethodStatus.PENDING_CONFIRMATION, 
+            isRecurrentReady: false,
+            detailsForUser: { message: 'Card addition initiated, awaiting confirmation.', requestKey: response.RequestKey },
         };
       }
+      else {
+        // TBankAddCardInitResponse has Message. TBankCommonResponse (which it extends via makeRequest) has Details.
+        const errorMessage = response.Message || response.Details || `TBank AddCard failed with ErrorCode: ${response.ErrorCode}`;
+        throw new Error(errorMessage);
+      }
     } catch (error: any) {
-      return {
-        status: PaymentMethodStatus.ERROR,
-        errorMessage: error.message,
-        providerResponse: error,
-      };
+      debug('TBank AddCard Error:', error);
+      throw new Error(`TBank AddCard request failed: ${error.message}`);
     }
   }
 
@@ -763,49 +764,65 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
   // Helper to get card list for a customer
   async getCardList(customerKey: string): Promise<TBankGetCardListResponse | null> {
     debug('TBank: getCardList called for customerKey:', customerKey);
-    const requestPayload: Omit<TBankGetCardListRequest, 'Token' | 'TerminalKey'> = {
+    // Prepare payload for token generation (needs Password)
+    // Note: generateToken expects scalar values. CustomerKey and TerminalKey are scalars.
+    const payloadForToken: any = { CustomerKey: customerKey, Password: this.secretKey, TerminalKey: this.terminalKey };
+    // Important: The generateToken function sorts keys. Ensure all keys for token are present.
+    // Based on general TBank token logic: all request params + Password, sorted.
+    // For GetCardList, the request params are TerminalKey, CustomerKey, Token.
+    // So, for token generation, we need TerminalKey, CustomerKey, Password.
+    
+    const token = this.generateToken(payloadForToken);
+
+    const requestPayload = {
+        TerminalKey: this.terminalKey,
         CustomerKey: customerKey,
+        Token: token,
     };
+
     try {
-        // The response is directly an array or an object with ErrorCode if failed.
-        // Adjusting makeRequest or handling response type here.
-        // For simplicity, assuming makeRequest can handle non-standard success responses.
-        const response = await this.makeRequest<TBankGetCardListRequest, TBankCommonResponse & TBankGetCardListResponse>('GetCardList', requestPayload);
-        if (response.Success === false && response.ErrorCode !== '0') { // Explicit check for failure
-             debug(`TBank GetCardList failed: ${response.Message}`);
-             return null; // Or throw error
+      // Using axios.post directly as GetCardList returns an array on success,
+      // which is not handled well by the generic makeRequest expecting a TBankCommonResponse object structure.
+      const response = await axios.post<TBankGetCardListResponse | TBankCommonResponse>(
+        `${TBANK_API_URL_V2}/GetCardList`,
+        requestPayload,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      debug('TBank Response from GetCardList:', response.data);
+
+      if (Array.isArray(response.data)) {
+        // Successfully received an array of cards
+        return response.data as TBankGetCardListResponse;
+      } else if (response.data && typeof response.data === 'object') {
+        // Received an object, should be TBankCommonResponse (likely an error or specific non-array success)
+        const objectResponse = response.data as TBankCommonResponse;
+        if (objectResponse.Success === false && objectResponse.ErrorCode !== '0') {
+          debug(`TBank GetCardList API Error: ${objectResponse.Message || objectResponse.Details}`);
+          return null;
         }
-        // If Success is true, or ErrorCode is '0' but Success might be missing (docs unclear for array response)
-        // the actual card list is the response itself if it's an array.
-        if (Array.isArray(response)) {
-            return response as TBankGetCardListResponse;
+        // If Success is true (or ErrorCode is '0') but it's not an array:
+        // This implies an empty list might be represented as a success object,
+        // or it's an unexpected format if the API strictly returns an array for success.
+        // Assuming if not an array, but Success=true, it implies an empty list scenario.
+        if (objectResponse.Success === true || (objectResponse.Success !== false && objectResponse.ErrorCode === '0')) {
+            debug('TBank GetCardList: Success response was an object, not an array. Assuming empty list.');
+            return [];
         }
-        // If it's an object with Success:true, it implies an empty list or an error that wasn't a typical API error.
-        // For now, if it's not an array and Success is true, assume empty list or handle based on actual API behavior.
-        // The provided OpenAPI spec for GetCardList shows it returns an array directly for success.
-        // Or an error object if it fails.
-        // The wrapper TBankCommonResponse might not apply directly here.
-
-        // Re-evaluating: If the response is an array, it's the list. If it's an object with ErrorCode, it's an error.
-        // The makeRequest will throw on network/HTTP errors. Here we handle API-level errors.
-        // Let's assume the response from makeRequest is always TBankCommonResponse structure,
-        // and the actual card list is embedded if successful. This needs verification against actual API.
-        // The OpenAPI spec at the provided URL shows GetCardList directly returns an array of CardInfo.
-        // This means our makeRequest might need adjustment or a different wrapper for such endpoints.
-
-        // Let's assume for now that if response.Success is true and it's an array, it's the list.
-        // Or if it's an object and success, it might be an empty list or a success wrapper.
-        // This part is tricky without live testing the GetCardList endpoint.
-        // For now, if it's an array, cast it.
-        if (Array.isArray(response)) return response as TBankGetCardListResponse;
-        if (response.Success && response.ErrorCode === '0') return []; // Empty list
-
+        debug('TBank GetCardList: Unexpected object response structure.');
         return null;
-
-
+      } else {
+        debug('TBank GetCardList: Unexpected response type.');
+        return null;
+      }
     } catch (error: any) {
-        debug('Error in getCardList:', error.message);
-        return null;
+      const errorResponse = error.response?.data as TBankCommonResponse;
+      const errorMessage = errorResponse?.Message || errorResponse?.Details || error.message;
+      debug(`TBank GetCardList request failed: ${errorMessage}`, error.response?.data || error);
+      // Propagate error or return null based on desired error handling strategy
+      // For now, returning null as per original logic for some failures.
+      // Consider throwing a more specific error if needed.
+      // throw new Error(`TBank GetCardList request failed: ${errorMessage}`);
+      return null;
     }
   }
 

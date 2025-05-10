@@ -209,10 +209,10 @@ async function calibrateTBank(rl: readline.Interface, envPath: string) {
       paymentId: testOrderId,
       amount: testAmount,
       currency: 'RUB',
-      description: 'TBank Calibration Test',
+      description: 'Test payment from assist-tbank',
       userId: 'calibration-user',
       returnUrl: envVars.TBANK_DEFAULT_RETURN_URL || `${appBaseUrl}/payment-callback/tbank-calibration`,
-      // metadata: { some_data: 'test' } // Add if needed
+      objectHid: 'test/payments/assist-tbank'
     });
 
     if (result.redirectUrl) {
