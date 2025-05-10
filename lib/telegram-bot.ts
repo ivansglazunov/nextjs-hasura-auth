@@ -139,6 +139,29 @@ export async function setWebhook(token: string, url: string): Promise<boolean> {
   }
 }
 
+// NEW function to set the bot's menu button to a Web App
+export async function setBotMenuButtonWebApp(token: string, text: string, webAppUrl: string): Promise<boolean> {
+  debug(`Setting bot menu button to Web App: ${text} -> ${webAppUrl}`);
+  try {
+    await callTelegramApi(token, 'setChatMenuButton', {
+      menu_button: {
+        type: 'web_app',
+        text: text,
+        web_app: {
+          url: webAppUrl,
+        },
+      },
+    });
+    console.log(`✅ Bot menu button set to open Web App: "${text}" -> ${webAppUrl}`);
+    debug(`Successfully set menu button to Web App: ${text}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Failed to set bot menu button to Web App: ${error instanceof Error ? error.message : String(error)}`);
+    debug('Failed to set bot menu button to Web App:', error);
+    return false;
+  }
+}
+
 // Helper function to send a message via Telegram API
 async function sendTelegramMessage(token: string, chatId: number | string, text: string, replyToMessageId?: number): Promise<any> {
   return callTelegramApi(token, 'sendMessage', {

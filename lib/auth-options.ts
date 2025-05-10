@@ -5,6 +5,9 @@ import { JWT as DefaultJWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import YandexProvider from 'next-auth/providers/yandex';
+import GitHubProvider from 'next-auth/providers/github';
+import FacebookProvider from 'next-auth/providers/facebook';
+import VkProvider from 'next-auth/providers/vk';
 import { createApolloClient } from './apollo'; // Import from generated package
 import { Hasyx } from './hasyx'; // Import from generated package
 import { SignJWT } from 'jose';
@@ -54,6 +57,18 @@ export const baseProviders = [
   YandexProvider({
     clientId: process.env.YANDEX_CLIENT_ID!,
     clientSecret: process.env.YANDEX_CLIENT_SECRET!,
+  }),
+  GitHubProvider({
+    clientId: process.env.GITHUB_ID!,
+    clientSecret: process.env.GITHUB_SECRET!,
+  }),
+  FacebookProvider({
+    clientId: process.env.FACEBOOK_CLIENT_ID!,
+    clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+  }),
+  VkProvider({
+    clientId: process.env.VK_CLIENT_ID!,
+    clientSecret: process.env.VK_CLIENT_SECRET!,
   }),
   // Add other base OAuth providers here if needed
 ];

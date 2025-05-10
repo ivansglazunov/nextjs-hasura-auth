@@ -452,6 +452,18 @@ VERCEL_URL=https://your-project.vercel.app
 # YANDEX_CLIENT_ID=your_yandex_client_id
 # YANDEX_CLIENT_SECRET=your_yandex_client_secret
 
+# --- GitHub ---
+# GITHUB_ID=your_github_client_id
+# GITHUB_SECRET=your_github_client_secret
+
+# --- Facebook ---
+# FACEBOOK_CLIENT_ID=your_facebook_app_id
+# FACEBOOK_CLIENT_SECRET=your_facebook_app_secret
+
+# --- VK ---
+# VK_CLIENT_ID=your_vk_app_id
+# VK_CLIENT_SECRET=your_vk_app_secret
+
 # ===== Email Provider (Optional - For passwordless or verification) =====
 # Required if using EmailProvider or email features (like verification if implemented)
 # RESEND_API_KEY=re_your_resend_api_key
@@ -567,6 +579,27 @@ Common WebSocket error: `TypeError: bufferUtil.mask is not a function` indicates
     4. Add the Redirect URI: `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/yandex` (e.g., `http://localhost:3000/api/auth/callback/yandex`).
     5. Grant necessary permissions (e.g., access to email, profile info).
     6. Copy the ID and Password (Client Secret) into your `.env`.
+*   **GitHub:**
+    1. Go to [GitHub Developer settings](https://github.com/settings/developers).
+    2. Click "New OAuth App".
+    3. Set "Application name", "Homepage URL".
+    4. Set "Authorization callback URL" to `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/github` (e.g., `http://localhost:3000/api/auth/callback/github`).
+    5. Click "Register application".
+    6. Copy the Client ID and generate a new Client Secret, then copy it into your `.env`.
+*   **Facebook:**
+    1. Go to [Facebook for Developers](https://developers.facebook.com/apps/).
+    2. Click "Create App". Select an app type (e.g., "Consumer" or "Business").
+    3. Set up "Facebook Login" product.
+    4. In "Settings" > "Basic", find your App ID and App Secret.
+    5. Under "Facebook Login" > "Settings", add `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/facebook` to "Valid OAuth Redirect URIs".
+    6. Copy the App ID (Client ID) and App Secret (Client Secret) into your `.env`.
+*   **VK:**
+    1. Go to [VK for Developers](https://vk.com/apps?act=manage).
+    2. Click "Create application".
+    3. Choose platform "Website". Fill in "Site address" and "Base domain".
+    4. After creation, go to "Settings". You will find "Application ID" (Client ID) and "Secure key" (Client Secret).
+    5. Set "Authorized redirect URI" to `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/vk` (e.g., `http://localhost:3000/api/auth/callback/vk`).
+    6. Copy the Application ID and Secure key into your `.env`.
 
 #### Email Provider (`RESEND_API_KEY`)
 
