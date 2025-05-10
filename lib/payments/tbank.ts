@@ -17,7 +17,7 @@ import {
   PaymentMethodStatus,
 } from './base';
 import Debug from '../debug';
-import { TBankProcessorOptions, defaultTBankOptions, GenerateReceiptArgs, ReceiptOperationType } from './tbank/options';
+import { TBankProcessorOptions, defaultTBankOptions, GenerateReceiptArgs, ReceiptOperationType } from '@/lib/payments/tbank/options';
 
 const debug = Debug('payment:tbank');
 
@@ -158,6 +158,8 @@ interface TBankCardInfo {
 
 interface TBankGetCardListResponse extends Array<TBankCardInfo> {}
 
+// Export TBankCardInfo here
+export type { TBankCardInfo };
 
 interface TBankRemoveCardRequest extends TBankBaseRequest {
     CardId: string;
