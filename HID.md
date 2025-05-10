@@ -160,4 +160,49 @@ If neither `defaultNamespace` argument nor the environment variable is set, `'ha
 *   Uniquely identifying database records in logs, events, or API responses.
 *   Creating stable and predictable identifiers for resources that can be parsed programmatically.
 *   Linking resources across different microservices or modules if they share the same HID generation/parsing logic and default namespace/project context.
-*   As the `object_hid` in payment transactions or subscriptions to link them to a specific billable item. 
+*   As the `object_hid` in payment transactions or subscriptions to link them to a specific billable item.
+
+## Hasyx View and Automated HID Generation
+
+A recent migration introduces a PostgreSQL view named `public.hasyx`. This view is designed to consolidate identifiers from all relevant tables into a single, queryable source of HIDs.
+
+### Computed Columns for Relationships
+
+To facilitate robust relationships between your original tables and the `public.hasyx` view, the migration adds two computed columns to each of your existing tables (those found in `public/hasura-schema.json` with a primary key, excluding system tables):
+
+1.  **`_hasyx_schema_name` (TEXT)**: This column is generated always as the name of the schema the table belongs to (e.g., `'public'`).
+2.  **`_hasyx_table_name` (TEXT)**: This column is generated always as the name of the table itself (e.g., `'users'`).
+
+These columns are added using `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ... GENERATED ALWAYS AS (...) STORED`. This ensures that they are always present and accurate without requiring manual data entry.
+
+**Purpose:**
+
+*   **Relationship Mapping**: These columns are crucial for defining Hasura relationships. When creating a relationship from an original table (e.g., `public.users`) to the `public.hasyx` view, Hasura can map:
+    *   `users.id` (primary key) → `hasyx.id`
+    *   `users._hasyx_schema_name` → `hasyx.schema`
+    *   `users._hasyx_table_name` → `hasyx.table`
+*   This allows a precise join to the correct entry in the `public.hasyx` view that represents the specific row from the original table.
+
+**Hasura Tracking and GraphQL Exposure:**
+
+While these computed columns are added to your database tables and Hasura is aware of them (which is necessary for the relationship logic to work), they are not typically exposed directly via GraphQL queries through Hasura's default permissions unless explicitly configured. Their primary role is internal for building the HIDs and enabling the relationships.
+
+### `public.hasyx` View Structure
+
+The `public.hasyx` view has the following structure:
+
+*   `hid` (TEXT): The fully constructed Hasyx Identifier (e.g., `namespace/project/schema/table/id`).
+*   `namespace` (TEXT): The namespace, taken from `DEFAULT_NAMESPACE` in `lib/hid.ts`.
+*   `project` (TEXT): The project name, derived from `package.json` or the current directory name.
+*   `schema` (TEXT): The schema name of the original record.
+*   `table` (TEXT): The table name of the original record.
+*   `id` (TEXT): The primary key of the original record, cast to text.
+
+### Automated Relationships
+
+The migration also attempts to automatically create the following Hasura relationships:
+
+1.  **From Original Table to `public.hasyx`**: An object relationship named `hasyx` is added to each original table, pointing to the corresponding entry in the `public.hasyx` view.
+2.  **From `public.hasyx` to Original Table**: An object relationship named `{schema}_{table}` (e.g., `public_users`) is added to the `public.hasyx` view, pointing back to the specific row in the original table. This allows you to traverse from a generic HID back to the concrete source entity.
+
+This setup provides a unified way to work with HIDs and easily navigate between the generic HID representation and the specific source records. 

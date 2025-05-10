@@ -616,9 +616,6 @@ program
     debug('Executing "dev" command.');
     const cwd = findProjectRoot();
     
-    // Apply WebSocket patch before starting development server
-    ensureWebSocketSupport(cwd);
-    
     console.log('🚀 Starting development server (using next dev --turbopack)...');
     debug(`Running command: npx next dev --turbopack in ${cwd}`);
     const result = spawn.sync('npx', ['next', 'dev', '--turbopack'], {
@@ -679,9 +676,6 @@ program
     debug('Executing "start" command.');
     const cwd = findProjectRoot();
     
-    // Apply WebSocket patch before starting production server
-    ensureWebSocketSupport(cwd);
-    
     console.log('🛰️ Starting production server (using next start)...');
     debug(`Running command: npx next start --turbopack in ${cwd}`);
      const result = spawn.sync('npx', ['next', 'start', '--turbopack'], {
@@ -711,9 +705,6 @@ program
   .action(() => {
     debug('Executing "build:client" command via CLI.');
     const cwd = findProjectRoot();
-    
-    // Apply WebSocket patch before building for client
-    ensureWebSocketSupport(cwd);
     
     console.log('📦 Building Next.js application for client export...');
     const scriptPath = path.join('lib', 'build-client.ts'); // Path relative to project root

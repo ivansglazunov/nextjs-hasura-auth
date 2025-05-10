@@ -1,9 +1,9 @@
 import pckg from '../package.json';
 import Debug from './debug';
 
-const DEFAULT_NAMESPACE = 'hasyx';
-const DEFAULT_PROJECT = pckg.name || 'unknown_project';
-const SEPARATOR = '/';
+export const DEFAULT_NAMESPACE = 'hasyx';
+export const DEFAULT_PROJECT = pckg.name || 'unknown_project';
+export const SEPARATOR = '/';
 
 export interface HidParts {
   namespace?: string;

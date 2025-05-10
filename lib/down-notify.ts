@@ -50,58 +50,49 @@ const tablesToUntrack = [
   }
 ];
 
-// Metadata for dropping permissions
+// Metadata for dropping permissions (EXPANDED)
 const permissionsToDrop = [
-  // User permissions
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'notification_permissions' },
-      role: 'user'
-    }
-  },
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'notification_messages' },
-      role: 'user'
-    }
-  },
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'notifications' },
-      role: 'user'
-    }
-  },
-  // Admin permissions
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'notification_permissions' },
-      role: 'admin'
-    }
-  },
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'notification_messages' },
-      role: 'admin'
-    }
-  },
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'notifications' },
-      role: 'admin'
-    }
-  }
+  // === notification_permissions ===
+  // User role
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_permissions' }, role: 'user' } },
+  { type: 'pg_drop_insert_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_permissions' }, role: 'user' } },
+  { type: 'pg_drop_update_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_permissions' }, role: 'user' } }, // Assuming update might exist
+  { type: 'pg_drop_delete_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_permissions' }, role: 'user' } },
+  // Admin role
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_permissions' }, role: 'admin' } },
+  { type: 'pg_drop_insert_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_permissions' }, role: 'admin' } }, // Assuming full admin crud
+  { type: 'pg_drop_update_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_permissions' }, role: 'admin' } },
+  { type: 'pg_drop_delete_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_permissions' }, role: 'admin' } },
+  // Anonymous role (if any select permission was defined, even restrictive)
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_permissions' }, role: 'anonymous' } }, 
+
+  // === notification_messages ===
+  // User role
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_messages' }, role: 'user' } },
+  { type: 'pg_drop_insert_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_messages' }, role: 'user' } },
+  { type: 'pg_drop_update_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_messages' }, role: 'user' } },
+  { type: 'pg_drop_delete_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_messages' }, role: 'user' } },
+  // Admin role
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_messages' }, role: 'admin' } },
+  { type: 'pg_drop_insert_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_messages' }, role: 'admin' } },
+  { type: 'pg_drop_update_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_messages' }, role: 'admin' } },
+  { type: 'pg_drop_delete_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_messages' }, role: 'admin' } },
+  // Anonymous role
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'notification_messages' }, role: 'anonymous' } }, 
+
+  // === notifications ===
+  // User role
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'notifications' }, role: 'user' } },
+  { type: 'pg_drop_insert_permission', args: { source: 'default', table: { schema: 'public', name: 'notifications' }, role: 'user' } }, // This was the problematic one
+  { type: 'pg_drop_update_permission', args: { source: 'default', table: { schema: 'public', name: 'notifications' }, role: 'user' } },
+  { type: 'pg_drop_delete_permission', args: { source: 'default', table: { schema: 'public', name: 'notifications' }, role: 'user' } },
+  // Admin role
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'notifications' }, role: 'admin' } },
+  { type: 'pg_drop_insert_permission', args: { source: 'default', table: { schema: 'public', name: 'notifications' }, role: 'admin' } },
+  { type: 'pg_drop_update_permission', args: { source: 'default', table: { schema: 'public', name: 'notifications' }, role: 'admin' } },
+  { type: 'pg_drop_delete_permission', args: { source: 'default', table: { schema: 'public', name: 'notifications' }, role: 'admin' } },
+  // Anonymous role
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'notifications' }, role: 'anonymous' } }, 
 ];
 
 // Metadata for dropping relationships
@@ -179,37 +170,58 @@ const relationshipsToDrop = [
  * Drop permissions and relationships
  */
 export async function dropMetadata(hasura: Hasura) {
-  debug('🧹 Dropping notification permissions...');
+  debug('🧹 Dropping notification permissions, relationships, and untracking tables...');
   
-  // Drop all permissions first
-  debug('  🗑️ Dropping permissions...');
+  debug('  🗑️ Dropping all known permissions first...');
   for (const dropRequest of permissionsToDrop) {
-    const perm = `${dropRequest.args.role} on ${dropRequest.args.table.schema}.${dropRequest.args.table.name}`;
-    debug(`     Dropping select permission for ${perm}...`);
-    await hasura.v1(dropRequest);
-    // Note: hasura.v1 handles 'not found' messages internally
+    const permType = dropRequest.type.replace('pg_drop_', '').replace('_permission', '');
+    const tableName = `${dropRequest.args.table.schema}.${dropRequest.args.table.name}`;
+    const role = dropRequest.args.role;
+    debug(`     Dropping ${permType} permission for role [${role}] on table [${tableName}]...`);
+    try {
+        await hasura.v1(dropRequest);
+    } catch (e: any) {
+        // Log non-critical errors, e.g., if permission was already deleted
+        if (e.message && (e.message.includes('does not exist') || e.message.includes('not found') || e.message.includes('permission-denied'))) {
+            debug(`     Permission ${permType} for ${role} on ${tableName} likely already deleted or never existed. Skipping.`);
+        } else {
+            throw e; // Re-throw if it's a different error
+        }
+    }
   }
-  debug('  ✅ Permissions dropped.');
+  debug('  ✅ All known permissions dropped (or confirmed absent).');
   
-  // Drop relationships
   debug('  🗑️ Dropping relationships...');
   for (const relToDrop of relationshipsToDrop) {
     const rel = `${relToDrop.args.relationship} on ${relToDrop.args.table.schema}.${relToDrop.args.table.name}`;
     debug(`     Dropping relationship ${rel}...`);
-    await hasura.v1(relToDrop);
-    // Note: hasura.v1 handles 'not found' messages internally
+    try {
+        await hasura.v1(relToDrop);
+    } catch (e: any) {
+        if (e.message && (e.message.includes('does not exist') || e.message.includes('not-exists'))) {
+            debug(`     Relationship ${rel} likely already deleted or never existed. Skipping.`);
+        } else {
+            throw e;
+        }
+    }
   }
-  debug('  ✅ Relationships dropped.');
+  debug('  ✅ Relationships dropped (or confirmed absent).');
 
-  // Untrack tables
   debug('  🗑️ Untracking notification tables...');
   for (const untrackRequest of tablesToUntrack) {
     const tableName = `${untrackRequest.args.table.schema}.${untrackRequest.args.table.name}`;
     debug(`  📝 Untracking table ${tableName}...`);
-    await hasura.v1(untrackRequest);
-     // Note: hasura.v1 handles 'not found' messages internally
+    try {
+        await hasura.v1(untrackRequest);
+    } catch (e: any) {
+        if (e.message && (e.message.includes('already untracked') || e.message.includes('not-exists'))) {
+            debug(`     Table ${tableName} likely already untracked or never existed. Skipping.`);
+        } else {
+            throw e;
+        }
+    }
   }
-  debug('✅ Tables untracked.');
+  debug('✅ Tables untracked (or confirmed absent/untracked).');
 }
 
 /**

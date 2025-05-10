@@ -93,10 +93,10 @@ const userPermissions = [
       table: { schema: 'public', name: 'users' },
       role: 'user',
       permission: {
-        columns: ['id', 'created_at', 'updated_at', 'hasura_role'],
+        columns: ['id', 'name', 'image', 'created_at', 'updated_at', 'hasura_role'],
         filter: {}
       },
-      comment: 'Users can see limited data of other users'
+      comment: 'Users can see limited data (including name and image) of other users'
     }
   },
   {
@@ -164,10 +164,10 @@ const anonymousPermissions = [
       table: { schema: 'public', name: 'users' },
       role: 'anonymous',
       permission: {
-        columns: ['id', 'created_at', 'updated_at'],
+        columns: ['id', 'name', 'image', 'created_at', 'updated_at', 'hasura_role'],
         filter: {} // Allow access to all rows
       },
-      comment: 'Anonymous users can see basic user info'
+      comment: 'Anonymous users can see basic user info including name and image'
     }
   },
   {
