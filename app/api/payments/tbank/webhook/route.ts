@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TBankPaymentProcessor } from '@/lib/payments/tbank'; 
-import { TBankProcessorOptions, defaultTBankOptions } from '@/lib/payments/tbank/options';
+import { tbankAppOptions } from '@/app/payments/tbank/options';
 import { Hasyx } from 'hasyx'; 
 import { createApolloClient } from 'hasyx/lib/apollo'; 
 import { Generator } from 'hasyx/lib/generator';
@@ -51,7 +51,7 @@ if (!TBANK_TERMINAL_KEY || !TBANK_SECRET_KEY) {
       terminalKey: TBANK_TERMINAL_KEY,
       secretKey: TBANK_SECRET_KEY,
       appBaseUrl: APP_BASE_URL,
-      options: defaultTBankOptions, 
+      options: tbankAppOptions,
     };
     tbankAdapter = new TBankPaymentProcessor(tbankProcessorConfig);
   } catch (e: any) {

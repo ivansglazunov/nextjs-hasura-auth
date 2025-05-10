@@ -66,4 +66,43 @@ Idempotent migrations are crucial for:
 
 By following these guidelines, you help ensure that database schema changes are managed smoothly, reliably, and predictably across all environments.
 
+## Contribution Guidelines
+
+## Project Structure Philosophy
+
+This project distinguishes between core library code and application-specific code:
+
+-   **`lib/`**: Contains core, reusable logic intended for broader use, potentially as an importable part of the `hasyx` package (`hasyx/lib/*`). This directory should **not** house project-specific business logic or default configurations that are meant to be overridden by consuming projects. Interfaces and core implementations reside here.
+
+-   **`app/`**: Contains application-level code, configurations, and stubs. Parts of `app/` are often duplicated into downstream projects using `npx hasyx init` and `npx hasyx assist`. This is the place for minimal, overridable business logic stubs and project-specific setups.
+
+## Specific Guidance for `app/payments/tbank/options.ts`
+
+The file `app/payments/tbank/options.ts` is a prime example of the `app/` philosophy. It's designed to host minimal, overridable business logic, such as the TBank receipt generator.
+
+### `generateReceipt` Function Stub
+
+When providing a `generateReceipt` function (or similar customizable logic) in `app/payments/tbank/options.ts`:
+
+1.  **Keep it Minimal**: The function should be as concise as possible, acting as a clear extension point.
+2.  **Clear I/O Comment**: Include a brief comment (3-5 lines max) specifying the expected input arguments and the structure of the returned object.
+3.  **File Conciseness**: The entire `app/payments/tbank/options.ts` file should ideally be less than 10-15 lines, focusing solely on providing these minimal, clearly documented stubs.
+
+**Example for `generateReceipt` in `app/payments/tbank/options.ts`:**
+
+```typescript
+// Args: { items: TBankReceiptItem[], paymentDetails: any, operationType: 'payment' | 'refund' }
+// Returns: TBankReceipt object or null
+export function defaultGenerateReceipt(args, operationType) {
+  // Minimal placeholder logic or project-specific implementation
+  console.warn('Placeholder: defaultGenerateReceipt in app/payments/tbank/options.ts needs implementation.');
+  return null;
+}
+
+export const tbankAppOptions = {
+  generateReceipt: defaultGenerateReceipt,
+  // Other app-specific TBank configurations
+};
+```
+
 Thank you for contributing! 

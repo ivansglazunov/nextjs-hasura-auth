@@ -17,7 +17,6 @@ import {
   PaymentMethodStatus,
 } from './base';
 import Debug from '../debug';
-import { TBankProcessorOptions, defaultTBankOptions, GenerateReceiptArgs, ReceiptOperationType } from '@/lib/payments/tbank/options';
 
 const debug = Debug('payment:tbank');
 
@@ -207,6 +206,27 @@ interface TBankReceiptItem {
 // Exporting types needed by options.ts
 export type { TBankReceipt, TBankReceiptItem };
 
+// Moved from lib/payments/tbank/options.ts
+export interface GenerateReceiptArgs {
+  items: Array<Omit<TBankReceiptItem, 'Amount' | 'Quantity'> & { quantity: number }>;
+  totalAmount: number; // Total amount of the payment/refund in kopecks
+  customerEmail?: string;
+  customerPhone?: string;
+  paymentId: string; // Internal payment ID
+  taxationSystem: TBankReceipt['Taxation'];
+}
+
+// Moved from lib/payments/tbank/options.ts
+export type ReceiptOperationType = 'payment' | 'refund' | 'confirmation';
+
+// Moved from lib/payments/tbank/options.ts
+export interface TBankProcessorOptions {
+  generateReceipt?: (args: GenerateReceiptArgs, operationType: ReceiptOperationType) => TBankReceipt | null | undefined;
+  // Add other provider-specific operational configurations if needed
+  // fiscalizationAgentConfig?: any; // Example for fiscalization (define type if used)
+  // customLogger?: (level: string, message: string, ...args: any[]) => void;
+}
+
 export class TBankPaymentProcessor implements IPaymentProcessor {
   readonly providerName = 'tbank';
   private terminalKey: string;
@@ -226,7 +246,9 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
     this.secretKey = config.secretKey;
     this.useTestMode = config.useTestMode || false;
     this.appBaseUrl = config.appBaseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    this.options = { ...defaultTBankOptions, ...config.options };
+    // Options are now passed directly and should include generateReceipt if needed.
+    // No merging with a library-defined defaultTBankOptions that includes a stub.
+    this.options = config.options || {}; // Initialize with empty object if no options passed
 
     if (!this.terminalKey || !this.secretKey) {
       throw new Error('TBank terminalKey or secretKey is missing.');
