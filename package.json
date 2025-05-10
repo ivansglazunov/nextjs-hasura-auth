@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.131",
+  "version": "0.1.132",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -29,7 +29,7 @@
     "unmigrate": "npx hasyx unmigrate",
     "hasura:schema": "tsx ./lib/hasura-schema.ts",
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
-    "npm-publish": "npm run build; npm publish",
+    "npm-publish": "npm run build && npm publish",
     "cli": "tsx ./lib/cli.ts"
   },
   "main": "lib/index.js",

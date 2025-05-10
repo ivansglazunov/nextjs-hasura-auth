@@ -569,7 +569,7 @@ program
           "postinstall": "npm run ws -- -y",
           "migrate": "npx hasyx migrate",
           "unmigrate": "npx hasyx unmigrate",
-          "npm-publish": "npm run build; npm publish",
+          "npm-publish": "npm run build && npm publish",
         };
         
         // Check if scripts need updating
