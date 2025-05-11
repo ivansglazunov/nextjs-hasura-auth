@@ -612,6 +612,29 @@ program
     }
     // --- END NEW ---
 
+    // --- Install/Update hasyx itself ---
+    console.log('📦 Ensuring the latest version of hasyx is installed...');
+    debug('Running command: npm install hasyx@latest --save');
+    const installHasyxResult = spawn.sync('npm', ['install', 'hasyx@latest', '--save'], {
+      stdio: 'inherit',
+      cwd: projectRoot,
+    });
+    if (installHasyxResult.error) {
+      console.error('❌ Failed to install/update hasyx:', installHasyxResult.error);
+      debug(`npm install hasyx@latest --save failed to start: ${installHasyxResult.error}`);
+      // Continue, but warn the user
+      console.warn('⚠️ Please try running "npm install hasyx@latest --save" manually.');
+    } else if (installHasyxResult.status !== 0) {
+      console.error(`❌ npm install hasyx@latest --save process exited with status ${installHasyxResult.status}`);
+      debug(`npm install hasyx@latest --save exited with non-zero status: ${installHasyxResult.status}`);
+      // Continue, but warn the user
+      console.warn('⚠️ Please try running "npm install hasyx@latest --save" manually.');
+    } else {
+      console.log('✅ hasyx package is up to date.');
+      debug('npm install hasyx@latest --save successful.');
+    }
+    // --- End Install/Update hasyx ---
+
     console.log('✨ hasyx initialization complete!');
 
     console.log('👉 Next steps:');
