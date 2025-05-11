@@ -470,14 +470,15 @@ program
           // Get template content
           let templateContent = getTemplateContent(configFile);
           
-          // Replace 'hasyx' with project name in paths section
+          // Replace "hasyx" with project name for the specific library path
           templateContent = templateContent.replace(
             /"hasyx":\s*\[\s*"\.\/lib\/index\.ts"\s*\]/g, 
             `"${projectName}": ["./lib/index.ts"]`
           );
           
+          // Replace "hasyx/*" with project name for the general wildcard path
           templateContent = templateContent.replace(
-            /"hasyx\/\*":\s*\[\s*"\.\/*"\s*\]/g, 
+            /"hasyx\/\*":\s*\[\s*"\.\/\*"\s*\]/g, 
             `"${projectName}/*": ["./*"]`
           );
           
