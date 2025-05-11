@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "frenco.vscode-vercel",
+    "gantoreno.vscode-vercel-theme",
+    "ms-azuretools.vscode-docker",
+    "me-dutour-mathieu.vscode-github-actions"
+  ]
+}
