@@ -356,6 +356,17 @@ program
       debug(`Error reading package.json: ${error}`);
     }
 
+    // Prevent hasyx from initializing itself
+    if (projectName === 'hasyx') {
+      console.warn(
+        '❌ Error: Running `hasyx init` within the `hasyx` project itself is not allowed.\n' +
+        'This command is intended to initialize hasyx in other projects.\n' +
+        'If you are developing hasyx, its structure is already initialized.'
+      );
+      debug('Attempted to run `hasyx init` on the `hasyx` project. Operation aborted.');
+      process.exit(1); // Exit with an error code
+    }
+
     const filesToCreateOrReplace = {
       'CONTRIBUTING.md': 'CONTRIBUTING.md',
       '.github/workflows/npm-publish.yml': '.github/workflows/npm-publish.yml',

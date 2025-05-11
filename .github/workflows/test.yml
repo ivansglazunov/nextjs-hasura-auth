@@ -37,12 +37,6 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{secrets.GOOGLE_CLIENT_SECRET}}
           YANDEX_CLIENT_ID: ${{secrets.YANDEX_CLIENT_ID}}
           YANDEX_CLIENT_SECRET: ${{secrets.YANDEX_CLIENT_SECRET}}
-          GITHUB_ID: ${{secrets.GITHUB_ID}}
-          GITHUB_SECRET: ${{secrets.GITHUB_SECRET}}
-          FACEBOOK_CLIENT_ID: ${{secrets.FACEBOOK_CLIENT_ID}}
-          FACEBOOK_CLIENT_SECRET: ${{secrets.FACEBOOK_CLIENT_SECRET}}
-          VK_CLIENT_ID: ${{secrets.VK_CLIENT_ID}}
-          VK_CLIENT_SECRET: ${{secrets.VK_CLIENT_SECRET}}
           RESEND_API_KEY: ${{secrets.RESEND_API_KEY}}
           NODE_ENV: ${{secrets.NODE_ENV}}
           NEXT_PUBLIC_BUILD_TARGET: ${{secrets.NEXT_PUBLIC_BUILD_TARGET}}

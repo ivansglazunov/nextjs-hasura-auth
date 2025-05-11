@@ -32,6 +32,7 @@ export async function setupVercel(rl: readline.Interface, envPath: string, envVa
 
   if (envVars.VERCEL_TOKEN && envVars.VERCEL_TEAM_ID && envVars.VERCEL_PROJECT_NAME) {
       console.log('✅ Vercel variables (TOKEN, TEAM_ID, PROJECT_NAME) seem to be set in .env');
+      debug('Vercel core env vars found:', { tokenSet: !!envVars.VERCEL_TOKEN, teamIdSet: !!envVars.VERCEL_TEAM_ID, projectNameSet: !!envVars.VERCEL_PROJECT_NAME });
       if(!await askYesNo(rl, 'Do you want to re-check/re-configure them?', false)) return;
   }
 
@@ -60,20 +61,32 @@ export async function setupVercel(rl: readline.Interface, envPath: string, envVa
     if (await askYesNo(rl, 'Do you want to set VERCEL_TOKEN? (needed for programmatic Vercel operations)', true)) {
       console.log('You can create a Vercel Access Token at: https://vercel.com/account/tokens');
       envVars.VERCEL_TOKEN = await askForInput(rl, 'Enter Vercel Access Token');
+      debug('VERCEL_TOKEN obtained from user input:', envVars.VERCEL_TOKEN ? 'Set' : 'Not Set');
     }
   }
   if (!envVars.VERCEL_TEAM_ID) {
     if (await askYesNo(rl, 'Do you want to set VERCEL_TEAM_ID? (optional, for personal accounts can be skipped by pressing Enter)', true)) {
       envVars.VERCEL_TEAM_ID = await askForInput(rl, 'Enter Vercel Team ID (if applicable)');
-      if (!envVars.VERCEL_TEAM_ID) delete envVars.VERCEL_TEAM_ID; // remove if empty
+      if (!envVars.VERCEL_TEAM_ID) {
+        delete envVars.VERCEL_TEAM_ID; // remove if empty
+        debug('VERCEL_TEAM_ID was empty, removed from envVars.');
+      } else {
+        debug('VERCEL_TEAM_ID obtained from user input:', envVars.VERCEL_TEAM_ID);
+      }
     }
   }
 
   // We call getVercelProjectName here to ensure it's asked if not already set.
-  await getVercelProjectName(rl, envVars);
+  const finalProjectName = await getVercelProjectName(rl, envVars);
+  debug('Final Vercel Project Name to be used:', finalProjectName);
   
   writeEnvFile(envPath, envVars);
   console.log(`✅ Vercel configuration updated in ${envPath}`);
+  debug(`Vercel env vars written to ${envPath}:`, {
+    VERCEL_TOKEN: envVars.VERCEL_TOKEN ? 'Exists' : 'Missing',
+    VERCEL_TEAM_ID: envVars.VERCEL_TEAM_ID || 'Not Set',
+    VERCEL_PROJECT_NAME: envVars.VERCEL_PROJECT_NAME || 'Not Set'
+  });
 }
 
 // Main function for standalone execution

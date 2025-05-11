@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import Debug from './debug';
 import { Generate } from './generator';
 import { NotificationProvider } from '../components/notify';
+import { Analytics } from "@vercel/analytics/next"
 
 const debug = Debug('provider');
 
@@ -56,6 +57,7 @@ export function HasyxProvider({ children, generate }: { children: React.ReactNod
         disableTransitionOnChange
       >
         <HasyxProviderCore generate={generate}>
+          <Analytics/>
           <NotificationProvider>
             {children}
           </NotificationProvider>
