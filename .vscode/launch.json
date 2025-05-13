@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Current TypeScript File",
+      "skipFiles": ["<node_internals>/**"],
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx"],
+      "args": ["${file}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Current Jest Test",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["jest", "--runInBand", "${file}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug All Jest Tests",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["jest", "--runInBand"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true
+    }
+  ]
+} 

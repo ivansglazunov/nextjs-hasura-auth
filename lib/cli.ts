@@ -575,6 +575,7 @@ program
         
         // Required npm scripts with their exact values
         const requiredScripts = {
+          "test": "jest",
           "build": "NODE_ENV=production npx -y hasyx build",
           "unbuild": "npx -y hasyx unbuild",
           "start": "NODE_ENV=production npx -y hasyx start",
