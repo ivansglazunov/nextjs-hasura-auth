@@ -23,6 +23,7 @@ export interface TelegramMessage {
   // Add other message fields like photo, document, etc.
   reply_to_message?: TelegramMessage;
   new_chat_members?: TelegramUser[];
+  message_thread_id?: number; // Topic/Thread ID for forum messages
 }
 
 export interface TelegramUser {
@@ -72,7 +73,7 @@ export interface TelegramChatInviteLink {
 }
 
 // Helper function to call Telegram API
-async function callTelegramApi(token: string, methodName: string, params: Record<string, any>): Promise<any> {
+export async function callTelegramApi(token: string, methodName: string, params: Record<string, any>): Promise<any> {
   const response = await fetch(`https://api.telegram.org/bot${token}/${methodName}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -163,11 +164,18 @@ export async function setBotMenuButtonWebApp(token: string, text: string, webApp
 }
 
 // Helper function to send a message via Telegram API
-export async function sendTelegramMessage(token: string, chatId: number | string, text: string, replyToMessageId?: number): Promise<any> {
+export async function sendTelegramMessage(
+  token: string, 
+  chatId: number | string, 
+  text: string, 
+  replyToMessageId?: number,
+  messageThreadId?: number
+): Promise<any> {
   return callTelegramApi(token, 'sendMessage', {
     chat_id: chatId,
     text: text,
-    reply_to_message_id: replyToMessageId
+    reply_to_message_id: replyToMessageId,
+    message_thread_id: messageThreadId
   });
 }
 
@@ -269,11 +277,11 @@ export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx
             name: topicTitle
           }).then(async (topicResult) => {
             const topicThreadId = topicResult.message_thread_id;
-            await sendTelegramMessage(botToken, adminChatId, textToForward, topicThreadId);
+            await sendTelegramMessage(botToken, adminChatId, textToForward, undefined, topicThreadId);
           }).catch(async (topicError) => {
             debug('Failed to create or use topic, sending to main group chat:', topicError.message);
             // Fallback: send to the group without a specific topic if topic creation fails
-            await sendTelegramMessage(botToken, adminChatId, textToForward);
+            await sendTelegramMessage(botToken, adminChatId, textToForward, undefined);
           });
         } catch (forwardError) {
             debug('Error forwarding message to admin group:', forwardError);
