@@ -1,3 +1,5 @@
+'use server';
+
 import { NextResponse } from 'next/server';
 import { processTelegramEvent, TelegramUpdate, sendTelegramMessage } from 'hasyx/lib/telegram-bot';
 import { Hasyx } from 'hasyx/lib/hasyx';

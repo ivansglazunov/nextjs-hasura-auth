@@ -1051,6 +1051,12 @@
   .bg-\(--color-bg\) {
     background-color: var(--color-bg);
   }
+  .bg-\[\#1877F2\] {
+    background-color: #1877F2;
+  }
+  .bg-\[\#4680C2\] {
+    background-color: #4680C2;
+  }
   .bg-accent {
     background-color: var(--accent);
   }
@@ -1918,6 +1924,20 @@
   .focus-within\:z-20 {
     &:focus-within {
       z-index: 20;
+    }
+  }
+  .hover\:bg-\[\#1877F2\]\/90 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: color-mix(in oklab, #1877F2 90%, transparent);
+      }
+    }
+  }
+  .hover\:bg-\[\#4680C2\]\/90 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: color-mix(in oklab, #4680C2 90%, transparent);
+      }
     }
   }
   .hover\:bg-accent {

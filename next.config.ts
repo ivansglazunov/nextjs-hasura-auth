@@ -37,16 +37,24 @@ const config: NextConfig = {
   // Keep these if needed for client export compatibility
   skipTrailingSlashRedirect: isBuildingForClient,
   skipMiddlewareUrlNormalize: isBuildingForClient,
-  
-  // Keep ignoring errors during client build if necessary, 
-  // but be aware this might hide real issues with static export incompatibility.
-  // Consider removing these ignore flags later to see actual Next.js errors.
+
   typescript: {
     ignoreBuildErrors: isBuildingForClient,
   },
   eslint: {
     ignoreDuringBuilds: isBuildingForClient,
   },
+  
+  // Указываем пакеты, которые должны быть обработаны только на сервере
+  serverExternalPackages: [
+    'better-sqlite3',
+    '@mastra/libsql',
+    '@libsql/client',
+    '@libsql/hrana-client',
+    '@mastra/core',
+    '@mastra/memory',
+    '@openrouter/ai-sdk-provider'
+  ],
   
   // Add CORS headers to all API routes
   async headers() {
@@ -63,6 +71,26 @@ const config: NextConfig = {
         ],
       },
     ];
+  },
+
+  // Упрощенная конфигурация webpack
+  webpack: (config, { isServer }) => {
+    // Игнорировать проблемные файлы
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        net: false,
+        tls: false,
+        child_process: false,
+      };
+    }
+    
+    return config;
   },
 };
 

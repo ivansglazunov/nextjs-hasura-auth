@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.142",
+  "version": "0.1.143",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -167,6 +167,7 @@
     "cross-env": "^7.0.3",
     "glob": "^11.0.2",
     "hasyx": "^0.1.136",
+    "ignore-loader": "^0.1.2",
     "tsx": "^4.19.4"
   }
 }
