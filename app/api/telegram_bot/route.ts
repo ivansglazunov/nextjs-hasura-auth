@@ -117,7 +117,7 @@ async function isChatForum(botToken: string, chatId: string): Promise<{ isForum:
 }
 
 // Helper function to test Telegram bot connection
-export async function testTelegramConnection(req: Request): Promise<Response> {
+async function testTelegramConnection(req: Request): Promise<Response> {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
   
