@@ -113,39 +113,58 @@ export async function syncEnvironmentVariables(rl: readline.Interface, envPath: 
                 debug(`Skipping non-string value for key ${key}`);
                 continue;
               }
-              // For keys that should be kept as is, don't apply the NEXT_PUBLIC_WS='0' logic if it was applied above.
-              // This part of the logic is a bit complex. The main goal is:
-              // 1. Most vars from .env go to Vercel.
-              // 2. NEXT_PUBLIC_WS becomes '0' on Vercel UNLESS it was in vercelKeepAsIsKeys (which it is not).
-              // 3. Keys IN vercelKeepAsIsKeys (like OPENROUTER_API_KEY) should take their value directly from envVars (local .env)
               
               let valueToPush = value; 
               if (vercelKeepAsIsKeys.includes(key)) {
-                valueToPush = envVars[key] || ''; // Take directly from original .env value for these keys
+                valueToPush = envVars[key] || '';
               }
 
-              if (vercelEnvPulled[key] !== valueToPush || !Object.prototype.hasOwnProperty.call(vercelEnvPulled, key)) {
-                changesPushed = true;
-                debug(`Difference detected or key missing on Vercel for: ${key}. Local value (effective for push): "${valueToPush}", Vercel value: "${vercelEnvPulled[key]}"`);
-                for (const envType of ['production', 'preview', 'development']) {
-                  const addArgs = ['env', 'add', key, envType, ...tokenArgsForEnv];
-                  debug(`Executing Vercel env add for ${key} to ${envType} with value via stdin: npx vercel ${addArgs.join(' ')}`);
-                  const addResult = spawn.sync('npx', ['vercel', ...addArgs], {
-                    stdio: ['pipe', 'pipe', 'pipe'],
-                    input: valueToPush,
-                    encoding: 'utf-8'
-                  });
-                  if (addResult.status !== 0) {
-                    console.error(`❌ Failed to add/update ${key} in Vercel ${envType} env. Error: ${addResult.stderr || addResult.error || 'Unknown error'}`);
-                    debug(`Failed to add/update ${key} in Vercel ${envType}. Stdout: ${addResult.stdout}, Stderr: ${addResult.stderr}, Error: ${addResult.error}`);
-                  } else {
-                    console.log(`✅ Added/Updated ${key} in Vercel ${envType} env.`);
-                    debug(`Successfully added/updated ${key} in Vercel ${envType} env. Stdout: ${addResult.stdout}`);
+              // We will attempt to set it regardless of whether it differs or not,
+              // to ensure it's correctly set or updated.
+              // The rm + add strategy handles creation and update.
+              changesPushed = true; // Assume a change is pushed if we attempt to set any variable
+              debug(`Processing variable for Vercel: ${key}`);
+
+              for (const envType of ['production', 'preview', 'development']) {
+                // 1. Attempt to remove the variable first (suppress errors, as it might not exist)
+                const rmArgs = ['env', 'rm', key, envType, '--yes', ...tokenArgsForEnv];
+                debug(`Executing Vercel env rm for ${key} from ${envType}: npx vercel ${rmArgs.join(' ')}`);
+                const rmResult = spawn.sync('npx', ['vercel', ...rmArgs], {
+                  stdio: 'pipe', // Capture output, don't inherit
+                  encoding: 'utf-8'
+                });
+
+                if (rmResult.status !== 0) {
+                  // Log non-critical errors (e.g., variable not found)
+                  if (rmResult.stderr && !rmResult.stderr.includes('not found')) {
+                     debug(`Warning during Vercel env rm for ${key} from ${envType} (status ${rmResult.status}): ${rmResult.stderr}`);
+                  } else if (!rmResult.stderr) {
+                     debug(`Warning during Vercel env rm for ${key} from ${envType} (status ${rmResult.status}, no stderr)`);
                   }
+                } else {
+                  debug(`Successfully removed ${key} from Vercel ${envType} env (or it was not present).`);
+                }
+
+                // 2. Add the variable
+                const addArgs = ['env', 'add', key, envType, ...tokenArgsForEnv];
+                debug(`Executing Vercel env add for ${key} to ${envType} with value via stdin: npx vercel ${addArgs.join(' ')}`);
+                const addResult = spawn.sync('npx', ['vercel', ...addArgs], {
+                  stdio: ['pipe', 'pipe', 'pipe'],
+                  input: valueToPush,
+                  encoding: 'utf-8'
+                });
+
+                if (addResult.status !== 0) {
+                  console.error(`❌ Failed to add/update ${key} in Vercel ${envType} env. Error: ${addResult.stderr || addResult.error || 'Unknown error'}`);
+                  debug(`Failed to add/update ${key} in Vercel ${envType}. Stdout: ${addResult.stdout}, Stderr: ${addResult.stderr}, Error: ${addResult.error}`);
+                } else {
+                  // Only log success for add, as rm might have "failed" by var not existing
+                  console.log(`✅ Added/Updated ${key} in Vercel ${envType} env.`);
+                  debug(`Successfully added/updated ${key} in Vercel ${envType} env. Stdout: ${addResult.stdout}`);
                 }
               }
             }
-            if (changesPushed) {
+            if (changesPushed) { // This will always be true if desiredVercelState is not empty
                 console.log("✅ Relevant changes from local .env (and NEXT_PUBLIC_WS=0) pushed to Vercel.")
                 debug('Changes were pushed to Vercel.');
             } else {
