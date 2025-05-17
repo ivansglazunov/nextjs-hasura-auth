@@ -39,7 +39,7 @@ const openrouter = createOpenRouter({
 });
 
 // Using a model available on OpenRouter, e.g., Claude Sonnet from your example
-const model = openrouter.chat('anthropic/claude-3.5-sonnet');
+const model = openrouter.chat('deepseek/deepseek-chat-v3-0324:free');
 // Or, if you prefer a smaller/faster model for testing:
 // const model = openrouter.chat('mistralai/mistral-7b-instruct');
 
@@ -155,8 +155,6 @@ if (require.main === module) {
     console.error('❌ FATAL: OPENROUTER_API_KEY is not set in .env and no fallback is available.');
     console.error('Please set OPENROUTER_API_KEY in your .env file.');
     process.exit(1);
-  } else if (!openrouterApiKey) {
-     console.warn('⚠️ WARNING: OPENROUTER_API_KEY not set in .env. Using the hardcoded example key. This is not recommended for production.');
   }
   startRepl();
 } 
