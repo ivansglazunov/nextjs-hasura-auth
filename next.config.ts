@@ -44,8 +44,7 @@ const config: NextConfig = {
   eslint: {
     ignoreDuringBuilds: isBuildingForClient,
   },
-  
-  // Указываем пакеты, которые должны быть обработаны только на сервере
+
   serverExternalPackages: [
     'better-sqlite3',
     '@mastra/libsql',
@@ -73,9 +72,7 @@ const config: NextConfig = {
     ];
   },
 
-  // Упрощенная конфигурация webpack
   webpack: (config, { isServer }) => {
-    // Игнорировать проблемные файлы
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,

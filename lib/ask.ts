@@ -8,6 +8,8 @@ import readline from 'readline';
 import dotenv from 'dotenv';
 import path from 'path';
 
+dotenv.config();
+
 // Load .env file if running directly
 if (require.main === module) {
   try {
