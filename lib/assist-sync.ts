@@ -19,6 +19,12 @@ export async function syncEnvironmentVariables(rl: readline.Interface, envPath: 
   const vercelOrgId = envVars.VERCEL_TEAM_ID;
   let vercelProjectNameForLink = envVars.VERCEL_PROJECT_NAME;
 
+  // Keys that should NOT be set to WS=0 on Vercel, or are managed differently
+  const vercelKeepAsIsKeys = [
+    'OPENROUTER_API_KEY', // Should be synced as is
+    // Add other keys here if they should not be forced to WS=0 or need special handling
+  ];
+
   if (!options.skipVercel) {
     if (await askYesNo(rl, 'Do you want to sync .env with Vercel?', true)) {
       debug('Proceeding with Vercel sync.');
@@ -95,8 +101,11 @@ export async function syncEnvironmentVariables(rl: readline.Interface, envPath: 
             debug('Variables pulled from Vercel (.env.vercel):', JSON.stringify(vercelEnvPulled, null, 2));
             
             const desiredVercelState = { ...envVars };
-            desiredVercelState.NEXT_PUBLIC_WS = '0';
-            debug('Desired state for Vercel (local .env + NEXT_PUBLIC_WS=0):', JSON.stringify(desiredVercelState, null, 2));
+            // Set NEXT_PUBLIC_WS='0' for Vercel, unless it's in keepAsIsKeys (which it isn't here)
+            if (!vercelKeepAsIsKeys.includes('NEXT_PUBLIC_WS')) {
+                desiredVercelState.NEXT_PUBLIC_WS = '0';
+            }
+            debug('Desired state for Vercel (local .env potentially modified for WS):', JSON.stringify(desiredVercelState, null, 2));
 
             let changesPushed = false;
             for (const [key, value] of Object.entries(desiredVercelState)) {
@@ -104,15 +113,26 @@ export async function syncEnvironmentVariables(rl: readline.Interface, envPath: 
                 debug(`Skipping non-string value for key ${key}`);
                 continue;
               }
-              if (vercelEnvPulled[key] !== value || !Object.prototype.hasOwnProperty.call(vercelEnvPulled, key)) {
+              // For keys that should be kept as is, don't apply the NEXT_PUBLIC_WS='0' logic if it was applied above.
+              // This part of the logic is a bit complex. The main goal is:
+              // 1. Most vars from .env go to Vercel.
+              // 2. NEXT_PUBLIC_WS becomes '0' on Vercel UNLESS it was in vercelKeepAsIsKeys (which it is not).
+              // 3. Keys IN vercelKeepAsIsKeys (like OPENROUTER_API_KEY) should take their value directly from envVars (local .env)
+              
+              let valueToPush = value; 
+              if (vercelKeepAsIsKeys.includes(key)) {
+                valueToPush = envVars[key] || ''; // Take directly from original .env value for these keys
+              }
+
+              if (vercelEnvPulled[key] !== valueToPush || !Object.prototype.hasOwnProperty.call(vercelEnvPulled, key)) {
                 changesPushed = true;
-                debug(`Difference detected or key missing on Vercel for: ${key}. Local value: "${value}", Vercel value: "${vercelEnvPulled[key]}"`);
+                debug(`Difference detected or key missing on Vercel for: ${key}. Local value (effective for push): "${valueToPush}", Vercel value: "${vercelEnvPulled[key]}"`);
                 for (const envType of ['production', 'preview', 'development']) {
                   const addArgs = ['env', 'add', key, envType, ...tokenArgsForEnv];
                   debug(`Executing Vercel env add for ${key} to ${envType} with value via stdin: npx vercel ${addArgs.join(' ')}`);
                   const addResult = spawn.sync('npx', ['vercel', ...addArgs], {
                     stdio: ['pipe', 'pipe', 'pipe'],
-                    input: value,
+                    input: valueToPush,
                     encoding: 'utf-8'
                   });
                   if (addResult.status !== 0) {
@@ -163,6 +183,7 @@ export async function syncEnvironmentVariables(rl: readline.Interface, envPath: 
         const excludedKeys = (baseEnvForGithub.GITHUB_SECRETS_EXCLUDE || '').split(',').map(k => k.trim()).filter(Boolean);
         excludedKeys.push('GITHUB_TOKEN', 'VERCEL_TOKEN', 'NPM_TOKEN');
         excludedKeys.push('VERCEL_TEAM_ID', 'VERCEL_PROJECT_NAME', 'GITHUB_SECRETS_EXCLUDE');
+        // OPENROUTER_API_KEY should NOT be in excludedKeys by default if we want to sync it.
         debug('GitHub Actions secrets excluded keys:', excludedKeys);
         
         for (const [key, value] of Object.entries(baseEnvForGithub)) {

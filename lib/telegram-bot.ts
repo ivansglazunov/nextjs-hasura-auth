@@ -163,7 +163,7 @@ export async function setBotMenuButtonWebApp(token: string, text: string, webApp
 }
 
 // Helper function to send a message via Telegram API
-async function sendTelegramMessage(token: string, chatId: number | string, text: string, replyToMessageId?: number): Promise<any> {
+export async function sendTelegramMessage(token: string, chatId: number | string, text: string, replyToMessageId?: number): Promise<any> {
   return callTelegramApi(token, 'sendMessage', {
     chat_id: chatId,
     text: text,
@@ -207,8 +207,6 @@ export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx
           userId: userId
         };
 
-        // Temporarily simplify: Always try to insert, to isolate type issue
-        // Later, we will add back the logic to check and update existing permissions.
         await client.insert({
           table: 'notification_permissions',
           object: {
@@ -238,11 +236,8 @@ export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx
       // Check if the message is a reply from the admin group to a user via the bot
       if (message.reply_to_message && message.reply_to_message.from?.is_bot) {
           // This is a reply from an admin *within the admin group* to a message *the bot sent*.
-          // We need to extract the original user's chat ID from the bot's message.
-          // The bot's original message should contain the original user's chat ID, perhaps in the text or entities.
-          
           const botOriginalMessage = message.reply_to_message.text;
-          let originalUserChatId: string | null = null; // Explicitly type as string | null
+          let originalUserChatId: string | null = null; 
 
           if (botOriginalMessage) {
             const match = botOriginalMessage.match(/Original Sender Chat ID: (\d+)/i) || botOriginalMessage.match(/User ID: (\d+)/i) ;
@@ -259,11 +254,12 @@ export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx
             debug('Admin reply detected, but could not extract original user chat ID from bot message:', botOriginalMessage);
             // Optionally notify admin that reply could not be matched
             // await sendTelegramMessage(botToken, chatId, "Could not determine original recipient for your reply."); 
+            return { success: false, message: 'Admin reply failed, original user chat ID not found.' }; 
           }
       } else if (String(chatId) !== adminChatId && !message.from?.is_bot) { // Message from a user to the bot (not a reply from admin group)
         debug(`Forwarding message from user ${username} (Chat ID: ${chatId}) to admin group ${adminChatId}`);
-        const topicTitle = `${username}_${userId}`; // Or just username, or chat_id
-        const textToForward = `Message from: ${username} (Telegram User ID: ${userId}, Chat ID: ${chatId})\n\n${messageText}\n\nOriginal Sender Chat ID: ${chatId}`; // Important for reply routing
+        const topicTitle = `${username}_${userId}`; 
+        const textToForward = `Message from: ${username} (Telegram User ID: ${userId}, Chat ID: ${chatId})\n\n${messageText}\n\nOriginal Sender Chat ID: ${chatId}`; 
         
         try {
            // Try to send to a topic. This requires the bot to have topic management rights.
@@ -285,12 +281,21 @@ export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx
         return { success: true, message: 'Message forwarded to admin group.' };
       }
     }
+    // If messageText exists but wasn't handled by /start or admin flow, it might be a direct message for AI later.
+    // For now, processTelegramEvent will indicate no specific action was taken for these.
+    if (messageText) {
+        debug(`Message from ${username} (Chat ID: ${chatId}) received, not /start or admin flow.`);
+        // The API route will decide if this needs an AI reply.
+        return { success: true, message: 'Text message received, no specific action taken by core processor.' };
+    }
+
   } else if (update.my_chat_member) {
     // Handle bot being added/removed from a chat, or status change
     debug('Received my_chat_member update:', update.my_chat_member);
+    return { success: true, message: 'my_chat_member update processed.' };
     // Potentially log this or update bot's understanding of where it's active.
   }
   // Add handlers for other update types like callback_query if needed
 
-  return { success: true, message: 'Event received, no specific action taken.' };
+  return { success: true, message: 'Event received, no specific action taken for this update type.' };
 } 

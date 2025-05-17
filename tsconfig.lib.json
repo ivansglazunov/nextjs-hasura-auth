@@ -16,5 +16,5 @@
     },
   },
   "include": ["lib/**/*.ts", "lib/**/*.tsx", "components/**/*.ts", "components/**/*.tsx", "hooks/**/*.ts", "hooks/**/*.tsx"],
-  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": ["node_modules", "**/*.test.ts", "**/*.test.tsx", ".mastra"]
 } 

@@ -31,6 +31,8 @@ import { commitChanges } from './assist-commit';
 import { runMigrations } from './assist-migrations';
 import { configureProjectUser } from './assist-project-user';
 import { configureTelegramBot, configureTelegramChannel, calibrateTelegramBot } from './assist-telegram';
+import { configureOpenRouter } from './assist-openrouter';
+import { startRepl as startAskRepl } from './ask';
 // NEW IMPORTS END
 
 // Ensure dotenv is configured only once
@@ -75,6 +77,7 @@ interface AssistOptions {
   skipTelegram?: boolean;
   skipProjectUser?: boolean;
   skipTelegramChannel?: boolean;
+  skipOpenRouter?: boolean;
 }
 
 // NEW FUNCTION to determine OAuth callback base URL
@@ -151,6 +154,8 @@ async function assist(options: AssistOptions = {}) {
     else debug('Skipping Resend configuration');
     if (!options.skipFirebase) envVars = await configureFirebaseNotifications(rl, envPath);
     else debug('Skipping Firebase setup');
+    if (!options.skipOpenRouter) envVars = await configureOpenRouter(rl, envPath);
+    else debug('Skipping OpenRouter API Key setup');
     if (!options.skipVercel) await setupVercel(rl, envPath, envVars);
     else debug('Skipping Vercel setup');
     if (!options.skipSync) await syncEnvironmentVariables(rl, envPath, {});
@@ -268,9 +273,35 @@ if (require.main === module) {
     .option('--skip-telegram', 'Skip Telegram Bot configuration')
     .option('--skip-project-user', 'Skip setting up project user')
     .option('--skip-telegram-channel', 'Skip setting up Telegram channel')
+    .option('--skip-openrouter', 'Skip OpenRouter API Key setup')
     .action((cmdOptions) => {
       assist(cmdOptions);
     });
+
+  // New command for 'hasyx ask'
+  program
+    .command('ask')
+    .description('Starts an interactive REPL to chat with the AI agent.')
+    .action(() => {
+      console.log('🚀 Launching AI Interaction REPL...');
+      // Ensure .env is loaded for the ask command when run via hasyx CLI
+      try {
+        let projectRoot = process.cwd();
+        const envPath = path.join(projectRoot, '.env');
+        const envResult = dotenv.config({ path: envPath });
+        if (envResult.error) {
+          Debug('assist:ask:env')('Failed to load .env file for hasyx ask:', envResult.error);
+          console.warn('⚠️ Could not load .env file. OPENROUTER_API_KEY might not be available.');
+        } else {
+          Debug('assist:ask:env')('.env file loaded successfully for hasyx ask');
+        }
+      } catch (error) {
+        Debug('assist:ask:env')('Error loading .env file for hasyx ask:', error);
+        console.warn('⚠️ Error loading .env file.');
+      }
+      startAskRepl();
+    });
+
   program.parse(process.argv);
 }
 

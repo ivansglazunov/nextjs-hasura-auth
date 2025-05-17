@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.141",
+  "version": "0.1.142",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -35,6 +35,8 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.2.11",
+    "@ai-sdk/openai": "^1.3.22",
     "@apollo/client": "^3.13.8",
     "@auth/core": "^0.38.0",
     "@auth/hasura-adapter": "^1.8.0",
@@ -50,6 +52,10 @@
     "@graphql-codegen/typescript": "^4.1.6",
     "@hookform/resolvers": "^5.0.1",
     "@jest/globals": "^29.7.0",
+    "@mastra/core": "^0.9.4",
+    "@mastra/libsql": "^0.0.4",
+    "@mastra/memory": "^0.3.4",
+    "@openrouter/ai-sdk-provider": "^0.4.5",
     "@radix-ui/react-accordion": "^1.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.7",
     "@radix-ui/react-aspect-ratio": "^1.1.3",
@@ -151,7 +157,7 @@
     "vaul": "^1.1.2",
     "vercel": "^41.7.3",
     "ws": "^8.18.2",
-    "zod": "^3.24.3"
+    "zod": "^3.24.4"
   },
   "bin": {
     "hasyx": "./lib/cli.js"
