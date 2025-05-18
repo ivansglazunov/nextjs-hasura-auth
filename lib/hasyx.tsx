@@ -29,15 +29,13 @@ export {
 
 const debug = Debug('client');
 
-// Check if WebSockets are disabled via environment variable
-const isWsDisabled = !+(process.env.NEXT_PUBLIC_WS || '1');
-
 // Default polling interval for subscription polling fallback in milliseconds
 const DEFAULT_POLLING_INTERVAL = 1000;
 
 interface ClientMethodOptions extends Omit<GenerateOptions, 'operation'> {
   role?: string;
   pollingInterval?: number; // New option for controlling polling interval
+  ws?: boolean; // Explicit WebSocket mode control
 }
 
 export class Hasyx {
@@ -237,77 +235,192 @@ export class Hasyx {
   subscribe<TData = any, TVariables extends OperationVariables = OperationVariables>(
     options: ClientMethodOptions
   ): Observable<TData> {
-    const { role, pollingInterval, ...genOptions } = options;
+    const { role, pollingInterval, ws, ...genOptions } = options;
     const interval = pollingInterval || DEFAULT_POLLING_INTERVAL;
     
-    debug(`Initiating ${isWsDisabled ? 'polling-based' : 'WebSocket'} subscription with options:`, 
-          genOptions, 'Role:', role, isWsDisabled ? `Polling interval: ${interval}ms` : '');
+    // Determine WebSocket mode:
+    // 1. Use 'ws' option from ClientMethodOptions if provided.
+    // 2. Fallback to NEXT_PUBLIC_WS environment variable if 'ws' option is undefined.
+    // 3. Default to true (WebSockets enabled) if neither is set.
+    const useWebSockets = ws !== undefined ? ws : !+(process.env.NEXT_PUBLIC_WS || '1') === false;
+        
+    debug(`Initiating ${useWebSockets ? 'WebSocket' : 'polling-based'} subscription with options:`, 
+          genOptions, 'Role:', role, `Explicit WS: ${ws}`, `Effective WS: ${useWebSockets}`, 
+          !useWebSockets ? `Polling interval: ${interval}ms` : '');
+     
+    debug(`Hasyx.subscribe: useWebSockets = ${useWebSockets}, explicit ws = ${ws}, NEXT_PUBLIC_WS = ${process.env.NEXT_PUBLIC_WS}`);
     
-    // If WebSockets are disabled, use polling as a fallback
-    if (isWsDisabled) {
-      // Create a new Observable that implements polling via repeated queries
-      return new Observable<TData>(observer => {
-        let lastData: TData | null = null;
-        let isActive = true;
-        let timeoutId: NodeJS.Timeout | null = null;
-        
-        // Function to execute the query and emit results if they've changed
-        const pollForChanges = async () => {
-          if (!isActive) return;
-          
-          try {
-            // Use the select method which already handles data extraction
-            const result = await this.select<TData>({ 
-              ...genOptions, 
-              role
-            });
-            
-            // Only emit if data has changed (deep equality check)
-            if (!isEqual(result, lastData)) {
-              debug('Polling subscription detected changes:', JSON.stringify(result));
-              lastData = result as TData;
-              observer.next(result);
-            }
-            
-            // Schedule next poll if still active
-            if (isActive) {
-              timeoutId = setTimeout(pollForChanges, interval);
-            }
-          } catch (error) {
-            debug('Error during polling subscription:', error);
-            // Only emit error if still active
-            if (isActive) {
-              observer.error(error);
-            }
-          }
-        };
-        
-        // Start polling immediately
-        pollForChanges();
-        
-        // Return unsubscribe function
-        return () => {
-          debug('Unsubscribing from polling subscription.');
-          isActive = false;
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-        };
-      });
+    // Принудительно используем WebSocket для тестов, если указан ws = true
+    if (process.env.NODE_ENV === 'test' && ws === true) {
+      debug("Hasyx.subscribe: FORCING WebSocket mode for tests");
+    }
+
+    // ВАЖНО: Проверяем, поддерживает ли клиент WebSocket подписки
+    if (useWebSockets && !this.apolloClient._options.ws) {
+      console.warn("WebSocket is requested, but the Apollo client was not created with ws: true. Falling back to polling mode.");
+      // Принудительно переходим в режим опроса
+      return this._subscribeWithPolling<TData>({ role, ...genOptions }, interval);
+    }
+    
+    // If WebSockets are explicitly disabled by option OR by env var (and not overridden by option), use polling
+    if (!useWebSockets) {
+      debug('Creating polling-based subscription Observable');
+      debug("Hasyx.subscribe: Using polling-based subscription (HTTP mode)");
+      // Switch to polling implementation
+      return this._subscribeWithPolling<TData>({ role, ...genOptions }, interval);
     }
     
     // Use WebSocket-based subscription if WebSockets are enabled (default behavior)
-    const generated: GenerateResult = this.generate({ ...genOptions, operation: 'subscription' });
+    return this._subscribeWithWebSocket<TData, TVariables>({ role, ...genOptions });
+  }
 
+  // Приватный метод для реализации подписки через опрос
+  private _subscribeWithPolling<TData>(options: ClientMethodOptions & { role?: string }, interval: number): Observable<TData> {
+    const { role, ...genOptions } = options;
+    debug('Creating polling-based subscription Observable');
+    debug("Hasyx._subscribeWithPolling: Using HTTP polling for subscription");
+    
+    // Create a new Observable that implements polling via repeated queries
+    return new Observable<TData>(observer => {
+      let lastData: TData | null = null;
+      let isActive = true;
+      let timeoutId: NodeJS.Timeout | null = null;
+      
+      // Function to execute the query and emit results if they've changed
+      const pollForChanges = async () => {
+        if (!isActive) return;
+        
+        try {
+          // Use the select method which already handles data extraction
+          const result = await this.select<TData>({ 
+            ...genOptions, 
+            role
+          });
+          
+          // Only emit if data has changed (deep equality check)
+          if (!isEqual(result, lastData)) {
+            debug('Polling subscription detected changes:', JSON.stringify(result));
+            lastData = result as TData;
+            observer.next(result);
+          }
+          
+          // Schedule next poll if still active
+          if (isActive) {
+            timeoutId = setTimeout(pollForChanges, interval);
+          }
+        } catch (error) {
+          debug('Error during polling subscription:', error);
+          // Only emit error if still active
+          if (isActive) {
+            observer.error(error);
+          }
+        }
+      };
+      
+      // Start polling immediately
+      pollForChanges();
+      
+      // Return unsubscribe function
+      return () => {
+        debug('Unsubscribing from polling subscription.');
+        isActive = false;
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      };
+    });
+  }
+
+  // Приватный метод для реализации подписки через WebSocket
+  private _subscribeWithWebSocket<TData, TVariables extends OperationVariables>(
+    options: ClientMethodOptions & { role?: string }
+  ): Observable<TData> {
+    const { role, ...genOptions } = options;
+    const generated: GenerateResult = this.generate({ ...genOptions, operation: 'subscription' });
+    debug(`Hasyx._subscribeWithWebSocket: Using WebSocket-based subscription. Query name: ${generated.queryName}`);
+    debug('Creating WebSocket-based subscription Observable');
+    
     // Create a new Observable to wrap the Apollo subscription
     return new Observable<TData>(observer => {
+      let lastEmitTime = 0;
+      let pendingData: TData | null = null;
+      let emitTimeoutId: NodeJS.Timeout | null = null;
+      
+      // Explicitly ensure DEFAULT_POLLING_INTERVAL is used if pollingInterval is not provided
+      const resolvedInterval = typeof options.pollingInterval === 'number' ? 
+                              options.pollingInterval : DEFAULT_POLLING_INTERVAL;
+      const minEmitInterval = resolvedInterval;
+      
+      debug(`[Hasyx.subscribe/WS] Effective minEmitInterval: ${minEmitInterval}ms (options.pollingInterval: ${options.pollingInterval}, DEFAULT_POLLING_INTERVAL: ${DEFAULT_POLLING_INTERVAL})`);
+
+      // Функция для отправки данных с учетом ограничения частоты
+      const throttledEmit = (data: TData) => {
+        const now = Date.now();
+        const timeSinceLastEmit = now - lastEmitTime;
+        debug(`[throttledEmit] Called. Now: ${now}, LastEmit: ${lastEmitTime}, SinceLast: ${timeSinceLastEmit}, MinInterval: ${minEmitInterval}, PendingData: ${JSON.stringify(pendingData)}, EmitTimeoutId: ${emitTimeoutId}`);
+        
+        pendingData = data;
+        debug(`[throttledEmit] Set pendingData to: ${JSON.stringify(pendingData)}`);
+        
+        if (timeSinceLastEmit >= minEmitInterval) {
+          debug(`[throttledEmit] Condition 1 MET (timeSinceLastEmit >= minEmitInterval). Emitting immediately.`);
+          lastEmitTime = now;
+          observer.next(pendingData);
+          debug(`[throttledEmit] Emitted. New LastEmit: ${lastEmitTime}. Data: ${JSON.stringify(pendingData)}`);
+          pendingData = null;
+          
+          if (emitTimeoutId) {
+            debug(`[throttledEmit] Clearing existing timeout ID: ${emitTimeoutId}`);
+            clearTimeout(emitTimeoutId);
+            emitTimeoutId = null;
+          }
+        } 
+        else if (!emitTimeoutId) {
+          debug(`[throttledEmit] Condition 2 MET (!emitTimeoutId). Scheduling delayed emit.`);
+          const delay = minEmitInterval - timeSinceLastEmit;
+          debug(`[throttledEmit] Delay calculated: ${delay}ms. Current pending data: ${JSON.stringify(pendingData)}`);
+          
+          emitTimeoutId = setTimeout(() => {
+            debug(`[throttledEmit] setTimeout EXECUTING. Current pendingData: ${JSON.stringify(pendingData)}. Old TimeoutId: ${emitTimeoutId}`);
+            if (pendingData !== null) {
+              debug(`[throttledEmit] setTimeout: pendingData is NOT null. Emitting.`);
+              lastEmitTime = Date.now();
+              observer.next(pendingData);
+              debug(`[throttledEmit] setTimeout: Emitted. New LastEmit: ${lastEmitTime}. Data: ${JSON.stringify(pendingData)}`);
+              pendingData = null;
+            } else {
+              debug(`[throttledEmit] setTimeout: pendingData IS NULL. Not emitting.`);
+            }
+            emitTimeoutId = null; // Clear the ID after execution
+            debug(`[throttledEmit] setTimeout: Cleared emitTimeoutId.`);
+          }, delay);
+          debug(`[throttledEmit] Scheduled timeout ID: ${emitTimeoutId}`);
+        } else {
+          debug(`[throttledEmit] Condition 3: ELSE (timeSinceLastEmit < minEmitInterval AND emitTimeoutId is SET). Doing nothing but pendingData updated.`);
+        }
+      };
+      
       // Subscribe to the actual Apollo client subscription
+      debug(`Hasyx.subscribe: Calling apolloClient.subscribe with WebSocket mode, url: ${this.apolloClient._options?.url}, ws: ${this.apolloClient._options?.ws}`);
+      
+      // В режиме тестирования добавим дополнительную проверку и логирование
+      if (process.env.NODE_ENV === 'test') {
+        debug('======= TEST ENVIRONMENT DETECTED =======');
+        debug(`+ Apollo Client URL: ${this.apolloClient._options?.url}`);
+        debug(`+ WebSocket enabled: ${this.apolloClient._options?.ws}`);
+        debug(`+ Admin Secret available: ${!!this.apolloClient._options?.secret}`);
+        debug(`+ Query name: ${generated.queryName}`);
+        debug(`+ Query: ${generated.query}`);
+        debug('=======================================');
+      }
+      
       const apolloSubscription = this.apolloClient.subscribe<any, TVariables>({
         query: generated.query,
         variables: generated.variables as TVariables,
         context: role ? { role } : undefined,
       }).subscribe({
         next: (result: FetchResult<any>) => {
+          debug(`Hasyx.subscribe: WS subscription next callback received data`);
           if (result.errors) {
             debug('GraphQL errors during subscription:', result.errors);
             // Forward ApolloError to the observer
@@ -317,6 +430,7 @@ export class Hasyx {
           const rawData = result.data ?? null; // Use null if no data
           debug('Subscription received raw data:', JSON.stringify(rawData));
           debug('Subscription expected queryName:', generated.queryName);
+          debug(`Hasyx.subscribe: Subscription received data for: ${generated.queryName}`);
 
           // --- Data Extraction Logic ---
           let extractedData: TData;
@@ -345,12 +459,17 @@ export class Hasyx {
               debug('Subscription extracted data using queryName:', JSON.stringify(extractedData));
             }
           }
-          debug('Subscription emitting final extracted data:', JSON.stringify(extractedData));
-          observer.next(extractedData); // Emit the extracted data
-          // --- End Extraction Logic ---
+          debug('Subscription processing extracted data:', JSON.stringify(extractedData));
+          
+          // Вместо прямой отправки данных используем функцию с тротлингом
+          throttledEmit(extractedData);
         },
         error: (error) => {
           debug('Error during subscription:', error);
+          console.error('Subscription error:', error);
+          if (error.message) console.error('Error message:', error.message);
+          if (error.graphQLErrors) console.error('GraphQL Errors:', JSON.stringify(error.graphQLErrors));
+          if (error.networkError) console.error('Network Error:', error.networkError);
           observer.error(error); // Forward the error
         },
         complete: () => {
@@ -362,6 +481,11 @@ export class Hasyx {
       // Return the unsubscribe function
       return () => {
         debug('Unsubscribing from Apollo subscription.');
+        // Очистить таймер тротлинга при отмене подписки
+        if (emitTimeoutId) {
+          clearTimeout(emitTimeoutId);
+          emitTimeoutId = null;
+        }
         apolloSubscription.unsubscribe();
       };
     });
@@ -409,7 +533,6 @@ export class Hasyx {
       } catch (error) {
         // Log error but don't throw, as it's fire-and-forget
         console.error('Error during debug insert (fire-and-forget):', error);
-        debug('Error during debug insert (fire-and-forget):', error);
         return undefined;
       }
     } else {

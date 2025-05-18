@@ -113,25 +113,67 @@ async function deleteUser(userId: string) {
 }
 
 // Example: Subscribe (returns an Observable)
-function subscribeToUserChanges(userId: string): Observable<any> | null {
+function subscribeToUserChanges(userId: string) {
   // Specify TData as the expected unwrapped type (e.g., User)
-  const subscriptionObservable = client.subscribe({ 
+  // The client.subscribe method returns an Apollo Observable.
+  const subscriptionObservable = client.subscribe<User>({
     table: 'users',
     pk_columns: { id: userId },
-    returning: ['name', 'updated_at'],
+    returning: ['id', 'name', 'updated_at'],
     role: 'me', // Role for subscription might be handled at connection time
     pollingInterval: 2000 // Optional: customize polling interval (ms) for WebSocket fallback
   });
 
-  const subscription = subscriptionObservable.subscribe({
-    // Note: The observable now emits the unwrapped data directly
-    next: (userData) => console.log('User updated:', userData),
-    error: (err) => console.error('Subscription error:', err),
+  console.log(`Subscribing to user ${userId} changes...`);
+
+  // To start receiving data, you call .subscribe() on the Observable.
+  // This returns a Subscription object which has an .unsubscribe() method.
+  const activeSubscription = subscriptionObservable.subscribe({
+    // next is called every time data is received from the server.
+    // The observable from Hasyx.subscribe now emits the unwrapped data directly.
+    next: (userData) => {
+      // userData will be of type User, or null if the user is not found or an error occurs.
+      if (userData) {
+        console.log('User data received:', userData);
+        // Example: Update UI or perform other actions with userData
+        // document.getElementById('userName').innerText = userData.name;
+      } else {
+        console.log('Received null or undefined user data from subscription.');
+      }
+    },
+    // error is called if the subscription encounters an error.
+    error: (err) => {
+      console.error('Subscription error:', err);
+      // Example: Display an error message to the user
+    },
+    // complete is called when the subscription is closed by the server
+    // or if the Observable completes for any other reason (rare for long-lived subscriptions).
+    complete: () => {
+      console.log('Subscription completed.');
+    }
   });
 
-  // To unsubscribe later: subscription.unsubscribe();
-  return subscriptionObservable; // Return the observable itself for potential chaining/further use
+  // It's crucial to unsubscribe when the component unmounts or the subscription is no longer needed
+  // to prevent memory leaks and unnecessary network activity.
+  // For example, in a React component, you would do this in a useEffect cleanup function.
+  // For a script, you might do it on exit or when a certain condition is met.
+  
+  // Example of how to manually unsubscribe after some time (for demonstration):
+  // setTimeout(() => {
+  //   console.log(`Unsubscribing from user ${userId} changes...`);
+  //   activeSubscription.unsubscribe();
+  // }, 30000); // Unsubscribe after 30 seconds
+
+  // Return the activeSubscription if you need to manage it externally (e.g., store it for later unsubscription)
+  return activeSubscription; 
 }
+
+// To use it:
+// const userSubscription = subscribeToUserChanges('some-user-id');
+// ... later, if you need to stop it manually:
+// if (userSubscription) {
+// userSubscription.unsubscribe();
+// }
 ```
 
 ### `Hasyx` Class Methods

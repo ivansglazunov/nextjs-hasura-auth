@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.143",
+  "version": "0.1.144",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -124,6 +124,7 @@
     "graphql": "^16.10.0",
     "graphql-ws": "^5.16.2",
     "input-otp": "^1.4.2",
+    "isomorphic-ws": "^5.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "jose": "^5.10.0",
