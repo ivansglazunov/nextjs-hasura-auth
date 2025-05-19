@@ -237,63 +237,10 @@ export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx
         return { success: false, message: 'DB error during /start processing.' };
       }
     }
-
-    // Forward message to admin group if TELEGRAM_ADMIN_CHAT_ID is set
-    const adminChatId = env.TELEGRAM_ADMIN_CHAT_ID;
-    if (adminChatId && String(chatId) !== adminChatId) { // Don't forward messages from the admin chat itself
-      // Check if the message is a reply from the admin group to a user via the bot
-      if (message.reply_to_message && message.reply_to_message.from?.is_bot) {
-          // This is a reply from an admin *within the admin group* to a message *the bot sent*.
-          const botOriginalMessage = message.reply_to_message.text;
-          let originalUserChatId: string | null = null; 
-
-          if (botOriginalMessage) {
-            const match = botOriginalMessage.match(/Original Sender Chat ID: (\d+)/i) || botOriginalMessage.match(/User ID: (\d+)/i) ;
-            if (match && match[1]) {
-              originalUserChatId = match[1];
-            }
-          }
-
-          if (originalUserChatId) {
-            debug(`Admin reply detected. Forwarding from admin group (Chat ID: ${chatId}) to original user (Chat ID: ${originalUserChatId}). Message: "${messageText}"`);
-            await sendTelegramMessage(botToken, originalUserChatId, `Admin reply: ${messageText}`);
-            return { success: true, message: 'Admin reply forwarded to user.' };
-          } else {
-            debug('Admin reply detected, but could not extract original user chat ID from bot message:', botOriginalMessage);
-            // Optionally notify admin that reply could not be matched
-            // await sendTelegramMessage(botToken, chatId, "Could not determine original recipient for your reply."); 
-            return { success: false, message: 'Admin reply failed, original user chat ID not found.' }; 
-          }
-      } else if (String(chatId) !== adminChatId && !message.from?.is_bot) { // Message from a user to the bot (not a reply from admin group)
-        debug(`Forwarding message from user ${username} (Chat ID: ${chatId}) to admin group ${adminChatId}`);
-        const topicTitle = `${username}_${userId}`; 
-        const textToForward = `Message from: ${username} (Telegram User ID: ${userId}, Chat ID: ${chatId})\n\n${messageText}\n\nOriginal Sender Chat ID: ${chatId}`; 
-        
-        try {
-           // Try to send to a topic. This requires the bot to have topic management rights.
-           // And the group must be a supergroup with topics enabled.
-          await callTelegramApi(botToken, 'createForumTopic', {
-            chat_id: adminChatId,
-            name: topicTitle
-          }).then(async (topicResult) => {
-            const topicThreadId = topicResult.message_thread_id;
-            await sendTelegramMessage(botToken, adminChatId, textToForward, undefined, topicThreadId);
-          }).catch(async (topicError) => {
-            debug('Failed to create or use topic, sending to main group chat:', topicError.message);
-            // Fallback: send to the group without a specific topic if topic creation fails
-            await sendTelegramMessage(botToken, adminChatId, textToForward, undefined);
-          });
-        } catch (forwardError) {
-            debug('Error forwarding message to admin group:', forwardError);
-        }
-        return { success: true, message: 'Message forwarded to admin group.' };
-      }
-    }
-    // If messageText exists but wasn't handled by /start or admin flow, it might be a direct message for AI later.
-    // For now, processTelegramEvent will indicate no specific action was taken for these.
+    
     if (messageText) {
-        debug(`Message from ${username} (Chat ID: ${chatId}) received, not /start or admin flow.`);
-        // The API route will decide if this needs an AI reply.
+        debug(`Message from ${username} (Chat ID: ${chatId}) received, not /start. Potential for AI reply.`);
+        // The API route and telegram-handler will decide if this needs an AI reply.
         return { success: true, message: 'Text message received, no specific action taken by core processor.' };
     }
 
