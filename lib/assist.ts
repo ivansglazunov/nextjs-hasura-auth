@@ -13,9 +13,6 @@ import schema from '../public/hasura-schema.json';
 import dotenv from 'dotenv';
 import { setBotName, setBotDescription, setBotCommands, BotCommand, setWebhook, setBotMenuButtonWebApp } from './telegram-bot';
 import { setTelegramChannelTitle, setTelegramChannelPhoto } from './telegram-channel';
-import { assistTbank } from './assist-tbank';
-
-// NEW IMPORTS START
 import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, getGitHubRemoteUrl } from './assist-common';
 import { checkGitHubAuth, setupRepository } from './assist-github-auth';
 import { setupEnvironment, setupPackageJson } from './assist-env';
@@ -33,7 +30,6 @@ import { configureProjectUser } from './assist-project-user';
 import { configureTelegramBot, configureTelegramChannel, calibrateTelegramBot } from './assist-telegram';
 import { configureOpenRouter } from './assist-openrouter';
 import { startRepl as startAskRepl } from './ask';
-// NEW IMPORTS END
 
 // Ensure dotenv is configured only once
 if (require.main === module) {
@@ -169,8 +165,6 @@ async function assist(options: AssistOptions = {}) {
     if (!options.skipTelegramChannel) envVars = await configureTelegramChannel(rl, envPath);
     else debug('Skipping Telegram Channel setup');
     
-    await assistTbank();
-
     if (!options.skipCommit) await commitChanges(rl, { skipCommit: options.skipCommit, commitMessage: 'feat: project configured by hasyx-assist' });
     else debug('Skipping commit');
 

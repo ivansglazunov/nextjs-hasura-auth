@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { TBankPaymentProcessor, TBankCardInfo } from '@/lib/payments/tbank';
+import { TBankPaymentProcessor, TBankCardInfo, TBankProviderDBConfig } from '@/lib/payments/tbank';
 import { tbankAppOptions } from '@/app/payments/tbank/options';
 import { Hasyx } from 'hasyx';
 import { createApolloClient } from 'hasyx/lib/apollo';
@@ -12,11 +12,8 @@ const debug = Debug('api:payments:tbank:card-webhook');
 
 const HASURA_GRAPHQL_URL = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
-const TBANK_TERMINAL_KEY = process.env.TBANK_TERMINAL_KEY;
-const TBANK_SECRET_KEY = process.env.TBANK_SECRET_KEY;
 const APP_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-let tbankAdapter: TBankPaymentProcessor;
 let hasyxClient: Hasyx;
 
 if (!HASURA_GRAPHQL_URL || !HASURA_ADMIN_SECRET) {
@@ -31,24 +28,11 @@ if (!HASURA_GRAPHQL_URL || !HASURA_ADMIN_SECRET) {
   } catch (e:any) { debug('Error initializing Hasyx client for card webhook', e.message); }
 }
 
-if (!TBANK_TERMINAL_KEY || !TBANK_SECRET_KEY) {
-  console.error('TBank Terminal Key or Secret Key not configured for card webhook handler.');
-} else {
-  try {
-    tbankAdapter = new TBankPaymentProcessor({
-      terminalKey: TBANK_TERMINAL_KEY,
-      secretKey: TBANK_SECRET_KEY,
-      appBaseUrl: APP_BASE_URL,
-      options: tbankAppOptions,
-    });
-  } catch (e:any) { debug('Error initializing TBank adapter for card webhook', e.message); }
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   debug('Received TBank card webhook POST request');
 
-  if (!tbankAdapter || !hasyxClient) {
-    debug('TBank adapter or Hasyx client not initialized for card webhook.');
+  if (!hasyxClient) {
+    debug('Hasyx client not initialized for card webhook.');
     return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
@@ -57,26 +41,48 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const payload = Object.fromEntries(new URLSearchParams(rawBody)); // TBank usually sends x-www-form-urlencoded
     debug('Card webhook raw payload:', payload);
 
-    // --- Token Validation (crucial for webhooks) ---
-    const receivedToken = payload.Token as string;
-    const payloadForTokenCalculation = { ...payload };
-    delete payloadForTokenCalculation.Token;
-    // @ts-ignore - Assuming generateToken can handle this structure internally for webhook validation
-    // It needs TerminalKey (from adapter) and Password (secretKey from adapter) and other params from payload.
-    // This part needs careful alignment with how generateToken expects its arguments for webhook validation.
-    // For now, we pass the payload excluding Token, assuming generateToken adds TerminalKey and Password.
-    // Alternatively, we'd reconstruct the object exactly as TBank signs it.
-    // This is a simplified approach for now and may need refinement.
-    // const expectedToken = tbankAdapter.generateTokenForWebhook(payloadForTokenCalculation); // This method would need to exist
-    // For now, let's assume a simplified check based on the main generateToken, knowing it might not be perfect for webhooks without a dedicated mode.
-    
-    // A more robust way for webhook token validation within the adapter might be needed.
-    // For now, this is a placeholder for the logic that would be inside handleCardWebhook if it did token validation.
-    // if (receivedToken !== expectedToken) {
-    //   debug('Card webhook token mismatch.');
-    //   return new NextResponse("ERROR", { status: 400 }); // Token mismatch
-    // }
-    // --- End Token Validation Placeholder ---
+    const terminalKeyFromPayload = payload.TerminalKey as string;
+    if (!terminalKeyFromPayload) {
+      debug('TerminalKey missing in TBank card webhook payload.');
+      return new NextResponse("ERROR: TerminalKey missing", { status: 400 });
+    }
+
+    // Fetch provider configuration from DB using TerminalKey
+    debug(`Fetching TBank provider config for TerminalKey: ${terminalKeyFromPayload}`);
+    const providers = await hasyxClient.select({
+        table: 'payments_providers',
+        where: {
+            type: { _eq: 'tbank' },
+            config: { _contains: { terminal_key: terminalKeyFromPayload } },
+            is_active: { _eq: true }
+        },
+        limit: 1,
+        columns: ['id', 'config', 'is_test_mode', 'default_return_url', 'default_webhook_url', 'default_card_webhook_url']
+    });
+
+    if (!providers || providers.length === 0 || !providers[0].config) {
+      debug(`No active TBank provider configuration found for TerminalKey: ${terminalKeyFromPayload}`);
+      return new NextResponse("ERROR: Provider configuration not found", { status: 400 });
+    }
+
+    const providerResult = providers[0];
+    const providerDBConfig = providerResult.config as TBankProviderDBConfig;
+    providerDBConfig.is_test_mode = providerResult.is_test_mode;
+    providerDBConfig.default_return_url = providerResult.default_return_url;
+    providerDBConfig.default_webhook_url = providerResult.default_webhook_url;
+    providerDBConfig.default_card_webhook_url = providerResult.default_card_webhook_url;
+
+    if (!providerDBConfig.secret_key) {
+        debug(`Secret key missing in fetched TBank provider config for TerminalKey: ${terminalKeyFromPayload}`);
+        return new NextResponse("ERROR: Provider secret key misconfiguration", { status: 500 });
+    }
+
+    // Dynamically initialize TBank adapter
+    const tbankAdapter = new TBankPaymentProcessor({
+      providerDBConfig: providerDBConfig,
+      appBaseUrl: APP_BASE_URL,
+      options: tbankAppOptions,
+    });
 
     const customerKey = payload.CustomerKey as string;
     const requestKey = payload.RequestKey as string; // From AddCard init, TBank includes this in notifications
@@ -124,18 +130,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return new NextResponse("OK", { status: 200 });
     }
 
-    // TODO: Retrieve internal userId associated with this customerKey.
-    // This might involve looking up a temporary record stored when AddCard was initiated with RequestKey,
-    // or having a mapping of CustomerKey to userId.
-    const internalUserId = 'USER_ID_NEEDS_TO_BE_FETCHED'; // Placeholder
-    if (internalUserId === 'USER_ID_NEEDS_TO_BE_FETCHED') {
-        debug('CRITICAL: Could not determine internalUserId for card webhook processing. CustomerKey:', customerKey);
+    // Retrieve the user ID associated with this customerKey from a mapping table or other record
+    // Here we're making a simplified assumption that customerKey was stored with a mapping to userId
+    const userMappings = await hasyxClient.select({
+        table: 'payments_user_payment_provider_mappings', // You would need to create this table
+        where: { provider_id: providerResult.id, provider_customer_key: customerKey },
+        limit: 1,
+        columns: ['user_id']
+    });
+
+    let internalUserId = userMappings && userMappings.length > 0 ? userMappings[0].user_id : null;
+    
+    // If no mapping found, we'll use a fallback or return an error
+    if (!internalUserId) {
+        debug('Could not determine internalUserId for card webhook processing. CustomerKey:', customerKey);
+        // In a real implementation, you might try other means to identify the user
         return new NextResponse("OK", { status: 200 }); // Acknowledge, but log error
     }
 
     const paymentMethodData = {
       user_id: internalUserId,
-      provider_name: 'tbank',
+      provider_id: providerResult.id,
       external_id: newCardInfo.CardId,
       type: 'card',
       details: {
@@ -152,15 +167,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     try {
       // Upsert logic: Update if exists (e.g. card details changed), or insert if new.
-      // Hasyx insert might need an on_conflict for upsert if you don't want duplicates based on external_id.
-      // For simplicity, we assume an insert for a new card. Handle conflicts as needed.
       debug('Attempting to save payment method to Hasura:', paymentMethodData);
       await hasyxClient.insert({
-        table: 'payment_methods',
+        table: 'payments_methods',
         object: paymentMethodData,
         returning: ['id'],
         role: 'admin', // Or a backend role with insert permissions to payment_methods
-        // on_conflict: { constraint: 'payment_methods_user_id_provider_name_external_id_type_key', update_columns: ['details', 'is_default', 'is_recurrent_ready', 'recurrent_details', 'expires_at', 'status'] }
+        // on_conflict: { constraint: 'payment_methods_user_id_provider_id_external_id_type_key', update_columns: ['details', 'is_default', 'is_recurrent_ready', 'recurrent_details', 'expires_at', 'status'] }
       });
       debug(`Payment method for CardId ${newCardInfo.CardId} saved successfully for user ${internalUserId}.`);
     } catch (hasuraError: any) {

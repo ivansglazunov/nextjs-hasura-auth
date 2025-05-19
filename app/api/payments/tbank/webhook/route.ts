@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { TBankPaymentProcessor } from '@/lib/payments/tbank'; 
+import { TBankPaymentProcessor, TBankProviderDBConfig } from '@/lib/payments/tbank'; 
 import { tbankAppOptions } from '@/app/payments/tbank/options';
 import { Hasyx } from 'hasyx'; 
 import { createApolloClient } from 'hasyx/lib/apollo'; 
 import { Generator } from 'hasyx/lib/generator';
-import schema from '@/public/hasura-schema.json'; // Corrected path to schema
+import schema from '@/public/hasura-schema.json';
 import Debug from 'hasyx/lib/debug';
 import { PaymentStatus, WebhookHandlingResult } from '@/lib/payments/base';
 
@@ -12,27 +12,23 @@ const debug = Debug('api:payments:tbank:webhook');
 
 const HASURA_GRAPHQL_URL = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
-const TBANK_TERMINAL_KEY = process.env.TBANK_TERMINAL_KEY;
-const TBANK_SECRET_KEY = process.env.TBANK_SECRET_KEY;
 const APP_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-let tbankAdapter: TBankPaymentProcessor;
 let hasyxClient: Hasyx;
 
-// Initialize Hasyx client
 if (!HASURA_GRAPHQL_URL || !HASURA_ADMIN_SECRET) {
   const errorMessage = 'Hasura URL or Admin Secret not configured for TBank webhook handler.';
   console.error(errorMessage);
   debug(errorMessage);
+  // Optional: throw error to prevent startup if Hasura client is critical and cannot be initialized
 } else {
   try {
     const apolloClient = createApolloClient({
       url: HASURA_GRAPHQL_URL, 
       secret: HASURA_ADMIN_SECRET,
     });
-    // The schema import might be typed as `any` or a specific JSON type by TypeScript depending on tsconfig
-    // Generator expects a certain structure, ensure your schema.json matches that, or cast if necessary.
     hasyxClient = new Hasyx(apolloClient, Generator(schema as any)); 
+    debug('Hasyx client initialized successfully for TBank webhook handler.');
   } catch (e: any) {
     const errorMessage = `Failed to initialize Hasyx client: ${e.message}`;
     console.error(errorMessage, e);
@@ -40,44 +36,81 @@ if (!HASURA_GRAPHQL_URL || !HASURA_ADMIN_SECRET) {
   }
 }
 
-// Initialize TBank adapter
-if (!TBANK_TERMINAL_KEY || !TBANK_SECRET_KEY) {
-  const errorMessage = 'TBank Terminal Key or Secret Key not configured.';
-  console.error(errorMessage);
-  debug(errorMessage);
-} else {
-  try {
-    const tbankProcessorConfig = {
-      terminalKey: TBANK_TERMINAL_KEY,
-      secretKey: TBANK_SECRET_KEY,
-      appBaseUrl: APP_BASE_URL,
-      options: tbankAppOptions,
-    };
-    tbankAdapter = new TBankPaymentProcessor(tbankProcessorConfig);
-  } catch (e: any) {
-    const errorMessage = `Failed to initialize TBank adapter: ${e.message}`;
-    console.error(errorMessage, e);
-    debug(errorMessage, e);
-  }
-}
+// TBank adapter will be initialized dynamically within the POST handler
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   debug('Received TBank webhook POST request');
 
-  if (!tbankAdapter || !hasyxClient) {
-    const errorMessage = 'TBank adapter or Hasyx client not initialized due to missing configuration or init error.';
+  if (!hasyxClient) {
+    const errorMessage = 'Hasyx client not initialized. Cannot process TBank webhook.';
     debug(errorMessage);
     return NextResponse.json({ error: 'Server configuration error', details: errorMessage }, { status: 500 });
   }
 
+  let payload: any;
   try {
     const rawBody = await request.text();
     debug('Raw webhook body:', rawBody);
     
-    // Create a dummy Request object as it's expected by the interface but not used in tbank.ts handleWebhook
-    const dummyRequest = new Request(request.url, { method: request.method, headers: request.headers });
-    const result: WebhookHandlingResult = await tbankAdapter.handleWebhook(dummyRequest, rawBody);
-    debug('Webhook processing result:', result);
+    if (typeof rawBody === 'string') {
+        payload = Object.fromEntries(new URLSearchParams(rawBody));
+    } else {
+        debug('Invalid rawBody type for TBank webhook');
+        return new NextResponse("ERROR: Invalid body format", { status: 400 });
+    }
+    debug('Parsed TBank webhook payload:', payload);
+
+    const terminalKeyFromPayload = payload.TerminalKey as string;
+    if (!terminalKeyFromPayload) {
+      debug('TerminalKey missing in TBank webhook payload.');
+      return new NextResponse("ERROR: TerminalKey missing", { status: 400 });
+    }
+
+    // Fetch provider configuration from DB using TerminalKey
+    debug(`Fetching TBank provider config for TerminalKey: ${terminalKeyFromPayload}`);
+    const providers = await hasyxClient.select({
+        table: 'payments_providers',
+        where: {
+            type: { _eq: 'tbank' },
+            config: { _contains: { terminal_key: terminalKeyFromPayload } },
+            is_active: { _eq: true }
+        },
+        limit: 1,
+        columns: ['id', 'config', 'is_test_mode', 'default_return_url', 'default_webhook_url', 'default_card_webhook_url']
+    });
+
+    if (!providers || providers.length === 0 || !providers[0].config) {
+      debug(`No active TBank provider configuration found for TerminalKey: ${terminalKeyFromPayload}`);
+      return new NextResponse("ERROR: Provider configuration not found", { status: 400 });
+    }
+
+    const providerResult = providers[0];
+    const providerDBConfig = providerResult.config as TBankProviderDBConfig;
+    // Augment with other fields from providerResult
+    providerDBConfig.is_test_mode = providerResult.is_test_mode;
+    providerDBConfig.default_return_url = providerResult.default_return_url;
+    providerDBConfig.default_webhook_url = providerResult.default_webhook_url;
+    providerDBConfig.default_card_webhook_url = providerResult.default_card_webhook_url;
+
+    if (!providerDBConfig.secret_key) {
+        debug(`Secret key missing in fetched TBank provider config for TerminalKey: ${terminalKeyFromPayload}`);
+        return new NextResponse("ERROR: Provider secret key misconfiguration", { status: 500 });
+    }
+
+    // Dynamically initialize TBank adapter
+    const tbankAdapter = new TBankPaymentProcessor({
+      providerDBConfig: providerDBConfig,
+      appBaseUrl: APP_BASE_URL, // General app base URL as fallback
+      options: tbankAppOptions, // Global/app-specific TBank options
+    });
+    debug('TBank adapter dynamically initialized for webhook processing.');
+
+    // Pass the payload directly instead of parsing it again
+    const result: WebhookHandlingResult = await tbankAdapter.handleWebhook(
+      request, // Pass the request object
+      rawBody  // Pass the raw body as received
+    );
+    debug('Webhook processing result from adapter:', result);
 
     if (result.processed && result.paymentId) {
       const paymentUpdateData: any = {
@@ -85,33 +118,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         provider_response_details: result.providerResponse, 
       };
       if (result.externalPaymentId) {
-        paymentUpdateData.external_payment_id = result.externalPaymentId;
+        paymentUpdateData.external_operation_id = result.externalPaymentId; // Changed to external_operation_id
       }
       if (result.newPaymentStatus === PaymentStatus.SUCCEEDED) {
         paymentUpdateData.paid_at = new Date().toISOString();
       }
 
       try {
-        debug(`Attempting to update payment ${result.paymentId} in Hasura with data:`, paymentUpdateData);
+        debug(`Attempting to update operation (payment) ${result.paymentId} in Hasura with data:`, paymentUpdateData);
         await hasyxClient.update({
-          table: 'payments',
+          table: 'payments_operations', 
           where: { id: { _eq: result.paymentId } }, 
           _set: paymentUpdateData,
           returning: ['id'], 
           role: 'admin', 
         });
-        debug(`Payment ${result.paymentId} updated successfully in Hasura.`);
+        debug(`Operation (payment) ${result.paymentId} updated successfully in Hasura.`);
       } catch (hasuraError: any) {
-        debug(`Error updating payment ${result.paymentId} in Hasura:`, hasuraError.message, hasuraError.graphQLErrors);
-        // Log and continue, TBank should still get an OK if core processing was fine.
+        debug(`Error updating operation (payment) ${result.paymentId} in Hasura:`, hasuraError.message, hasuraError.graphQLErrors);
       }
 
       if (result.subscriptionId && result.newSubscriptionStatus) {
          try {
             const subscriptionUpdateData: any = { status: result.newSubscriptionStatus };
+            // If subscription becomes active, set current_period_start/end based on webhook data if available
+            // This part depends on what TBank webhook provides for recurrent payments/subscriptions
+            // For now, just updating status.
             debug(`Attempting to update subscription ${result.subscriptionId} in Hasura with data:`, subscriptionUpdateData);
             await hasyxClient.update({
-                table: 'subscriptions',
+                table: 'payments_subscriptions',
                 where: { id: { _eq: result.subscriptionId } }, 
                 _set: subscriptionUpdateData,
                 returning: ['id'],
@@ -127,14 +162,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       debug('Webhook processing failed by adapter:', result.error);
     }
 
-    // Respond to TBank
     const responseMessage = result.messageToProvider || (result.processed ? "OK" : "ERROR");
-    const responseStatus = result.processed ? 200 : 400; // Or 500 if it was an internal error before processing
+    const responseStatus = result.processed ? 200 : (result.error === 'Webhook token mismatch' || result.error === 'Webhook TerminalKey mismatch with processor instance.' ? 400 : 500);
     debug(`Responding to TBank with status ${responseStatus} and message: ${responseMessage}`);
     return new NextResponse(responseMessage, { status: responseStatus });
 
   } catch (error: any) {
     debug('Critical error in TBank webhook POST handler:', error.message, error.stack);
+    // Avoid leaking detailed error messages to TBank unless it's a specific format they expect
+    let internalPaymentIdAttempt = payload?.OrderId; // Try to get OrderId if payload parsing was successful
+    debug(`Webhook processing failed critically. OrderId (if available): ${internalPaymentIdAttempt}. Error:`, error);
     return new NextResponse("ERROR", { status: 500 });
   }
 }

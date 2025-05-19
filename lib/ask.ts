@@ -10,8 +10,13 @@ import path from 'path';
 
 dotenv.config();
 
+const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+
 // Load .env file if running directly
 if (require.main === module) {
+  if (!openrouterApiKey) {
+    throw new Error('OPENROUTER_API_KEY not found in environment variables. Please set it in your .env file.');
+  }
   try {
     let projectRoot = process.cwd();
     // Attempt to find project root for .env (if script is nested)
@@ -29,12 +34,6 @@ if (require.main === module) {
 }
 
 const debug = Debug('ask');
-
-const openrouterApiKey = process.env.OPENROUTER_API_KEY;
-
-if (!openrouterApiKey) {
-  throw new Error('OPENROUTER_API_KEY not found in environment variables. Please set it in your .env file.');
-}
 
 const openrouter = createOpenRouter({
   apiKey: openrouterApiKey

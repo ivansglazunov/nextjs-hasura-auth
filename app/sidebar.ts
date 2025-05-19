@@ -18,6 +18,10 @@ export const sidebar: SidebarData = {
           title: "A-Frame",
           url: "/aframe",
         },
+        {
+          title: "Payments",
+          url: "/payments",
+        },
       ],
     },
   ],
