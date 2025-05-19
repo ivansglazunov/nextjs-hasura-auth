@@ -413,6 +413,7 @@ program
       'migrations/1746837333136-hasyx-debug/up.ts': 'migrations/1746837333136-hasyx-debug/up.ts',
       'migrations/1746837333136-hasyx-debug/down.ts': 'migrations/1746837333136-hasyx-debug/down.ts',
       'events/notify.json': 'events/notify.json',
+      'lib/debug.ts': 'lib/debug.ts',
     };
     debug('Files to create if not exists:', Object.keys(filesToCreateIfNotExists));
 
@@ -428,6 +429,7 @@ program
       'migrations/1746837333136-hasyx-debug',
       'app/api/events/[name]',
       'events',
+      'lib',
       'app/api/telegram_bot',
     ];
     debug('Ensuring directories exist:', ensureDirs);
