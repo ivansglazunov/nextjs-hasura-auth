@@ -20,7 +20,7 @@ import Debug from '../debug';
 
 const debug = Debug('payment:tbank');
 
-const TBANK_API_URL_V2 = 'https://securepay.tbank.ru/v2';
+const TBANK_API_URL_V2 = 'https://securepay.tinkoff.ru/v2';
 
 // TBank response statuses
 const TBANK_STATUS_AUTHORIZED = 'AUTHORIZED'; // Деньги захолдированы
@@ -270,6 +270,7 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
         strToHash += value;
       }
     }
+    // Only enable for detailed debugging
     // debug('String to hash for token:', strToHash);
     const hash = createHash('sha256').update(strToHash).digest('hex');
     // debug('Generated token:', hash);
@@ -282,36 +283,31 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
   ): Promise<TResponse> {
     const requestPayload: any = { ...payload, TerminalKey: this.terminalKey };
 
-    // Add Password to payload for token generation, but remove it before sending the request
-    const payloadForToken = { ...requestPayload, Password: this.secretKey };
-    delete payloadForToken.Receipt; // Receipt object is not part of token calculation
-
-    // Special handling for DATA and Receipt objects if they exist, they should be part of token calculation
-    // but not as [object Object]. The API docs suggest that complex objects like Receipt and DATA are not directly part of the token.
-    // However, the example for Init token includes Receipt fields. This area is tricky.
-    // For now, following the general rule: sort keys, concat values.
-    // If specific fields from Receipt/DATA are needed, they must be flattened into payloadForToken.
-    // The TBank example shows Receipt being stringified and then included in the signature.
-    // This is not standard. Assuming simple scalar values for token for now.
-
-    // The TBank documentation example for token generation for Init includes sorted scalar values
-    // and specifically Password, which is not sent in the request itself.
-    // Example: Amount + OrderId + Password + TerminalKey (sorted alphabetically)
-    // So we create a temporary object for token generation.
-
-    const tokenGenObj: any = { TerminalKey: this.terminalKey, Password: this.secretKey };
+    // Корректная логика генерации токена:
+    // 1. Создаем объект с обязательными параметрами
+    // 2. Игнорируем сложные объекты (Receipt, DATA)
+    // 3. Исключаем параметры, которые не используются API (ReturnUrl)
+    const tokenGenObj: Record<string, any> = {};
+    
+    // Собираем примитивные параметры, исключая параметры, не являющиеся частью API
     for (const key in payload) {
-        if (Object.prototype.hasOwnProperty.call(payload, key)) {
-            // @ts-ignore
-            const value = payload[key];
-            if (typeof value !== 'object' && typeof value !== 'undefined' && value !== null) {
-                // @ts-ignore
-                tokenGenObj[key] = value;
-            }
+      if (Object.prototype.hasOwnProperty.call(payload, key) && 
+          key !== 'ReturnUrl' && 
+          key !== 'Receipt' &&
+          key !== 'DATA') {
+        const value = (payload as any)[key];
+        if (typeof value !== 'object' && typeof value !== 'undefined' && value !== null) {
+          tokenGenObj[key] = value;
         }
+      }
     }
+    
+    // Добавляем системные параметры 
+    tokenGenObj.Password = this.secretKey;
+    tokenGenObj.TerminalKey = this.terminalKey;
+    
+    // Генерируем токен и добавляем в запрос
     requestPayload.Token = this.generateToken(tokenGenObj);
-
 
     debug(`TBank Request to ${TBANK_API_URL_V2}/${endpoint}:`, requestPayload);
     try {

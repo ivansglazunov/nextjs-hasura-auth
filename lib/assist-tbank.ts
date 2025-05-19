@@ -104,6 +104,9 @@ async function calibrateTBank(rl: readline.Interface, envPath: string) {
   const secretKey = useTestMode ? envVars.TBANK_TEST_SECRET_KEY : envVars.TBANK_PROD_SECRET_KEY;
   const appBaseUrl = envVars.NEXT_PUBLIC_MAIN_URL || envVars.VERCEL_URL || envVars.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
+  console.log('Using terminal key:', terminalKey);
+  console.log('Using secret key:', secretKey);
+  
   if (!terminalKey || !secretKey) {
     console.error('❌ TBank TerminalKey or SecretKey not configured for the selected mode. Skipping calibration.');
     return;

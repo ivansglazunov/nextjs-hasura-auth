@@ -2,6 +2,9 @@
 
 Этот документ описывает методы, реализованные в `TBankPaymentProcessor`, их назначение, сигнатуры аргументов и возвращаемых значений, а также структуры данных, используемые при взаимодействии с API TBank.
 
+> **Важно:** Актуальная информация о базовом API Tinkoff доступна в файле [TINKOFF_API.md](./TINKOFF_API.md).
+> Актуальный URL API для интеграции: `https://securepay.tinkoff.ru/v2`
+
 ## Реализованные методы адаптера
 
 ### 1. `initiatePayment`
@@ -205,7 +208,7 @@
 
 ## Структуры данных TBank (используемые адаптером)
 
-На основе документации TBank API ([https://www.tbank.ru/kassa/dev/payments/](https://www.tbank.ru/kassa/dev/payments/)) и кода адаптера:
+На основе документации TBank API ([https://www.tinkoff.ru/kassa/dev/payments/](https://www.tinkoff.ru/kassa/dev/payments/)) и кода адаптера:
 
 **Запросы к TBank (отправляются адаптером):**
 
