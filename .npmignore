@@ -48,6 +48,7 @@ next-env.d.ts
 lib/*.ts
 lib/*.tsx
 !lib/*.d.ts
+!lib/debug.ts
 lib/**/*.ts
 lib/**/*.tsx
 !lib/**/*.d.ts
