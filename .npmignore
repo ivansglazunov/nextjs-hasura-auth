@@ -47,16 +47,16 @@ next-env.d.ts
 # hasyx
 lib/*.ts
 lib/*.tsx
-!lib/*.d.ts
-!lib/debug.ts
 lib/**/*.ts
 lib/**/*.tsx
+!lib/*.d.ts
 !lib/**/*.d.ts
+!lib/debug.ts
 components/*.ts
 components/*.tsx
-!components/**/*.d.ts
 components/**/*.ts
 components/**/*.tsx
+!components/*.d.ts
 !components/**/*.d.ts
 hooks/*.ts
 hooks/*.tsx
