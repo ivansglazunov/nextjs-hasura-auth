@@ -96,6 +96,12 @@ The `generate` function accepts an object with the following properties:
 *   [12. Delete Mutation by `where` Condition](#12-delete-mutation-by-where-condition)
 *   [13. Subscription](#13-subscription)
 *   [14. Query with `distinct_on`](#14-query-with-distinct_on)
+*   [15. Advanced Nested Query with `where` Conditions](#15-advanced-nested-query-with-where-conditions)
+*   [16. Deeply Nested Relations (Multiple Levels)](#16-deeply-nested-relations-multiple-levels)
+*   [17. Complex `where` Clauses with Logical Operators](#17-complex-where-clauses-with-logical-operators)
+*   [18. Using Field Aliases with Parameters](#18-using-field-aliases-with-parameters)
+*   [19. Mixed Array and Object Notation for Relations](#19-mixed-array-and-object-notation-for-relations)
+*   [20. Multiple Nested Relationships with Different Parameters](#20-multiple-nested-relationships-with-different-parameters)
 
 
 ### 1. Advanced Nested Query (Appending to Defaults)
@@ -713,6 +719,371 @@ query QueryUsers($v1: [users_select_column!], $v2: users_bool_exp, $v3: [users_o
     { "email": "asc" },
     { "created_at": "desc" }
   ]
+}
+```
+</details>
+
+### 15. Advanced Nested Query with `where` Conditions
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    where: { email: { _eq: 'test@example.com' } },
+    returning: [
+        'id',
+        'name',
+        'email',
+        {
+            accounts: {
+                where: { provider: { _eq: 'google' } },
+                limit: 5,
+                returning: ['id', 'provider', 'created_at']
+            }
+        }
+    ]
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: users_bool_exp, $v2: accounts_bool_exp, $v3: Int) {
+  users(where: $v1) {
+    id
+    name
+    email
+    accounts(where: $v2, limit: $v3) {
+      id
+      provider
+      created_at
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "email": { "_eq": "test@example.com" } },
+  "v2": { "provider": { "_eq": "google" } },
+  "v3": 5
+}
+```
+</details>
+
+### 16. Deeply Nested Relations (Multiple Levels)
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    limit: 5,
+    returning: [
+        'id',
+        'name',
+        {
+            accounts: [
+                'id',
+                'provider',
+                { 
+                    user: [
+                        'id', 
+                        'name', 
+                        { accounts: ['id', 'provider'] }
+                    ] 
+                }
+            ]
+        }
+    ]
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: Int) {
+  users(limit: $v1) {
+    id
+    name
+    accounts {
+      id
+      provider
+      user {
+        id
+        name
+        accounts {
+          id
+          provider
+        }
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": 5
+}
+```
+</details>
+
+### 17. Complex `where` Clauses with Logical Operators
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    where: {
+        _and: [
+            { is_admin: { _eq: true } },
+            {
+                _or: [
+                    { email: { _ilike: '%@example.com' } },
+                    { email: { _ilike: '%@test.com' } }
+                ]
+            }
+        ]
+    },
+    returning: ['id', 'name', 'email']
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: users_bool_exp) {
+  users(where: $v1) {
+    id
+    name
+    email
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": {
+    "_and": [
+      {
+        "is_admin": {
+          "_eq": true
+        }
+      },
+      {
+        "_or": [
+          {
+            "email": {
+              "_ilike": "%@example.com"
+            }
+          },
+          {
+            "email": {
+              "_ilike": "%@test.com"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+</details>
+
+### 18. Using Field Aliases with Parameters
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    where: { id: { _eq: 'user-123' } },
+    returning: [
+        'id',
+        'name',
+        {
+            accounts: {
+                alias: 'google_accounts',
+                where: { 
+                    provider: { _eq: 'google' }, 
+                    active: { _eq: true } 
+                },
+                limit: 3,
+                order_by: [{ created_at: 'desc' }],
+                returning: ['id', 'provider', 'created_at']
+            }
+        }
+    ]
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: users_bool_exp, $v2: accounts_bool_exp, $v3: Int, $v4: [accounts_order_by!]) {
+  users(where: $v1) {
+    id
+    name
+    google_accounts: accounts(where: $v2, limit: $v3, order_by: $v4) {
+      id
+      provider
+      created_at
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "id": { "_eq": "user-123" } },
+  "v2": { "provider": { "_eq": "google" }, "active": { "_eq": true } },
+  "v3": 3,
+  "v4": [{ "created_at": "desc" }]
+}
+```
+</details>
+
+### 19. Mixed Array and Object Notation for Relations
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    where: { id: { _eq: 'user-456' } },
+    returning: [
+        'id',
+        'name',
+        {
+            accounts: ['id', 'provider', { 
+                sessions: { 
+                    where: { expires: { _gt: 'now()' } },
+                    returning: ['id', 'expires'] 
+                }
+            }]
+        }
+    ]
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: users_bool_exp, $v2: sessions_bool_exp) {
+  users(where: $v1) {
+    id
+    name
+    accounts {
+      id
+      provider
+      sessions(where: $v2) {
+        id
+        expires
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "id": { "_eq": "user-456" } },
+  "v2": { "expires": { "_gt": "now()" } }
+}
+```
+</details>
+
+### 20. Multiple Nested Relationships with Different Parameters
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    where: { is_active: { _eq: true } },
+    returning: [
+        'id',
+        'name',
+        {
+            posts: {
+                where: { published: { _eq: true } },
+                limit: 5,
+                order_by: [{ created_at: 'desc' }],
+                returning: ['id', 'title', 'content']
+            }
+        },
+        {
+            comments: {
+                where: { reported: { _eq: false } },
+                limit: 10,
+                returning: ['id', 'text']
+            }
+        }
+    ]
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: users_bool_exp, $v2: posts_bool_exp, $v3: Int, $v4: [posts_order_by!], $v5: comments_bool_exp, $v6: Int) {
+  users(where: $v1) {
+    id
+    name
+    posts(where: $v2, limit: $v3, order_by: $v4) {
+      id
+      title
+      content
+    }
+    comments(where: $v5, limit: $v6) {
+      id
+      text
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "is_active": { "_eq": true } },
+  "v2": { "published": { "_eq": true } },
+  "v3": 5,
+  "v4": [{ "created_at": "desc" }],
+  "v5": { "reported": { "_eq": false } },
+  "v6": 10
 }
 ```
 </details> 

@@ -313,7 +313,251 @@ function OnlineUsersList() {
     // ... render list based on loading, error, data ...
 }
 
+### Advanced Usage Examples
+
+Below are advanced examples showcasing how to use the hooks for more complex queries:
+
+#### Advanced Nested Query with Filtering Conditions
+
+```typescript
+function UserGoogleAccounts() {
+  const { loading, error, data } = useQuery(
+    {
+      table: 'users',
+      where: { email: { _eq: 'example@gmail.com' } },
+      returning: [
+        'id',
+        'name',
+        {
+          accounts: {
+            where: { provider: { _eq: 'google' } },
+            limit: 5,
+            returning: ['id', 'provider', 'created_at']
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
+  return (
+    <div>
+      <h2>User: {data?.name}</h2>
+      <h3>Google Accounts ({data?.accounts?.length})</h3>
+      <ul>
+        {data?.accounts?.map(account => (
+          <li key={account.id}>
+            {account.provider} (Created: {new Date(account.created_at).toLocaleDateString()})
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 ```
+
+#### Deeply Nested Relations
+
+```typescript
+function UserNetworkGraphComponent() {
+  const { loading, error, data } = useSelect(
+    {
+      table: 'users',
+      pk_columns: { id: 'current-user-id' },
+      returning: [
+        'id',
+        'name',
+        {
+          accounts: [
+            'id',
+            'provider',
+            { 
+              user: [
+                'id', 
+                'name', 
+                { accounts: ['id', 'provider'] }
+              ] 
+            }
+          ]
+        }
+      ]
+    },
+    { 
+      role: 'me',
+      fetchPolicy: 'cache-and-network' 
+    }
+  );
+
+  // Process and render network graph data
+  // ...
+}
+```
+
+#### Complex Logical Filtering with useClient
+
+```typescript
+function AdminDashboard() {
+  const client = useClient();
+  const [results, setResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchAdminUsers = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await client.select({
+        table: 'users',
+        where: {
+          _and: [
+            { is_admin: { _eq: true } },
+            {
+              _or: [
+                { email: { _ilike: '%@example.com' } },
+                { email: { _ilike: '%@test.com' } }
+              ]
+            }
+          ]
+        },
+        returning: ['id', 'name', 'email'],
+        role: 'admin'
+      });
+      setResults(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Component rendering...
+}
+```
+
+#### Field Aliases with Parameters
+
+```typescript
+function UserGoogleAccountsWithAlias() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { id: { _eq: 'user-123' } },
+      returning: [
+        'id',
+        'name',
+        {
+          accounts: {
+            alias: 'google_accounts',
+            where: { 
+              provider: { _eq: 'google' }, 
+              active: { _eq: true } 
+            },
+            limit: 3,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'provider', 'created_at']
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  // Use data.google_accounts instead of data.accounts due to alias
+  // ...
+}
+```
+
+#### Multi-level Nested Relations with Mixed Notation
+
+```typescript
+function UserSessionsComponent() {
+  const { data } = useSubscribe(
+    {
+      table: 'users',
+      where: { id: { _eq: 'user-456' } },
+      returning: [
+        'id',
+        'name',
+        {
+          accounts: ['id', 'provider', { 
+            sessions: { 
+              where: { expires: { _gt: 'now()' } },
+              returning: ['id', 'expires'] 
+            }
+          }]
+        }
+      ]
+    },
+    { 
+      role: 'me',
+      pollingInterval: 10000 // Custom polling interval for subscription  
+    }
+  );
+
+  // Render active user sessions across all accounts...
+}
+```
+
+#### Multiple Relations in a Single Query
+
+```typescript
+function UserContentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      pk_columns: { id: 'current-user-id' },
+      returning: [
+        'id',
+        'name',
+        {
+          posts: {
+            where: { published: { _eq: true } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'title', 'content']
+          }
+        },
+        {
+          comments: {
+            where: { reported: { _eq: false } },
+            limit: 10,
+            returning: ['id', 'text']
+          }
+        }
+      ]
+    },
+    { role: 'me' }
+  );
+
+  if (loading) return <div>Loading user content...</div>;
+  
+  return (
+    <div>
+      <h1>{data?.name}'s Dashboard</h1>
+      
+      <h2>Recent Posts ({data?.posts?.length})</h2>
+      {data?.posts?.map(post => (
+        <div key={post.id}>
+          <h3>{post.title}</h3>
+          <p>{post.content.substring(0, 100)}...</p>
+        </div>
+      ))}
+      
+      <h2>Recent Comments ({data?.comments?.length})</h2>
+      {data?.comments?.map(comment => (
+        <div key={comment.id}>
+          <p>{comment.text}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
 
 ### Available Hooks
 

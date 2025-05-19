@@ -159,7 +159,7 @@ const sqlSchema = `
   -- 3. Same for public.subscriptions and public.payments.
   -- 4. Drop old public tables.
   -- For this script, we'll assume direct creation in the new schema and structure.
-  -- We will handle the drop of old tables in the `down` migration or assume they are handled manually for existing data.
+  -- We will handle the drop of old tables in the down migration or assume they are handled manually for existing data.
 `;
 
 const tablesToTrackPayload = [

@@ -98,101 +98,6 @@ const findProjectRoot = (startDir: string = process.cwd()): string => {
   throw new Error("Could not find project root (package.json). Are you inside a Node.js project?");
 };
 
-// --- NEW: Helper function to find and sort migration scripts ---
-interface MigrationScript {
-  dirName: string;
-  scriptPath: string;
-}
-
-const findMigrationScripts = async (direction: 'up' | 'down'): Promise<MigrationScript[]> => {
-  debug(`Finding migration scripts for direction: ${direction}`);
-  const projectRoot = findProjectRoot();
-  const migrationsDir = path.join(projectRoot, 'migrations');
-  const scriptFileName = `${direction}.ts`;
-  const scripts: MigrationScript[] = [];
-
-  console.log(`🔍 Searching for ${scriptFileName} scripts in ${migrationsDir}...`);
-  debug(`Full migrations directory path: ${migrationsDir}`);
-
-  if (!await fs.pathExists(migrationsDir)) {
-    console.warn(`⚠️ Migrations directory not found: ${migrationsDir}`);
-    debug('Migrations directory does not exist.');
-    return [];
-  }
-
-  try {
-    debug(`Reading directory: ${migrationsDir}`);
-    const entries = await fs.readdir(migrationsDir, { withFileTypes: true });
-    debug(`Found entries in migrations directory: ${entries.map(e => e.name).join(', ')}`);
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        const dirName = entry.name;
-        const potentialScriptPath = path.join(migrationsDir, dirName, scriptFileName);
-        debug(`Checking directory entry: ${dirName}. Potential script path: ${potentialScriptPath}`);
-        if (await fs.pathExists(potentialScriptPath)) {
-          scripts.push({ dirName, scriptPath: potentialScriptPath });
-          console.log(`  ✔️ Found: ${path.join(dirName, scriptFileName)}`);
-          debug(`Added script: ${potentialScriptPath}`);
-        } else {
-           debug(`Script not found at: ${potentialScriptPath}`);
-        }
-      } else {
-         debug(`Entry is not a directory: ${entry.name}`);
-      }
-    }
-  } catch (error) {
-    console.error(`❌ Error reading migrations directory: ${error}`);
-    debug(`Error reading migrations directory: ${error}`);
-    return []; // Return empty on error reading directory
-  }
-
-  debug(`Found ${scripts.length} scripts before sorting.`);
-  // Sort alphabetically by directory name
-  scripts.sort((a, b) => a.dirName.localeCompare(b.dirName));
-  debug(`Scripts sorted alphabetically by dirname.`);
-
-  // Reverse order for 'down' migrations
-  if (direction === 'down') {
-    scripts.reverse();
-    debug(`Scripts reversed for 'down' direction.`);
-  }
-
-  console.log(`🔢 Determined execution order for '${direction}':`);
-  scripts.forEach((s, index) => console.log(`  ${index + 1}. ${path.join(s.dirName, scriptFileName)}`));
-  debug(`Final script order: ${scripts.map(s => s.scriptPath).join(', ')}`);
-
-  return scripts;
-};
-
-// --- NEW: Helper function to execute scripts ---
-const executeScript = (scriptPath: string): boolean => {
-  const cwd = findProjectRoot();
-  console.log(`\n▶️ Executing: ${scriptPath}...`);
-  debug(`Executing script: ${scriptPath} with cwd: ${cwd}`);
-  // Use npx tsx to ensure tsx is found
-  debug(`Spawning command: npx tsx ${scriptPath}`);
-  const result = spawn.sync('npx', ['tsx', scriptPath], {
-    stdio: 'inherit', // Show script output directly
-    cwd: cwd, // Run from project root
-  });
-
-  debug('Spawn result:', JSON.stringify(result, null, 2));
-
-  if (result.error) {
-    console.error(`❌ Failed to start script ${scriptPath}:`, result.error);
-    debug(`Script execution failed to start: ${result.error}`);
-    return false;
-  }
-  if (result.status !== 0) {
-    console.error(`❌ Script ${scriptPath} exited with status ${result.status}`);
-    debug(`Script execution exited with non-zero status: ${result.status}`);
-    return false;
-  }
-  console.log(`✅ Successfully executed: ${scriptPath}`);
-  debug(`Script execution successful: ${scriptPath}`);
-  return true;
-};
-
 // --- Helper function to ensure WebSocket support in the project ---
 const ensureWebSocketSupport = (projectRoot: string): void => {
   debug('Ensuring WebSocket support');
@@ -368,7 +273,6 @@ program
     }
 
     const filesToCreateOrReplace = {
-      'CONTRIBUTING.md': 'CONTRIBUTING.md',
       '.github/workflows/npm-publish.yml': '.github/workflows/npm-publish.yml',
       '.github/workflows/test.yml': '.github/workflows/test.yml',
       '.github/workflows/nextjs.yml': '.github/workflows/nextjs.yml',
@@ -454,6 +358,45 @@ program
          console.error(`❌ Failed to process ${targetPath} from template ${templateName}: ${error}`);
          debug(`Error writing file ${fullTargetPath}: ${error}`);
       }
+    }
+
+    // Special handling for CONTRIBUTING.md
+    debug('Special handling for CONTRIBUTING.md');
+    try {
+      const contributingPath = path.join(targetDir, 'CONTRIBUTING.md');
+      const hasContributing = fs.existsSync(contributingPath);
+      const hasyxContributingContent = getTemplateContent('CONTRIBUTING.md');
+      
+      if (hasContributing) {
+        // Read existing content
+        const existingContent = fs.readFileSync(contributingPath, 'utf-8');
+        
+        // Find the Hasyx contribution header
+        const hasyxHeaderIndex = existingContent.indexOf('# Contributing to Hasyx based projects');
+        
+        if (hasyxHeaderIndex !== -1) {
+          // If Hasyx header exists, replace everything after it
+          const updatedContent = existingContent.substring(0, hasyxHeaderIndex) + hasyxContributingContent;
+          fs.writeFileSync(contributingPath, updatedContent);
+          console.log('✅ Updated Hasyx section in existing CONTRIBUTING.md');
+          debug('Updated Hasyx section in existing CONTRIBUTING.md');
+        } else {
+          // If Hasyx header doesn't exist, append the Hasyx content
+          const updatedContent = existingContent + '\n\n' + hasyxContributingContent;
+          fs.writeFileSync(contributingPath, updatedContent);
+          console.log('✅ Appended Hasyx contribution guidelines to existing CONTRIBUTING.md');
+          debug('Appended Hasyx contribution guidelines to existing CONTRIBUTING.md');
+        }
+      } else {
+        // Create new CONTRIBUTING.md with project section and Hasyx section
+        const newContent = '# Contributing\n\nWrite development rules for your repository here\n\n' + hasyxContributingContent;
+        fs.writeFileSync(contributingPath, newContent);
+        console.log('✅ Created new CONTRIBUTING.md with project and Hasyx sections');
+        debug('Created new CONTRIBUTING.md with project and Hasyx sections');
+      }
+    } catch (error) {
+      console.error(`❌ Failed to process CONTRIBUTING.md: ${error}`);
+      debug(`Error processing CONTRIBUTING.md: ${error}`);
     }
 
     // Special handling for tsconfig files to replace 'hasyx' with project name
@@ -584,8 +527,8 @@ program
           "dev": "npx -y hasyx dev",
           "ws": "npx --yes next-ws-cli@latest patch -y",
           "postinstall": "npm run ws -- -y",
-          "migrate": "npx hasyx migrate",
-          "unmigrate": "npx hasyx unmigrate",
+          "migrate": "tsx lib/migrate.ts",
+          "unmigrate": "tsx lib/unmigrate.ts",
           "npm-publish": "npm run build && npm publish",
         };
         
@@ -784,27 +727,18 @@ program
   .description('Run UP migration scripts located in subdirectories of ./migrations in alphabetical order.')
   .action(async () => {
     debug('Executing "migrate" command.');
-    console.log('🚀 Starting UP migrations...');
-    const scriptsToRun = await findMigrationScripts('up');
-
-    if (scriptsToRun.length === 0) {
-      console.log('🤷 No UP migration scripts found to execute.');
-      debug('No UP migration scripts found.');
-      return;
+    
+    // Import the migrate function from lib/migrate.ts
+    const { migrate } = await import('./migrate');
+    
+    try {
+      await migrate();
+      debug('Finished "migrate" command successfully.');
+    } catch (error) {
+      console.error('❌ Migration failed:', error);
+      debug(`Error in migrate command: ${error}`);
+      process.exit(1);
     }
-
-    debug(`Found ${scriptsToRun.length} UP scripts to run.`);
-    for (const script of scriptsToRun) {
-      debug(`Executing UP script: ${script.scriptPath}`);
-      if (!executeScript(script.scriptPath)) {
-        console.error('❌ Migration failed. Stopping execution.');
-        debug('UP Migration script failed, stopping.');
-        process.exit(1); // Exit with error code
-      }
-    }
-
-    console.log('\n✨ All UP migrations executed successfully!');
-    debug('Finished "migrate" command successfully.');
   });
 
 // --- NEW: `unmigrate` Command ---
@@ -813,27 +747,18 @@ program
   .description('Run DOWN migration scripts located in subdirectories of ./migrations in reverse alphabetical order.')
   .action(async () => {
     debug('Executing "unmigrate" command.');
-    console.log('🚀 Starting DOWN migrations...');
-    const scriptsToRun = await findMigrationScripts('down');
-
-    if (scriptsToRun.length === 0) {
-      console.log('🤷 No DOWN migration scripts found to execute.');
-      debug('No DOWN migration scripts found.');
-      return;
+    
+    // Import the unmigrate function from lib/unmigrate.ts
+    const { unmigrate } = await import('./unmigrate');
+    
+    try {
+      await unmigrate();
+      debug('Finished "unmigrate" command successfully.');
+    } catch (error) {
+      console.error('❌ Unmigration failed:', error);
+      debug(`Error in unmigrate command: ${error}`);
+      process.exit(1);
     }
-
-     debug(`Found ${scriptsToRun.length} DOWN scripts to run.`);
-    for (const script of scriptsToRun) {
-      debug(`Executing DOWN script: ${script.scriptPath}`);
-      if (!executeScript(script.scriptPath)) {
-        console.error('❌ Migration rollback failed. Stopping execution.');
-        debug('DOWN Migration script failed, stopping.');
-        process.exit(1); // Exit with error code
-      }
-    }
-
-    console.log('\n✨ All DOWN migrations executed successfully!');
-    debug('Finished "unmigrate" command successfully.');
   });
 
 // --- NEW: `schema` Command ---

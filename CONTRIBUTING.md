@@ -1,4 +1,4 @@
-# Contributing to Hasyx
+# Contributing to Hasyx based projects
 
 We welcome contributions to Hasyx! Please follow these guidelines to help us keep the project consistent and maintainable.
 

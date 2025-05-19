@@ -44,8 +44,8 @@ import { Input } from "hasyx/components/ui/input";
 import { Label } from "hasyx/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "hasyx/components/ui/table";
 import { SidebarData } from "hasyx/components/sidebar";
-import { useToast } from "hasyx/components/ui/use-toast";
-import { useHasyx } from "hasyx/hooks/use-hasyx";
+import { toast, Toaster } from "sonner";
+import { useHasyx } from "hasyx/lib";
 import { format } from "date-fns";
 import { PlusCircle } from "lucide-react";
 
@@ -86,7 +86,6 @@ interface Subscription {
 }
 
 export default function Payments({ sidebarData }: PaymentsProps) {
-  const { toast } = useToast();
   const [tabValue, setTabValue] = useState("terminals");
   const [operationsTab, setOperationsTab] = useState("payments");
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
@@ -104,14 +103,14 @@ export default function Payments({ sidebarData }: PaymentsProps) {
   const { data: providers, loading: providersLoading, error: providersError } = hasyx.useSubscription({
     table: "payments_providers",
     returning: ["id", "name", "type", "is_test_mode", "created_at"],
-    orderBy: { created_at: "desc" },
+    order_by: { created_at: "desc" },
   });
 
   // Subscription for operations (filtered by provider_id if selected)
   const operationsQuery = {
     table: "payments_operations",
     returning: ["id", "user_id", "amount", "currency", "status", "description", "method_id", "provider_id", "created_at", "subscription_id"],
-    orderBy: { created_at: "desc" },
+    order_by: { created_at: "desc" },
     ...(selectedProviderId ? { where: { provider_id: { _eq: selectedProviderId } } } : {}),
   };
   const { data: operations, loading: operationsLoading, error: operationsError } = hasyx.useSubscription(operationsQuery);
@@ -120,7 +119,7 @@ export default function Payments({ sidebarData }: PaymentsProps) {
   const subscriptionsQuery = {
     table: "payments_subscriptions",
     returning: ["id", "user_id", "method_id", "provider_id", "status", "current_period_start", "current_period_end", "created_at"],
-    orderBy: { created_at: "desc" },
+    order_by: { created_at: "desc" },
     ...(selectedProviderId ? { where: { provider_id: { _eq: selectedProviderId } } } : {}),
   };
   const { data: subscriptions, loading: subscriptionsLoading, error: subscriptionsError } = hasyx.useSubscription(subscriptionsQuery);
@@ -142,11 +141,7 @@ export default function Payments({ sidebarData }: PaymentsProps) {
 
   const handleProviderSubmit = async () => {
     if (!newProvider.name || !newProvider.terminal_key || !newProvider.secret_key) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
+      toast.error("Please fill in all fields");
       return;
     }
 
@@ -167,23 +162,17 @@ export default function Payments({ sidebarData }: PaymentsProps) {
         role: "admin",
       });
 
-      toast({
-        title: "Success",
-        description: `Added ${newProvider.name} provider`,
-      });
+      toast.success(`Added ${newProvider.name} provider`);
       setIsAddDialogOpen(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add provider",
-        variant: "destructive",
-      });
+      toast.error("Failed to add provider");
       console.error("Error adding provider:", error);
     }
   };
 
   return (
     <SidebarProvider>
+      <Toaster position="top-right" />
       <Sidebar data={sidebarData} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             is_active: { _eq: true }
         },
         limit: 1,
-        columns: ['id', 'config', 'is_test_mode', 'default_return_url', 'default_webhook_url', 'default_card_webhook_url']
+        returning: ['id', 'config', 'is_test_mode', 'default_return_url', 'default_webhook_url', 'default_card_webhook_url']
     });
 
     if (!providers || providers.length === 0 || !providers[0].config) {
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         table: 'payments_user_payment_provider_mappings', // You would need to create this table
         where: { provider_id: providerResult.id, provider_customer_key: customerKey },
         limit: 1,
-        columns: ['user_id']
+        returning: ['user_id']
     });
 
     let internalUserId = userMappings && userMappings.length > 0 ? userMappings[0].user_id : null;

@@ -674,4 +674,5 @@ export const useUpdate = (genOpts: Omit<GenerateOptions, 'operation'>, hookOpts?
     useMutation({ operation: 'update', ...genOpts }, hookOpts);
 export const useDelete = (genOpts: Omit<GenerateOptions, 'operation'>, hookOpts?: MutationHookOptions<any, any>) =>
     useMutation({ operation: 'delete', ...genOpts }, hookOpts);
-export const useSubscribe = useSubscription; 
+export const useSubscribe = useSubscription;
+export const useHasyx = useClient; 

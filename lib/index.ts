@@ -9,6 +9,7 @@ export * from './utils';
 export * from './provider';
 export * from './notify';
 export * from './hid';
+export * from './hasyx-client';
 
 // Re-export from auth.tsx (now including auth-next.ts indirectly)
 export * from './auth';
