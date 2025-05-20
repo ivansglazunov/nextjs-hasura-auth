@@ -51,7 +51,6 @@ lib/**/*.ts
 lib/**/*.tsx
 !lib/*.d.ts
 !lib/**/*.d.ts
-!lib/debug.ts
 components/*.ts
 components/*.tsx
 components/**/*.ts
