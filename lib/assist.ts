@@ -28,7 +28,6 @@ import { runMigrations } from './assist-migrations';
 import { configureProjectUser } from './assist-project-user';
 import { configureTelegramBot, calibrateTelegramBot } from './assist-telegram';
 import { configureOpenRouter } from './assist-openrouter';
-import { startRepl as startAskRepl } from './ask';
 
 // Ensure dotenv is configured only once
 if (require.main === module) {
@@ -262,30 +261,6 @@ if (require.main === module) {
     .option('--skip-openrouter', 'Skip OpenRouter API Key setup')
     .action((cmdOptions) => {
       assist(cmdOptions);
-    });
-
-  // New command for 'hasyx ask'
-  program
-    .command('ask')
-    .description('Starts an interactive REPL to chat with the AI agent.')
-    .action(() => {
-      console.log('🚀 Launching AI Interaction REPL...');
-      // Ensure .env is loaded for the ask command when run via hasyx CLI
-      try {
-        let projectRoot = process.cwd();
-        const envPath = path.join(projectRoot, '.env');
-        const envResult = dotenv.config({ path: envPath });
-        if (envResult.error) {
-          Debug('assist:ask:env')('Failed to load .env file for hasyx ask:', envResult.error);
-          console.warn('⚠️ Could not load .env file. OPENROUTER_API_KEY might not be available.');
-        } else {
-          Debug('assist:ask:env')('.env file loaded successfully for hasyx ask');
-        }
-      } catch (error) {
-        Debug('assist:ask:env')('Error loading .env file for hasyx ask:', error);
-        console.warn('⚠️ Error loading .env file.');
-      }
-      startAskRepl();
     });
 
   program.parse(process.argv);

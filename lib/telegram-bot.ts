@@ -180,6 +180,75 @@ export async function sendTelegramMessage(
 }
 
 /**
+ * TelegramBot class for convenient interaction with Telegram Bot API
+ */
+export class TelegramBot {
+  private token: string;
+
+  constructor(token: string) {
+    this.token = token;
+  }
+
+  /**
+   * Get information about the bot
+   */
+  async getMe(): Promise<any> {
+    return callTelegramApi(this.token, 'getMe', {});
+  }
+
+  /**
+   * Creates a chat handler for a specific chat ID
+   * @param chatId Telegram chat ID
+   * @returns An object with methods to interact with the specific chat
+   */
+  chat(chatId: number | string) {
+    return {
+      /**
+       * Send a text message to this chat
+       * @param text Message text
+       * @param replyToMessageId Optional message ID to reply to
+       * @param threadId Optional thread ID for forum messages
+       */
+      sendMessage: async (text: string, replyToMessageId?: number, threadId?: number) => {
+        return sendTelegramMessage(this.token, chatId, text, replyToMessageId, threadId);
+      }
+    };
+  }
+
+  /**
+   * Set the webhook URL for the bot
+   * @param url Webhook URL
+   */
+  async setWebhook(url: string): Promise<boolean> {
+    return setWebhook(this.token, url);
+  }
+
+  /**
+   * Set the bot's commands
+   * @param commands Array of command objects
+   */
+  async setCommands(commands: BotCommand[]): Promise<boolean> {
+    return setBotCommands(this.token, commands);
+  }
+
+  /**
+   * Set the bot's name
+   * @param name New bot name
+   */
+  async setName(name: string): Promise<boolean> {
+    return setBotName(this.token, name);
+  }
+
+  /**
+   * Set the bot's description
+   * @param description New bot description
+   */
+  async setDescription(description: string): Promise<boolean> {
+    return setBotDescription(this.token, description);
+  }
+}
+
+/**
  * Processes an incoming Telegram update.
  * This function will be called from the API route.
  */
