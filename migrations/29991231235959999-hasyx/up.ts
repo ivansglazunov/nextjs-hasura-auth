@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs-extra';
 import { spawn } from 'child_process';
-import { up } from '../../lib/up-hasyx'; // Использовать локальную версию, а не из пакета
+import { up } from 'hasyx/lib/up-hasyx'; // Использовать локальную версию, а не из пакета
 
 // Determine project root to load .env from there
 // This assumes migrations are run from the project root or `process.cwd()` is the project root.
