@@ -1,5 +1,5 @@
 import sidebar from "@/app/sidebar";
-import Payments from "@/lib/payments";
+import Payments from "hasyx/lib/payments";
 
 export default function PaymentsPage() {
   return (

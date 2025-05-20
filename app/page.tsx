@@ -1,6 +1,6 @@
 // Imports for getting server-side session
 
-import { SidebarLayout } from "@/components/sidebar/layout";
+import { SidebarLayout } from "hasyx/components/sidebar/layout";
 import sidebar from "@/app/sidebar";
 
 // Now this is an async server component

@@ -1,7 +1,7 @@
 'use client'
 
 // Remove static import of A-Frame - we'll import it dynamically
-import { AframeEntity as Entity, AframeScene as Scene } from '@/lib/aframe'; // Use the aliased exports
+import { AframeEntity as Entity, AframeScene as Scene } from 'hasyx/lib/aframe'; // Use the aliased exports
 import React, { useEffect, useRef, useState } from 'react'; // Add useState for tracking
 
 // This page needs to be a client component for A-Frame

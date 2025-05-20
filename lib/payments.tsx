@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SidebarData } from "hasyx/components/sidebar";
-import { SidebarLayout } from "@/components/sidebar/layout";
+import { SidebarLayout } from "hasyx/components/sidebar/layout";
 import {
   Tabs,
   TabsContent,

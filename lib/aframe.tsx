@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useImperativeHandle, forwardRef, Forwarded
 import Debug from "./debug";
 import React, { Component, ReactNode, RefCallback } from 'react';
 import { SidebarData } from "hasyx/components/sidebar";
-import { SidebarLayout } from "@/components/sidebar/layout";
+import { SidebarLayout } from "hasyx/components/sidebar/layout";
 
 const debug = Debug('aframe');
 

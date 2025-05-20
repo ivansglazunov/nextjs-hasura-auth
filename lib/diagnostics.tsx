@@ -1,7 +1,7 @@
 "use client";
 
 import { SidebarData } from "hasyx/components/sidebar";
-import { SidebarLayout } from "@/components/sidebar/layout";
+import { SidebarLayout } from "hasyx/components/sidebar/layout";
 import { AuthActionsCard } from "hasyx/components/auth/auth-actions-card";
 import { CredentialsSignInCard } from "hasyx/components/auth/credentials-signin-card";
 import { SessionCard } from "hasyx/components/auth/session-card";
