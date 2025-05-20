@@ -1142,30 +1142,6 @@
           "description": "columns and relationships of \"accounts\"",
           "fields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
               "name": "access_token",
               "description": null,
               "args": [],
@@ -1931,26 +1907,6 @@
               "defaultValue": null
             },
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "_not",
               "description": null,
               "type": {
@@ -2364,30 +2320,6 @@
           "description": "aggregate max on columns",
           "fields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
               "name": "access_token",
               "description": null,
               "args": [],
@@ -2580,26 +2512,6 @@
           "fields": null,
           "inputFields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "access_token",
               "description": null,
               "type": {
@@ -2759,30 +2671,6 @@
           "name": "accounts_min_fields",
           "description": "aggregate min on columns",
           "fields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "access_token",
               "description": null,
@@ -2975,26 +2863,6 @@
           "description": "order by min() on columns of table \"accounts\"",
           "fields": null,
           "inputFields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
             {
               "name": "access_token",
               "description": null,
@@ -3265,26 +3133,6 @@
           "fields": null,
           "inputFields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "access_token",
               "description": null,
               "type": {
@@ -3482,18 +3330,6 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "access_token",
               "description": "column name",
@@ -3921,26 +3757,6 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
             {
               "name": "access_token",
               "description": null,
@@ -4574,30 +4390,6 @@
           "description": "columns and relationships of \"debug\"",
           "fields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
               "name": "created_at",
               "description": null,
               "args": [],
@@ -4831,26 +4623,6 @@
               "defaultValue": null
             },
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "_not",
               "description": null,
               "type": {
@@ -5048,30 +4820,6 @@
           "description": "aggregate max on columns",
           "fields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
               "name": "created_at",
               "description": null,
               "args": [],
@@ -5106,30 +4854,6 @@
           "name": "debug_min_fields",
           "description": "aggregate min on columns",
           "fields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "created_at",
               "description": null,
@@ -5275,26 +4999,6 @@
           "fields": null,
           "inputFields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "created_at",
               "description": null,
               "type": {
@@ -5383,18 +5087,6 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "created_at",
               "description": "column name",
@@ -5498,26 +5190,6 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
             {
               "name": "created_at",
               "description": null,
@@ -9607,30 +9279,6 @@
           "description": "columns and relationships of \"notification_messages\"",
           "fields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
               "name": "body",
               "description": null,
               "args": [],
@@ -10270,26 +9918,6 @@
               "defaultValue": null
             },
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "_not",
               "description": null,
               "type": {
@@ -10597,30 +10225,6 @@
           "description": "aggregate max on columns",
           "fields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
               "name": "body",
               "description": null,
               "args": [],
@@ -10693,26 +10297,6 @@
           "fields": null,
           "inputFields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "body",
               "description": null,
               "type": {
@@ -10772,30 +10356,6 @@
           "name": "notification_messages_min_fields",
           "description": "aggregate min on columns",
           "fields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "body",
               "description": null,
@@ -10868,26 +10428,6 @@
           "description": "order by min() on columns of table \"notification_messages\"",
           "fields": null,
           "inputFields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
             {
               "name": "body",
               "description": null,
@@ -11093,26 +10633,6 @@
           "fields": null,
           "inputFields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "body",
               "description": null,
               "type": {
@@ -11251,18 +10771,6 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "body",
               "description": "column name",
@@ -11414,26 +10922,6 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
             {
               "name": "body",
               "description": null,
@@ -11636,30 +11124,6 @@
           "name": "notification_permissions",
           "description": "columns and relationships of \"notification_permissions\"",
           "fields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "created_at",
               "description": null,
@@ -12320,26 +11784,6 @@
               "defaultValue": null
             },
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "_not",
               "description": null,
               "type": {
@@ -12667,30 +12111,6 @@
           "description": "aggregate max on columns",
           "fields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
               "name": "created_at",
               "description": null,
               "args": [],
@@ -12775,26 +12195,6 @@
           "fields": null,
           "inputFields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "created_at",
               "description": null,
               "type": {
@@ -12864,30 +12264,6 @@
           "name": "notification_permissions_min_fields",
           "description": "aggregate min on columns",
           "fields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "created_at",
               "description": null,
@@ -12972,26 +12348,6 @@
           "description": "order by min() on columns of table \"notification_permissions\"",
           "fields": null,
           "inputFields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
             {
               "name": "created_at",
               "description": null,
@@ -13207,26 +12563,6 @@
           "fields": null,
           "inputFields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "created_at",
               "description": null,
               "type": {
@@ -13375,18 +12711,6 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "created_at",
               "description": "column name",
@@ -13554,26 +12878,6 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
             {
               "name": "created_at",
               "description": null,
@@ -13792,30 +13096,6 @@
           "name": "notifications",
           "description": "columns and relationships of \"notifications\"",
           "fields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "config",
               "description": null,
@@ -14326,26 +13606,6 @@
               "defaultValue": null
             },
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "INPUT_OBJECT",
-                "name": "String_comparison_exp",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "_not",
               "description": null,
               "type": {
@@ -14683,30 +13943,6 @@
           "description": "aggregate max on columns",
           "fields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
               "name": "created_at",
               "description": null,
               "args": [],
@@ -14803,26 +14039,6 @@
           "fields": null,
           "inputFields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "created_at",
               "description": null,
               "type": {
@@ -14902,30 +14118,6 @@
           "name": "notifications_min_fields",
           "description": "aggregate min on columns",
           "fields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "args": [],
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "created_at",
               "description": null,
@@ -15022,26 +14214,6 @@
           "description": "order by min() on columns of table \"notifications\"",
           "fields": null,
           "inputFields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
             {
               "name": "created_at",
               "description": null,
@@ -15232,26 +14404,6 @@
           "fields": null,
           "inputFields": [
             {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "ENUM",
-                "name": "order_by",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
               "name": "config",
               "description": null,
               "type": {
@@ -15410,18 +14562,6 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": "column name",
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
             {
               "name": "config",
               "description": "column name",
@@ -15605,26 +14745,6 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
-            {
-              "name": "_hasyx_schema_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
-            {
-              "name": "_hasyx_table_name",
-              "description": null,
-              "type": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              },
-              "defaultValue": null
-            },
             {
               "name": "config",
               "description": null,
@@ -42135,5 +41255,55 @@
         }
       ]
     }
+  },
+  "hasyx": {
+    "tableMappings": {
+      "accounts": {
+        "schema": "public",
+        "table": "accounts"
+      },
+      "debug": {
+        "schema": "public",
+        "table": "debug"
+      },
+      "notification_messages": {
+        "schema": "notification",
+        "table": "messages"
+      },
+      "notification_permissions": {
+        "schema": "notification",
+        "table": "permissions"
+      },
+      "notifications": {
+        "schema": "public",
+        "table": "notifications"
+      },
+      "payments_methods": {
+        "schema": "payments",
+        "table": "methods"
+      },
+      "payments_operations": {
+        "schema": "payments",
+        "table": "operations"
+      },
+      "payments_plans": {
+        "schema": "payments",
+        "table": "plans"
+      },
+      "payments_providers": {
+        "schema": "payments",
+        "table": "providers"
+      },
+      "payments_subscriptions": {
+        "schema": "payments",
+        "table": "subscriptions"
+      },
+      "users": {
+        "schema": "public",
+        "table": "users"
+      }
+    },
+    "timestamp": "2025-05-20T02:34:49.469Z",
+    "version": "1.0.0"
   }
 }
