@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   debug('POST /api/telegram_bot request received');
   
   return handleTelegramBot(request, async ({ bot, chat, message, username }) => {
-    await chat.sendMessage(`Hello ${username}, I received your message: "${message.text}"`);
+    await chat.sendMessage(`Hello ${username}, I received your message: "${message?.text}"`);
   });
 }
 
