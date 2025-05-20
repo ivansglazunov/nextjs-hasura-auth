@@ -88,58 +88,6 @@ export async function configureTelegramBot(rl: readline.Interface, envPath: stri
   return envVars;
 }
 
-export async function configureTelegramChannel(rl: readline.Interface, envPath: string): Promise<Record<string, string>> {
-  debug('Configuring Telegram Channel'); console.log('📢 Configuring Telegram Channel for notifications...');
-  let envVars = parseEnvFile(envPath);
-  let changed = false;
-
-  const currentChannelId = envVars.TELEGRAM_CHANNEL_ID;
-  let newChannelId = currentChannelId;
-
-  if (currentChannelId) {
-    console.log(`✅ Telegram Channel ID already configured: ${currentChannelId}.`);
-    if (!await askYesNo(rl, 'Do you want to reconfigure the Telegram Channel ID?', false)) {
-      return envVars; // No changes if user opts out
-    }
-    // Proceed to ask for new value if they want to reconfigure
-    newChannelId = await askForInput(rl, 'Enter new Telegram Channel ID (e.g., @mychannel or -100123..., press Enter to keep current)', currentChannelId);
-  } else {
-    if (await askYesNo(rl, 'Do you want to set up a Telegram Channel for notifications?', true)) {
-      console.log(
-`To set up a Telegram Channel for notifications:
-1. Create a new public or private Telegram channel.
-2. Add your Telegram Bot (configured in the previous step) to the channel as an administrator.
-3. Get the Channel ID:
-   - For public channels: it's the username (e.g., @mychannelname).
-   - For private channels: temporarily make it public to get its username, or use a bot like @RawDataBot, forward a message from the channel to it, and look for "chat": { "id": YOUR_CHANNEL_ID } (it will be a negative number).
-   - Ensure the ID starts with '@' for public channels if using the username, or is the numeric ID for private channels.`
-      );
-      newChannelId = await askForInput(rl, 'Enter Telegram Channel ID (e.g., @mychannel or -100123...)');
-    } else {
-      delete envVars.TELEGRAM_CHANNEL_ID;
-      console.log('Skipping Telegram Channel setup.');
-      return envVars; // No changes if user opts out
-    }
-  }
-  
-  if (newChannelId !== currentChannelId) {
-    if (newChannelId && newChannelId.trim() !== '') {
-        envVars.TELEGRAM_CHANNEL_ID = newChannelId;
-    } else {
-        delete envVars.TELEGRAM_CHANNEL_ID; // Remove if new value is empty string
-    }
-    changed = true;
-  }
-
-  if (changed) {
-    writeEnvFile(envPath, envVars);
-    console.log('✅ Telegram Channel configuration updated.');
-  } else {
-    console.log('ℹ️ No changes made to Telegram Channel configuration.');
-  }
-  return envVars;
-}
-
 export async function runTelegramSetupAndCalibration(rl: readline.Interface, envPath: string, options: { skipTelegram?: boolean, projectName?: string }): Promise<void> {
   if (options.skipTelegram) {
     debug('Skipping all Telegram setup due to options.');
@@ -147,7 +95,6 @@ export async function runTelegramSetupAndCalibration(rl: readline.Interface, env
     return;
   }
   await configureTelegramBot(rl, envPath);
-  await configureTelegramChannel(rl, envPath);
   
   const envVars = parseEnvFile(envPath);
   if (envVars.TELEGRAM_BOT_TOKEN) {
@@ -221,7 +168,7 @@ async function main() {
   }
   try {
     await runTelegramSetupAndCalibration(rl, envPath, { projectName });
-    console.log('✅ Telegram Bot and Channel setup/calibration process complete.');
+    console.log('✅ Telegram Bot setup/calibration process complete.');
   } catch (error) {
     console.error('❌ Error during Telegram setup:', error);
     process.exit(1);

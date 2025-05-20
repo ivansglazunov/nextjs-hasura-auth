@@ -71,24 +71,6 @@ const config: NextConfig = {
       },
     ];
   },
-
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        path: false,
-        os: false,
-        crypto: false,
-        stream: false,
-        net: false,
-        tls: false,
-        child_process: false,
-      };
-    }
-    
-    return config;
-  },
 };
 
 // REMOVED the entire block that was moving the app/api directory.

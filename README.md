@@ -486,11 +486,9 @@ TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_API_TOKEN
 # Optional: Chat ID for admin correspondence group
 TELEGRAM_ADMIN_CHAT_ID=YOUR_ADMIN_GROUP_CHAT_ID 
 
-# Telegram Channel & Project User Configuration
+# Project User Configuration
 # User ID in your Hasyx database representing the project itself (set via `npx hasyx assist`)
 NEXT_PUBLIC_PROJECT_USER_ID=your_hasyx_project_user_uuid
-# ID or username of your Telegram Channel for announcements (set via `npx hasyx assist`)
-TELEGRAM_CHANNEL_ID=@your_channel_username_or_numerical_id
 
 # Optional: Custom path to notification icon
 NEXT_PUBLIC_NOTIFICATION_ICON=/icon-192x192.png
@@ -617,7 +615,6 @@ Hasyx includes a flexible system for push notifications, designed to be extensib
 Key features include:
 - Firebase Cloud Messaging (FCM) for Web Push.
 - Telegram Bot integration for direct user messages and admin correspondence.
-- Telegram Channel integration for project announcements.
 
 ## Contributing
 

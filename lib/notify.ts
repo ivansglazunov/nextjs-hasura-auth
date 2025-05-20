@@ -21,7 +21,7 @@ export interface Notification {
 export interface NotificationPermission {
   id: string;
   user_id: string;
-  provider: string; // e.g., 'firebase', 'apn', 'telegram_bot', 'telegram_channel'
+  provider: string; // e.g., 'firebase', 'apn', 'telegram_bot'
   device_token: string;
   device_info: Record<string, any>; // e.g., { platform: 'web', browser: 'chrome', os: 'mac' }
   created_at: string;
@@ -95,11 +95,6 @@ export async function handleNotificationEvent(
         debug('Sending via Telegram Bot provider');
         const { sendTelegramNotification } = await import('./notify-telegram');
         result = await sendTelegramNotification(permission, message, notification);
-        break;
-      case 'telegram_channel':
-        debug('Sending via Telegram Channel provider');
-        const { sendTelegramChannelNotification } = await import('./notify-telegram-channel');
-        result = await sendTelegramChannelNotification(permission, message, notification);
         break;
       default:
         debug(`Unsupported provider: ${permission.provider}`);

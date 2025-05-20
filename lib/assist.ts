@@ -12,7 +12,6 @@ import { Generator } from './generator';
 import schema from '../public/hasura-schema.json';
 import dotenv from 'dotenv';
 import { setBotName, setBotDescription, setBotCommands, BotCommand, setWebhook, setBotMenuButtonWebApp } from './telegram-bot';
-import { setTelegramChannelTitle, setTelegramChannelPhoto } from './telegram-channel';
 import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, getGitHubRemoteUrl } from './assist-common';
 import { checkGitHubAuth, setupRepository } from './assist-github-auth';
 import { setupEnvironment, setupPackageJson } from './assist-env';
@@ -27,7 +26,7 @@ import { syncEnvironmentVariables } from './assist-sync';
 import { commitChanges } from './assist-commit';
 import { runMigrations } from './assist-migrations';
 import { configureProjectUser } from './assist-project-user';
-import { configureTelegramBot, configureTelegramChannel, calibrateTelegramBot } from './assist-telegram';
+import { configureTelegramBot, calibrateTelegramBot } from './assist-telegram';
 import { configureOpenRouter } from './assist-openrouter';
 import { startRepl as startAskRepl } from './ask';
 
@@ -72,7 +71,6 @@ interface AssistOptions {
   skipFirebase?: boolean;
   skipTelegram?: boolean;
   skipProjectUser?: boolean;
-  skipTelegramChannel?: boolean;
   skipOpenRouter?: boolean;
 }
 
@@ -162,8 +160,6 @@ async function assist(options: AssistOptions = {}) {
     else debug('Skipping Project User setup');
     if (!options.skipTelegram) envVars = await configureTelegramBot(rl, envPath);
     else debug('Skipping Telegram Bot setup');
-    if (!options.skipTelegramChannel) envVars = await configureTelegramChannel(rl, envPath);
-    else debug('Skipping Telegram Channel setup');
     
     if (!options.skipCommit) await commitChanges(rl, { skipCommit: options.skipCommit, commitMessage: 'feat: project configured by hasyx-assist' });
     else debug('Skipping commit');
@@ -184,7 +180,6 @@ async function assist(options: AssistOptions = {}) {
 export interface TelegramSetupOptions {
   skipBot?: boolean;
   skipAdminGroup?: boolean;
-  skipChannel?: boolean;
   skipCalibration?: boolean;
 }
 
@@ -223,9 +218,7 @@ async function runTelegramSetupAndCalibration(options: TelegramSetupOptions = {}
     if (!options.skipBot) {
       envVars = await configureTelegramBot(rl, envPath);
     }
-    if (!options.skipChannel) {
-      envVars = await configureTelegramChannel(rl, envPath);
-    }
+    
     if (!options.skipCalibration) {
       if (envVars.TELEGRAM_BOT_TOKEN) {
         console.log('🔬 Starting Telegram Bot Calibration (using imported module)...');
@@ -266,7 +259,6 @@ if (require.main === module) {
     .option('--skip-firebase', 'Skip Firebase configuration')
     .option('--skip-telegram', 'Skip Telegram Bot configuration')
     .option('--skip-project-user', 'Skip setting up project user')
-    .option('--skip-telegram-channel', 'Skip setting up Telegram channel')
     .option('--skip-openrouter', 'Skip OpenRouter API Key setup')
     .action((cmdOptions) => {
       assist(cmdOptions);
