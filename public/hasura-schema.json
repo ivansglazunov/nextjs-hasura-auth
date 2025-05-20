@@ -1142,6 +1142,30 @@
           "description": "columns and relationships of \"accounts\"",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "access_token",
               "description": null,
               "args": [],
@@ -1176,6 +1200,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "bigint",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -1907,6 +1943,26 @@
               "defaultValue": null
             },
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_not",
               "description": null,
               "type": {
@@ -1960,6 +2016,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "bigint_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -2180,6 +2246,16 @@
               "defaultValue": null
             },
             {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "id",
               "description": null,
               "type": {
@@ -2319,6 +2395,30 @@
           "name": "accounts_max_fields",
           "description": "aggregate max on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "access_token",
               "description": null,
@@ -2512,6 +2612,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "access_token",
               "description": null,
               "type": {
@@ -2671,6 +2791,30 @@
           "name": "accounts_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "access_token",
               "description": null,
@@ -2863,6 +3007,26 @@
           "description": "order by min() on columns of table \"accounts\"",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "access_token",
               "description": null,
@@ -3071,6 +3235,41 @@
         },
         {
           "kind": "INPUT_OBJECT",
+          "name": "accounts_obj_rel_insert_input",
+          "description": "input type for inserting object relation for remote table \"accounts\"",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "data",
+              "description": null,
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "accounts_insert_input",
+                  "ofType": null
+                }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "on_conflict",
+              "description": "upsert condition",
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "accounts_on_conflict",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
           "name": "accounts_on_conflict",
           "description": "on_conflict condition type for table \"accounts\"",
           "fields": null,
@@ -3133,6 +3332,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "access_token",
               "description": null,
               "type": {
@@ -3158,6 +3377,16 @@
               "type": {
                 "kind": "ENUM",
                 "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -3330,6 +3559,18 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "access_token",
               "description": "column name",
@@ -3757,6 +3998,26 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "access_token",
               "description": null,
@@ -4390,6 +4651,30 @@
           "description": "columns and relationships of \"debug\"",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "args": [],
@@ -4401,6 +4686,18 @@
                   "name": "timestamptz",
                   "ofType": null
                 }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx",
+                "ofType": null
               },
               "isDeprecated": false,
               "deprecationReason": null
@@ -4623,6 +4920,26 @@
               "defaultValue": null
             },
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_not",
               "description": null,
               "type": {
@@ -4656,6 +4973,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "timestamptz_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -4790,6 +5117,16 @@
               "defaultValue": null
             },
             {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "id",
               "description": null,
               "type": {
@@ -4819,6 +5156,30 @@
           "name": "debug_max_fields",
           "description": "aggregate max on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -4854,6 +5215,30 @@
           "name": "debug_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -4937,6 +5322,41 @@
         },
         {
           "kind": "INPUT_OBJECT",
+          "name": "debug_obj_rel_insert_input",
+          "description": "input type for inserting object relation for remote table \"debug\"",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "data",
+              "description": null,
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "debug_insert_input",
+                  "ofType": null
+                }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "on_conflict",
+              "description": "upsert condition",
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "debug_on_conflict",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
           "name": "debug_on_conflict",
           "description": "on_conflict condition type for table \"debug\"",
           "fields": null,
@@ -4999,11 +5419,41 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "type": {
                 "kind": "ENUM",
                 "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -5087,6 +5537,18 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": "column name",
@@ -5190,6 +5652,26 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -5331,6 +5813,1197 @@
                   "name": "debug_bool_exp",
                   "ofType": null
                 }
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "hasyx",
+          "description": "columns and relationships of \"hasyx\"",
+          "fields": [
+            {
+              "name": "hid",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "id",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "namespace",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "payments_methods",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "payments_methods",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "payments_operations",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "payments_operations",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "payments_plans",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "payments_plans",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "payments_providers",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "payments_providers",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "payments_subscriptions",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "payments_subscriptions",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "project",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "public_accounts",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "accounts",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "public_debug",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "debug",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "public_notifications",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "notifications",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "public_users",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "users",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "schema",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "table",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [],
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "hasyx_aggregate",
+          "description": "aggregated selection of \"hasyx\"",
+          "fields": [
+            {
+              "name": "aggregate",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx_aggregate_fields",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "nodes",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "OBJECT",
+                      "name": "hasyx",
+                      "ofType": null
+                    }
+                  }
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [],
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "hasyx_aggregate_fields",
+          "description": "aggregate fields of \"hasyx\"",
+          "fields": [
+            {
+              "name": "count",
+              "description": null,
+              "args": [
+                {
+                  "name": "columns",
+                  "description": null,
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "ENUM",
+                        "name": "hasyx_select_column",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "distinct",
+                  "description": null,
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Boolean",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                }
+              ],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "max",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx_max_fields",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "min",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx_min_fields",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [],
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "hasyx_bool_exp",
+          "description": "Boolean expression to filter rows from the table \"hasyx\". All fields are combined with a logical 'AND'.",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "_and",
+              "description": null,
+              "type": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "hasyx_bool_exp",
+                    "ofType": null
+                  }
+                }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_not",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_or",
+              "description": null,
+              "type": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "hasyx_bool_exp",
+                    "ofType": null
+                  }
+                }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hid",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "id",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "namespace",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_methods",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_methods_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_operations",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_operations_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_plans",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_plans_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_providers",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_providers_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_subscriptions",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_subscriptions_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "project",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_accounts",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "accounts_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_debug",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "debug_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_notifications",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "notifications_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_users",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "users_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "schema",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "table",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "hasyx_insert_input",
+          "description": "input type for inserting data into table \"hasyx\"",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "hid",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "id",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "namespace",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_methods",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_methods_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_operations",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_operations_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_plans",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_plans_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_providers",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_providers_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_subscriptions",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_subscriptions_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "project",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_accounts",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "accounts_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_debug",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "debug_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_notifications",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "notifications_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_users",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "users_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "schema",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "table",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "hasyx_max_fields",
+          "description": "aggregate max on columns",
+          "fields": [
+            {
+              "name": "hid",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "id",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "namespace",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "project",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "schema",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "table",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [],
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "hasyx_min_fields",
+          "description": "aggregate min on columns",
+          "fields": [
+            {
+              "name": "hid",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "id",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "namespace",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "project",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "schema",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "table",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [],
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "hasyx_obj_rel_insert_input",
+          "description": "input type for inserting object relation for remote table \"hasyx\"",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "data",
+              "description": null,
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "hasyx_insert_input",
+                  "ofType": null
+                }
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "hasyx_order_by",
+          "description": "Ordering options when selecting data from \"hasyx\".",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "hid",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "id",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "namespace",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_methods",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_methods_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_operations",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_operations_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_plans",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_plans_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_providers",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_providers_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "payments_subscriptions",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_subscriptions_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "project",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_accounts",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "accounts_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_debug",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "debug_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_notifications",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "notifications_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "public_users",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "users_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "schema",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "table",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "ENUM",
+          "name": "hasyx_select_column",
+          "description": "select columns of table \"hasyx\"",
+          "fields": null,
+          "inputFields": null,
+          "interfaces": null,
+          "enumValues": [
+            {
+              "name": "hid",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "id",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "namespace",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "project",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "schema",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "table",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "hasyx_stream_cursor_input",
+          "description": "Streaming cursor of the table \"hasyx\"",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "initial_value",
+              "description": "Stream column input with initial value",
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "hasyx_stream_cursor_value_input",
+                  "ofType": null
+                }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "ordering",
+              "description": "cursor ordering",
+              "type": {
+                "kind": "ENUM",
+                "name": "cursor_ordering",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "hasyx_stream_cursor_value_input",
+          "description": "Initial value of the column from where the streaming should start",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "hid",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "id",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "namespace",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "project",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "schema",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "table",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "defaultValue": null
             }
@@ -13097,6 +14770,30 @@
           "description": "columns and relationships of \"notifications\"",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "config",
               "description": null,
               "args": [
@@ -13142,6 +14839,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -13606,6 +15315,26 @@
               "defaultValue": null
             },
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_not",
               "description": null,
               "type": {
@@ -13659,6 +15388,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -13863,6 +15602,16 @@
               "defaultValue": null
             },
             {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "id",
               "description": null,
               "type": {
@@ -13942,6 +15691,30 @@
           "name": "notifications_max_fields",
           "description": "aggregate max on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -14039,6 +15812,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "type": {
@@ -14118,6 +15911,30 @@
           "name": "notifications_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -14214,6 +16031,26 @@
           "description": "order by min() on columns of table \"notifications\"",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -14342,6 +16179,41 @@
         },
         {
           "kind": "INPUT_OBJECT",
+          "name": "notifications_obj_rel_insert_input",
+          "description": "input type for inserting object relation for remote table \"notifications\"",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "data",
+              "description": null,
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "notifications_insert_input",
+                  "ofType": null
+                }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "on_conflict",
+              "description": "upsert condition",
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "notifications_on_conflict",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
           "name": "notifications_on_conflict",
           "description": "on_conflict condition type for table \"notifications\"",
           "fields": null,
@@ -14404,6 +16276,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "config",
               "description": null,
               "type": {
@@ -14429,6 +16321,16 @@
               "type": {
                 "kind": "ENUM",
                 "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -14562,6 +16464,18 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "config",
               "description": "column name",
@@ -14745,6 +16659,26 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "config",
               "description": null,
@@ -15154,6 +17088,30 @@
           "description": "columns and relationships of \"payments.methods\"",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "args": [],
@@ -15211,6 +17169,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -16242,6 +18212,26 @@
               "defaultValue": null
             },
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_not",
               "description": null,
               "type": {
@@ -16305,6 +18295,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -16643,6 +18643,16 @@
               "defaultValue": null
             },
             {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "id",
               "description": null,
               "type": {
@@ -16783,6 +18793,30 @@
           "description": "aggregate max on columns",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "args": [],
@@ -16903,6 +18937,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "type": {
@@ -17002,6 +19056,30 @@
           "name": "payments_methods_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -17122,6 +19200,26 @@
           "description": "order by min() on columns of table \"payments.methods\"",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -17367,6 +19465,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "type": {
@@ -17402,6 +19520,16 @@
               "type": {
                 "kind": "ENUM",
                 "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -17605,6 +19733,18 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": "column name",
@@ -17914,6 +20054,26 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -18229,6 +20389,30 @@
           "description": "columns and relationships of \"payments.operations\"",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "amount",
               "description": null,
               "args": [],
@@ -18307,6 +20491,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -19164,6 +21360,26 @@
               "defaultValue": null
             },
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_not",
               "description": null,
               "type": {
@@ -19247,6 +21463,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -19678,6 +21904,16 @@
               "defaultValue": null
             },
             {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "id",
               "description": null,
               "type": {
@@ -19857,6 +22093,30 @@
           "name": "payments_operations_max_fields",
           "description": "aggregate max on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "amount",
               "description": null,
@@ -20062,6 +22322,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "amount",
               "description": null,
               "type": {
@@ -20231,6 +22511,30 @@
           "name": "payments_operations_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "amount",
               "description": null,
@@ -20435,6 +22739,26 @@
           "description": "order by min() on columns of table \"payments.operations\"",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "amount",
               "description": null,
@@ -20653,6 +22977,41 @@
         },
         {
           "kind": "INPUT_OBJECT",
+          "name": "payments_operations_obj_rel_insert_input",
+          "description": "input type for inserting object relation for remote table \"payments.operations\"",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "data",
+              "description": null,
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "payments_operations_insert_input",
+                  "ofType": null
+                }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "on_conflict",
+              "description": "upsert condition",
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "payments_operations_on_conflict",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
           "name": "payments_operations_on_conflict",
           "description": "on_conflict condition type for table \"payments.operations\"",
           "fields": null,
@@ -20715,6 +23074,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "amount",
               "description": null,
               "type": {
@@ -20770,6 +23149,16 @@
               "type": {
                 "kind": "ENUM",
                 "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -21023,6 +23412,18 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "amount",
               "description": "column name",
@@ -21514,6 +23915,26 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "amount",
               "description": null,
@@ -22111,6 +24532,30 @@
           "description": "columns and relationships of \"payments.plans\"",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "active",
               "description": "Whether this plan can be subscribed to currently",
               "args": [],
@@ -22188,6 +24633,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "jsonb",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -23285,6 +25742,26 @@
               "defaultValue": null
             },
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_not",
               "description": null,
               "type": {
@@ -23358,6 +25835,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "jsonb_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -23711,6 +26198,16 @@
               "defaultValue": null
             },
             {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "id",
               "description": null,
               "type": {
@@ -23830,6 +26327,30 @@
           "name": "payments_plans_max_fields",
           "description": "aggregate max on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -23975,6 +26496,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "type": {
@@ -24094,6 +26635,30 @@
           "name": "payments_plans_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -24238,6 +26803,26 @@
           "description": "order by min() on columns of table \"payments.plans\"",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -24503,6 +27088,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "active",
               "description": null,
               "type": {
@@ -24548,6 +27153,16 @@
               "type": {
                 "kind": "ENUM",
                 "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -24731,6 +27346,18 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "active",
               "description": "column name",
@@ -25308,6 +27935,26 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "active",
               "description": "Whether this plan can be subscribed to currently",
@@ -26001,6 +28648,30 @@
           "description": "columns and relationships of \"payments.providers\"",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "config",
               "description": "Provider-specific credentials and settings. Structure depends on the type. Access to this column must be heavily restricted.",
               "args": [
@@ -26074,6 +28745,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -27206,6 +29889,26 @@
               "defaultValue": null
             },
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_not",
               "description": null,
               "type": {
@@ -27279,6 +29982,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -27579,6 +30292,16 @@
               "defaultValue": null
             },
             {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "id",
               "description": null,
               "type": {
@@ -27698,6 +30421,30 @@
           "name": "payments_providers_max_fields",
           "description": "aggregate max on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -27819,6 +30566,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "type": {
@@ -27918,6 +30685,30 @@
           "name": "payments_providers_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -28038,6 +30829,26 @@
           "description": "order by min() on columns of table \"payments.providers\"",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -28283,6 +31094,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "config",
               "description": null,
               "type": {
@@ -28328,6 +31159,16 @@
               "type": {
                 "kind": "ENUM",
                 "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -28501,6 +31342,18 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "config",
               "description": "column name",
@@ -28794,6 +31647,26 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "config",
               "description": "Provider-specific credentials and settings. Structure depends on the type. Access to this column must be heavily restricted.",
@@ -29093,6 +31966,30 @@
           "description": "columns and relationships of \"payments.subscriptions\"",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "cancel_at_period_end",
               "description": null,
               "args": [],
@@ -29179,6 +32076,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -30058,6 +32967,26 @@
               "defaultValue": null
             },
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_not",
               "description": null,
               "type": {
@@ -30151,6 +33080,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -30485,6 +33424,16 @@
               "defaultValue": null
             },
             {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "id",
               "description": null,
               "type": {
@@ -30644,6 +33593,30 @@
           "name": "payments_subscriptions_max_fields",
           "description": "aggregate max on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "canceled_at",
               "description": null,
@@ -30837,6 +33810,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "canceled_at",
               "description": null,
               "type": {
@@ -30996,6 +33989,30 @@
           "name": "payments_subscriptions_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "canceled_at",
               "description": null,
@@ -31188,6 +34205,26 @@
           "description": "order by min() on columns of table \"payments.subscriptions\"",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "canceled_at",
               "description": null,
@@ -31493,6 +34530,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "cancel_at_period_end",
               "description": null,
               "type": {
@@ -31558,6 +34615,16 @@
               "type": {
                 "kind": "ENUM",
                 "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -31771,6 +34838,18 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "cancel_at_period_end",
               "description": "column name",
@@ -32132,6 +35211,26 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "cancel_at_period_end",
               "description": null,
@@ -32908,6 +36007,180 @@
                 "kind": "OBJECT",
                 "name": "debug",
                 "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "fetch data from the table: \"hasyx\"",
+              "args": [
+                {
+                  "name": "distinct_on",
+                  "description": "distinct select on columns",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "ENUM",
+                        "name": "hasyx_select_column",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "limit",
+                  "description": "limit the number of rows returned",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Int",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "offset",
+                  "description": "skip the first n rows. Use only with order_by",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Int",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "order_by",
+                  "description": "sort the rows by one or more columns",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "hasyx_order_by",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "where",
+                  "description": "filter the rows returned",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "hasyx_bool_exp",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                }
+              ],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "OBJECT",
+                      "name": "hasyx",
+                      "ofType": null
+                    }
+                  }
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx_aggregate",
+              "description": "fetch aggregated fields from the table: \"hasyx\"",
+              "args": [
+                {
+                  "name": "distinct_on",
+                  "description": "distinct select on columns",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "ENUM",
+                        "name": "hasyx_select_column",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "limit",
+                  "description": "limit the number of rows returned",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Int",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "offset",
+                  "description": "skip the first n rows. Use only with order_by",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Int",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "order_by",
+                  "description": "sort the rows by one or more columns",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "hasyx_order_by",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "where",
+                  "description": "filter the rows returned",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "hasyx_bool_exp",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                }
+              ],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "hasyx_aggregate",
+                  "ofType": null
+                }
               },
               "isDeprecated": false,
               "deprecationReason": null
@@ -35260,6 +38533,247 @@
                     "ofType": {
                       "kind": "OBJECT",
                       "name": "debug",
+                      "ofType": null
+                    }
+                  }
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "fetch data from the table: \"hasyx\"",
+              "args": [
+                {
+                  "name": "distinct_on",
+                  "description": "distinct select on columns",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "ENUM",
+                        "name": "hasyx_select_column",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "limit",
+                  "description": "limit the number of rows returned",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Int",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "offset",
+                  "description": "skip the first n rows. Use only with order_by",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Int",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "order_by",
+                  "description": "sort the rows by one or more columns",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "hasyx_order_by",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "where",
+                  "description": "filter the rows returned",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "hasyx_bool_exp",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                }
+              ],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "OBJECT",
+                      "name": "hasyx",
+                      "ofType": null
+                    }
+                  }
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx_aggregate",
+              "description": "fetch aggregated fields from the table: \"hasyx\"",
+              "args": [
+                {
+                  "name": "distinct_on",
+                  "description": "distinct select on columns",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "ENUM",
+                        "name": "hasyx_select_column",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "limit",
+                  "description": "limit the number of rows returned",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Int",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "offset",
+                  "description": "skip the first n rows. Use only with order_by",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Int",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "order_by",
+                  "description": "sort the rows by one or more columns",
+                  "type": {
+                    "kind": "LIST",
+                    "name": null,
+                    "ofType": {
+                      "kind": "NON_NULL",
+                      "name": null,
+                      "ofType": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "hasyx_order_by",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "where",
+                  "description": "filter the rows returned",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "hasyx_bool_exp",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                }
+              ],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "OBJECT",
+                  "name": "hasyx_aggregate",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx_stream",
+              "description": "fetch data from the table in a streaming manner: \"hasyx\"",
+              "args": [
+                {
+                  "name": "batch_size",
+                  "description": "maximum number of rows returned in a single batch",
+                  "type": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "SCALAR",
+                      "name": "Int",
+                      "ofType": null
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "cursor",
+                  "description": "cursor to stream the results returned by the query",
+                  "type": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "LIST",
+                      "name": null,
+                      "ofType": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "hasyx_stream_cursor_input",
+                        "ofType": null
+                      }
+                    }
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "where",
+                  "description": "filter the rows returned",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "hasyx_bool_exp",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                }
+              ],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "OBJECT",
+                      "name": "hasyx",
                       "ofType": null
                     }
                   }
@@ -37819,6 +41333,30 @@
           "description": "columns and relationships of \"users\"",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "accounts",
               "description": "An array relationship",
               "args": [
@@ -38039,6 +41577,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "hasyx",
+              "description": "An object relationship",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "hasyx",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -39500,6 +43050,26 @@
               "defaultValue": null
             },
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_not",
               "description": null,
               "type": {
@@ -39583,6 +43153,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_bool_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -39872,6 +43452,16 @@
               "defaultValue": null
             },
             {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_obj_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "id",
               "description": null,
               "type": {
@@ -40012,6 +43602,30 @@
           "description": "aggregate max on columns",
           "fields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "created_at",
               "description": null,
               "args": [],
@@ -40130,6 +43744,30 @@
           "name": "users_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -40394,6 +44032,26 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "accounts_aggregate",
               "description": null,
               "type": {
@@ -40439,6 +44097,16 @@
               "type": {
                 "kind": "ENUM",
                 "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "hasyx",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "hasyx_order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -40611,6 +44279,18 @@
           "inputFields": null,
           "interfaces": null,
           "enumValues": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "created_at",
               "description": "column name",
@@ -40826,6 +44506,26 @@
           "description": "Initial value of the column from where the streaming should start",
           "fields": null,
           "inputFields": [
+            {
+              "name": "_hasyx_schema_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_hasyx_table_name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "created_at",
               "description": null,
@@ -41266,6 +44966,10 @@
         "schema": "public",
         "table": "debug"
       },
+      "hasyx": {
+        "schema": "public",
+        "table": "hasyx"
+      },
       "notification_messages": {
         "schema": "notification",
         "table": "messages"
@@ -41303,7 +45007,7 @@
         "table": "users"
       }
     },
-    "timestamp": "2025-05-20T02:34:49.469Z",
+    "timestamp": "2025-05-20T02:51:05.511Z",
     "version": "1.0.0"
   }
 }
