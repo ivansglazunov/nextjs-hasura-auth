@@ -20,6 +20,7 @@ jobs:
 
       - name: Prepare ignore files
         run: |
+          cp lib/debug.ts lib/debug.template
           cp .npmignore .npmignore.template
           cp .npmrc .npmrc.template
           cp .gitignore .gitignore.template

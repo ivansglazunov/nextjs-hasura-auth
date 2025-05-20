@@ -329,7 +329,7 @@ program
       'migrations/29991231235959999-hasyx/up.ts': 'migrations/29991231235959999-hasyx/up.ts',
       'migrations/29991231235959999-hasyx/down.ts': 'migrations/29991231235959999-hasyx/down.ts',
       'events/notify.json': 'events/notify.json',
-      'lib/debug.ts': 'lib/debug.ts',
+      'lib/debug.ts': 'lib/debug.template',
     };
     debug('Files to create if not exists:', Object.keys(filesToCreateIfNotExists));
 
