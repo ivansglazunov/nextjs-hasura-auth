@@ -2,20 +2,19 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs-extra';
 import { spawn } from 'child_process';
-import { up } from 'hasyx/lib/up-hasyx'; // Использовать локальную версию, а не из пакета
+import { up } from 'hasyx/lib/up-hasyx';
 
 // Determine project root to load .env from there
 // This assumes migrations are run from the project root or `process.cwd()` is the project root.
 const projectRoot = process.cwd(); 
 dotenv.config({ path: path.join(projectRoot, '.env') });
 
-// Функция для прямого запуска hasura-schema.ts, минуя npx hasyx schema
+// Функция для запуска hasyx schema
 async function runHasuraSchema(): Promise<void> {
   return new Promise((resolve, reject) => {
-    console.log('📊 Directly generating schema with proper table mappings...');
+    console.log('📊 Generating schema using hasyx schema command...');
     
-    const scriptPath = path.join(projectRoot, 'lib', 'hasura-schema.ts');
-    const child = spawn('npx', ['tsx', scriptPath], {
+    const child = spawn('npx', ['hasyx', 'schema'], {
       stdio: 'inherit',
       cwd: projectRoot
     });

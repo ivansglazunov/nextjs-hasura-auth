@@ -73,8 +73,4 @@ const config: NextConfig = {
   },
 };
 
-// REMOVED the entire block that was moving the app/api directory.
-// Next.js with output: 'export' will handle API routes appropriately 
-// (either build them if static GET, or error if dynamic).
-
 export default config;

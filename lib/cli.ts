@@ -545,8 +545,8 @@ program
           "dev": "npx -y hasyx dev",
           "ws": "npx --yes next-ws-cli@latest patch -y",
           "postinstall": "npm run ws -- -y",
-          "migrate": "tsx lib/migrate.ts",
-          "unmigrate": "tsx lib/unmigrate.ts",
+          "migrate": "npx hasyx migrate",
+          "unmigrate": "npx hasyx unmigrate",
           "npm-publish": "npm run build && npm publish",
         };
         
