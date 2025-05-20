@@ -38,8 +38,8 @@ export function SidebarLayout({
           <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
-              {breadcrumb.map((item, i) => (<>
-                <BreadcrumbItem key={item.title} className="hidden md:block">
+              {breadcrumb.map((item, i) => (<React.Fragment key={i}>
+                <BreadcrumbItem className="hidden md:block">
                   <BreadcrumbLink href={item.link || '#'}>
                     {item.title}
                   </BreadcrumbLink>
@@ -47,7 +47,7 @@ export function SidebarLayout({
                 {i < breadcrumb.length - 1 && (
                   <BreadcrumbSeparator className="hidden md:block" />
                 )}
-              </>))}
+              </React.Fragment>))}
             </BreadcrumbList>
           </Breadcrumb>
         </header>
