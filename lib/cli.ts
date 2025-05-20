@@ -292,6 +292,14 @@ program
       'app/layout.tsx': 'app/layout.tsx',
       'app/page.tsx': 'app/page.tsx',
       'app/globals.css': 'app/globals.css',
+      'app/hasyx/diagnostics/page.tsx': 'app/hasyx/diagnostics/page.tsx',
+      'app/hasyx/aframe/page.tsx': 'app/hasyx/aframe/page.tsx',
+      'app/hasyx/aframe/client.tsx': 'app/hasyx/aframe/client.tsx',
+      'app/hasyx/payments/page.tsx': 'app/hasyx/payments/page.tsx',
+      'components/sidebar/layout.tsx': 'components/sidebar/layout.tsx',
+      'lib/diagnostics.tsx': 'lib/diagnostics.tsx',
+      'lib/aframe.tsx': 'lib/aframe.tsx',
+      'lib/payments.tsx': 'lib/payments.tsx',
       'public/favicon.ico': 'public/favicon.ico', // Need binary template handling or skip
       // Universal logo path
       'public/logo.svg': 'public/logo.svg',
@@ -335,6 +343,10 @@ program
       'events',
       'lib',
       'app/api/telegram_bot',
+      'app/hasyx/diagnostics',
+      'app/hasyx/aframe',
+      'app/hasyx/payments',
+      'components/sidebar',
     ];
     debug('Ensuring directories exist:', ensureDirs);
     for (const dir of ensureDirs) {

@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef, useImperativeHandle, forwardRef, ForwardedRef } from "react";
 import Debug from "./debug";
 import React, { Component, ReactNode, RefCallback } from 'react';
+import { SidebarData } from "hasyx/components/sidebar";
+import { SidebarLayout } from "@/components/sidebar/layout";
 
 const debug = Debug('aframe');
 
@@ -354,3 +356,58 @@ export { EntityComponent as AframeEntity, SceneComponent as AframeScene, options
 // Remove old class-based exports
 // export class Entity extends Component<EntityProps> { ... }
 // export class Scene extends Entity { ... }
+
+// --- New Aframe Component -----------------------
+
+/**
+ * Default A-Frame container component offering 100% height/width container
+ * @param children - The A-Frame scene component to render
+ * @param containerStyle - Optional custom container styles
+ */
+export function AframeContainer({ 
+  children, 
+  containerStyle = {} 
+}: { 
+  children: React.ReactNode, 
+  containerStyle?: React.CSSProperties 
+}) {
+  // Default styles for the scene container
+  const defaultStyle: React.CSSProperties = {
+    position: 'relative',
+    flexGrow: 1,
+    width: '100%',
+    height: 'calc(100vh - 4rem)',
+    overflow: 'hidden',
+    backgroundColor: 'white',
+  };
+
+  // Merge default styles with any passed containerStyle
+  const mergedStyle = { ...defaultStyle, ...containerStyle };
+
+  return (
+    <div style={mergedStyle}>
+      <AframeProvider>
+        {children}
+      </AframeProvider>
+    </div>
+  );
+}
+
+interface AframeProps {
+  sidebarData: SidebarData;
+  children: React.ReactNode;
+}
+
+/**
+ * Main A-Frame component with sidebar layout
+ * Use this component with your own A-Frame client implementation as children
+ */
+export default function Aframe({ sidebarData, children }: AframeProps) {
+  return (
+    <SidebarLayout sidebarData={sidebarData} title="A-Frame">
+      <AframeContainer>
+        {children}
+      </AframeContainer>
+    </SidebarLayout>
+  );
+}

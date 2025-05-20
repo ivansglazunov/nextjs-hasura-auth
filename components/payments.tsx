@@ -198,7 +198,7 @@ export default function Payments({ sidebarData }: PaymentsProps) {
             </TabsList>
             
             <TabsContent value="terminals" className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {providersLoading ? (
                   <div>Loading terminals...</div>
                 ) : providersError ? (
