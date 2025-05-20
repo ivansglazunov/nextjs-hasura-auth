@@ -1,6 +1,3 @@
-
-
-
 // Imports for getting server-side session
 import authOptions from "@/app/options"
 
