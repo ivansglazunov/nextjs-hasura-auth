@@ -159,7 +159,10 @@ export default function Payments({ sidebarData }: PaymentsProps) {
   return (
     <>
       <Toaster position="top-right" />
-      <SidebarLayout sidebarData={sidebarData} title="Payments">
+      <SidebarLayout sidebarData={sidebarData} breadcrumb={[
+        { title: 'Hasyx', link: '/' },
+        { title: 'Payments', link: '/hasyx/payments' }
+      ]}>
         <Tabs value={tabValue} onValueChange={setTabValue} className="w-full">
           <TabsList className="w-full justify-start px-4 py-2 border-b">
             <TabsTrigger value="terminals">Terminals</TabsTrigger>

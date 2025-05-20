@@ -18,7 +18,10 @@ interface DiagnosticsProps {
 
 export default function Diagnostics({ serverSession, sidebarData }: DiagnosticsProps) {
   return (
-    <SidebarLayout sidebarData={sidebarData} title="Diagnostics">
+    <SidebarLayout sidebarData={sidebarData} breadcrumb={[
+      { title: 'Hasyx', link: '/' },
+      { title: 'Diagnostics', link: '/hasyx/diagnostics' }
+    ]}>
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="grid auto-rows-min gap-4 md:grid-cols-2">
           <HasuraCard />

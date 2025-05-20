@@ -404,7 +404,10 @@ interface AframeProps {
  */
 export default function Aframe({ sidebarData, children }: AframeProps) {
   return (
-    <SidebarLayout sidebarData={sidebarData} title="A-Frame">
+    <SidebarLayout sidebarData={sidebarData} breadcrumb={[
+      { title: 'Hasyx' },
+      { title: 'A-Frame', link: '/hasyx/aframe' }
+    ]}>
       <AframeContainer>
         {children}
       </AframeContainer>

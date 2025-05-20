@@ -17,22 +17,17 @@ import {
   SidebarTrigger,
 } from "hasyx/components/ui/sidebar";
 import { SidebarData } from "hasyx/components/sidebar";
-import pckg from "hasyx/package.json";
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
   sidebarData: SidebarData;
-  title: string;
-  backLink?: string;
-  backText?: string;
+  breadcrumb?: { title: string; link?: string }[];
 }
 
 export function SidebarLayout({ 
   children, 
   sidebarData, 
-  title,
-  backLink = "/",
-  backText = pckg.name
+  breadcrumb = [],
 }: SidebarLayoutProps) {
   return (
     <SidebarProvider>
@@ -43,15 +38,16 @@ export function SidebarLayout({
           <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href={backLink}>
-                  {backText}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{title}</BreadcrumbPage>
-              </BreadcrumbItem>
+              {breadcrumb.map((item, i) => (<>
+                <BreadcrumbItem key={item.title} className="hidden md:block">
+                  <BreadcrumbLink href={item.link || '#'}>
+                    {item.title}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                {i < breadcrumb.length - 1 && (
+                  <BreadcrumbSeparator className="hidden md:block" />
+                )}
+              </>))}
             </BreadcrumbList>
           </Breadcrumb>
         </header>
