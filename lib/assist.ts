@@ -28,6 +28,7 @@ import { runMigrations } from './assist-migrations';
 import { configureProjectUser } from './assist-project-user';
 import { configureTelegramBot, calibrateTelegramBot } from './assist-telegram';
 import { configureOpenRouter } from './assist-openrouter';
+import { configurePg } from './assist-pg';
 
 // Ensure dotenv is configured only once
 if (require.main === module) {
@@ -71,6 +72,7 @@ interface AssistOptions {
   skipTelegram?: boolean;
   skipProjectUser?: boolean;
   skipOpenRouter?: boolean;
+  skipPg?: boolean;
 }
 
 // NEW FUNCTION to determine OAuth callback base URL
@@ -149,6 +151,8 @@ async function assist(options: AssistOptions = {}) {
     else debug('Skipping Firebase setup');
     if (!options.skipOpenRouter) envVars = await configureOpenRouter(rl, envPath);
     else debug('Skipping OpenRouter API Key setup');
+    if (!options.skipPg) envVars = await configurePg(rl, envPath);
+    else debug('Skipping PostgreSQL configuration');
     if (!options.skipVercel) await setupVercel(rl, envPath, envVars);
     else debug('Skipping Vercel setup');
     if (!options.skipSync) await syncEnvironmentVariables(rl, envPath, {});
@@ -259,6 +263,7 @@ if (require.main === module) {
     .option('--skip-telegram', 'Skip Telegram Bot configuration')
     .option('--skip-project-user', 'Skip setting up project user')
     .option('--skip-openrouter', 'Skip OpenRouter API Key setup')
+    .option('--skip-pg', 'Skip PostgreSQL configuration')
     .action((cmdOptions) => {
       assist(cmdOptions);
     });
