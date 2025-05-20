@@ -3,6 +3,9 @@ import Debug from './debug';
 import fs from 'fs-extra';
 import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const debug = Debug('events');
 
@@ -639,4 +642,173 @@ export function hasyxEvent(
       );
     }
   };
+}
+
+/**
+ * Main function that is executed when the script is called directly
+ * Implements the same functionality as 'npx hasyx events' command
+ */
+export async function main() {
+  debug('Executing events script directly.');
+  
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  const options = {
+    init: args.includes('--init'),
+    clean: args.includes('--clean'),
+  };
+  
+  // Find project root and events directory
+  const projectRoot = process.cwd();
+  const eventsDir = path.join(projectRoot, 'events');
+  
+  // If --init flag is set, create default event trigger definitions
+  if (options.init) {
+    debug('Initializing events directory with default triggers');
+    console.log('🏗️ Creating default event trigger definitions...');
+    
+    try {
+      await createDefaultEventTriggers(eventsDir);
+      console.log('✅ Default event trigger definitions created in events directory');
+    } catch (error) {
+      console.error('❌ Failed to create default event trigger definitions:', error);
+      process.exit(1);
+    }
+    
+    // Exit early if only initializing
+    return;
+  }
+  
+  // If --clean flag is set, clean security headers from event definitions
+  if (options.clean) {
+    debug('Cleaning security headers from event definitions');
+    console.log('🧹 Cleaning security headers from event definitions...');
+    
+    try {
+      // Ensure the events directory exists
+      if (!fs.existsSync(eventsDir)) {
+        console.log('⚠️ Events directory not found. Nothing to clean.');
+        debug('Events directory does not exist, nothing to clean');
+        return;
+      }
+      
+      // Get all JSON files in the events directory
+      const files = fs.readdirSync(eventsDir).filter(file => file.endsWith('.json'));
+      debug(`Found ${files.length} JSON files in events directory`);
+      
+      if (files.length === 0) {
+        console.log('⚠️ No event definition files found. Nothing to clean.');
+        debug('No JSON files in events directory');
+        return;
+      }
+      
+      let cleanedCount = 0;
+      
+      // Process each file
+      for (const file of files) {
+        const filePath = path.join(eventsDir, file);
+        debug(`Processing ${filePath}`);
+        
+        try {
+          // Read the file
+          const content = await fs.readFile(filePath, 'utf8');
+          const triggerDef = JSON.parse(content);
+          
+          // Check if it has headers array with security header
+          if (triggerDef.headers) {
+            const originalLength = triggerDef.headers.length;
+            
+            // Filter out security headers
+            triggerDef.headers = triggerDef.headers.filter((header: any) => 
+              !(header.name.toLowerCase() === 'x-hasura-event-secret' && 
+                (header.value_from_env === 'HASURA_EVENT_SECRET' || 
+                 (header.value && header.value.length > 0)))
+            );
+            
+            // If the headers array is now empty, remove it
+            if (triggerDef.headers.length === 0) {
+              delete triggerDef.headers;
+              debug(`Removed empty headers array from ${file}`);
+            }
+            
+            // If we made changes, write the file back
+            if (!triggerDef.headers || triggerDef.headers.length !== originalLength) {
+              await fs.writeFile(filePath, JSON.stringify(triggerDef, null, 2));
+              console.log(`✅ Cleaned security headers from ${file}`);
+              cleanedCount++;
+              debug(`Cleaned security headers from ${file}`);
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Failed to process ${file}:`, error);
+          debug(`Error processing ${file}: ${error}`);
+        }
+      }
+      
+      console.log(`🧹 Cleaned security headers from ${cleanedCount} file(s).`);
+      console.log('   Security headers will be added automatically during synchronization.');
+      debug(`Finished cleaning ${cleanedCount} files`);
+    } catch (error) {
+      console.error('❌ Failed to clean security headers:', error);
+      debug(`Error cleaning security headers: ${error}`);
+      process.exit(1);
+    }
+    
+    // Exit early if only cleaning
+    return;
+  }
+  
+  // Ensure the events directory exists
+  if (!fs.existsSync(eventsDir)) {
+    console.log('⚠️ Events directory not found. Creating empty directory.');
+    debug('Creating events directory');
+    try {
+      fs.mkdirSync(eventsDir, { recursive: true });
+    } catch (error) {
+      console.error('❌ Failed to create events directory:', error);
+      debug(`Error creating events directory: ${error}`);
+      process.exit(1);
+    }
+  }
+  
+  // Check if the directory is empty and suggest --init
+  const files = fs.readdirSync(eventsDir);
+  if (files.length === 0) {
+    console.log('⚠️ Events directory is empty. Use --init to create default event trigger definitions.');
+    debug('Events directory is empty');
+    process.exit(0);
+  }
+  
+  // Synchronize event triggers
+  console.log('🔄 Synchronizing Hasura event triggers...');
+  debug('Synchronizing event triggers');
+  
+  try {
+    // Determine base URL for webhook
+    const baseUrl = process.env.NEXT_PUBLIC_MAIN_URL || process.env.NEXT_PUBLIC_BASE_URL;
+    if (!baseUrl) {
+      console.warn('⚠️ NEXT_PUBLIC_MAIN_URL or NEXT_PUBLIC_BASE_URL not set. Using relative paths for webhooks.');
+      console.warn('   This may cause issues if Hasura cannot access your API with relative paths.');
+      console.warn('   For production, set NEXT_PUBLIC_MAIN_URL to your publicly accessible domain (e.g., https://your-domain.com).');
+      debug('No base URL found in environment variables');
+    } else {
+      console.log(`ℹ️ Using base URL for webhooks: ${baseUrl}`);
+    }
+    
+    await syncEventTriggersFromDirectory(eventsDir, undefined, undefined, baseUrl);
+    console.log('✅ Event triggers synchronized successfully!');
+    debug('Event triggers synchronized');
+  } catch (error) {
+    console.error('❌ Failed to synchronize event triggers:', error);
+    debug(`Error synchronizing event triggers: ${error}`);
+    process.exit(1);
+  }
+}
+
+// Execute main function if this module is run directly
+if (require.main === module) {
+  main().catch(error => {
+    console.error('Error executing events script:', error);
+    process.exit(1);
+  });
 } 

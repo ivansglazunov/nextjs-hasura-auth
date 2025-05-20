@@ -259,15 +259,17 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
     cache: new InMemoryCache(),
     defaultOptions: {
       watchQuery: {
-        fetchPolicy: 'network-only',
+        fetchPolicy: 'no-cache',
         errorPolicy: 'all',
+        nextFetchPolicy: 'no-cache'
       },
       query: {
-        fetchPolicy: 'network-only',
-        errorPolicy: 'all',
+        fetchPolicy: 'no-cache',
+        errorPolicy: 'all'
       },
       mutate: {
         errorPolicy: 'all',
+        fetchPolicy: 'no-cache'
       },
     }
   }) as HasyxApolloClient;
@@ -336,7 +338,10 @@ query CheckConnection {
  * @returns {Promise<boolean>} True if connection is successful
  */
 export async function checkConnection(client = getClient()): Promise<boolean> {
-  const result = await client.query({ query: CHECK_CONNECTION_QUERY });
+  const result = await client.query({ 
+    query: CHECK_CONNECTION_QUERY,
+    fetchPolicy: 'no-cache' 
+  });
   
   return !!(result.data?.__schema?.queryType?.name);
 }
