@@ -209,6 +209,7 @@ These packages provide components, utilities, and functionalities that you can d
 | `input-otp`               | A React component for OTP (One-Time Password) input.                                                      |
 | `embla-carousel-react`    | A bare-bones carousel library with great fluid motion and awesome swipe precision for React.                |
 | `react-resizable-panels`  | React components for resizable panel groups/layouts.                                                       |
+| `react-resize-detector`   | A React hook/component to detect element resize events. Useful for creating responsive components.         |
 | `react-day-picker`        | A flexible date picker component for React.                                                                 |
 | `react-hook-form`         | Performant, flexible and extensible forms with easy-to-use validation.                                      |
 | `@hookform/resolvers`     | Resolvers for React Hook Form, allowing integration with validation libraries like Zod.                   |
