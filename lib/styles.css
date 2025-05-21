@@ -556,6 +556,12 @@
   .h-\[1\.15rem\] {
     height: 1.15rem;
   }
+  .h-\[20px\] {
+    height: 20px;
+  }
+  .h-\[50px\] {
+    height: 50px;
+  }
   .h-\[calc\(100\%-1px\)\] {
     height: calc(100% - 1px);
   }
@@ -654,6 +660,9 @@
   }
   .w-72 {
     width: calc(var(--spacing) * 72);
+  }
+  .w-\[50px\] {
+    width: 50px;
   }
   .w-\[100px\] {
     width: 100px;

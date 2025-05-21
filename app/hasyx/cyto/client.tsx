@@ -1,14 +1,14 @@
 "use client"
 
-import React, { useEffect, useState, useRef } from "react";
-import { Card, CardHeader, CardTitle } from "hasyx/components/ui/card";
-import { Cyto, CytoNode, CytoEdge, CytoStyle } from "hasyx/lib/cyto";
+import Debug from '@/lib/debug';
 import { useSubscription } from "hasyx";
 import { Avatar, AvatarFallback, AvatarImage } from "hasyx/components/ui/avatar";
-import Debug from '@/lib/debug';
 import { Badge } from "hasyx/components/ui/badge";
 
-const logClient = Debug('cyto:client');
+import { Cyto, CytoEdge, CytoNode, CytoStyle } from "hasyx/lib/cyto";
+import React, { useCallback, useMemo } from "react";
+
+const debug = Debug('cyto');
 
 // Стили для Cytoscape
 const stylesheet = [
@@ -40,31 +40,33 @@ export default function Client() {
     returning: ['id', 'image', 'name', 'created_at', 'updated_at', { accounts: { returning: ['id', 'provider'] } }],
   });
 
-  const onGraphLoaded = (cy) => {
+  const onGraphLoaded = useCallback((cy) => {
     global.cy = cy;
     cy.zoom(1);
     cy.center();
-  };
+  }, []);
 
-  const onInsert = (inserted, insertQuery) => {
-    logClient("Cyto client: onInsert called", { inserted, insertQuery });
-  };
+  const onInsert = useCallback((inserted, insertQuery) => {
+    debug("Cyto client: onInsert called", { inserted, insertQuery });
+  }, []);
   
+  const layoutConfig = useMemo(() => ({
+    name: 'cola',
+    nodeDimensionsIncludeLabels: true,
+    fit: false
+  }), []);
+
   return (
     <div className="w-full h-full relative">
       <Cyto 
         onLoaded={onGraphLoaded}
         onInsert={onInsert}
         buttons={true}
-        layout={{
-          name: 'cola',
-          nodeDimensionsIncludeLabels: true,
-          fit: false
-        }}
+        layout={layoutConfig}
       >
         <CytoStyle stylesheet={stylesheet} />
 
-        {users.map((user) => (<React.Fragment key={user.id}>
+        {(users || []).map((user) => (<React.Fragment key={user.id}>
           <CytoNode 
             key={user.id}
             element={{
@@ -83,32 +85,27 @@ export default function Client() {
               </Avatar>
             </div>
           </CytoNode>
-          {user.accounts.map((account) => (
-              <CytoNode
-                key={account.id} 
-                element={{
-                  id: `account-${account.id}`,
-                  data: {
-                    id: `account-${account.id}`,
-                    label: account.provider,
-                  },
-                }}
-              >
-                <div className="w-[50px] h-[20px]">
-                  <Badge variant="outline">{account?.provider}</Badge>
-                </div>
-              </CytoNode>
-            ))}
-            {user.accounts.map((account) => (
-              <CytoEdge key={account.id} element={{
+          {(user.accounts || []).map((account) => (<React.Fragment key={account.id}>
+            <CytoNode element={{
+              id: `account-${account.id}`,
+              data: {
+                id: `account-${account.id}`,
+                label: account.provider,
+              },
+            }}>
+              <div className="w-[50px] h-[20px]">
+                <Badge variant="outline">{account?.provider}</Badge>
+              </div>
+            </CytoNode>
+            <CytoEdge element={{
+              id: `account-edge-${account.id}`,
+              data: {
                 id: `account-edge-${account.id}`,
-                data: {
-                  id: `account-edge-${account.id}`,
-                  source: `user-${user.id}`,
-                  target: `account-${account.id}`,
-                },
-              }} />
-            ))}
+                source: `user-${user.id}`,
+                target: `account-${account.id}`,
+              },
+            }} />
+          </React.Fragment>))}
         </React.Fragment>))}
       </Cyto>
     </div>
