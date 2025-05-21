@@ -66,7 +66,130 @@ Idempotent migrations are crucial for:
 
 By following these guidelines, you help ensure that database schema changes are managed smoothly, reliably, and predictably across all environments.
 
-## Contribution Guidelines
+## Project Structure
+
+The Hasyx project follows a structured organization to maintain code clarity and separation of concerns. Here's an overview of the key directories and files:
+
+```
+hasyx/
+├── lib/ - Core library code with reusable logic
+│   ├── hasyx.ts - Main Hasyx class for Hasura operations
+│   ├── hasyx-client.ts - Client-side version of Hasyx
+│   ├── generator.ts - GraphQL query generator
+│   ├── apollo.tsx - Apollo Client configuration
+│   ├── auth.ts - Authentication utilities
+│   ├── cli.ts - Command-line interface tools
+│   ├── events.ts - Event handling system
+│   ├── hasura.ts - Hasura-specific utilities
+│   ├── notify.ts - Notification system
+│   ├── notify-firebase.ts - Firebase notification provider
+│   ├── notify-telegram.ts - Telegram notification provider
+│   ├── telegram-bot.ts - Telegram bot implementation
+│   ├── hid.ts - Hasura ID utilities
+│   └── hooks/ - Library-level hooks
+│       └── useCheckConnection.tsx - Connection status hook
+│
+├── components/ - React components
+│   ├── ui/ - UI component library
+│   │   ├── accordion.tsx - Accordion component
+│   │   ├── alert.tsx - Alert component
+│   │   ├── alert-dialog.tsx - Alert dialog component
+│   │   ├── aspect-ratio.tsx - Aspect ratio container
+│   │   ├── avatar.tsx - Avatar component
+│   │   ├── badge.tsx - Badge component
+│   │   ├── breadcrumb.tsx - Breadcrumb navigation
+│   │   ├── button.tsx - Button component
+│   │   ├── calendar.tsx - Calendar component
+│   │   ├── card.tsx - Card component
+│   │   ├── carousel.tsx - Carousel component
+│   │   ├── chart.tsx - Chart component
+│   │   ├── checkbox.tsx - Checkbox input
+│   │   ├── collapsible.tsx - Collapsible section
+│   │   ├── command.tsx - Command palette
+│   │   ├── context-menu.tsx - Context menu
+│   │   ├── dialog.tsx - Dialog component
+│   │   ├── drawer.tsx - Drawer component
+│   │   ├── dropdown-menu.tsx - Dropdown menu
+│   │   ├── form.tsx - Form components
+│   │   ├── hover-card.tsx - Hover card component
+│   │   ├── input.tsx - Input component
+│   │   ├── input-otp.tsx - OTP input component
+│   │   ├── label.tsx - Form label component
+│   │   ├── menubar.tsx - Menu bar component
+│   │   ├── navigation-menu.tsx - Navigation menu
+│   │   ├── pagination.tsx - Pagination component
+│   │   ├── popover.tsx - Popover component
+│   │   ├── progress.tsx - Progress indicator
+│   │   ├── radio-group.tsx - Radio group input
+│   │   ├── resizable.tsx - Resizable container
+│   │   ├── scroll-area.tsx - Scrollable area
+│   │   ├── select.tsx - Select dropdown
+│   │   ├── separator.tsx - Visual separator
+│   │   ├── sheet.tsx - Sheet component
+│   │   ├── sidebar.tsx - Sidebar component
+│   │   ├── skeleton.tsx - Skeleton loading component
+│   │   ├── slider.tsx - Slider input
+│   │   ├── sonner.tsx - Toast notification
+│   │   ├── switch.tsx - Toggle switch
+│   │   ├── table.tsx - Table component
+│   │   ├── tabs.tsx - Tabs component
+│   │   ├── textarea.tsx - Multiline text input
+│   │   ├── toggle.tsx - Toggle button
+│   │   ├── toggle-group.tsx - Group of toggle buttons
+│   │   └── tooltip.tsx - Tooltip component
+│   │
+│   ├── auth/ - Authentication components
+│   ├── hasura/ - Hasura-specific components
+│   ├── hasyx/ - Hasyx-specific components
+│   ├── proxy/ - GraphQL proxy components
+│   ├── sidebar/ - Sidebar layout components
+│   ├── users/ - User management components
+│   ├── code-block.tsx - Code display component
+│   ├── echarts.tsx - ECharts integration
+│   ├── notify.tsx - Notification components
+│   ├── payments.tsx - Payment processing components
+│   ├── sidebar.tsx - Main sidebar component
+│   ├── theme-provider.tsx - Theme context provider
+│   ├── theme-switcher.tsx - Theme toggling component
+│   ├── users.tsx - User management components
+│   └── version-switcher.tsx - Version selector component
+│
+├── hooks/ - Application-level React hooks
+│   └── use-mobile.ts - Mobile device detection hook
+│
+├── app/ - Application code and overridable business logic
+│   └── payments/
+│       └── tbank/
+│           └── options.ts - TBank payment options (customizable)
+│
+├── public/ - Static assets and generated schema
+│   └── hasura-schema.json - Generated Hasura schema
+│
+└── types/ - TypeScript type definitions
+```
+
+## Importable Modules
+
+### Core Modules
+
+- **`hasyx/lib/hasyx`**: Main Hasyx class with CRUD operations
+- **`hasyx/lib/generator`**: GraphQL query generator
+- **`hasyx/lib/apollo`**: Apollo Client configuration
+
+### UI Components
+All components in the `components/ui` directory can be imported as `hasyx/components/ui/{component-name}`. For example:
+```typescript
+import { Button } from 'hasyx/components/ui/button';
+import { Card, CardHeader, CardContent } from 'hasyx/components/ui/card';
+```
+
+### Hooks
+Available hooks include:
+- **`hasyx/hooks/useClient`**: Hook to get a Hasyx client instance
+- **`hasyx/hooks/useQuery`/`useSelect`**: Data fetching hook
+- **`hasyx/hooks/useSubscription`/`useSubscribe`**: Real-time subscription hook
+- **`hasyx/hooks/useMutation`**: Mutation hook for insert/update/delete operations
+- **`hasyx/hooks/use-mobile`**: Detect mobile devices
 
 ## Project Structure Philosophy
 
