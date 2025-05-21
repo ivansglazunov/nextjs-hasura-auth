@@ -1,33 +1,16 @@
 import fs from 'fs-extra';
 import path from 'path';
 import spawn from 'cross-spawn';
-import { Hasura } from './hasura'; // Assuming Hasura class is in ./hasura.ts
+import { Hasura } from './hasura';
 import Debug from './debug';
-import { DEFAULT_NAMESPACE } from './hid'; // Import DEFAULT_NAMESPACE
+import { DEFAULT_NAMESPACE } from './hid';
 
 const debug = Debug('migration:up-hasyx');
 
-// Комментируем функцию runHasyxSchemaCommand, которая перезаписывает наш файл schema.json
-// async function runHasyxSchemaCommand(projectRoot: string): Promise<void> {
-//   debug('Running "npx hasyx schema"...');
-//   const result = spawn.sync('npx', ['hasyx', 'schema'], {
-//     stdio: 'inherit',
-//     cwd: projectRoot,
-//   });
-//   if (result.error) {
-//     debug('Failed to run "npx hasyx schema":', result.error);
-//     throw new Error(`Failed to run "npx hasyx schema": ${result.error.message}`);
-//   }
-//   if (result.status !== 0) {
-//     debug('"npx hasyx schema" command failed with status:', result.status);
-//     throw new Error(`"npx hasyx schema" command failed with status ${result.status}`);
-//   }
-//   debug('"npx hasyx schema" command completed successfully.');
-// }
 
 function getCurrentProjectName(projectRoot: string): string {
   const packageJsonPath = path.join(projectRoot, 'package.json');
-  let projectName = path.basename(projectRoot); // Fallback
+  let projectName = path.basename(projectRoot);
   if (fs.existsSync(packageJsonPath)) {
     try {
       const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
@@ -38,13 +21,13 @@ function getCurrentProjectName(projectRoot: string): string {
       debug('Could not read project name from package.json:', e.message);
     }
   }
-  return projectName.replace(/[^a-zA-Z0-9-]/g, '_'); // Sanitize for use in names
+  return projectName.replace(/[^a-zA-Z0-9-]/g, '_');
 }
 
 interface HasuraTableColumn {
   name: string;
-  type: string; // e.g. "uuid", "text", "integer", "bigint"
-  // Add other properties if needed, like "is_nullable"
+  type: string;
+
 }
 
 interface HasuraTable {
@@ -52,14 +35,13 @@ interface HasuraTable {
     schema: string;
     name: string;
   };
-  columns?: HasuraTableColumn[]; // Make columns optional as schema might not always have it
+  columns?: HasuraTableColumn[];
   primary_key?: {
     columns: string[];
   } | null;
-  // Add other properties like relationships if needed for schema parsing
+
 }
 
-// Get proper schema name and table name from the tableMappings data
 function getProperSchemaAndTable(graphQLTypeName: string, tableMappings: Record<string, { schema: string, table: string }> | undefined): { schema: string, table: string } {
   if (tableMappings && tableMappings[graphQLTypeName]) {
     return {
@@ -67,14 +49,13 @@ function getProperSchemaAndTable(graphQLTypeName: string, tableMappings: Record<
       table: tableMappings[graphQLTypeName].table
     };
   }
-  // Fallback to the original behavior - assume 'public' schema and the GraphQL type name as the table name
+
   return {
     schema: 'public',
     table: graphQLTypeName
   };
 }
 
-// Helper to extract relevant table information from GraphQL schema types
 function getTablesFromGraphQLSchema(schemaTypes: any[], tableMappings?: Record<string, { schema: string, table: string }>): HasuraTable[] {
   const tables: HasuraTable[] = [];
   if (!Array.isArray(schemaTypes)) {
@@ -83,10 +64,10 @@ function getTablesFromGraphQLSchema(schemaTypes: any[], tableMappings?: Record<s
   }
 
   for (const type of schemaTypes) {
-    // Basic filter: OBJECT kind, not starting with __ (GraphQL internal), and has fields
+  
     if (type.kind === 'OBJECT' && type.name && !type.name.startsWith('__') && type.fields) {
-      // Further checks to differentiate tables from other object types (like query_root, etc.)
-      // Aggregation types often end with _aggregate, _avg_fields etc.
+    
+    
       if (type.name.endsWith('_aggregate') || 
           type.name.endsWith('_avg_fields') || 
           type.name.endsWith('_max_fields') || 
@@ -104,7 +85,7 @@ function getTablesFromGraphQLSchema(schemaTypes: any[], tableMappings?: Record<s
         continue;
       }
 
-      // Attempt to find a primary key (assuming 'id' or 'uuid') - THIS IS A HUGE ASSUMPTION
+    
       let pkColumnName: string | undefined = undefined;
       const idField = type.fields.find((f: any) => f.name === 'id');
       if (idField) pkColumnName = 'id';
@@ -113,7 +94,7 @@ function getTablesFromGraphQLSchema(schemaTypes: any[], tableMappings?: Record<s
         if (uuidField) pkColumnName = 'uuid';
       }
       
-      // Get proper schema and table name from tableMappings if available
+    
       const { schema, table } = getProperSchemaAndTable(type.name, tableMappings);
       
       tables.push({
@@ -121,9 +102,9 @@ function getTablesFromGraphQLSchema(schemaTypes: any[], tableMappings?: Record<s
           schema,
           name: table
         },
-        // The `columns` and `primary_key` here are for the HasuraTable interface structure.
-        // The actual primary_key for SQL generation in the main `up` function MUST come from a more reliable source.
-        // This `primary_key` field based on assumption might not be accurate for all tables.
+      
+      
+      
         primary_key: pkColumnName ? { columns: [pkColumnName] } : null 
       });
     }
@@ -151,8 +132,8 @@ export async function up(): Promise<boolean> {
   const hidNamespace = DEFAULT_NAMESPACE;
 
   try {
-    // Убираем вызов runHasyxSchemaCommand(projectRoot);
-    // Схема должна быть уже создана с правильными маппингами таблиц
+  
+  
 
     const schemaPath = path.join(projectRoot, 'public', 'hasura-schema.json');
     let tablesToProcess: HasuraTable[] = [];
@@ -166,13 +147,13 @@ export async function up(): Promise<boolean> {
         const rawSchemaFileContent = JSON.parse(fs.readFileSync(schemaPath, 'utf-8'));
         debug(`Raw schema file content keys: ${Object.keys(rawSchemaFileContent).join(', ')}`);
         
-        // Extract table mappings from the hasyx property if available
+      
         if (rawSchemaFileContent && rawSchemaFileContent.hasyx && rawSchemaFileContent.hasyx.tableMappings) {
           tableMappings = rawSchemaFileContent.hasyx.tableMappings;
           debug(`Found ${Object.keys(tableMappings || {}).length} table mappings in hasura-schema.json`);
           console.log(`Found ${Object.keys(tableMappings || {}).length} table mappings in schema file`);
           
-          // Преобразуем маппинги таблиц в HasuraTable
+        
           if (tableMappings) {
             tablesToProcess = Object.entries(tableMappings).map(([typeName, mapping]) => {
               return {
@@ -180,7 +161,7 @@ export async function up(): Promise<boolean> {
                   schema: mapping.schema,
                   name: mapping.table
                 },
-                // Предполагаем, что PK - это id или uuid
+              
                 primary_key: { columns: ['id'] }
               };
             });
@@ -199,9 +180,9 @@ export async function up(): Promise<boolean> {
             console.log('hasyx section not found in schema file');
           }
           
-          // Adjust parsing based on actual schema structure (GraphQL introspection result)
+        
           if (rawSchemaFileContent && rawSchemaFileContent.data && rawSchemaFileContent.data.__schema && rawSchemaFileContent.data.__schema.types) {
-            // Pass the array of types to the helper function
+          
             tablesToProcess = getTablesFromGraphQLSchema(rawSchemaFileContent.data.__schema.types, tableMappings);
             if (tablesToProcess.length === 0) {
                console.warn(`⚠️ Parsed GraphQL schema but found no suitable table objects in data.__schema.types. Check filter logic in getTablesFromGraphQLSchema.`);
@@ -221,17 +202,17 @@ export async function up(): Promise<boolean> {
     
     if (tablesToProcess.length === 0) {
       console.warn('⚠️ No tables found in schema to process for Hasyx view. Migration will complete, but view might be empty or not created/updated optimally.');
-      // Continue to allow schema command to run at the end, but view-related operations will be skipped if no tables.
+    
     }
 
     let viewSqlUnionParts: string[] = [];
 
-    // Now the loop uses proper schema and table name information from tableMappings
+  
     for (const tableDef of tablesToProcess) {
       const schemaName = tableDef.table.schema;
       const tableName = tableDef.table.name;
 
-      // Проверим существование таблицы перед выполнением миграции
+    
       try {
         console.log(`Checking if table ${schemaName}.${tableName} exists...`);
         const checkTableSql = `
@@ -244,7 +225,7 @@ export async function up(): Promise<boolean> {
         const tableExists = await hasura.sql(checkTableSql);
         console.log(`Table existence check result:`, JSON.stringify(tableExists));
         
-        // Исправленная проверка существования таблицы - теперь проверяем значение правильно
+      
         if (!tableExists.result || !tableExists.result[1] || tableExists.result[1][0] !== 't') {
           console.warn(`⚠️ Table ${schemaName}.${tableName} does not exist! Skipping.`);
           continue;
@@ -256,9 +237,9 @@ export async function up(): Promise<boolean> {
         continue;
       }
 
-      // Проверяем, есть ли primary_key, если нет - пробуем найти его в таблице
+    
       if (!tableDef.primary_key || !tableDef.primary_key.columns || tableDef.primary_key.columns.length === 0) {
-        // Проверяем наличие id и uuid в таблице
+      
         try {
           console.log(`Looking for primary key columns in ${schemaName}.${tableName}...`);
           const columnsResult = await hasura.sql(`SELECT column_name FROM information_schema.columns 
@@ -282,7 +263,7 @@ export async function up(): Promise<boolean> {
         }
       }
 
-      // We need a reliable way to get the Primary Key for tableDef
+    
       const pkColumns = tableDef.primary_key?.columns;
       if (!pkColumns || pkColumns.length === 0) {
         debug(`⚠️ Table ${schemaName}.${tableName} has no determinable primary key. Skipping for HID view.`);
@@ -291,7 +272,7 @@ export async function up(): Promise<boolean> {
       const pkColumn = pkColumns[0];
 
       if (['pg_catalog', 'information_schema', 'hdb_catalog', 'graphql_public'].includes(schemaName)) {
-        // This check might be redundant if getTablesFromGraphQLSchema already filters these out by name pattern
+      
         debug(`Skipping system or internal table: ${schemaName}.${tableName}`);
         continue;
       }
@@ -311,7 +292,7 @@ export async function up(): Promise<boolean> {
         console.log(`Add columns result:`, JSON.stringify(alterResult));
       } catch (error) {
         console.error(`❌ Error adding columns to ${schemaName}.${tableName}:`, error);
-        // Продолжаем только если ошибка не критическая
+      
         if (String(error).includes('already exists')) {
           console.log(`Columns already exist, continuing...`);
         } else {
@@ -353,7 +334,7 @@ export async function up(): Promise<boolean> {
         console.log(`Track view result:`, JSON.stringify(trackResult));
       } catch (error) {
         console.error(`❌ Error tracking view:`, error);
-        // Продолжаем даже если ошибка (например, таблица уже отслеживается)
+      
       }
     } else {
       console.warn("⚠️ No suitable tables (with assumed PKs) found to include in the hasyx view. View will not be created/updated.");
@@ -370,7 +351,7 @@ export async function up(): Promise<boolean> {
             const schemaName = tableDef.table.schema;
             const tableName = tableDef.table.name;
 
-            // Проверка существования таблицы перед созданием отношений
+          
             try {
                 const checkTableSql = `
                     SELECT EXISTS (
@@ -394,7 +375,7 @@ export async function up(): Promise<boolean> {
             if (!pkColumns || pkColumns.length === 0) continue;
             const pkColumn = pkColumns[0];
             
-            if (tableName === 'hasyx' && schemaName === 'public') continue; // Already handled
+            if (tableName === 'hasyx' && schemaName === 'public') continue;
             if (['pg_catalog', 'information_schema', 'hdb_catalog', 'graphql_public'].includes(schemaName)) continue;
 
             const relToHasyxName = 'hasyx';
@@ -420,10 +401,10 @@ export async function up(): Promise<boolean> {
                 });
             } catch (error) {
                 console.warn(`⚠️ Error creating relationship ${relToHasyxName} from ${schemaName}.${tableName} to public.hasyx:`, error);
-                // Continue with the next table, don't stop the whole migration
+              
             }
 
-            if (viewSqlUnionParts.length > 0) { // Only create reverse relationships if view has content
+            if (viewSqlUnionParts.length > 0) {
                 const relFromHasyxName = `${schemaName}_${tableName}`;
                 debug(`Creating relationship ${relFromHasyxName} from public.hasyx to ${schemaName}.${tableName}`);
                 try {
@@ -446,14 +427,14 @@ export async function up(): Promise<boolean> {
                     });
                 } catch (error) {
                     console.warn(`⚠️ Error creating relationship ${relFromHasyxName} from public.hasyx to ${schemaName}.${tableName}:`, error);
-                    // Continue with the next table, don't stop the whole migration
+                  
                 }
             }
         }
     }
 
-    // Убираем запуск runHasyxSchemaCommand в конце, чтобы не перезаписать наши mappings
-    // await runHasyxSchemaCommand(projectRoot);
+  
+  
 
     debug('✨ Hasyx View migration UP completed successfully!');
     return true;

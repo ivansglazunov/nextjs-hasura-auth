@@ -83,6 +83,9 @@ const permissionsToDrop = [
   { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'users' }, role: 'user' } },
   { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'users' }, role: 'admin' } },
   { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'accounts' }, role: 'admin' } },
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'accounts' }, role: 'anonymous' } },
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'accounts' }, role: 'me' } },
+  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'accounts' }, role: 'user' } },
 ];
 
 const userPermissions = [
@@ -123,6 +126,48 @@ const userPermissions = [
       },
       comment: 'Users can see their own full information'
     }
+  },
+  {
+    type: 'pg_create_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'accounts' },
+      role: 'me',
+      permission: {
+        columns: [
+          'id',
+          'user_id',
+          'type',
+          'provider',
+          'provider_account_id',
+          'refresh_token',
+          'access_token',
+          'expires_at',
+          'token_type',
+          'scope',
+          'id_token',
+          'session_state',
+          'created_at'
+        ],
+        filter: {
+          user_id: { _eq: 'X-Hasura-User-Id' }
+        }
+      },
+      comment: 'Users can see their own full account details'
+    }
+  },
+  {
+    type: 'pg_create_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'accounts' },
+      role: 'user',
+      permission: {
+        columns: ['id', 'provider', 'user_id'],
+        filter: {}
+      },
+      comment: 'Users can see id, provider, and user_id of all accounts'
+    }
   }
 ];
 
@@ -152,6 +197,19 @@ const adminPermissions = [
       },
       comment: 'Admins can see basic account info'
     }
+  },
+  {
+    type: 'pg_create_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'accounts' },
+      role: 'anonymous',
+      permission: {
+        columns: ['id', 'user_id', 'provider'],
+        filter: {}
+      },
+      comment: 'Anonymous users can see basic account info (id, user_id, provider)'
+    }
   }
 ];
 
@@ -177,10 +235,10 @@ const anonymousPermissions = [
       table: { schema: 'public', name: 'accounts' },
       role: 'anonymous',
       permission: {
-        columns: ['id', 'created_at'],
-        filter: {} // Allow access to all rows
+        columns: ['id', 'provider', 'user_id'],
+        filter: {}
       },
-      comment: 'Anonymous users can see basic account info'
+      comment: 'Anonymous users can see id, provider, and user_id of all accounts'
     }
   }
 ];

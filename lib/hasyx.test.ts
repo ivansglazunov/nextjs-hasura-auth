@@ -3,62 +3,50 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { ApolloError, gql } from '@apollo/client';
 
-// Load environment variables from root .env
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
 import { Hasyx } from './hasyx'; 
 import { createApolloClient, HasyxApolloClient } from './apollo'; 
-import Debug from './debug'; // UNCOMMENTED
+import Debug from './debug'; 
 import { Generator } from './generator'; 
 import schema from '../public/hasura-schema.json'; 
 import { hashPassword } from './authDbUtils'; 
 
-// Using console.log for direct output, original namespace was 'test:hasyx'
-// const debug = Debug('test:hasyx'); 
-const debug = Debug('test:hasyx'); // UNCOMMENTED
-const generate = Generator(schema as any); // RESTORED
+const debug = Debug('test:hasyx'); 
+const generate = Generator(schema as any); 
 
-// --- Test Configuration ---
 const HASURA_URL = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!;
 const ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
-
 interface TestUser {
   id: string;
   name: string;
   hasura_role?: string;
 }
-
 describe('Hasyx Integration Tests', () => {
   let adminHasyx: Hasyx;
   const testUsersData: TestUser[] = [];
   const initialUserNames: string[] = []; 
-
   beforeAll(async () => {
     console.log("RUNNING: Main beforeAll in hasyx.test.ts"); 
     debug('🔧 Hasyx Test Setup: Initializing admin Hasyx client and creating test users...');
     console.log(`[test:hasyx]   🔑 Loaded HASURA_URL: ${HASURA_URL}`);
     console.log(`[test:hasyx]   🔑 Loaded ADMIN_SECRET: ${ADMIN_SECRET ? '******' + ADMIN_SECRET.slice(-4) : undefined}`);
-
     if (!HASURA_URL || !ADMIN_SECRET) {
       console.error('❌ Missing HASURA_URL or ADMIN_SECRET in environment variables for test setup.');
       console.error('   Please ensure NEXT_PUBLIC_HASURA_GRAPHQL_URL and HASURA_ADMIN_SECRET are correctly set in your .env file.');
       throw new Error('Missing HASURA_URL or ADMIN_SECRET in environment variables for test setup.');
     }
-
     const adminApolloClient = createApolloClient({
       url: HASURA_URL,
       secret: ADMIN_SECRET,
-      ws: false, // Отключаем WebSocket для основного клиента CRUD операций
+      ws: false, 
     }) as HasyxApolloClient;
     adminHasyx = new Hasyx(adminApolloClient, generate);
-
     for (let i = 0; i < 3; i++) {
       const email = `hasyx-test-${uuidv4()}@example.com`;
       const password = 'password123';
       const name = `Hasyx Test User ${i + 1}`;
       initialUserNames.push(name); 
       const hashedPassword = await hashPassword(password);
-
       try {
         const createdUser = await adminHasyx.insert<TestUser>({
           table: 'users',
@@ -87,7 +75,6 @@ describe('Hasyx Integration Tests', () => {
     expect(testUsersData.length).toBe(3);
     debug('✅ Hasyx Test Setup Complete.');
   }, 45000); 
-
   afterAll(async () => {
     debug('\n🧹 Hasyx Test Teardown: Deleting test users...');
     if (adminHasyx && testUsersData.length > 0) {
@@ -107,13 +94,12 @@ describe('Hasyx Integration Tests', () => {
     }
     debug('✅ Hasyx Test Teardown Complete.');
   }, 45000); 
-
   describe('Hasyx Class HTTP Tests', () => {
     it('should perform CRUD operations on users', async () => {
       debug('🧪 Testing Hasyx CRUD operations (select, update, delete)...');
       expect(testUsersData.length).toBe(3);
       
-      // Test 1: SELECT - Fetch all test users
+      
       debug('📋 Testing SELECT: Fetching all test users...');
       const testUserIds = testUsersData.map(u => u.id);
       const users = await adminHasyx.select<TestUser[]>({
@@ -134,7 +120,7 @@ describe('Hasyx Integration Tests', () => {
       });
       debug('✅ SELECT test succeeded.');
       
-      // Test 2: UPDATE - Modify name of first user
+      
       debug('📝 Testing UPDATE: Modifying name of first user...');
       const newName = `Updated User ${Date.now()}`;
       const updatedUser = await adminHasyx.update<TestUser>({
@@ -150,7 +136,7 @@ describe('Hasyx Integration Tests', () => {
       expect(updatedUser.name).toBe(newName);
       debug('✅ UPDATE test succeeded.');
       
-      // Test 3: Verify the update with another SELECT
+      
       debug('🔍 Testing SELECT after UPDATE to verify changes...');
       const verifyUser = await adminHasyx.select<TestUser>({
         table: 'users',
@@ -164,7 +150,7 @@ describe('Hasyx Integration Tests', () => {
       expect(verifyUser.name).toBe(newName);
       debug('✅ Verification of UPDATE succeeded.');
       
-      // Test 4: Create a temporary user and then DELETE it
+      
       debug('🧪 Testing INSERT and DELETE: Creating temporary user...');
       const tempEmail = `hasyx-temp-${uuidv4()}@example.com`;
       const tempPassword = await hashPassword('temppass');
@@ -187,7 +173,7 @@ describe('Hasyx Integration Tests', () => {
       expect(tempUser.name).toBe(tempName);
       debug('✅ INSERT test succeeded.');
       
-      // Delete the temporary user
+      
       debug('🗑️ Testing DELETE: Removing temporary user...');
       const deleteResult = await adminHasyx.delete<{id: string}>({
         table: 'users',
@@ -200,7 +186,7 @@ describe('Hasyx Integration Tests', () => {
       expect(deleteResult.id).toBe(tempUser.id);
       debug('✅ DELETE test succeeded.');
       
-      // Verify deletion by attempting to select the deleted user
+      
       debug('🔍 Verifying DELETE by attempting to select deleted user...');
       const deletedUser = await adminHasyx.select<TestUser | null>({
         table: 'users',
@@ -209,64 +195,58 @@ describe('Hasyx Integration Tests', () => {
       });
       
       debug('📊 SELECT after DELETE returned:', deletedUser);
-      expect(deletedUser).toBeNull(); // Should return null for non-existent user
+      expect(deletedUser).toBeNull(); 
       debug('✅ Verification of DELETE succeeded.');
       
       debug('🎉 All CRUD tests completed successfully!');
     });
   });
-
   describe('Hasyx Subscription Rate Limiting Tests', () => {
-    let subHasyx: Hasyx; // Hasyx client for subscriptions, WS-enabled
+    let subHasyx: Hasyx; 
     const subscriptionResults: any[] = [];
     const updateTimes: number[] = [];
     
-    // Target user for subscription tests
+    
     let targetUserForSubscription: TestUser;
-
     beforeAll(async () => {
       debug('🧪 Setting up Hasyx client for subscription tests (WS-enabled)...');
       if (testUsersData.length === 0) {
         console.error("[test:hasyx] ❌ No test users available for subscription tests. Outer beforeAll might have failed.");
         throw new Error("No test users for subscription tests.");
       }
-      targetUserForSubscription = testUsersData[0]; // Use the first test user
-
-      // Более подробная отладка для WebSocket подключения
+      targetUserForSubscription = testUsersData[0]; 
+      
       console.log(`[test:hasyx] 📡 WebSocket URL: ${HASURA_URL.replace(/^http/, 'ws').replace(/^https/, 'wss')}`);
       console.log(`[test:hasyx] 🔑 Using admin secret: ${ADMIN_SECRET ? ADMIN_SECRET.substring(0, 5) + '...' : 'undefined'}`);
       console.log(`[test:hasyx] 🚀 Creating Apollo client for WebSocket...`);
-
-      // Создаем новый Apollo клиент с улучшенной настройкой WebSocket
+      
       const subApolloClient = createApolloClient({
         url: HASURA_URL,
-        secret: ADMIN_SECRET, // Use admin secret for subscriptions
-        ws: true, // Explicitly enable WebSocket transport
+        secret: ADMIN_SECRET, 
+        ws: true, 
       }) as HasyxApolloClient;
       
-      // Проверяем, что клиент создался с правильными настройками
-      // console.log(`[test:hasyx] ✓ Apollo client options:`, {
-      //   url: subApolloClient._options.url,
-      //   ws: subApolloClient._options.ws,
-      //   secret: subApolloClient._options.secret ? '✓ Set' : 'undefined'
-      // });
+      
+      
+      
+      
+      
+      
       debug(`✓ Apollo client options: url=${subApolloClient._options.url}, ws=${subApolloClient._options.ws}, secret=${subApolloClient._options.secret ? '✓ Set' : 'undefined'}`);
-
       subHasyx = new Hasyx(subApolloClient, generate);
       debug('✅ WS-enabled Hasyx client for subscriptions is ready.');
-    }, 30000); // Increase timeout for WebSocket connection
-
+    }, 30000); 
     beforeEach(() => {
       subscriptionResults.length = 0;
       updateTimes.length = 0;
-      // No mockClient setup needed here anymore
-      // Reset name of targetUserForSubscription to ensure clean state for each test if needed
-      // This might be better in an afterEach or specific to tests that modify it.
-      // For now, assuming tests handle their own state or one modification is fine.
+      
+      
+      
+      
     });
     
     afterAll(async () => {
-      // Clean up subHasyx or its Apollo client if necessary (e.g., close WS connections)
+      
       if (subHasyx && subHasyx.apolloClient && subHasyx.apolloClient.terminate) {
         debug('ttempting to terminate WebSocket client...');
         subHasyx.apolloClient.terminate();
@@ -274,18 +254,17 @@ describe('Hasyx Integration Tests', () => {
       }
       debug('✅ Subscription test Hasyx client cleaned up (attempted).');
     });
-
-    // Helper function to analyze update intervals
+    
     function analyzeUpdateIntervals(doneFn: jest.DoneCallback, expectedMinInterval: number = 950) {
-      // debug('📊 Analyzing update intervals. Raw updateTimes:', updateTimes.map(t => new Date(t).toISOString()));
+      
       debug(`📊 Analyzing update intervals. Raw updateTimes: ${JSON.stringify(updateTimes.map(t => new Date(t).toISOString()))}`);
       if (updateTimes.length < 2) {
         const errorMessage = `[test:hasyx] ⚠️ Insufficient updates to analyze throttling: received ${updateTimes.length} updates. Expected at least 2.`;
         console.error(errorMessage);
-        // If no updates were received, it's a failure if we expected some.
-        // If only one update was received, we can't calculate an interval.
-        // The number of expected updates should be managed by the test itself.
-        if (updateTimes.length === 0 && expectedMinInterval > 0) { // expectedMinInterval > 0 implies we expected updates
+        
+        
+        
+        if (updateTimes.length === 0 && expectedMinInterval > 0) { 
              doneFn(new Error("No updates received by subscription."));
              return;
         }
@@ -293,8 +272,8 @@ describe('Hasyx Integration Tests', () => {
              doneFn(new Error("Only one update received, cannot calculate interval."));
              return;
         }
-        // If it's okay to have 0 or 1 update (e.g. testing unsubscribe), then don't error here.
-        // For throttling tests, less than 2 is an issue.
+        
+        
         doneFn(new Error(errorMessage));
         return;
       }
@@ -303,10 +282,10 @@ describe('Hasyx Integration Tests', () => {
         intervals.push(updateTimes[i] - updateTimes[i-1]);
       }
       
-      // debug('📊 Calculated intervals (ms): [${intervals.join(', ')}]');
+      
       debug(`📊 Calculated intervals (ms): [${intervals.join(', ')}]`);
       
-      // It's possible no intervals were calculated if only one update was received, caught above.
+      
       if (intervals.length === 0) {
         const errorMessage = `[test:hasyx] ⚠️ No intervals calculated, though ${updateTimes.length} updates were received. This indicates an issue.`;
         console.error(errorMessage);
@@ -315,7 +294,7 @@ describe('Hasyx Integration Tests', () => {
       }
       
       const minInterval = Math.min(...intervals);
-      // console.log(`[test:hasyx] ⏱️ Minimum interval: ${minInterval}ms`);
+      
       debug(`⏱️ Minimum interval: ${minInterval}ms`);
       
       try {
@@ -332,19 +311,16 @@ describe('Hasyx Integration Tests', () => {
       debug('🧪 Testing REAL subscription rate limiting in WEBSOCKET mode (explicit ws: true)');
       expect(targetUserForSubscription).toBeDefined();
       expect(subHasyx).toBeDefined();
-
       const NUM_DB_UPDATES = 5;
-      const DB_UPDATE_INTERVAL_MS = 200; // How quickly we trigger DB changes
-      const THROTTLE_INTERVAL_MS = 1000; // The pollingInterval for Hasyx, expected min emit interval
-
+      const DB_UPDATE_INTERVAL_MS = 200; 
+      const THROTTLE_INTERVAL_MS = 1000; 
       const originalName = targetUserForSubscription.name;
-
       const subscription = subHasyx.subscribe<TestUser>({
         table: 'users',
         pk_columns: { id: targetUserForSubscription.id },
-        returning: ['id', 'name'], // Ensure 'name' is returned
-        pollingInterval: THROTTLE_INTERVAL_MS, // This is key for the throttling logic
-        ws: true // Explicitly use WebSocket
+        returning: ['id', 'name'], 
+        pollingInterval: THROTTLE_INTERVAL_MS, 
+        ws: true 
       }).subscribe({
         next: (result) => {
           const timestamp = Date.now();
@@ -357,8 +333,7 @@ describe('Hasyx Integration Tests', () => {
           done(err);
         }
       });
-
-      // Trigger database updates rapidly
+      
       (async () => {
         for (let i = 0; i < NUM_DB_UPDATES; i++) {
           await new Promise(resolve => setTimeout(resolve, DB_UPDATE_INTERVAL_MS));
@@ -375,27 +350,25 @@ describe('Hasyx Integration Tests', () => {
           } catch (dbError) {
             console.error(`[test:hasyx] ❌ [WS] DB update ${i+1} failed:`, dbError);
             subscription.unsubscribe();
-            done(dbError); // Fail test if DB update fails
+            done(dbError); 
             return;
           }
         }
-
-        // Wait for all updates to be processed and throttled messages to arrive
-        // Max time for updates to occur: (NUM_DB_UPDATES - 1) * DB_UPDATE_INTERVAL_MS
-        // Max time for throttled messages: (NUM_DB_UPDATES -1) * THROTTLE_INTERVAL_MS (roughly, if each update triggers a new throttle window)
-        // Add a buffer
+        
+        
+        
+        
         const timeToWaitForAllMessages = 
-            (NUM_DB_UPDATES * DB_UPDATE_INTERVAL_MS) + // Time for all DB updates to be sent
-            (NUM_DB_UPDATES * THROTTLE_INTERVAL_MS) + // Time for all potential throttled messages
-            2000; // Extra buffer for network latency and processing
-
-        console.log(`[test:hasyx] [WS] All ${NUM_DB_UPDATES} DB updates triggered. Waiting ${timeToWaitForAllMessages / 1000}s for throttled messages...`);
+            (NUM_DB_UPDATES * DB_UPDATE_INTERVAL_MS) + 
+            (NUM_DB_UPDATES * THROTTLE_INTERVAL_MS) + 
+            2000; 
+            console.log(`[test:hasyx] [WS] All ${NUM_DB_UPDATES} DB updates triggered. Waiting ${timeToWaitForAllMessages / 1000}s for throttled messages...`);
         
         setTimeout(async () => {
           subscription.unsubscribe();
           debug('[WS] Subscription unsubscribed.');
           
-          // Restore original name
+          
           try {
             await adminHasyx.update<TestUser>({
               table: 'users',
@@ -407,39 +380,36 @@ describe('Hasyx Integration Tests', () => {
             console.warn(`[test:hasyx] [WS] Failed to restore user name:`, restoreError)
           }
           
-          // Expect at least a few updates, but not necessarily all NUM_DB_UPDATES if they are too close
-          // The key is the interval between received updates.
+          
+          
           if(updateTimes.length < 2 && NUM_DB_UPDATES > 1) {
              console.warn(`[test:hasyx] [WS] Received only ${updateTimes.length} updates after ${NUM_DB_UPDATES} DB changes. This might indicate an issue or very effective throttling / debouncing.`);
           }
-          analyzeUpdateIntervals(done, 950); // Analyze with expected min interval
+          analyzeUpdateIntervals(done, 950); 
         }, timeToWaitForAllMessages);
       })();
-    }, 25000); // Increased test timeout 
+    }, 25000); 
     
     it('should throttle subscription updates according to pollingInterval in HTTP interval mode', (done) => {
       debug('🧪 Testing REAL subscription rate limiting in HTTP INTERVAL mode (explicit ws: false)');
       expect(targetUserForSubscription).toBeDefined();
       expect(subHasyx).toBeDefined();
-
-      const NUM_DB_UPDATES = 3; // Number of distinct changes to make
-      const POLLING_INTERVAL_MS = 1500; // Set a specific polling interval for this test
-      const originalName = targetUserForSubscription.name + " http poll"; // Make it unique to ensure change
-
-      // Restore name first to ensure it's different from WS test if run sequentially on same user.
+      const NUM_DB_UPDATES = 3; 
+      const POLLING_INTERVAL_MS = 1500; 
+      const originalName = targetUserForSubscription.name + " http poll"; 
+      
        adminHasyx.update<TestUser>({
           table: 'users',
           pk_columns: { id: targetUserForSubscription.id },
           _set: { name: originalName },
         }).then(() => {
           console.log(`[test:hasyx] [HTTP] Target user name set to '${originalName}' for HTTP test.`);
-
           const subscription = subHasyx.subscribe<TestUser>({
             table: 'users',
             pk_columns: { id: targetUserForSubscription.id },
             returning: ['id', 'name'],
-            pollingInterval: POLLING_INTERVAL_MS, // This is the actual polling interval
-            ws: false // Explicitly use HTTP polling
+            pollingInterval: POLLING_INTERVAL_MS, 
+            ws: false 
           }).subscribe({
             next: (result) => {
               const timestamp = Date.now();
@@ -453,10 +423,10 @@ describe('Hasyx Integration Tests', () => {
             }
           });
     
-          // Trigger database updates, spaced out enough for polling to pick them up individually
+          
           (async () => {
             for (let i = 0; i < NUM_DB_UPDATES; i++) {
-              // Wait a bit longer than half the polling interval, but less than the full, to ensure change is seen on next poll
+              
               await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS / 2 + (i * POLLING_INTERVAL_MS) )); 
               try {
                 const newName = `User HTTP Poll Test Update ${i + 1} ${Date.now()}`;
@@ -476,35 +446,35 @@ describe('Hasyx Integration Tests', () => {
               }
             }
     
-            // Wait for all polling cycles that should have picked up changes
-            const timeToWaitForAllPolls = (NUM_DB_UPDATES * POLLING_INTERVAL_MS) + POLLING_INTERVAL_MS + 2000; // buffer
+            
+            const timeToWaitForAllPolls = (NUM_DB_UPDATES * POLLING_INTERVAL_MS) + POLLING_INTERVAL_MS + 2000; 
             console.log(`[test:hasyx] [HTTP] All ${NUM_DB_UPDATES} DB updates triggered. Waiting ${timeToWaitForAllPolls / 1000}s for polling ...`);
             
             setTimeout(async () => {
               subscription.unsubscribe();
               debug('[HTTP] Subscription unsubscribed.');
               
-              // Restore original name (or a known state)
+              
               try {
                  await adminHasyx.update<TestUser>({
                     table: 'users',
                     pk_columns: { id: targetUserForSubscription.id },
-                    _set: { name: initialUserNames[0] ?? "Default Test User Name" }, // Use initial name if available
+                    _set: { name: initialUserNames[0] ?? "Default Test User Name" }, 
                 });
                 console.log(`[test:hasyx] [HTTP] Target user name restored.`);
               } catch (restoreError) {
                 console.warn(`[test:hasyx] [HTTP] Failed to restore user name:`, restoreError)
               }
               
-              // For polling, each distinct change should ideally result in one emission after the next poll.
-              // The interval between these emissions should be close to POLLING_INTERVAL_MS.
-              analyzeUpdateIntervals(done, POLLING_INTERVAL_MS * 0.9); // Allow some leeway (e.g., 90% of interval)
+              
+              
+              analyzeUpdateIntervals(done, POLLING_INTERVAL_MS * 0.9); 
             }, timeToWaitForAllPolls);
           })();
         }).catch(setupError => {
             console.error('[test:hasyx] ❌ [HTTP] Failed to set up user for HTTP test:', setupError);
             done(setupError);
         });
-    }, 30000); // Increased test timeout
+    }, 30000); 
   });
 });

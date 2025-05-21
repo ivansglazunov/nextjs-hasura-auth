@@ -70,7 +70,23 @@ const permissionsToDrop = [
     type: 'pg_drop_select_permission',
     args: {
       source: 'default',
+      table: { schema: 'public', name: 'accounts' },
+      role: 'user'
+    }
+  },
+  {
+    type: 'pg_drop_select_permission',
+    args: {
+      source: 'default',
       table: { schema: 'public', name: 'users' },
+      role: 'me'
+    }
+  },
+  {
+    type: 'pg_drop_select_permission',
+    args: {
+      source: 'default',
+      table: { schema: 'public', name: 'accounts' },
       role: 'me'
     }
   },

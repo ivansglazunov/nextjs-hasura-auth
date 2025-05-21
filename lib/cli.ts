@@ -296,6 +296,8 @@ program
       'app/hasyx/aframe/page.tsx': 'app/hasyx/aframe/page.tsx',
       'app/hasyx/aframe/client.tsx': 'app/hasyx/aframe/client.tsx',
       'app/hasyx/payments/page.tsx': 'app/hasyx/payments/page.tsx',
+      'app/hasyx/cyto/page.tsx': 'app/hasyx/cyto/page.tsx',
+      'app/hasyx/cyto/client.tsx': 'app/hasyx/cyto/client.tsx',
       'components/sidebar/layout.tsx': 'components/sidebar/layout.tsx',
       'lib/diagnostics.tsx': 'lib/diagnostics.tsx',
       'lib/aframe.tsx': 'lib/aframe.tsx',
@@ -352,6 +354,7 @@ program
       'app/hasyx/diagnostics',
       'app/hasyx/aframe',
       'app/hasyx/payments',
+      'app/hasyx/cyto',
       'components/sidebar',
     ];
     debug('Ensuring directories exist:', ensureDirs);

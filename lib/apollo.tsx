@@ -1,7 +1,7 @@
 import { ApolloClient, InMemoryCache, HttpLink, split, ApolloLink, gql, ApolloProvider, createHttpLink, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { getMainDefinition } from '@apollo/client/utilities';
-// Restore GraphQLWsLink imports
+
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient as graphqlWSClient, Client as GraphQLWSClientInstance } from 'graphql-ws';
 import fetch from 'cross-fetch';
@@ -10,21 +10,21 @@ import { ContextSetter } from '@apollo/client/link/context';
 import { GraphQLRequest } from '@apollo/client/core';
 import { useMemo } from 'react';
 import { getJwtSecret } from './jwt';
-// Remove deprecated WebSocketLink import
-// import { WebSocketLink } from '@apollo/client/link/ws'; 
+
+
 import { onError } from '@apollo/client/link/error';
 import { Generate } from './generator';
 import { createWebSocketUrl } from './ws-config';
-// Add imports for Node.js WebSocket support
+
 import isomorphicWs from 'isomorphic-ws';
 
-// Create a debug logger for this module
+
 const debug = Debug('apollo');
 
-// Determine if running on client
+
 const isClient = typeof window !== 'undefined';
 
-debug(`Environment check: isClient=${isClient}`); // Log environment type
+debug(`Environment check: isClient=${isClient}`); 
 
 export interface ApolloOptions {
   url?: string;
@@ -37,23 +37,23 @@ export interface HasyxApolloClient extends ApolloClient<any> {
   Provider: React.ComponentType<{ children: React.ReactNode }>;
   _options: ApolloOptions;
   hasyxGenerator: Generate;
-  graphqlWsClient?: GraphQLWSClientInstance; // Store the Ws client instance
-  terminate?: () => void; // Method to terminate WS connection
+  graphqlWsClient?: GraphQLWSClientInstance; 
+  terminate?: () => void; 
 }
 
 const createRoleLink = () => setContext((request: GraphQLRequest, previousContext: any) => {
-  // Get the role from the operation's context passed in the hook options
-  const role = previousContext?.role; // Correctly access context via the second argument
+  
+  const role = previousContext?.role; 
   debug(`roleLink: Role from context: ${role}`);
   if (role) {
     return {
       headers: {
-        ...previousContext.headers, // Spread existing headers
+        ...previousContext.headers, 
         'X-Hasura-Role': role,
       },
     };
   }
-  // If no role is provided in the context, don't add the header
+  
   return {};
 });
 
@@ -68,7 +68,7 @@ const createRoleLink = () => setContext((request: GraphQLRequest, previousContex
  */
 export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClient {
   debug('apollo', '🔌 Creating Apollo client with options:', options);
-  // Default values
+  
   const { 
     url = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL,
     ws = false, 
@@ -89,20 +89,20 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
   debug('apollo', '🔌 Creating Apollo client with endpoint:', url);
   
   
-  // --- NEW: Link to set Hasura Role Header ---
-  const roleLink = createRoleLink();
-  // --- END NEW ---
   
-  // --- Existing Links ---
-  // Create base HttpLink (no auth here initially)
+  const roleLink = createRoleLink();
+  
+  
+  
+  
   const baseHttpLink = new HttpLink({
     uri: url,
     fetch,
   });
 
-  // Create link for adding auth (JWT or Admin Secret)
+  
   const authHeaderLink = setContext((_, { headers }) => {
-    // Return the headers to the context so httpLink can read them
+    
      if (token) {
          debug('apollo', '🔒 Using JWT token for Authorization header');
          return {
@@ -124,23 +124,23 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
      return { headers };
   });
   
-  // Chain the links: roleLink -> authHeaderLink -> baseHttpLink
-  const httpLink = ApolloLink.from([roleLink, authHeaderLink, baseHttpLink]);
-  // --- End Existing Links Modification ---
   
-  // --- WebSocket Link Setup 
-  let link = httpLink; // Start with the combined HTTP link
+  const httpLink = ApolloLink.from([roleLink, authHeaderLink, baseHttpLink]);
+  
+  
+  
+  let link = httpLink; 
 
-  // --- Debugging WS Link Creation ---
+  
   debug('apollo', `🚀 Checking WS setup: ws=${ws}, isClient=${isClient}`); 
 
   let wsClientInstance: GraphQLWSClientInstance | undefined = undefined;
 
-  // Important: создаем WebSocket соединение, если ws = true, независимо от isClient
+  
   if (ws) {
-    debug('apollo', '✅ Entering WS Link creation block.'); // Log entry
+    debug('apollo', '✅ Entering WS Link creation block.'); 
     
-    // Use improved function for creating WebSocket URL
+    
     const wsEndpoint = createWebSocketUrl(url);
     debug('apollo', '🔌 Setting up GraphQLWsLink for:', wsEndpoint);
     debug('===========================');
@@ -149,7 +149,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
     debug(`WebSocket URL: ${wsEndpoint}`);
     debug('===========================');
     
-    // --- Enhance GraphQLWsLink to work in Node.js --- 
+    
     const wsConnectionParams: Record<string, any> = {};
     
     if (token) {
@@ -157,7 +157,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
       wsConnectionParams.headers = { Authorization: `Bearer ${token}` };
     } else if (secret) {
       debug('apollo', '🔑 Preparing Admin Secret for WS connectionParams');
-      // For Hasura specifically, admin secret must be set in the headers
+      
       wsConnectionParams.headers = { 'x-hasura-admin-secret': secret };
     } else {
       debug('apollo', '🔓 No auth for WS connectionParams');
@@ -166,26 +166,26 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
     debug('apollo', '📝 WS connection params prepared:', wsConnectionParams);
     
     try {
-      // Убедимся, что используем правильный протокол для Hasura
-      const protocols = ['graphql-transport-ws']; // Используется библиотекой graphql-ws
       
-      // Для Hasura Cloud требуется именно этот протокол
+      const protocols = ['graphql-transport-ws']; 
+      
+      
       if (url.includes('hasura.app')) {
         debug('🔍 Detected Hasura Cloud - using graphql-transport-ws protocol');
       }
       
       const wsClient = graphqlWSClient({
         url: wsEndpoint,
-        webSocketImpl: isClient ? undefined : isomorphicWs, // Use isomorphic-ws in Node.js
-        // @ts-ignore - inactivityTimeout not in type definitions but supported by graphql-ws
-        inactivityTimeout: 30000, // 30 seconds timeout for inactivity
-        lazy: false, // Connect immediately instead of waiting for first subscription
-        retryAttempts: 5, // Retry 5 times before giving up
+        webSocketImpl: isClient ? undefined : isomorphicWs, 
+        // @ts-ignore
+        inactivityTimeout: 30000, 
+        lazy: false, 
+        retryAttempts: 5, 
         connectionParams: () => {
           debug('apollo', '⚙️ Evaluating connectionParams function...');
           
           if (secret) {
-            // Для Hasura требуется особый формат передачи admin secret
+            
             debug('🔒 Adding admin secret to WebSocket connection');
             return {
               headers: {
@@ -196,7 +196,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
           
           return wsConnectionParams;
         },
-        // --- Add event handlers for diagnostics ---
+        
         on: {
           connected: (socket) => {
             debug('apollo', '🔗 [graphql-ws] WebSocket connected:', socket);
@@ -211,16 +211,16 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
           },
           closed: (event) => debug('apollo', '🚪 [graphql-ws] WebSocket closed:', event),
         }
-        // --- End event handlers ---
+        
       });
       
-      wsClientInstance = wsClient; // Store the client instance locally first
+      wsClientInstance = wsClient; 
       
       const wsLink = new GraphQLWsLink(wsClient);
       debug('apollo', '🔗 GraphQLWsLink created with wsClient');
       debug('GraphQLWsLink successfully created for subscriptions');
 
-      // Split based on operation type
+      
       link = split(
         ({ query }) => {
           const definition = getMainDefinition(query);
@@ -228,7 +228,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
                                  definition.operation === 'subscription';
           debug('apollo', `🔗 Split link decision: isSubscription=${isSubscription}, operation=${definition.kind === 'OperationDefinition' ? definition.operation : 'fragment'}, kind=${definition.kind}`);
           
-          // Более подробное логирование для анализа выбора ссылки
+          
           if (isSubscription) {
             const operationType = definition.kind === 'OperationDefinition' ? definition.operation : 'fragment';
             debug('💬 Using WebSocket link for subscription:', definition.kind, operationType);
@@ -240,8 +240,8 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
           
           return isSubscription;
         },
-        wsLink, // Use wsLink for subscriptions
-        httpLink // Use httpLink (with roleLink and authHeaderLink) for query/mutation
+        wsLink, 
+        httpLink 
       );
       debug('apollo', '✅ Final link split set up properly: WS for subscriptions, HTTP for queries/mutations');
     } catch (err) {
@@ -251,11 +251,11 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
   } else {
     debug('apollo', '❌ Skipping WS Link creation.', { ws, isClient });
   }
-  // --- End WebSocket Setup ---
+  
 
-  // Create Apollo Client with the final composed link
+  
   const apolloClientInstance: HasyxApolloClient = new ApolloClient({
-    link: link, // Use the potentially split link
+    link: link, 
     cache: new InMemoryCache(),
     defaultOptions: {
       watchQuery: {
@@ -289,7 +289,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
     apolloClientInstance.graphqlWsClient = wsClientInstance;
   }
 
-  // Add terminate method to the client
+  
   apolloClientInstance.terminate = () => {
     if (apolloClientInstance.graphqlWsClient) {
       debug('apollo', '🔌 Disposing WebSocket client.');
@@ -300,7 +300,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
   return apolloClientInstance;
 }
 
-// Default client instance
+
 let clientInstance: ApolloClient<any> | null = null;
 
 /**
@@ -347,7 +347,7 @@ export async function checkConnection(client = getClient()): Promise<boolean> {
 }
 
 const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
-  // Handle errors
+  
 });
 
 export default {

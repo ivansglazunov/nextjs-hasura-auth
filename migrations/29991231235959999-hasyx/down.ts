@@ -8,7 +8,7 @@ import { down } from 'hasyx/lib/down-hasyx';
 const projectRoot = process.cwd();
 dotenv.config({ path: path.join(projectRoot, '.env') });
 
-// Функция для запуска hasyx schema
+// Function to run hasyx schema
 async function runHasuraSchema(): Promise<void> {
   return new Promise((resolve, reject) => {
     console.log('📊 Generating schema using hasyx schema command...');
@@ -39,10 +39,10 @@ async function run() {
   console.log('🔄 Running updated hasyx view DOWN migration with improved schema handling...');
   
   try {
-    // Генерируем схему напрямую
+    // Generate schema directly
     await runHasuraSchema();
     
-    // Проверка наличия таблиц в hasura-schema.json
+    // Check for tables in hasura-schema.json
     const schemaPath = path.join(projectRoot, 'public', 'hasura-schema.json');
     if (fs.existsSync(schemaPath)) {
       const schemaContent = fs.readFileSync(schemaPath, 'utf-8');
@@ -59,7 +59,7 @@ async function run() {
       }
     }
     
-    // Запускаем миграцию
+    // Run migration
     if (await down()) {
       console.log('✅ Hasyx View migration DOWN completed successfully.');
       process.exit(0);

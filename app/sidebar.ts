@@ -24,6 +24,10 @@ export const sidebar: SidebarData = {
           url: "/hasyx/aframe",
         },
         {
+          title: "Cyto",
+          url: "/hasyx/cyto",
+        },
+        {
           title: "Payments",
           url: "/hasyx/payments",
         },

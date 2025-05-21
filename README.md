@@ -11,6 +11,13 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![Authentication Helpers Documentation](https://img.shields.io/badge/Auth%20Helpers%20Docs-MD-green)](AUTH.md) [![Hasura Admin Client Documentation](https://img.shields.io/badge/Hasura%20Client%20Docs-MD-purple)](HASURA.md)
 [![Generated Client Documentation](https://img.shields.io/badge/Generated%20Hasyx%20Docs-MD-cyan)](HASYX.md)
 [![GraphQL Proxy Documentation](https://img.shields.io/badge/GraphQL%20Proxy%20Docs-MD-yellow)](GRAPHQL-PROXY.md)
+[![Cytoscape Integration Documentation](https://img.shields.io/badge/Cyto%20Docs-MD-red)](CYTO.md)
+[![Hasyx Identifier (HID) Documentation](https://img.shields.io/badge/HID%20Docs-MD-lightgrey)](HID.md)
+[![Notifications System Documentation](https://img.shields.io/badge/Notify%20System-MD-blueviolet)](NOTIFY.md)
+[![Firebase Notifications Documentation](https://img.shields.io/badge/Notify%20Firebase-MD-gold)](NOTIFY-FIREBASE.md)
+[![Telegram Bot Notifications Documentation](https://img.shields.io/badge/Notify%20Telegram%20Bot-MD-skyblue)](NOTIFY-TELEGRAM-BOT.md)
+[![TBank Payments Documentation](https://img.shields.io/badge/TBank%20Payments-MD-ff69b4)](TBANK.md)
+[![Tinkoff API Base Documentation](https://img.shields.io/badge/Tinkoff%20API-MD-lightpink)](TINKOFF_API.md)
 
 ## Technologies Used
 
@@ -33,6 +40,7 @@ Hasyx takes responsibility for:
 *   Migrations control with `npx hasyx migrate` and `npx hasyx unmigrate` for easy database schema management from `./migrations` directory.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
+*   **Cytoscape Integration:** A powerful set of React components for graph visualizations using Cytoscape.js, allowing for custom HTML rendering within nodes and reactive style updates. See [`CYTO.md`](CYTO.md) for details.
 
 Applying best development practices from the listed ecosystems, we have combined these libraries into a single framework for rapid deployment.
 
@@ -85,11 +93,33 @@ Applying best development practices from the listed ecosystems, we have combined
          <img src="./public/resend.webp" height="70" alt="Resend Logo">
        </a>
      </td>
-     <td align="center"></td> <!-- Empty cell -->
+     <td align="center">
+     <a href="https://js.cytoscape.org" target="_blank" rel="noopener noreferrer">
+        <img src="./public/cyto.png" height="70" alt="Cytoscape Logo">
+     </a>
+     </td> <!-- Empty cell -->
      <td align="center"></td> <!-- Empty cell -->
      <td align="center"></td> <!-- Empty cell -->
   </tr>
 </table>
+
+## Detailed Documentation
+
+Explore the different modules and functionalities of Hasyx:
+
+*   **[GENERATOR.md](GENERATOR.md):** Learn about the powerful dynamic query generator for Hasura.
+*   **[APOLLO.md](APOLLO.md):** Understand how to use the Apollo Client with Hasyx.
+*   **[AUTH.md](AUTH.md):** Details on authentication helpers and NextAuth.js integration.
+*   **[HASURA.md](HASURA.md):** Information about the Hasura admin client and its usage.
+*   **[HASYX.md](HASYX.md):** Documentation for the core `Hasyx` client class and its features.
+*   **[GRAPHQL-PROXY.md](GRAPHQL-PROXY.md):** How the secure GraphQL proxy to Hasura works.
+*   **[CYTO.md](CYTO.md):** Guide to Cytoscape.js integration for graph visualizations.
+*   **[HID.md](HID.md):** Explanation of Hasyx Identifiers (HID) for resource identification.
+*   **[NOTIFY.md](NOTIFY.md):** Overview of the notifications system.
+*   **[NOTIFY-FIREBASE.md](NOTIFY-FIREBASE.md):** Specifics on Firebase Cloud Messaging for push notifications.
+*   **[NOTIFY-TELEGRAM-BOT.md](NOTIFY-TELEGRAM-BOT.md):** Details on Telegram Bot integration for notifications.
+*   **[TBANK.md](TBANK.md):** Documentation for TBank payments integration.
+*   **[TINKOFF_API.md](TINKOFF_API.md):** Base documentation for Tinkoff API interactions.
 
 ## 🚀 Quick Start
 
