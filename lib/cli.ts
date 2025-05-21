@@ -547,6 +547,7 @@ program
           "postinstall": "npm run ws -- -y",
           "migrate": "npx hasyx migrate",
           "unmigrate": "npx hasyx unmigrate",
+          "events": "npx hasyx events",
           "npm-publish": "npm run build && npm publish",
         };
         
