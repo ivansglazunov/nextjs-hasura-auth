@@ -17,6 +17,11 @@ import difference from 'lodash/difference';
 import flatten from 'lodash/flatten';
 import isEqual from 'lodash/isEqual';
 import { useResizeDetector } from 'react-resize-detector';
+import Debug from './debug';
+
+const logMain = Debug('cyto:main');
+const logNode = Debug('cyto:node');
+const logEdge = Debug('cyto:edge');
 
 const CytoscapeComponent = dynamic<any>(
   // @ts-ignore
@@ -100,7 +105,7 @@ export const Cyto = memo(function Graph({
   const gridColor = '#747474';
 
   const onLoaded = useCallback((cy) => {
-    console.log('Graph onLoaded', cy);
+    logMain('Graph onLoaded', cy);
     if (_cy) return;
     setCy(cy); cyRef.current = cy;
 
@@ -112,7 +117,7 @@ export const Cyto = memo(function Graph({
       const translateY = pan.y;
 
 
-      console.log('[DEBUG_VIEWPORT]', {
+      logMain('[DEBUG_VIEWPORT]', {
         eventSource: event?.type,
         pan,
         zoom,
@@ -152,11 +157,11 @@ export const Cyto = memo(function Graph({
       const s = source.data();
       const t = target.data();
       added.remove();
-      console.log('ehcomplete', s, t);
+      logMain('ehcomplete', s, t);
     };
 
     const bgtap = (event) => {
-      console.log('bgtap', event);
+      logMain('bgtap', event);
     };
 
     const onNodeAdd = (evt) => {
@@ -250,7 +255,7 @@ export const Cyto = memo(function Graph({
     }
     layoutRef.current = lay = cyRef.current.elements().layout(layout);
     lay.run();
-    cyRef.current.once('layoutready', () => setTimeout(() => { console.log('RELAYOUT'); }, 300));
+    cyRef.current.once('layoutready', () => setTimeout(() => { logMain('RELAYOUT'); }, 300));
     callback && callback();
   }, 300);
 
@@ -315,7 +320,7 @@ export const Cyto = memo(function Graph({
         edgeParams: (source, target) => {
           const s = source.data();
           const t = target.data();
-          console.log('edgeParams', source, s, target, t);
+          logMain('edgeParams', source, s, target, t);
           return {};
         },
       });
@@ -466,10 +471,24 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
   const i = useMemo(() => nodesIterator++, []);
   const cls = useMemo(() => `ni-${i}${ghost ? '-ghost' : ''}`, [i, ghost]);
   const parent: any = useContext(CytoElementsContext);
-  const boxRef = useRef<HTMLDivElement>(null);
+  
+  const id = useMemo(() => `${element?.id || element?.data?.id}`, [element]);
+  if (!id) {
+    logNode("Error: GraphNode !props.element.id && !props.element.data.id. Element:", element);
+    throw new Error(`GraphNode !props.element.id && !props.element.data.id`);
+  }
 
-  const id = `${element?.id || element?.data?.id}`;
-  if (!id) throw new Error(`GraphNode !props.element.id && !props.element.data.id`);
+
+  const [htmlElement, setHtmlElement] = useState<HTMLDivElement | null>(null);
+  const boxRefCallback = useCallback((node: HTMLDivElement | null) => {
+    logNode(`GraphNode [${id}] boxRefCallback called with node:`, node);
+    if (node) {
+      setHtmlElement(node);
+    } else {
+      setHtmlElement(null);
+    }
+  }, [id]);
+
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -511,9 +530,9 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
       if (onAdded) onAdded(cyEl, cy);
     } else {
       cyEl.addClass(cls);
-      console.log(`GraphNode [${id}] prepare update. element.data:`, element?.data, 'dataForCy:', dataForCy);
+      logNode(`GraphNode [${id}] prepare update. element.data:`, element?.data, 'dataForCy:', dataForCy);
       if (element?.data && !isEqual(cyEl.data(), dataForCy)) {
-        console.log(`GraphNode [${id}] Updating data in Cytoscape. Old:`, cyEl.data(), 'New:', dataForCy);
+        logNode(`GraphNode [${id}] Updating data in Cytoscape. Old:`, cyEl.data(), 'New:', dataForCy);
         cyEl.data(dataForCy);
       }
 
@@ -579,54 +598,61 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
     restProps.onClick, 
     restProps.onGhost, 
     restProps.onUnghost,
-    setCytoscapeNode
+    setCytoscapeNode,
+    parent
   ]);
 
   const onPositionCallbackRef = useRef<((p: { x: number, y: number }) => void) | null>(null);
   useEffect(() => {
     onPositionCallbackRef.current = (p: { x: number, y: number }) => {
-      if (boxRef.current) {
+      if (htmlElement) {
 
         const transformString = `translate(calc(${p.x}px - 50%), calc(${p.y}px - 50%))`;
 
-        console.log('[DEBUG_NODE_POS]', {
+        logNode('[DEBUG_NODE_POS]', {
           eventSource: 'onPositionCallbackRef',
           nodeId: id,
           position: p,
           transformString,
         });
 
-        boxRef.current.style.transform = transformString;
+        htmlElement.style.transform = transformString;
       }
     };
-  }, [id]);
+  }, [id, htmlElement]);
 
 
   useEffect(() => {
-    if (!isMounted || !cytoscapeNode || !cytoscapeNode.length || !cytoscapeNode.inside()) {
-        if (!isMounted) console.warn(`GraphNode [${id}] Positioning effect: Not mounted yet.`);
-        if (!cytoscapeNode) console.warn(`GraphNode [${id}] Positioning effect: cytoscapeNode is null.`);
-        else if (!cytoscapeNode.length) console.warn(`GraphNode [${id}] Positioning effect: cytoscapeNode has no length (empty collection).`);
-        else if (!cytoscapeNode.inside()) console.warn(`GraphNode [${id}] Positioning effect: cytoscapeNode is not inside the graph.`);
+    if (!children && !ghost) {
+        logNode(`GraphNode [${id}] Positioning/Resize effect: No children and not a ghost node. Skipping.`);
+        return;
+    }
+    if (!isMounted || !cytoscapeNode || !cytoscapeNode.length || !cytoscapeNode.inside() || (children && !htmlElement)) {
+        if (!isMounted) logNode(`GraphNode [${id}] Positioning effect: Not mounted yet.`);
+        if (!cytoscapeNode) logNode(`GraphNode [${id}] Positioning effect: cytoscapeNode is null.`);
+        else if (!cytoscapeNode.length) logNode(`GraphNode [${id}] Positioning effect: cytoscapeNode has no length (empty collection).`);
+        else if (!cytoscapeNode.inside()) logNode(`GraphNode [${id}] Positioning effect: cytoscapeNode is not inside the graph.`);
+        if (children && !htmlElement) logNode(`GraphNode [${id}] Positioning effect: htmlElement (for children) is null.`);
         return;
     }
 
     const currentCyEl = cytoscapeNode;
 
-    if (boxRef.current) {
+    if (htmlElement) {
       const p = currentCyEl.position();
-      console.log(`GraphNode [${id}] Positioning effect (run): currentCyEl ready. Position from cy:`, p, 'Transforming boxRef:', boxRef.current);
+      logNode(`GraphNode [${id}] Positioning effect (run): currentCyEl ready. Position from cy:`, p, 'Transforming htmlElement:', htmlElement);
       if (p && onPositionCallbackRef.current) {
         onPositionCallbackRef.current(p);
       } else if (!p) {
-        console.warn(`GraphNode [${id}] Positioning effect (run): currentCyEl.position() returned null/undefined.`);
+        logNode(`GraphNode [${id}] Positioning effect (run): currentCyEl.position() returned null/undefined.`);
       }
-    } else {
-      console.warn(`GraphNode [${id}] Positioning effect (run): boxRef.current is null. Cannot set initial transform.`);
+    } else if (children) {
+        logNode(`GraphNode [${id}] Positioning effect (run): htmlElement is null despite children being present. Cannot set initial transform.`);
     }
 
+
     const handlePositionEvent = (e: any) => {
-      console.log(`GraphNode [${id}] 'position' event triggered. Event target position:`, e.target.position());
+      logNode(`GraphNode [${id}] 'position' event triggered. Event target position:`, e.target.position());
       if (onPositionCallbackRef.current) {
         onPositionCallbackRef.current(e.target.position());
       }
@@ -634,38 +660,36 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
     currentCyEl.on('position', handlePositionEvent);
 
 
-    if (boxRef.current) {
+    if (htmlElement) {
       const p = currentCyEl.position();
       if (p && onPositionCallbackRef.current) {
         onPositionCallbackRef.current(p);
       }
-    } else {
-      // console.warn(`GraphNode [${id}] Initial position sync: boxRef.current is null.`); // Already logged above
     }
 
     let animationFrameId: number | null = null;
     let observer: ResizeObserver | null = null;
 
 
-    if (boxRef.current) {
-      console.log(`GraphNode [${id}] Setting up ResizeObserver as boxRef.current is available.`);
+    if (htmlElement) {
+      logNode(`GraphNode [${id}] Setting up ResizeObserver as htmlElement is available.`);
       observer = new ResizeObserver(entries => {
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(() => {
           for (let entry of entries) {
-            if (entry.target === boxRef.current && boxRef.current && currentCyEl && currentCyEl.length && currentCyEl.inside()) {
+            if (entry.target === htmlElement && htmlElement && currentCyEl && currentCyEl.length && currentCyEl.inside()) {
               const { width, height } = entry.contentRect;
-              console.log(`GraphNode [${id}] ResizeObserver: HTML element size w=${width}, h=${height}`);
+              logNode(`GraphNode [${id}] ResizeObserver: HTML element size w=${width}, h=${height}`);
               const parseDim = (v: any): number => typeof v === 'string' ? parseFloat(v) : typeof v === 'number' ? v : 0;
               const currentCyWidth = parseDim(currentCyEl.style('width'));
               const currentCyHeight = parseDim(currentCyEl.style('height'));
-              console.log(`GraphNode [${id}] ResizeObserver: Current CyNode size w=${currentCyWidth}, h=${currentCyHeight}`);
+              logNode(`GraphNode [${id}] ResizeObserver: Current CyNode size w=${currentCyWidth}, h=${currentCyHeight}`);
 
               if (width > 0 && height > 0 && (Math.abs(currentCyWidth - width) > 0.5 || Math.abs(currentCyHeight - height) > 0.5)) {
-                console.log(`GraphNode [${id}] ResizeObserver: Updating CyNode size to w=${width}, h=${height}`);
+                logNode(`GraphNode [${id}] ResizeObserver: Updating CyNode size to w=${width}, h=${height}`);
                 currentCyEl.style({ 'width': width, 'height': height });
                 if (relayout) {
-                  console.log(`GraphNode [${id}] ResizeObserver: Triggering relayout.`);
+                  logNode(`GraphNode [${id}] ResizeObserver: Triggering relayout.`);
                   relayout();
                 }
               }
@@ -674,45 +698,45 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
         });
       });
 
-      observer.observe(boxRef.current);
+      observer.observe(htmlElement);
 
-      const initialWidth = boxRef.current.offsetWidth;
-      const initialHeight = boxRef.current.offsetHeight;
-      console.log(`GraphNode [${id}] Initial HTML size: w=${initialWidth}, h=${initialHeight}`);
+      const initialWidth = htmlElement.offsetWidth;
+      const initialHeight = htmlElement.offsetHeight;
+      logNode(`GraphNode [${id}] Initial HTML size: w=${initialWidth}, h=${initialHeight}`);
       if (initialWidth > 0 && initialHeight > 0 && currentCyEl && currentCyEl.length && currentCyEl.inside()) {
         const parseDim = (v: any): number => typeof v === 'string' ? parseFloat(v) : typeof v === 'number' ? v : 0;
         const currentCyWidth = parseDim(currentCyEl.style('width'));
         const currentCyHeight = parseDim(currentCyEl.style('height'));
-        console.log(`GraphNode [${id}] Initial CyNode size: w=${currentCyWidth}, h=${currentCyHeight}`);
+        logNode(`GraphNode [${id}] Initial CyNode size: w=${currentCyWidth}, h=${currentCyHeight}`);
         if (Math.abs(currentCyWidth - initialWidth) > 0.5 || Math.abs(currentCyHeight - initialHeight) > 0.5) {
-          console.log(`GraphNode [${id}] Initial Sync: Updating CyNode size to w=${initialWidth}, h=${initialHeight}`);
+          logNode(`GraphNode [${id}] Initial Sync: Updating CyNode size to w=${initialWidth}, h=${initialHeight}`);
           currentCyEl.style({ 'width': initialWidth, 'height': initialHeight });
           if (relayout) {
-            console.log(`GraphNode [${id}] Initial Sync: Triggering relayout.`);
+            logNode(`GraphNode [${id}] Initial Sync: Triggering relayout.`);
             relayout();
           }
         }
       }
-    } else {
-      console.warn(`GraphNode [${id}] ResizeObserver setup skipped: boxRef.current is null.`);
+    } else if (children) {
+      logNode(`GraphNode [${id}] ResizeObserver setup skipped: htmlElement is null despite children being present.`);
     }
 
     return () => {
       if (currentCyEl && currentCyEl.length && currentCyEl.inside()) currentCyEl.off('position', handlePositionEvent);
-      if (boxRef.current && observer) {
-        observer.unobserve(boxRef.current);
+      if (htmlElement && observer) {
+        observer.unobserve(htmlElement);
       }
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (observer) observer.disconnect();
     };
-  }, [id, relayout, isMounted, cytoscapeNode, onPositionCallbackRef]);
+  }, [id, relayout, isMounted, cytoscapeNode, onPositionCallbackRef, htmlElement, children, ghost]);
 
   return <>
     <CytoElementsContext.Provider value={cytoscapeNode}>
       {children && (
         <Portal containerRef={overlayRef}>
           <div
-            ref={boxRef}
+            ref={boxRefCallback}
             style={{
               position: 'absolute',
               pointerEvents: 'all',
@@ -778,11 +802,11 @@ export const CytoEdge = memo(function GraphEdge({
     const eid = element?.id || element?.data?.id;
     if (!eid) {
       if (element?.data?.source && element?.data?.target) {
-        console.warn(`GraphEdge: Missing id for edge between ${element.data.source} and ${element.data.target}. Generating fallback: edge-${element.data.source}-${element.data.target}-${i}`);
+        logEdge(`GraphEdge: Missing id for edge between ${element.data.source} and ${element.data.target}. Generating fallback: edge-${element.data.source}-${element.data.target}-${i}`);
         return `edge-${element.data.source}-${element.data.target}-${i}`;
       }
       const fallbackId = `generated-edge-${i}`;
-      console.error(`GraphEdge: element.id or element.data.id is required, and source/target are also missing. Using insecure fallback ID: ${fallbackId}. Element data: ${JSON.stringify(element?.data)}`);
+      logEdge(`GraphEdge: element.id or element.data.id is required, and source/target are also missing. Using insecure fallback ID: ${fallbackId}. Element data: ${JSON.stringify(element?.data)}`);
       return fallbackId;
     }
     return `${eid}`;
@@ -790,27 +814,27 @@ export const CytoEdge = memo(function GraphEdge({
 
   const [isMounted, setIsMounted] = useState(false);
   const mount = useCallback(() => {
-    console.log(`GraphEdge [${id}] mount called (all ghost nodes ready). Setting isMounted to true.`);
+    logEdge(`GraphEdge [${id}] mount called (all ghost nodes ready). Setting isMounted to true.`);
     setIsMounted(true);
   }, [id]);
 
   const addEdgeToCytoscape = useCallback(() => {
     if (!cy || !element?.data?.source || !element?.data?.target) {
-      console.warn(`GraphEdge [${id}] addEdgeToCytoscape: cy instance or source/target data missing. Element:`, element);
+      logEdge(`GraphEdge [${id}] addEdgeToCytoscape: cy instance or source/target data missing. Element:`, element);
       return;
     }
     if (!isMounted) {
-      console.log(`GraphEdge [${id}] addEdgeToCytoscape: Not mounted yet (ghosts not ready).`);
+      logEdge(`GraphEdge [${id}] addEdgeToCytoscape: Not mounted yet (ghosts not ready).`);
       return;
     }
 
-    console.log(`GraphEdge [${id}] addEdgeToCytoscape: Proceeding. Element:`, element);
+    logEdge(`GraphEdge [${id}] addEdgeToCytoscape: Proceeding. Element:`, element);
     const sourceId = element.data.source;
     const targetId = element.data.target;
 
     let cyEdgeInstance = cy.$id(id);
     if (cyEdgeInstance.length > 0) {
-      console.log(`GraphEdge [${id}] addEdgeToCytoscape: Edge with ID '${id}' already exists. Ensuring instance class '${cls}' is present.`);
+      logEdge(`GraphEdge [${id}] addEdgeToCytoscape: Edge with ID '${id}' already exists. Ensuring instance class '${cls}' is present.`);
       if (!cyEdgeInstance.hasClass(cls)) {
         cyEdgeInstance.addClass(cls);
       }
@@ -818,14 +842,14 @@ export const CytoEdge = memo(function GraphEdge({
     }
 
     const tryRecreate = () => {
-      console.log(`GraphEdge [${id}] tryRecreate: SourceID=${sourceId}, TargetID=${targetId}`);
+      logEdge(`GraphEdge [${id}] tryRecreate: SourceID=${sourceId}, TargetID=${targetId}`);
       const sourceNode = cy.$id(sourceId);
       const targetNode = cy.$id(targetId);
-      console.log(`GraphEdge [${id}] tryRecreate: Source node '${sourceId}' found: ${sourceNode.length > 0}, Target node '${targetId}' found: ${targetNode.length > 0}`);
+      logEdge(`GraphEdge [${id}] tryRecreate: Source node '${sourceId}' found: ${sourceNode.length > 0}, Target node '${targetId}' found: ${targetNode.length > 0}`);
 
       if (!sourceNode.length || !targetNode.length) {
-        if (!sourceNode.length) console.warn(`GraphEdge [${id}] tryRecreate: Source node ${sourceId} NOT FOUND in Cytoscape when trying to create edge.`);
-        if (!targetNode.length) console.warn(`GraphEdge [${id}] tryRecreate: Target node ${targetId} NOT FOUND in Cytoscape when trying to create edge.`);
+        if (!sourceNode.length) logEdge(`GraphEdge [${id}] tryRecreate: Source node ${sourceId} NOT FOUND in Cytoscape when trying to create edge.`);
+        if (!targetNode.length) logEdge(`GraphEdge [${id}] tryRecreate: Target node ${targetId} NOT FOUND in Cytoscape when trying to create edge.`);
         return;
       }
 
@@ -838,11 +862,11 @@ export const CytoEdge = memo(function GraphEdge({
       };
       edgeDataForCytoscape.data.id = id;
 
-      console.log(`GraphEdge [${id}] tryRecreate: Adding edge to Cytoscape:`, edgeDataForCytoscape);
+      logEdge(`GraphEdge [${id}] tryRecreate: Adding edge to Cytoscape:`, edgeDataForCytoscape);
       const addedEdge = cy.add(edgeDataForCytoscape);
 
       const onClickHandler = (e: any) => {
-        console.log(`GraphEdge [${id}] onClick event`, { event: e, edge: addedEdge, props });
+        logEdge(`GraphEdge [${id}] onClick event`, { event: e, edge: addedEdge, props });
         props.onClick && props.onClick(e);
       };
       addedEdge.on('click', onClickHandler);
@@ -859,43 +883,43 @@ export const CytoEdge = memo(function GraphEdge({
 
     if (!sourceNode.length) {
       waitingForSource = true;
-      console.log(`GraphEdge [${id}] addEdgeToCytoscape: Source node ${sourceId} not found. Waiting for node:created:${sourceId}`);
+      logEdge(`GraphEdge [${id}] addEdgeToCytoscape: Source node ${sourceId} not found. Waiting for node:created:${sourceId}`);
       cy.once(`node:created:${sourceId}`, () => {
-        console.log(`GraphEdge [${id}] addEdgeToCytoscape: node:created:${sourceId} event received.`);
+        logEdge(`GraphEdge [${id}] addEdgeToCytoscape: node:created:${sourceId} event received.`);
         tryRecreate();
       });
     }
     if (!targetNode.length) {
       waitingForTarget = true;
-      console.log(`GraphEdge [${id}] addEdgeToCytoscape: Target node ${targetId} not found. Waiting for node:created:${targetId}`);
+      logEdge(`GraphEdge [${id}] addEdgeToCytoscape: Target node ${targetId} not found. Waiting for node:created:${targetId}`);
       cy.once(`node:created:${targetId}`, () => {
-        console.log(`GraphEdge [${id}] addEdgeToCytoscape: node:created:${targetId} event received.`);
+        logEdge(`GraphEdge [${id}] addEdgeToCytoscape: node:created:${targetId} event received.`);
         tryRecreate();
       });
     }
 
     if (!waitingForSource && !waitingForTarget) {
-      console.log(`GraphEdge [${id}] addEdgeToCytoscape: Both source and target nodes found initially.`);
+      logEdge(`GraphEdge [${id}] addEdgeToCytoscape: Both source and target nodes found initially.`);
       tryRecreate();
     }
   }, [cy, element, isMounted, id, cls, props.onClick]);
 
   useEffect(() => {
-    console.log(`GraphEdge [${id}] main effect. isMounted: ${isMounted}, element.id: ${element?.id}, element.data.id: ${element?.data?.id}, element.data.source: ${element?.data?.source}, element.data.target: ${element?.data?.target}`);
+    logEdge(`GraphEdge [${id}] main effect. isMounted: ${isMounted}, element.id: ${element?.id}, element.data.id: ${element?.data?.id}, element.data.source: ${element?.data?.source}, element.data.target: ${element?.data?.target}`);
     if (!cy || !isMounted || !element?.data?.source || !element?.data?.target) {
-      if(!cy) console.warn(`GraphEdge [${id}] main effect: cy not available.`);
-      if(!isMounted) console.warn(`GraphEdge [${id}] main effect: not mounted (ghosts not ready).`);
-      if(!element?.data?.source || !element?.data?.target) console.warn(`GraphEdge [${id}] main effect: source or target missing in element.data.`);
+      if(!cy) logEdge(`GraphEdge [${id}] main effect: cy not available.`);
+      if(!isMounted) logEdge(`GraphEdge [${id}] main effect: not mounted (ghosts not ready).`);
+      if(!element?.data?.source || !element?.data?.target) logEdge(`GraphEdge [${id}] main effect: source or target missing in element.data.`);
       return;
     }
 
     let cyEdge = cy.$id(id);
     
     if (!cyEdge.length) {
-      console.log(`GraphEdge [${id}] main effect: Edge does not exist in Cytoscape. Calling addEdgeToCytoscape.`);
+      logEdge(`GraphEdge [${id}] main effect: Edge does not exist in Cytoscape. Calling addEdgeToCytoscape.`);
       addEdgeToCytoscape();
     } else {
-      console.log(`GraphEdge [${id}] main effect: Edge ${id} exists. Checking for data updates.`);
+      logEdge(`GraphEdge [${id}] main effect: Edge ${id} exists. Checking for data updates.`);
       const currentCyData = cyEdge.data();
       
       const elementDataForComparison = { ...element.data, id };
@@ -915,14 +939,14 @@ export const CytoEdge = memo(function GraphEdge({
       }
 
       if (needsUpdate) {
-        console.log(`GraphEdge [${id}] main effect: Data changed. Updating edge data. New:`, element.data, `Old in Cy:`, currentCyData);
+        logEdge(`GraphEdge [${id}] main effect: Data changed. Updating edge data. New:`, element.data, `Old in Cy:`, currentCyData);
         cyEdge.data(element.data);
       } else {
-        console.log(`GraphEdge [${id}] main effect: Data for edge ${id} seems unchanged.`);
+        logEdge(`GraphEdge [${id}] main effect: Data for edge ${id} seems unchanged.`);
       }
 
       if (!cyEdge.hasClass(cls)) {
-        console.log(`GraphEdge [${id}] main effect: Adding instance class '${cls}' to existing edge.`);
+        logEdge(`GraphEdge [${id}] main effect: Adding instance class '${cls}' to existing edge.`);
         cyEdge.addClass(cls);
       }
     }
@@ -933,10 +957,10 @@ export const CytoEdge = memo(function GraphEdge({
       if (cy) {
         const edgeToRemove = cy.$id(id);
         if (edgeToRemove.length) {
-          console.log(`GraphEdge [${id}] Unmounting React component: Removing edge '${id}' from Cytoscape.`);
+          logEdge(`GraphEdge [${id}] Unmounting React component: Removing edge '${id}' from Cytoscape.`);
           edgeToRemove.remove();
         } else {
-          console.log(`GraphEdge [${id}] Unmounting React component: Edge '${id}' not found in Cytoscape for removal.`);
+          logEdge(`GraphEdge [${id}] Unmounting React component: Edge '${id}' not found in Cytoscape for removal.`);
         }
       }
     };
@@ -958,7 +982,7 @@ export const CytoEdge = memo(function GraphEdge({
     const nextElementClasses = element?.classes || [];
 
     if (!isEqual(previousElementClasses, nextElementClasses)) {
-      console.log(`GraphEdge [${id}] Classes prop changed. Previous:`, previousElementClasses, `Next:`, nextElementClasses);
+      logEdge(`GraphEdge [${id}] Classes prop changed. Previous:`, previousElementClasses, `Next:`, nextElementClasses);
       const removed = difference(previousElementClasses, nextElementClasses);
       const added = difference(nextElementClasses, previousElementClasses);
 
@@ -968,7 +992,7 @@ export const CytoEdge = memo(function GraphEdge({
       removed.forEach(className => {
         edgeSpecificClassCounts[className] = (edgeSpecificClassCounts[className] || 1) - 1;
         if (edgeSpecificClassCounts[className] <= 0) {
-          console.log(`GraphEdge [${id}] Removing class '${className}' from Cytoscape element for edge ${id}.`);
+          logEdge(`GraphEdge [${id}] Removing class '${className}' from Cytoscape element for edge ${id}.`);
           cyEdge.removeClass(className);
           delete edgeSpecificClassCounts[className]; 
         }
@@ -977,7 +1001,7 @@ export const CytoEdge = memo(function GraphEdge({
       added.forEach(className => {
         edgeSpecificClassCounts[className] = (edgeSpecificClassCounts[className] || 0) + 1;
         if (edgeSpecificClassCounts[className] === 1) { 
-          console.log(`GraphEdge [${id}] Adding class '${className}' to Cytoscape element for edge ${id}.`);
+          logEdge(`GraphEdge [${id}] Adding class '${className}' to Cytoscape element for edge ${id}.`);
           cyEdge.addClass(className);
         }
       });
@@ -993,7 +1017,7 @@ export const CytoEdge = memo(function GraphEdge({
       const edgeSpecificClassCounts = contextClassCounts[id];
       const classesThisInstanceManaged = prevClassesRef.current;
 
-      console.log(`GraphEdge [${id}] Unmounting React component: Cleaning up its classes in classesRef. Classes managed:`, classesThisInstanceManaged);
+      logEdge(`GraphEdge [${id}] Unmounting React component: Cleaning up its classes in classesRef. Classes managed:`, classesThisInstanceManaged);
       classesThisInstanceManaged.forEach(className => {
         if (edgeSpecificClassCounts && edgeSpecificClassCounts[className]) {
           edgeSpecificClassCounts[className]--;
@@ -1011,31 +1035,31 @@ export const CytoEdge = memo(function GraphEdge({
   const ghostsRef = useRef(0);
   const ghostMounted = useCallback(() => {
     ghostsRef.current++;
-    console.log(`GraphEdge [${id}] ghostMounted. ghostsRef.current: ${ghostsRef.current}`);
+    logEdge(`GraphEdge [${id}] ghostMounted. ghostsRef.current: ${ghostsRef.current}`);
     if (ghostsRef.current >= 2) {
       mount(); 
     }
   }, [id, mount]);
 
   const onNodeMount = useCallback((type: string, nodeEl: any) => {
-    console.log(`GraphEdge [${id}] CytoNode ${type} (ghost) mounted:`, nodeEl?.id, 'Calling ghostMounted.');
+    logEdge(`GraphEdge [${id}] CytoNode ${type} (ghost) mounted:`, nodeEl?.id, 'Calling ghostMounted.');
     ghostMounted();
   }, [ghostMounted, id]);
 
   const onNodeUnmount = useCallback((type: string, nodeEl: any) => {
-    console.log(`GraphEdge [${id}] CytoNode ${type} (ghost) unmounted:`, nodeEl?.id);
+    logEdge(`GraphEdge [${id}] CytoNode ${type} (ghost) unmounted:`, nodeEl?.id);
   }, [id]);
 
   const mountedStateRef = useRef(false);
   useEffect(() => {
     if (isMounted && !mountedStateRef.current) {
-      console.log(`GraphEdge [${id}] Main edge component isMounted=true. Calling props.onMount.`);
+      logEdge(`GraphEdge [${id}] Main edge component isMounted=true. Calling props.onMount.`);
       mountedStateRef.current = true;
       props.onMount && props.onMount(element);
     }
     return () => {
       if (mountedStateRef.current) {
-        console.log(`GraphEdge [${id}] Main edge component unmounting. Calling props.onUnmount.`);
+        logEdge(`GraphEdge [${id}] Main edge component unmounting. Calling props.onUnmount.`);
         mountedStateRef.current = false;
         props.onUnmount && props.onUnmount(element);
       }
@@ -1061,6 +1085,8 @@ export const CytoEdge = memo(function GraphEdge({
   if (!isEqual(prevProps.element?.data, nextProps.element?.data)) return false;
   if (!isEqual(prevProps.element?.classes, nextProps.element?.classes)) return false;
   if (prevProps.onClick !== nextProps.onClick) return false;
+  if (prevProps.onMount !== nextProps.onMount) return false;
+  if (prevProps.onUnmount !== nextProps.onUnmount) return false;
   return true;
 });
 

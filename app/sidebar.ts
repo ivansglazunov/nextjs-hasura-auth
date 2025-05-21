@@ -7,11 +7,6 @@ export const sidebar: SidebarData = {
   logo: "logo.svg",
   navMain: [
     {
-      title: "Home",
-      url: "/",
-      items: [],
-    },
-    {
       title: "Hasyx",
       url: "#",
       items: [

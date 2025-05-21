@@ -177,7 +177,8 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
                 client,                 
                 provider!,              
                 account.providerAccountId!, 
-                profile!                
+                profile!,
+                user.image // Pass user.image as the fifth argument
               );
 
               if (!dbUser || !dbUser.id) {

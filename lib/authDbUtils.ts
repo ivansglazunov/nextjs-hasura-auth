@@ -64,6 +64,7 @@ export interface HasuraUser { // Export interface for use in options.ts
  * @param provider The OAuth provider name (e.g., 'google', 'credentials').
  * @param providerAccountId The user's unique ID from the provider.
  * @param profile Optional profile information from the provider (name, email, image).
+ * @param image Optional image URL from the provider.
  * @returns The Hasura user object associated with the account.
  * @throws Error if user/account processing fails.
  */
@@ -71,7 +72,8 @@ export async function getOrCreateUserAndAccount(
   hasyx: Hasyx,
   provider: string,
   providerAccountId: string,
-  profile?: UserProfileFromProvider | null
+  profile?: UserProfileFromProvider | null,
+  image?: string | null
 ): Promise<HasuraUser> {
   debug(`getOrCreateUserAndAccount called for provider: ${provider}, providerAccountId: ${providerAccountId}`);
 
@@ -85,16 +87,25 @@ export async function getOrCreateUserAndAccount(
         provider_account_id: { _eq: providerAccountId },
       },
       returning: [
-        { user: ['id', 'name', 'email', 'email_verified', 'image', 'password', 'created_at', 'updated_at', 'is_admin', 'hasura_role'] } // Removed extra backslashes
+        { user: ['id', 'name', 'email', 'email_verified', 'image', 'password', 'created_at', 'updated_at', 'is_admin', 'hasura_role'] } 
       ],
-      limit: 1, // Optimization: we only need one
+      limit: 1, 
     });
 
     if (accountResult?.length > 0 && accountResult?.[0]?.user) {
       existingUser = accountResult?.[0]?.user;
       debug(`Found existing account for ${provider}:${providerAccountId}. User ID: ${existingUser?.id}`);
-      // Optionally update user profile info (name, image) from provider here if desired
-      // await hasyx.update({ table: 'users', pk_columns: { id: existingUser.id }, _set: { name: profile.name, image: profile.image } });
+      // If user exists and image is provided, update it
+      if (existingUser && image && existingUser.image !== image) {
+        debug(`Updating image for existing user ${existingUser.id}`);
+        await hasyx.update({
+          table: 'users',
+          pk_columns: { id: existingUser.id },
+          _set: { image: image, name: profile?.name ?? existingUser.name } // Also update name if provider has a newer one
+        });
+        existingUser.image = image; // Update in-memory object
+        existingUser.name = profile?.name ?? existingUser.name;
+      }
       return existingUser as HasuraUser;
     }
   } catch (error) {
@@ -119,6 +130,19 @@ export async function getOrCreateUserAndAccount(
       if (userByEmailResult?.length > 0) {
         existingUser = userByEmailResult?.[0];
         debug(`Found existing user by email ${profile.email}. User ID: ${existingUser?.id}. Linking account.`);
+        
+        // If user exists and image is provided, update it
+        if (existingUser && image && existingUser.image !== image) {
+          debug(`Updating image for existing user ${existingUser.id} found by email.`);
+          await hasyx.update({
+            table: 'users',
+            pk_columns: { id: existingUser.id },
+            _set: { image: image, name: profile?.name ?? existingUser.name } // Also update name
+          });
+          existingUser.image = image; // Update in-memory object
+          existingUser.name = profile?.name ?? existingUser.name;
+        }
+        
         // Link account to this existing user
         await hasyx.insert({
           table: 'accounts',
@@ -138,7 +162,7 @@ export async function getOrCreateUserAndAccount(
       if (error instanceof ApolloError && error.message.includes('Uniqueness violation')) {
         debug(`Account ${provider}:${providerAccountId} likely already linked during concurrent request. Attempting to refetch.`);
         // Retry finding the account, as it might have been created concurrently
-         return getOrCreateUserAndAccount(hasyx, provider, providerAccountId, profile);
+         return getOrCreateUserAndAccount(hasyx, provider, providerAccountId, profile, image);
       } else {
          debug(`Error searching for user by email ${profile.email} or linking account:`, error);
          throw new Error(`Failed to process user by email or link account: ${(error as Error).message}`);
@@ -154,9 +178,9 @@ export async function getOrCreateUserAndAccount(
 
     const newUserInput: Partial<HasuraUser> = {
       name: profile?.name,
-      email: profile?.email, // Will be null for credentials initially, set later?
-      image: profile?.image,
-      hasura_role: 'user', // Default role
+      email: profile?.email, 
+      image: image ?? profile?.image, // Use passed image first, then profile.image
+      hasura_role: 'user', 
       // email_verified: profile?.email_verified ? new Date().toISOString() : null, // Need verification logic for OAuth
     };
 
@@ -196,7 +220,7 @@ export async function getOrCreateUserAndAccount(
         debug(`User with email ${profile?.email} likely already exists. Attempting to find and link.`);
         // If user creation failed due to duplicate email, retry finding by email and linking account
         if (profile?.email && provider !== 'credentials') {
-            return getOrCreateUserAndAccount(hasyx, provider, providerAccountId, profile);
+            return getOrCreateUserAndAccount(hasyx, provider, providerAccountId, profile, image);
         }
     }
     throw new Error(`Failed to create new user/account: ${(error as Error).message}`);
