@@ -1,6 +1,6 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile } from './assist-common';
+import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret } from './assist-common';
 import path from 'path';
 import fs from 'fs-extra';
 import spawn from 'cross-spawn'; // For potential calibration scripts
@@ -24,13 +24,13 @@ export async function configureTelegramBot(rl: readline.Interface, envPath: stri
   const currentToken = envVars.TELEGRAM_BOT_TOKEN;
   let newToken = currentToken;
   if (currentToken) {
-    if (await askYesNo(rl, `Telegram Bot Token is already set (starts with: ${currentToken.substring(0, 8)}...). Do you want to change it?`, false)) {
-      newToken = await askForInput(rl, 'Enter new Telegram Bot API Token (press Enter to keep current)', currentToken);
+    if (await askYesNo(rl, `Telegram Bot Token is already set (starts with: ${maskDisplaySecret(currentToken)}). Do you want to change it?`, false)) {
+      newToken = await askForInput(rl, 'Enter new Telegram Bot API Token (press Enter to keep current)', currentToken, true);
     } else {
       newToken = currentToken; // Explicitly keep current if not changing
     }
   } else {
-    newToken = await askForInput(rl, 'Enter Telegram Bot API Token');
+    newToken = await askForInput(rl, 'Enter Telegram Bot API Token', '', true);
   }
   if (newToken !== currentToken) {
     envVars.TELEGRAM_BOT_TOKEN = newToken;

@@ -1,6 +1,6 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile } from './assist-common';
+import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret } from './assist-common';
 import path from 'path';
 import { urlToOptions, optionsToUrl, PgConnectionOptions } from './pg';
 
@@ -62,7 +62,7 @@ export async function configurePg(rl: readline.Interface, envPath: string): Prom
     host: await askForInput(rl, 'Host', 'localhost'),
     port: parseInt(await askForInput(rl, 'Port', '5432'), 10),
     user: await askForInput(rl, 'Username'),
-    password: await askForInput(rl, 'Password'),
+    password: await askForInput(rl, 'Password', '', true),
     database: await askForInput(rl, 'Database name'),
   };
   

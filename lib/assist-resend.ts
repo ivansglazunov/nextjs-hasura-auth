@@ -1,6 +1,6 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile } from './assist-common';
+import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret } from './assist-common';
 import path from 'path';
 
 const debug = Debug('assist:resend');
@@ -10,7 +10,7 @@ export async function configureResend(rl: readline.Interface, envPath: string): 
   const envVars = parseEnvFile(envPath);
 
   if (envVars.RESEND_API_KEY) {
-    console.log('✅ Resend API Key already configured.');
+    console.log(`✅ Resend API Key already configured (${maskDisplaySecret(envVars.RESEND_API_KEY)}).`);
     if (!await askYesNo(rl, 'Do you want to reconfigure Resend API Key?', false)) {
       return envVars;
     }
@@ -18,7 +18,7 @@ export async function configureResend(rl: readline.Interface, envPath: string): 
 
   if (await askYesNo(rl, 'Do you want to set up Resend for email sending?', true)) {
     console.log('You can get a Resend API key from https://resend.com/docs/api-keys');
-    envVars.RESEND_API_KEY = await askForInput(rl, 'Enter Resend API Key');
+    envVars.RESEND_API_KEY = await askForInput(rl, 'Enter Resend API Key', envVars.RESEND_API_KEY || '', true);
     console.log('✅ Resend API Key configured.');
   } else {
     delete envVars.RESEND_API_KEY;

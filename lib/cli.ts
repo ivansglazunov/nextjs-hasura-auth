@@ -992,7 +992,61 @@ program
       // Continue even if favicon generation fails
     }
     
-    // --- Step 4: Generate Capacitor assets ---
+    // --- Step 4: Generate PWA icons ---
+    console.log('🔄 Generating PWA icons...');
+    
+    try {
+      // Ensure public/icons directory exists
+      const iconsDir = path.join(publicDir, 'icons');
+      debug(`Ensuring icons directory: ${iconsDir}`);
+      await fs.ensureDir(iconsDir);
+      
+      // Dynamic import of sharp (since it's a native module)
+      debug('Dynamically importing sharp for PWA icons...');
+      const { default: importSharp } = await import('sharp');
+      const sharp = importSharp;
+      
+      // PWA icon sizes needed for manifest.webmanifest
+      const pwaIconSizes = [48, 72, 96, 128, 192, 256, 512];
+      
+      console.log(`📱 Generating PWA icons in ${pwaIconSizes.length} sizes...`);
+      
+      for (const size of pwaIconSizes) {
+        const iconPath = path.join(iconsDir, `icon-${size}.webp`);
+        debug(`Generating PWA icon: ${iconPath}`);
+        
+        await sharp(svgLogoPath)
+          .resize(size, size)
+          .webp({ quality: 90 }) // High quality WebP
+          .toFile(iconPath);
+        
+        console.log(`✅ Created PWA icon: icon-${size}.webp`);
+      }
+      
+      // Also create PNG versions for better compatibility
+      console.log('🖼️ Creating PNG fallbacks for PWA icons...');
+      
+      for (const size of [192, 512]) { // Most important sizes
+        const iconPath = path.join(iconsDir, `icon-${size}.png`);
+        debug(`Generating PWA PNG icon: ${iconPath}`);
+        
+        await sharp(svgLogoPath)
+          .resize(size, size)
+          .png()
+          .toFile(iconPath);
+        
+        console.log(`✅ Created PWA PNG icon: icon-${size}.png`);
+      }
+      
+      console.log('✅ PWA icons generated successfully');
+      
+    } catch (error) {
+      console.error('❌ Failed to generate PWA icons:', error);
+      debug(`Error generating PWA icons: ${error}`);
+      // Continue even if PWA icon generation fails
+    }
+    
+    // --- Step 5: Generate Capacitor assets ---
     console.log('🔄 Generating Capacitor assets...');
     
     try {

@@ -1,6 +1,6 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, askYesNo, parseEnvFile, getGitHubRemoteUrl, writeEnvFile, askForInput } from './assist-common';
+import { createRlInterface, askYesNo, parseEnvFile, getGitHubRemoteUrl, writeEnvFile, askForInput, maskDisplaySecret } from './assist-common';
 import { getVercelProjectName } from './assist-vercel';
 import path from 'path';
 import spawn from 'cross-spawn';

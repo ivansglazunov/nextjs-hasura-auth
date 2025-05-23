@@ -16,6 +16,7 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![Notifications System Documentation](https://img.shields.io/badge/Notify%20System-MD-blueviolet)](NOTIFY.md)
 [![Firebase Notifications Documentation](https://img.shields.io/badge/Notify%20Firebase-MD-gold)](NOTIFY-FIREBASE.md)
 [![Telegram Bot Notifications Documentation](https://img.shields.io/badge/Notify%20Telegram%20Bot-MD-skyblue)](NOTIFY-TELEGRAM-BOT.md)
+[![PWA Support Documentation](https://img.shields.io/badge/PWA%20Support-MD-9cf)](PWA.md)
 [![TBank Payments Documentation](https://img.shields.io/badge/TBank%20Payments-MD-ff69b4)](TBANK.md)
 [![Tinkoff API Base Documentation](https://img.shields.io/badge/Tinkoff%20API-MD-lightpink)](TINKOFF_API.md)
 
@@ -39,6 +40,7 @@ Hasyx takes responsibility for:
 *   Interactive `npx hasyx cli js [<filePath>] [-e "<script>" | --eval "<script>"]` for quick scripting, data exploration, or debugging interactions with your Hasura backend, with the `client` object available in the global scope.
 *   Migrations control with `npx hasyx migrate` and `npx hasyx unmigrate` for easy database schema management from `./migrations` directory.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
+*   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
 *   **Cytoscape Integration:** A powerful set of React components for graph visualizations using Cytoscape.js, allowing for custom HTML rendering within nodes and reactive style updates. See [`CYTO.md`](CYTO.md) for details.
 
@@ -115,6 +117,7 @@ Explore the different modules and functionalities of Hasyx:
 *   **[GRAPHQL-PROXY.md](GRAPHQL-PROXY.md):** How the secure GraphQL proxy to Hasura works.
 *   **[CYTO.md](CYTO.md):** Guide to Cytoscape.js integration for graph visualizations.
 *   **[HID.md](HID.md):** Explanation of Hasyx Identifiers (HID) for resource identification.
+*   **[PWA.md](PWA.md):** Progressive Web App support with offline functionality, installability, and push notifications.
 *   **[NOTIFY.md](NOTIFY.md):** Overview of the notifications system.
 *   **[NOTIFY-FIREBASE.md](NOTIFY-FIREBASE.md):** Specifics on Firebase Cloud Messaging for push notifications.
 *   **[NOTIFY-TELEGRAM-BOT.md](NOTIFY-TELEGRAM-BOT.md):** Details on Telegram Bot integration for notifications.
@@ -416,6 +419,36 @@ Synchronize Hasura event triggers with local definitions
 - Option: `--clean` - Remove security headers from event definitions (they will be added automatically during sync)
 
 The CLI automatically loads environment variables from the `.env` file in your project root. This ensures that commands like `npx hasyx events` have access to your Hasura URL, admin secret, and other configuration.
+
+---
+
+### `assets`
+
+Generate app icons and splash screens from logo.svg for web, Capacitor, and Electron apps.
+
+```bash
+npx hasyx assets
+```
+
+This command automatically generates:
+- **PWA icons** in all required sizes (48px to 512px) in WebP format
+- **PNG fallbacks** for better compatibility (192px, 512px)
+- **Favicon** for browsers
+- **Capacitor assets** for mobile apps
+- **Electron assets** if Electron is detected
+
+**Requirements:**
+- Your `public/logo.svg` file (created automatically by `npx hasyx init`)
+- The command creates icons in `public/icons/` directory
+- Icons are automatically referenced in the PWA manifest
+
+**Generated Files:**
+- `public/favicon.ico` - Browser favicon
+- `public/logo.png` - Main logo in PNG format
+- `public/icons/icon-48.webp` through `icon-512.webp` - PWA icons
+- `public/icons/icon-192.png`, `public/icons/icon-512.png` - PNG fallbacks
+- Mobile app assets (if Capacitor is present)
+- Electron assets (if Electron directory exists)
 
 ---
 

@@ -1,6 +1,6 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, getGitHubRemoteUrl } from './assist-common';
+import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, getGitHubRemoteUrl, maskDisplaySecret } from './assist-common';
 import path from 'path';
 import spawn from 'cross-spawn';
 import fs from 'fs-extra';
@@ -60,7 +60,7 @@ export async function setupVercel(rl: readline.Interface, envPath: string, envVa
   if (!envVars.VERCEL_TOKEN) {
     if (await askYesNo(rl, 'Do you want to set VERCEL_TOKEN? (needed for programmatic Vercel operations)', true)) {
       console.log('You can create a Vercel Access Token at: https://vercel.com/account/tokens');
-      envVars.VERCEL_TOKEN = await askForInput(rl, 'Enter Vercel Access Token');
+      envVars.VERCEL_TOKEN = await askForInput(rl, 'Enter Vercel Access Token', '', true);
       debug('VERCEL_TOKEN obtained from user input:', envVars.VERCEL_TOKEN ? 'Set' : 'Not Set');
     }
   }
