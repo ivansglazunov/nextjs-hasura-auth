@@ -539,7 +539,7 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
           internalPaymentId: response.OrderId || internalPaymentId, // TBank returns OrderId (our internal ID)
           status: currentStatus,
           providerStatus: response.Status,
-          paidAt: currentStatus === PaymentStatus.SUCCEEDED ? new Date().toISOString() : undefined, // Set paidAt if succeeded
+          paidAt: currentStatus === PaymentStatus.SUCCEEDED ? new Date().valueOf() : undefined, // Set paidAt if succeeded
           providerResponse: response,
         };
       } else {
@@ -695,7 +695,7 @@ export class TBankPaymentProcessor implements IPaymentProcessor {
     return {
       subscriptionId: args.internalSubscriptionId, 
       newStatus: 'canceled', 
-      canceledAt: new Date().toISOString(),
+      canceledAt: new Date().valueOf(),
     };
   }
 

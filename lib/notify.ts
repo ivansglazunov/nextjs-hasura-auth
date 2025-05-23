@@ -108,7 +108,7 @@ export async function handleNotificationEvent(
       _set: {
         status: result.success ? 'sent' : 'failed',
         error: result.success ? null : result.message,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().valueOf()
       }
     });
     
@@ -123,7 +123,7 @@ export async function handleNotificationEvent(
         _set: {
           status: 'failed',
           error: error instanceof Error ? error.message : 'Unknown error in handleNotificationEvent',
-          updated_at: new Date().toISOString()
+          updated_at: new Date().valueOf()
         }
       });
     } catch (updateError) {

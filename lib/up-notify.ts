@@ -15,8 +15,8 @@ const sqlSchema = `
       "provider" text NOT NULL,
       "device_token" text NOT NULL,
       "device_info" jsonb NOT NULL DEFAULT '{}'::jsonb,
-      "created_at" timestamptz NOT NULL DEFAULT now(),
-      "updated_at" timestamptz NOT NULL DEFAULT now(),
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
       PRIMARY KEY ("id"),
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE
   );
@@ -32,7 +32,7 @@ const sqlSchema = `
       "body" text NOT NULL,
       "data" jsonb DEFAULT NULL,
       "user_id" uuid NOT NULL,
-      "created_at" timestamptz NOT NULL DEFAULT now(),
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
       PRIMARY KEY ("id"),
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE
   );
@@ -48,8 +48,8 @@ const sqlSchema = `
       "config" jsonb DEFAULT NULL,
       "status" text NOT NULL DEFAULT 'pending',
       "error" text DEFAULT NULL,
-      "created_at" timestamptz NOT NULL DEFAULT now(),
-      "updated_at" timestamptz NOT NULL DEFAULT now(),
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
       PRIMARY KEY ("id"),
       FOREIGN KEY ("message_id") REFERENCES "public"."notification_messages"("id") ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY ("permission_id") REFERENCES "public"."notification_permissions"("id") ON UPDATE CASCADE ON DELETE CASCADE
@@ -67,7 +67,7 @@ const sqlSchema = `
     _new RECORD;
   BEGIN
     _new := NEW;
-    _new."updated_at" = NOW();
+    _new."updated_at" = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000;
     RETURN _new;
   END;
   $$ LANGUAGE plpgsql;
@@ -504,9 +504,8 @@ export async function up(customHasura?: Hasura) {
     await applyPermissions(hasura);
     debug('✨ Hasura Notify migration UP completed successfully!');
     return true;
-  } catch (error) {
-    console.error('❗ Critical error during Notify UP migration:', error);
-    debug('❌ Notify UP Migration failed.');
-    return false;
+  } catch (error: any) {
+    debug('❗ Critical error during Notify UP migration:', error);
+    throw error;
   }
 } 

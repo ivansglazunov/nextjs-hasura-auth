@@ -189,7 +189,7 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
               
               // Update userId ONLY if it changed (e.g., mapping to existing)
               userId = dbUser.id; 
-              emailVerified = dbUser.email_verified; // Update status from DB
+              emailVerified = dbUser.email_verified ? new Date(dbUser.email_verified).toISOString() : null; // Convert unix timestamp to ISO string for NextAuth
               // Cannot determine isNewUser directly from this return type assumption
               debug(`JWT Callback: OAuth DB sync completed for ${userId}`); 
             } catch (error) {

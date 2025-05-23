@@ -357,13 +357,17 @@ describe('GraphQL Query Generator Unit Tests', () => {
 
   it('Test 8: Should generate an update mutation by primary key correctly', () => {
     debug('\n📝 Test 8: Update mutation by primary key');
+    
+    // Use a fixed timestamp to avoid timing issues in tests
+    const fixedTimestamp = 1748000000000;
+    
     const options: GenerateOptions = {
         operation: 'update',
         table: 'users',
         pk_columns: { id: '123e4567-e89b-12d3-a456-426614174000' },
         _set: {
           name: 'Updated User',
-          updated_at: '2023-10-27T10:00:00Z' // Use fixed date for testing
+          updated_at: fixedTimestamp // Use fixed timestamp instead of new Date().valueOf()
         },
         returning: ['id', 'name', 'email', 'updated_at']
     };
@@ -383,7 +387,7 @@ describe('GraphQL Query Generator Unit Tests', () => {
     const expectedVariables = {
       v1: {
         name: 'Updated User',
-        updated_at: '2023-10-27T10:00:00Z'
+        updated_at: fixedTimestamp // Use same fixed timestamp
       },
       v2: {
         id: '123e4567-e89b-12d3-a456-426614174000'
@@ -1013,7 +1017,7 @@ describe('Aggregate Field Tests', () => {
     // Test our new aggregate field detection logic
     const fieldName = 'accounts_aggregate';
     const isAggregateField = fieldName.endsWith('_aggregate');
-    console.log(`Field "${fieldName}" is aggregate:`, isAggregateField);
+    debug(`Field "${fieldName}" is aggregate:`, isAggregateField);
     
     const subFieldsOrParams = {
         aggregate: {
@@ -1025,22 +1029,22 @@ describe('Aggregate Field Tests', () => {
     let nestedReturning: any = null;
     let nestedArgsInput: Record<string, any> = {};
     
-    console.log(`Processing field params:`, JSON.stringify(subFieldsOrParams));
+    debug(`Processing field params:`, JSON.stringify(subFieldsOrParams));
     
     if (isAggregateField) {
         Object.entries(subFieldsOrParams).forEach(([key, value]) => {
-            console.log(`Processing key: ${key}, value:`, JSON.stringify(value));
+            debug(`Processing key: ${key}, value:`, JSON.stringify(value));
             if (key === 'returning') {
                 nestedReturning = value;
-                console.log(`Set nestedReturning from explicit 'returning' key`);
+                debug(`Set nestedReturning from explicit 'returning' key`);
             } else if (key === 'alias') {
                 // alias handling
             } else if (knownAggregateArgs.has(key)) {
                 nestedArgsInput[key] = value;
-                console.log(`Added to nestedArgsInput: ${key}`);
+                debug(`Added to nestedArgsInput: ${key}`);
             } else {
                 // For aggregate fields, unknown properties are likely return fields
-                console.log(`Treating as return field: ${key}`);
+                debug(`Treating as return field: ${key}`);
                 if (!nestedReturning) {
                     nestedReturning = {};
                 }
@@ -1051,8 +1055,8 @@ describe('Aggregate Field Tests', () => {
         });
     }
     
-    console.log(`Final nestedReturning:`, JSON.stringify(nestedReturning));
-    console.log(`Final nestedArgsInput:`, JSON.stringify(nestedArgsInput));
+    debug(`Final nestedReturning:`, JSON.stringify(nestedReturning));
+    debug(`Final nestedArgsInput:`, JSON.stringify(nestedArgsInput));
     
     // This should extract aggregate as a return field
     expect(nestedReturning).toEqual({ aggregate: { count: ['*'] } });
@@ -1080,14 +1084,14 @@ describe('Aggregate Field Tests', () => {
         ]
     };
     
-    console.log('\n=== TEST A1 DEBUG ===');
-    console.log('Input options:', JSON.stringify(options, null, 2));
+    debug('\n=== TEST A1 DEBUG ===');
+    debug('Input options:', JSON.stringify(options, null, 2));
     
     const result = generate(options);
     
-    console.log('Generated query:', result.queryString);
-    console.log('Generated variables:', JSON.stringify(result.variables));
-    console.log('=== END DEBUG ===\n');
+    debug('Generated query:', result.queryString);
+    debug('Generated variables:', JSON.stringify(result.variables));
+    debug('=== END DEBUG ===\n');
 
     const expectedQuery = `
       query QueryUsers {
@@ -1353,10 +1357,10 @@ describe('Aggregate Field Tests', () => {
     };
     
     const result = generate(options);
-    console.log('\\n=== SIMPLE AGGREGATE DEBUG ===');
-    console.log('Query:', result.queryString);
-    console.log('Variables:', JSON.stringify(result.variables, null, 2));
-    console.log('===============================');
+    debug('\\n=== SIMPLE AGGREGATE DEBUG ===');
+    debug('Query:', result.queryString);
+    debug('Variables:', JSON.stringify(result.variables, null, 2));
+    debug('===============================');
     
     // Check if we get the right structure - this should FAIL if __typename is generated
     expect(result.queryString).toContain('accounts_aggregate');

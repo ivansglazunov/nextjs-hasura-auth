@@ -701,10 +701,10 @@ export function Generator(schema: any): Generate { // We take the __schema objec
           queryName
         };
     } catch (error: any) {
-         console.error("❌ Error parsing GraphQL query:", error.message);
-         console.error("Generated Query String:", queryStr);
-         console.error("Variables:", JSON.stringify(variables, null, 2));
-         throw new Error(`Failed to parse generated GraphQL query: ${error.message}`);
+        debug("❌ Error parsing GraphQL query:", error.message);
+        debug("Generated Query String:", queryStr);
+        debug("Variables:", JSON.stringify(variables, null, 2));
+        throw error;
     }
   };
 }

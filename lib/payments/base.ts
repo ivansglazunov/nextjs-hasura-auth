@@ -68,7 +68,7 @@ export interface PaymentStatusResult {
   internalPaymentId: string;
   status: string;
   providerStatus?: string;
-  paidAt?: Date | string;
+  paidAt?: number; // Unix timestamp in milliseconds
   error?: string;
   providerResponse?: any;
 }
@@ -101,7 +101,7 @@ export interface CancelSubscriptionArgs {
 export interface CancelSubscriptionResult {
   subscriptionId: string;
   newStatus: string;
-  canceledAt?: Date | string;
+  canceledAt?: number; // Unix timestamp in milliseconds
   errorMessage?: string;
 }
 

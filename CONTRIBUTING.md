@@ -42,6 +42,48 @@ If you encounter unexpected behavior related to data fetching, mutations, or sub
     ```
     This allows you to execute short snippets of code with the admin `client` instance available (and use `await` directly) to see the output immediately, helping to verify hypotheses about data or permissions.
 
+### Quick Testing with `npx hasyx js`
+
+The `npx hasyx js` command is especially useful for quick testing and debugging. It provides a Hasyx client instance with admin privileges, allowing you to:
+
+*   **Test database operations directly**: Insert, update, delete, and query data without setting up test files
+*   **Debug permissions**: Test different operations to verify Hasura permissions are working as expected  
+*   **Validate schema changes**: Quickly test if new tables, columns, or relationships are accessible
+*   **Test type compatibility**: Verify that data types (especially timestamps) are working correctly
+
+Examples:
+```bash
+# Test inserting data with unix timestamps
+npx hasyx js -e "
+const now = new Date().valueOf();
+const result = await client.insert({ 
+  table: 'debug', 
+  object: { created_at: now, value: { test: 'timestamp_check' } } 
+});
+console.log('Insert result:', result);
+"
+
+# Test querying with filtering
+npx hasyx js -e "
+const users = await client.select({ 
+  table: 'users', 
+  where: { created_at: { _gte: 1740000000000 } },
+  returning: ['id', 'name', 'created_at']
+});
+console.log('Recent users:', users);
+"
+
+# Test complex operations
+npx hasyx js -e "
+const result = await client.update({
+  table: 'users',
+  where: { id: { _eq: 'your-user-id' } },
+  _set: { updated_at: new Date().valueOf() }
+});
+console.log('Update result:', result);
+"
+```
+
 ## Testing Aggregation Features
 
 When working with or testing aggregation functionality in Hasyx:

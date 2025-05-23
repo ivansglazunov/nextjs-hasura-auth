@@ -9,7 +9,7 @@ const sqlSchema = `
   CREATE EXTENSION IF NOT EXISTS "pgcrypto"; -- Ensure pgcrypto is enabled for gen_random_uuid()
   CREATE TABLE IF NOT EXISTS "public"."debug" (
       "id" uuid NOT NULL DEFAULT gen_random_uuid(),
-      "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
       "value" jsonb,
       PRIMARY KEY ("id")
   );

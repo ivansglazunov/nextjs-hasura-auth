@@ -3,6 +3,10 @@
  * Handles service worker registration, installation prompts, and PWA features
  */
 
+import Debug from './debug';
+
+const debug = Debug('pwa');
+
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
   readonly userChoice: Promise<{
@@ -27,12 +31,12 @@ let serviceWorkerRegistration: ServiceWorkerRegistration | null = null;
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-    console.log('Service workers are not supported');
+    debug('Service workers are not supported');
     return null;
   }
 
   try {
-    console.log('Registering service worker...');
+    debug('Registering service worker...');
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',
     });
@@ -46,7 +50,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             // New service worker is available
-            console.log('New service worker available');
+            debug('New service worker available');
             showUpdateAvailable();
           }
         });
@@ -55,13 +59,13 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 
     // Listen for service worker messages
     navigator.serviceWorker.addEventListener('message', (event) => {
-      console.log('Message from service worker:', event.data);
+      debug('Message from service worker:', event.data);
     });
 
-    console.log('Service worker registered successfully:', registration);
+    debug('Service worker registered successfully:', registration);
     return registration;
   } catch (error) {
-    console.error('Service worker registration failed:', error);
+    debug('Service worker registration failed:', error);
     return null;
   }
 }
@@ -74,7 +78,7 @@ function showUpdateAvailable() {
   window.dispatchEvent(new CustomEvent('sw-update-available'));
   
   // You can also show a toast/notification here
-  console.log('🔄 App update available. Refresh to update.');
+  debug('🔄 App update available. Refresh to update.');
 }
 
 /**
@@ -82,7 +86,7 @@ function showUpdateAvailable() {
  */
 export async function updateServiceWorker(): Promise<void> {
   if (!serviceWorkerRegistration) {
-    console.log('No service worker registration available');
+    debug('No service worker registration available');
     return;
   }
 
@@ -90,7 +94,7 @@ export async function updateServiceWorker(): Promise<void> {
     await serviceWorkerRegistration.update();
     window.location.reload();
   } catch (error) {
-    console.error('Failed to update service worker:', error);
+    debug('Failed to update service worker:', error);
   }
 }
 
@@ -112,7 +116,7 @@ export function setupInstallPrompt(): PWAInstallPrompt {
   // Check if app is already installed
   if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
     result.isInstalled = true;
-    console.log('PWA is already installed');
+    debug('PWA is already installed');
     return result;
   }
 
@@ -140,7 +144,7 @@ export function setupInstallPrompt(): PWAInstallPrompt {
       if (deferredPrompt) {
         await deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to install prompt: ${outcome}`);
+        debug(`User response to install prompt: ${outcome}`);
         deferredPrompt = null;
         
         if (outcome === 'accepted') {
@@ -151,14 +155,14 @@ export function setupInstallPrompt(): PWAInstallPrompt {
     
     // Dispatch custom event
     window.dispatchEvent(new CustomEvent('pwa-install-available'));
-    console.log('PWA install prompt available');
+    debug('PWA install prompt available');
   });
 
   // Listen for app installed event
   window.addEventListener('appinstalled', () => {
     result.isInstalled = true;
     deferredPrompt = null;
-    console.log('PWA was installed');
+    debug('PWA was installed');
     window.dispatchEvent(new CustomEvent('pwa-installed'));
   });
 
@@ -176,7 +180,7 @@ function showIOSInstallInstructions() {
     detail: { message }
   }));
   
-  console.log(message);
+  debug(message);
 }
 
 /**
@@ -210,7 +214,7 @@ export function getPWADisplayMode(): string {
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (!('Notification' in window)) {
-    console.log('This browser does not support notifications');
+    debug('This browser does not support notifications');
     return 'denied';
   }
 
@@ -220,7 +224,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 
   if (Notification.permission !== 'denied') {
     const permission = await Notification.requestPermission();
-    console.log('Notification permission:', permission);
+    debug('Notification permission:', permission);
     return permission;
   }
 
@@ -232,7 +236,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
  */
 export function showNotification(title: string, options?: NotificationOptions): void {
   if (!('Notification' in window) || Notification.permission !== 'granted') {
-    console.log('Notifications not available or not permitted');
+    debug('Notifications not available or not permitted');
     return;
   }
 
@@ -255,16 +259,21 @@ export function showNotification(title: string, options?: NotificationOptions): 
  * Check if browser supports PWA features
  */
 export function checkPWASupport() {
+  if (typeof window === 'undefined') {
+    debug('PWA Support: Not available (server-side)');
+    return null;
+  }
+
   const support = {
     serviceWorker: 'serviceWorker' in navigator,
     manifest: 'manifest' in document.createElement('link'),
     notifications: 'Notification' in window,
-    pushManager: 'PushManager' in window,
-    syncManager: typeof window !== 'undefined' && 'ServiceWorkerRegistration' in window && 'sync' in window.ServiceWorkerRegistration.prototype,
+    pushManager: 'serviceWorker' in navigator && 'PushManager' in window,
+    syncManager: 'serviceWorker' in navigator && 'ServiceWorkerRegistration' in window && window.ServiceWorkerRegistration && 'sync' in window.ServiceWorkerRegistration.prototype,
     backgroundFetch: 'serviceWorker' in navigator && 'BackgroundFetch' in window,
   };
 
-  console.log('PWA Support:', support);
+  debug('PWA Support:', support);
   return support;
 }
 
@@ -272,13 +281,13 @@ export function checkPWASupport() {
  * Initialize PWA features
  */
 export async function initializePWA() {
-  console.log('Initializing PWA features...');
+  debug('Initializing PWA features...');
   
   // Check support
   const support = checkPWASupport();
   
-  if (!support.serviceWorker) {
-    console.log('PWA features not fully supported');
+  if (!support || !support.serviceWorker) {
+    debug('PWA features not fully supported');
     return null;
   }
 
@@ -291,7 +300,7 @@ export async function initializePWA() {
   // Request notification permission if needed
   await requestNotificationPermission();
   
-  console.log('PWA initialized:', {
+  debug('PWA initialized:', {
     registration: !!registration,
     installAvailable: installPrompt.isAvailable,
     isInstalled: installPrompt.isInstalled,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import http from 'http';
 import ws, { WebSocket, WebSocketServer } from 'ws';
 import { getToken } from 'next-auth/jwt';
-import Debug from 'hasyx/lib/debug';
+import Debug from './debug';
 import { generateJWT } from 'hasyx/lib/jwt';
 
 const debugGraphql = Debug('graphql:proxy');
@@ -30,7 +30,6 @@ if (typeof window === 'undefined') {
   }
   if (!HASURA_ADMIN_SECRET) {
     // Allow Admin Secret to be optional for WS if only JWT is used, but log warning
-    console.warn("⚠️ WARNING: HASURA_ADMIN_SECRET environment variable is not set. Anonymous WS access will fail.");
     debugGraphql("⚠️ WARNING: HASURA_ADMIN_SECRET environment variable is not set. Anonymous WS access will fail.");
   }
   if (!NEXTAUTH_SECRET) {
@@ -121,11 +120,11 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
       const errorMsg = 'HASURA_ADMIN_SECRET is not configured on the server for HTTP proxy.';
       console.error(`❌ ${errorMsg}`);
       debugGraphql(`❌ ${errorMsg}`);
-      // Important: Do not proceed if admin secret is missing for POST
       return NextResponse.json({ errors: [{ message: errorMsg }] }, {
         status: 500,
         headers: corsHeaders
       });
+      // Important: Do not proceed if admin secret is missing for POST
     }
     headers['x-hasura-admin-secret'] = HASURA_ADMIN_SECRET;
     debugGraphql('🔑 Using Hasura Admin Secret for downstream HTTP request.');
@@ -157,23 +156,10 @@ export async function proxyPOST(request: NextRequest): Promise<NextResponse> {
     debugGraphql('❌ Error proxying HTTP GraphQL request:', error.message);
     debugGraphql('--- proxyPOST End (Error) ---');
 
-    return NextResponse.json(
-      {
-        errors: [
-          {
-            message: 'Error processing GraphQL request via proxy.',
-            extensions: {
-              code: 'INTERNAL_SERVER_ERROR',
-              path: 'graphql-proxy-http'
-            }
-          }
-        ]
-      },
-      {
-        status: 500,
-        headers: corsHeaders
-      }
-    );
+    return NextResponse.json({ errors: [{ message: error.message || 'Internal server error' }] }, {
+      status: 500,
+      headers: corsHeaders
+    });
   }
 }
 

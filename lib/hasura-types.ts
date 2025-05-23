@@ -26,14 +26,14 @@ const config: CodegenConfig = {
     'types/hasura-types.d.ts': {
       plugins: ['typescript'], // Use basic typescript plugin
       config: {
-        // TypeScript plugin settings (can be added later as needed)
-        // For example:
-        // scalars: { // Mapping Hasura/Postgres scalars to TS types
-        //   uuid: 'string',
-        //   timestamptz: 'string',
-        //   numeric: 'number',
-        //   // ... other scalars
-        // },
+        // TypeScript plugin settings - mapping Hasura/Postgres scalars to TS types
+        scalars: {
+          uuid: 'string',
+          timestamptz: 'number', // Using number for unix timestamps (milliseconds since epoch)
+          bigint: 'number', // BIGINT should be number for timestamps
+          numeric: 'number',
+          jsonb: 'any',
+        },
         // avoidOptionals: true, // Make optional fields required (use with caution)
         // maybeValue: 'T | null | undefined', // How to represent nullable types
       },

@@ -44,7 +44,7 @@ interface PaymentProvider {
   name: string;
   type: string;
   is_test_mode: boolean;
-  created_at: string;
+  created_at: number; // Unix timestamp in milliseconds
 }
 
 interface PaymentOperation {
@@ -56,7 +56,7 @@ interface PaymentOperation {
   description: string;
   method_id: string | null;
   provider_id: string;
-  created_at: string;
+  created_at: number; // Unix timestamp in milliseconds
   subscription_id: string | null;
 }
 
@@ -66,9 +66,9 @@ interface Subscription {
   method_id: string;
   provider_id: string;
   status: string;
-  current_period_start: string | null;
-  current_period_end: string | null;
-  created_at: string;
+  current_period_start: number | null; // Unix timestamp in milliseconds
+  current_period_end: number | null; // Unix timestamp in milliseconds
+  created_at: number; // Unix timestamp in milliseconds
 }
 
 export default function Payments({ sidebarData }: PaymentsProps) {

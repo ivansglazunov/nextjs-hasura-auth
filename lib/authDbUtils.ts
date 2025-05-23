@@ -45,7 +45,7 @@ export interface HasuraUser { // Export interface for use in options.ts
   id: string;
   name?: string | null;
   email?: string | null;
-  email_verified?: string | null; // timestamptz comes as string
+  email_verified?: number | null; // unix timestamp in milliseconds
   image?: string | null;
   password?: string | null;
   created_at: string;

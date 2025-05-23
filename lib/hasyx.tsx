@@ -24,7 +24,7 @@ import Debug from './debug'; export {
   useClient, useDelete, useInsert, useMutation, useQuery, useSelect, useSubscribe, useSubscription, useUpdate
 } from './hasyx-client';
 
-const debug = Debug('client'); const DEFAULT_POLLING_INTERVAL = 1000;
+const debug = Debug('hasyx:client'); const DEFAULT_POLLING_INTERVAL = 1000;
 
 interface ClientMethodOptions extends Omit<GenerateOptions, 'operation'> {
   role?: string;
@@ -226,7 +226,7 @@ export class Hasyx {
       debug("Hasyx.subscribe: FORCING WebSocket mode for tests");
     }
     if (useWebSockets && !this.apolloClient._options.ws) {
-      console.warn("WebSocket is requested, but the Apollo client was not created with ws: true. Falling back to polling mode.");
+      debug("WebSocket is requested, but the Apollo client was not created with ws: true. Falling back to polling mode.");
 
       return this._subscribeWithPolling<TData>({ role, ...genOptions }, interval);
     }
@@ -399,12 +399,11 @@ export class Hasyx {
           debug('Subscription processing extracted data:', JSON.stringify(extractedData));
           throttledEmit(extractedData);
         },
-        error: (error) => {
-          debug('Error during subscription:', error);
-          console.error('Subscription error:', error);
-          if (error.message) console.error('Error message:', error.message);
-          if (error.graphQLErrors) console.error('GraphQL Errors:', JSON.stringify(error.graphQLErrors));
-          if (error.networkError) console.error('Network Error:', error.networkError);
+        error: (error: any) => {
+          debug('Subscription error:', error);
+          if (error.message) debug('Error message:', error.message);
+          if (error.graphQLErrors) debug('GraphQL Errors:', JSON.stringify(error.graphQLErrors));
+          if (error.networkError) debug('Network Error:', error.networkError);
           observer.error(error);
         },
         complete: () => {
@@ -459,9 +458,8 @@ export class Hasyx {
           table: 'debug',
           object: { value: value }
         });
-      } catch (error) {
-
-        console.error('Error during debug insert (fire-and-forget):', error);
+      } catch (error: any) {
+        debug('Error during debug insert (fire-and-forget):', error);
         return undefined;
       }
     } else {

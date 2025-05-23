@@ -291,8 +291,8 @@ export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx
             provider: 'telegram_bot',
             device_token: String(chatId), 
             device_info: deviceInfo,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            created_at: new Date().valueOf(),
+            updated_at: new Date().valueOf(),
           }
         });
         debug('New telegram_bot permission potentially created/updated for chat ID:', chatId);

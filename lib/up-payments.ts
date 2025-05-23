@@ -18,8 +18,8 @@ const sqlSchema = `
       "default_card_webhook_url" text,
       "user_id" uuid, -- For admin/system-level providers, can be null or link to a specific admin user
       "is_active" boolean NOT NULL DEFAULT true,
-      "created_at" timestamptz NOT NULL DEFAULT now(),
-      "updated_at" timestamptz NOT NULL DEFAULT now(),
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
       PRIMARY KEY ("id"),
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE SET NULL ON DELETE SET NULL,
       UNIQUE ("name", "type", "is_test_mode") -- Ensures unique provider configurations
@@ -38,10 +38,10 @@ const sqlSchema = `
       "is_default" boolean NOT NULL DEFAULT false,
       "is_recurrent_ready" boolean NOT NULL DEFAULT false,
       "recurrent_details" jsonb,
-      "expires_at" timestamptz,
+      "expires_at" bigint,
       "status" text NOT NULL DEFAULT 'active',
-      "created_at" timestamptz NOT NULL DEFAULT now(),
-      "updated_at" timestamptz NOT NULL DEFAULT now(),
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
       PRIMARY KEY ("id"),
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY ("provider_id") REFERENCES "payments"."providers"("id") ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -67,8 +67,8 @@ const sqlSchema = `
       "features" jsonb,
       "metadata" jsonb,
       "user_id" uuid, -- For custom plans for a specific user
-      "created_at" timestamptz NOT NULL DEFAULT now(),
-      "updated_at" timestamptz NOT NULL DEFAULT now(),
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
       PRIMARY KEY ("id"),
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE SET NULL ON DELETE SET NULL
   );
@@ -84,16 +84,16 @@ const sqlSchema = `
       "provider_id" uuid NOT NULL, -- Changed from provider_name
       "external_subscription_id" text,
       "status" text NOT NULL,
-      "current_period_start" timestamptz,
-      "current_period_end" timestamptz,
-      "trial_ends_at" timestamptz,
+      "current_period_start" bigint,
+      "current_period_end" bigint,
+      "trial_ends_at" bigint,
       "cancel_at_period_end" boolean NOT NULL DEFAULT false,
-      "canceled_at" timestamptz,
-      "ended_at" timestamptz,
+      "canceled_at" bigint,
+      "ended_at" bigint,
       "object_hid" text,
       "metadata" jsonb,
-      "created_at" timestamptz NOT NULL DEFAULT now(),
-      "updated_at" timestamptz NOT NULL DEFAULT now(),
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
       PRIMARY KEY ("id"),
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY ("method_id") REFERENCES "payments"."methods"("id") ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -120,11 +120,11 @@ const sqlSchema = `
       "provider_request_details" jsonb,
       "provider_response_details" jsonb,
       "error_message" text,
-      "initiated_at" timestamptz DEFAULT now(),
-      "paid_at" timestamptz,
+      "initiated_at" bigint DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      "paid_at" bigint,
       "metadata" jsonb,
-      "created_at" timestamptz NOT NULL DEFAULT now(),
-      "updated_at" timestamptz NOT NULL DEFAULT now(),
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
       PRIMARY KEY ("id"),
       FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE,
       FOREIGN KEY ("method_id") REFERENCES "payments"."methods"("id") ON UPDATE CASCADE ON DELETE SET NULL,
@@ -409,9 +409,8 @@ export async function up(customHasura?: Hasura) {
 
     debug(`Migration ${MIGRATION_NAME} - UP (with new payments schema) completed successfully.`);
     return true;
-  } catch (error) {
-    console.error('Error during migration ' + MIGRATION_NAME + ' - UP (new payments schema):', error);
-    debug('Migration ' + MIGRATION_NAME + ' - UP (new payments schema) failed.');
+  } catch (error: any) {
+    debug('Error during migration ' + MIGRATION_NAME + ' - UP (new payments schema):', error);
     throw error;
   }
 } 

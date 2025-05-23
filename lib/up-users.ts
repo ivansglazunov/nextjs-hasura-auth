@@ -15,11 +15,11 @@ const sqlSchema = `
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT,
     email TEXT UNIQUE,
-    email_verified TIMESTAMPTZ,
+    email_verified BIGINT,
     image TEXT,
     password TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
     is_admin BOOLEAN DEFAULT FALSE,
     hasura_role TEXT DEFAULT 'user' -- Make sure default role is 'user'
   );
@@ -40,7 +40,7 @@ const sqlSchema = `
     session_state TEXT,
     oauth_token_secret TEXT,
     oauth_token TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
     UNIQUE(provider, provider_account_id)
   );
 `;
@@ -345,9 +345,8 @@ export async function up(customHasura?: Hasura) {
     await applyPermissions(hasura); // Apply GQL permissions after tables/relationships
     debug('✨ Hasura Users migration UP completed successfully!');
     return true;
-  } catch (error) {
-    console.error('❗ Critical error during Users UP migration:', error);
-    debug('❌ Users UP Migration failed.');
-    return false;
+  } catch (error: any) {
+    debug('❗ Critical error during Users UP migration:', error);
+    throw error;
   }
 } 

@@ -81,7 +81,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       // Log to database for Vercel debugging
       hasyx.debug({
         action: "telegram_auth_start",
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().valueOf(),
         credentialsKeys: credentials ? Object.keys(credentials) : null,
         hasCredentials: !!credentials
       });
@@ -92,7 +92,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
         hasyx.debug({
           action: "telegram_auth_error",
           error: "No credentials provided",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().valueOf()
         });
         return null;
       }
@@ -104,7 +104,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
         hasyx.debug({
           action: "telegram_auth_error",
           error: "TELEGRAM_LOGIN_BOT_TOKEN not configured",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().valueOf()
         });
         throw new Error("Telegram bot token is not configured.");
       }
@@ -123,7 +123,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       hasyx.debug({
         action: "telegram_auth_credentials",
         credentials: credentialsForLog,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().valueOf()
       });
 
       // Prepare data for hash verification (all fields except 'hash' itself)
@@ -170,7 +170,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       hasyx.debug({
         action: "telegram_auth_hash_verification",
         verification: hashVerification,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().valueOf()
       });
 
       if (calculatedHash !== credentials.hash) {
@@ -180,7 +180,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
           action: "telegram_auth_error",
           error: "Hash verification failed",
           verification: hashVerification,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().valueOf()
         });
         return null; // Hash mismatch
       }
@@ -196,7 +196,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       hasyx.debug({
         action: "telegram_auth_time_verification",
         verification: timeVerification,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().valueOf()
       });
       
       if (timeDiff > 86400) { // 24 hours in seconds
@@ -206,7 +206,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
           action: "telegram_auth_error",
           error: "Auth date too old (replay attack protection)",
           verification: timeVerification,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().valueOf()
         });
         return null;
       }
@@ -233,7 +233,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       hasyx.debug({
         action: "telegram_auth_user_processing",
         user: userInfo,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().valueOf()
       });
 
       try {
@@ -255,7 +255,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
           provider: "telegram",
           providerAccountId,
           userProfile,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().valueOf()
         });
 
         const dbUser = await getOrCreateUserAndAccount(
@@ -273,7 +273,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
             action: "telegram_auth_success",
             dbUserId: dbUser.id,
             telegramUserId: telegramUser.id,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().valueOf()
           });
           return {
             id: dbUser.id,
@@ -288,7 +288,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
             action: "telegram_auth_error",
             error: "Failed to get or create user in DB",
             dbUser,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().valueOf()
           });
           return null;
         }
@@ -300,7 +300,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
           error: "Database operation failed",
           errorMessage: error instanceof Error ? error.message : String(error),
           errorStack: error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().valueOf()
         });
         throw new Error("Failed to process Telegram login with database.");
       }
