@@ -45,8 +45,7 @@ export function TelegramDebugCard() {
   const { 
     data, 
     loading, 
-    error,
-    refetch 
+    error
   } = useSubscription<{ debug: DebugLog[] }>(
     {
       table: 'debug',
@@ -70,7 +69,9 @@ export function TelegramDebugCard() {
   );
 
   const handleRefresh = () => {
-    refetch?.();
+    // Since useSubscription updates automatically, we can just trigger a state update
+    // to cause a re-render which will show the latest data
+    setLimit(current => current);
   };
 
   const handleLoadMore = () => {
