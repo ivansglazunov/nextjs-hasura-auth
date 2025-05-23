@@ -8,8 +8,29 @@ import spawn from 'cross-spawn'; // For potential calibration scripts
 const debug = Debug('assist:telegram');
 
 export async function configureTelegramBot(rl: readline.Interface, envPath: string): Promise<Record<string, string>> {
-  debug('Configuring Telegram Bot'); console.log('🤖 Configuring Telegram Bot...');
+  debug('Configuring Telegram Bot');
+  
   let envVars = parseEnvFile(envPath);
+  
+  // Ask first if user wants to configure Telegram bot
+  const currentToken = envVars.TELEGRAM_BOT_TOKEN;
+  const hasExistingConfig = currentToken && currentToken.trim() !== '';
+  
+  let shouldConfigure = false;
+  
+  if (hasExistingConfig) {
+    console.log('🤖 Telegram Bot is already configured.');
+    shouldConfigure = await askYesNo(rl, 'Do you want to reconfigure Telegram Bot settings?', false);
+  } else {
+    shouldConfigure = await askYesNo(rl, 'Do you want to configure Telegram Bot?', false);
+  }
+  
+  if (!shouldConfigure) {
+    console.log('⏭️ Skipping Telegram Bot configuration.');
+    return envVars;
+  }
+  
+  console.log('🤖 Configuring Telegram Bot...');
   let changed = false;
 
   console.log(
@@ -21,7 +42,6 @@ export async function configureTelegramBot(rl: readline.Interface, envPath: stri
   );
 
   // Configure TELEGRAM_BOT_TOKEN
-  const currentToken = envVars.TELEGRAM_BOT_TOKEN;
   let newToken = currentToken;
   if (currentToken) {
     if (await askYesNo(rl, `Telegram Bot Token is already set (starts with: ${maskDisplaySecret(currentToken)}). Do you want to change it?`, false)) {

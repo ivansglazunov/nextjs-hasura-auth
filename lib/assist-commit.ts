@@ -21,7 +21,7 @@ export async function commitChanges(rl: readline.Interface, options: { commitMes
     return;
   }
 
-  if (await askYesNo(rl, 'Do you want to commit the changes?', true)) {
+  if (await askYesNo(rl, 'Do you want to commit the changes?', false)) {
     spawn.sync('git', ['add', '.'], { stdio: 'inherit' });
     const message = options.commitMessage || 'feat: initial project setup by hasyx-assist';
     const commitResult = spawn.sync('git', ['commit', '-m', message], { stdio: 'inherit' });

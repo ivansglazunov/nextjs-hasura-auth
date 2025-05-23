@@ -54,13 +54,12 @@ function verifyTelegramHash(data: Omit<TelegramUserData, 'hash'>, botToken: stri
 export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
   if (!process.env.TELEGRAM_LOGIN_BOT_TOKEN) {
     debug("TELEGRAM_LOGIN_BOT_TOKEN not set. Telegram Login disabled.");
-    // Return a placeholder or throw an error if this provider is crucial
-    // For now, let's make it so it doesn't break if not configured
+    console.warn("⚠️ TELEGRAM_LOGIN_BOT_TOKEN not set. Telegram Login disabled.");
     return null; 
   }
   if (!process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME) {
     debug("NEXT_PUBLIC_TELEGRAM_BOT_USERNAME not set. Telegram Login client-side might fail.");
-    // This is more of a warning for the client-side widget
+    console.warn("⚠️ NEXT_PUBLIC_TELEGRAM_BOT_USERNAME not set. Telegram Login client-side might fail.");
   }
   
   return CredentialsProvider({
@@ -76,17 +75,56 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       hash: { label: "Hash", type: "text" },
     },
     async authorize(credentials) {
-      debug("Telegram authorize attempt with credentials:", credentials);
+      debug("🔐 Telegram authorize attempt started");
+      console.log("🔐 Telegram authorize attempt with credentials keys:", credentials ? Object.keys(credentials) : 'null');
+      
+      // Log to database for Vercel debugging
+      hasyx.debug({
+        action: "telegram_auth_start",
+        timestamp: new Date().toISOString(),
+        credentialsKeys: credentials ? Object.keys(credentials) : null,
+        hasCredentials: !!credentials
+      });
+      
       if (!credentials) {
-        debug("No credentials provided");
+        debug("❌ No credentials provided");
+        console.error("❌ Telegram login failed: No credentials provided");
+        hasyx.debug({
+          action: "telegram_auth_error",
+          error: "No credentials provided",
+          timestamp: new Date().toISOString()
+        });
         return null;
       }
 
       const botToken = process.env.TELEGRAM_LOGIN_BOT_TOKEN;
       if (!botToken) {
-        debug("TELEGRAM_LOGIN_BOT_TOKEN is not set in environment. Cannot verify hash.");
+        debug("❌ TELEGRAM_LOGIN_BOT_TOKEN is not set in environment. Cannot verify hash.");
+        console.error("❌ TELEGRAM_LOGIN_BOT_TOKEN is not set in environment. Cannot verify hash.");
+        hasyx.debug({
+          action: "telegram_auth_error",
+          error: "TELEGRAM_LOGIN_BOT_TOKEN not configured",
+          timestamp: new Date().toISOString()
+        });
         throw new Error("Telegram bot token is not configured.");
       }
+
+      // Log received credentials for debugging
+      const credentialsForLog = {
+        id: credentials.id,
+        first_name: credentials.first_name,
+        username: credentials.username,
+        auth_date: credentials.auth_date,
+        has_hash: !!credentials.hash,
+        hash_length: credentials.hash ? credentials.hash.length : 0
+      };
+      
+      debug("📝 Received credentials:", credentialsForLog);
+      hasyx.debug({
+        action: "telegram_auth_credentials",
+        credentials: credentialsForLog,
+        timestamp: new Date().toISOString()
+      });
 
       // Prepare data for hash verification (all fields except 'hash' itself)
       const dataToCheck: Record<string, string | number> = {};
@@ -114,24 +152,65 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
         .update(dataCheckString)
         .digest('hex');
       
+      debug("🔍 Hash verification details:");
       debug("Data check string:", dataCheckString);
       debug("Received hash:", credentials.hash);
       debug("Calculated hash:", calculatedHash);
+      
+      const hashVerification = {
+        dataCheckString,
+        received_hash: credentials.hash ? `${credentials.hash.substring(0, 8)}...` : 'missing',
+        calculated_hash: `${calculatedHash.substring(0, 8)}...`,
+        match: calculatedHash === credentials.hash,
+        bot_token_configured: !!botToken,
+        bot_token_length: botToken ? botToken.length : 0
+      };
+      
+      console.log("🔍 Telegram hash verification - received vs calculated:", hashVerification);
+      hasyx.debug({
+        action: "telegram_auth_hash_verification",
+        verification: hashVerification,
+        timestamp: new Date().toISOString()
+      });
 
       if (calculatedHash !== credentials.hash) {
-        debug("Hash verification failed!");
+        debug("❌ Hash verification failed!");
+        console.error("❌ Telegram login failed: Hash verification failed");
+        hasyx.debug({
+          action: "telegram_auth_error",
+          error: "Hash verification failed",
+          verification: hashVerification,
+          timestamp: new Date().toISOString()
+        });
         return null; // Hash mismatch
       }
-      debug("Telegram hash verification successful.");
+      debug("✅ Telegram hash verification successful.");
 
       // Check auth_date to prevent replay attacks (e.g., data is not older than 24 hours)
       const authDate = parseInt(credentials.auth_date, 10);
       const now = Math.floor(Date.now() / 1000);
-      if (now - authDate > 86400) { // 24 hours in seconds
-        debug("Telegram auth_date is too old. Possible replay attack.");
+      const timeDiff = now - authDate;
+      
+      const timeVerification = { authDate, now, timeDiff, maxAge: 86400 };
+      debug("⏰ Time verification:", timeVerification);
+      hasyx.debug({
+        action: "telegram_auth_time_verification",
+        verification: timeVerification,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (timeDiff > 86400) { // 24 hours in seconds
+        debug("❌ Telegram auth_date is too old. Possible replay attack.");
+        console.error("❌ Telegram login failed: Auth date too old (replay attack protection)");
+        hasyx.debug({
+          action: "telegram_auth_error",
+          error: "Auth date too old (replay attack protection)",
+          verification: timeVerification,
+          timestamp: new Date().toISOString()
+        });
         return null;
       }
-      debug("Telegram auth_date is recent.");
+      debug("✅ Telegram auth_date is recent.");
 
       // Construct TelegramUserData safely from credentials
       const telegramUser: Partial<TelegramUserData> = {
@@ -143,6 +222,19 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
         auth_date: parseInt(credentials.auth_date, 10),
         hash: credentials.hash,
       };
+
+      const userInfo = {
+        id: telegramUser.id,
+        name: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
+        username: telegramUser.username
+      };
+
+      debug("👤 Processing Telegram user:", userInfo);
+      hasyx.debug({
+        action: "telegram_auth_user_processing",
+        user: userInfo,
+        timestamp: new Date().toISOString()
+      });
 
       try {
         // Use providerAccountId as the Telegram user ID
@@ -157,7 +249,14 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
           image: telegramUser.photo_url,
         };
         
-        debug("Calling getOrCreateUserAndAccount with Telegram data:", { provider: "telegram", providerAccountId, userProfile });
+        debug("🔄 Calling getOrCreateUserAndAccount with Telegram data:", { provider: "telegram", providerAccountId, userProfile });
+        hasyx.debug({
+          action: "telegram_auth_db_operation_start",
+          provider: "telegram",
+          providerAccountId,
+          userProfile,
+          timestamp: new Date().toISOString()
+        });
 
         const dbUser = await getOrCreateUserAndAccount(
           hasyx,
@@ -168,7 +267,14 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
         );
 
         if (dbUser && dbUser.id) {
-          debug("Telegram user authorized and mapped to DB user:", dbUser.id);
+          debug("✅ Telegram user authorized and mapped to DB user:", dbUser.id);
+          console.log("✅ Telegram login successful for user:", dbUser.id);
+          hasyx.debug({
+            action: "telegram_auth_success",
+            dbUserId: dbUser.id,
+            telegramUserId: telegramUser.id,
+            timestamp: new Date().toISOString()
+          });
           return {
             id: dbUser.id,
             name: dbUser.name,
@@ -176,11 +282,26 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
             image: dbUser.image,
           };
         } else {
-          debug("Failed to get or create user for Telegram login.");
+          debug("❌ Failed to get or create user for Telegram login.");
+          console.error("❌ Failed to get or create user for Telegram login.");
+          hasyx.debug({
+            action: "telegram_auth_error",
+            error: "Failed to get or create user in DB",
+            dbUser,
+            timestamp: new Date().toISOString()
+          });
           return null;
         }
       } catch (error) {
-        debug("Error during Telegram user processing in DB:", error);
+        debug("❌ Error during Telegram user processing in DB:", error);
+        console.error("❌ Error during Telegram user processing in DB:", error);
+        hasyx.debug({
+          action: "telegram_auth_error",
+          error: "Database operation failed",
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
         throw new Error("Failed to process Telegram login with database.");
       }
     },
