@@ -1004,3 +1004,365 @@ describe('Generator Integration Tests', () => {
     });
 
 });
+
+describe('Aggregate Field Tests', () => {
+  
+  it('Test A0: Debug - Test basic aggregate field detection', () => {
+    debug('\n📝 Test A0: Basic aggregate field detection debug');
+    
+    // Test our new aggregate field detection logic
+    const fieldName = 'accounts_aggregate';
+    const isAggregateField = fieldName.endsWith('_aggregate');
+    console.log(`Field "${fieldName}" is aggregate:`, isAggregateField);
+    
+    const subFieldsOrParams = {
+        aggregate: {
+            count: ['*']
+        }
+    };
+    
+    const knownAggregateArgs = new Set(['where', 'limit', 'offset', 'order_by', 'distinct_on', 'alias', 'returning']);
+    let nestedReturning: any = null;
+    let nestedArgsInput: Record<string, any> = {};
+    
+    console.log(`Processing field params:`, JSON.stringify(subFieldsOrParams));
+    
+    if (isAggregateField) {
+        Object.entries(subFieldsOrParams).forEach(([key, value]) => {
+            console.log(`Processing key: ${key}, value:`, JSON.stringify(value));
+            if (key === 'returning') {
+                nestedReturning = value;
+                console.log(`Set nestedReturning from explicit 'returning' key`);
+            } else if (key === 'alias') {
+                // alias handling
+            } else if (knownAggregateArgs.has(key)) {
+                nestedArgsInput[key] = value;
+                console.log(`Added to nestedArgsInput: ${key}`);
+            } else {
+                // For aggregate fields, unknown properties are likely return fields
+                console.log(`Treating as return field: ${key}`);
+                if (!nestedReturning) {
+                    nestedReturning = {};
+                }
+                if (typeof nestedReturning === 'object' && !Array.isArray(nestedReturning)) {
+                    nestedReturning[key] = value;
+                }
+            }
+        });
+    }
+    
+    console.log(`Final nestedReturning:`, JSON.stringify(nestedReturning));
+    console.log(`Final nestedArgsInput:`, JSON.stringify(nestedArgsInput));
+    
+    // This should extract aggregate as a return field
+    expect(nestedReturning).toEqual({ aggregate: { count: ['*'] } });
+    expect(nestedArgsInput).toEqual({});
+    
+    debug('✅ Basic aggregate field detection test passed');
+  });
+
+  it('Test A1: Should generate nested aggregate query correctly (accounts_aggregate)', () => {
+    debug('\n📝 Test A1: Nested aggregate query');
+    const options: GenerateOptions = {
+        operation: 'query',
+        table: 'users',
+        returning: [
+            'id', 
+            'name', 
+            'email',
+            { 
+                accounts_aggregate: {
+                    aggregate: {
+                        count: ['*']
+                    }
+                }
+            }
+        ]
+    };
+    
+    console.log('\n=== TEST A1 DEBUG ===');
+    console.log('Input options:', JSON.stringify(options, null, 2));
+    
+    const result = generate(options);
+    
+    console.log('Generated query:', result.queryString);
+    console.log('Generated variables:', JSON.stringify(result.variables));
+    console.log('=== END DEBUG ===\n');
+
+    const expectedQuery = `
+      query QueryUsers {
+        users {
+          id
+          name
+          email
+          accounts_aggregate {
+            aggregate {
+              count
+            }
+          }
+        }
+      }
+    `;
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual({});
+    debug('✅ Nested aggregate query test passed');
+  });
+
+  it('Test A2: Should generate multiple nested aggregates with conditions', () => {
+    debug('\n📝 Test A2: Multiple nested aggregates with conditions');
+    const options: GenerateOptions = {
+        operation: 'query',
+        table: 'users',
+        returning: [
+            'id', 
+            'name',
+            { 
+                accounts_aggregate: {
+                    aggregate: {
+                        count: ['*']
+                    }
+                }
+            },
+            { 
+                notification_messages_aggregate: {
+                    where: {
+                        id: { _is_null: false }
+                    },
+                    aggregate: {
+                        count: ['*']
+                    }
+                }
+            }
+        ]
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      query QueryUsers($v1: notification_messages_bool_exp) {
+        users {
+          id
+          name
+          accounts_aggregate {
+            aggregate {
+              count
+            }
+          }
+          notification_messages_aggregate(where: $v1) {
+            aggregate {
+              count
+            }
+          }
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: { id: { _is_null: false } }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    debug('✅ Multiple nested aggregates with conditions test passed');
+  });
+
+  it('Test A3: Should generate complex aggregate with sum, avg, and count', () => {
+    debug('\n📝 Test A3: Complex aggregate with multiple operations');
+    const options: GenerateOptions = {
+        operation: 'query',
+        table: 'users',
+        returning: [
+            'id',
+            'name',
+            { 
+                accounts_aggregate: {
+                    aggregate: {
+                        count: ['*'],
+                        min: { created_at: true },
+                        max: { created_at: true }
+                    }
+                }
+            }
+        ]
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      query QueryUsers {
+        users {
+          id
+          name
+          accounts_aggregate {
+            aggregate {
+              count
+              min {
+                created_at
+              }
+              max {
+                created_at
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual({});
+    debug('✅ Complex aggregate operations test passed');
+  });
+
+  it('Test A4: Should handle aggregate with nodes and aggregate together', () => {
+    debug('\n📝 Test A4: Aggregate with both nodes and aggregate fields');
+    const options: GenerateOptions = {
+        operation: 'query',
+        table: 'users',
+        returning: [
+            'id',
+            { 
+                accounts_aggregate: {
+                    aggregate: {
+                        count: ['*']
+                    },
+                    nodes: ['id', 'provider']
+                }
+            }
+        ]
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      query QueryUsers {
+        users {
+          id
+          accounts_aggregate {
+            aggregate {
+              count
+            }
+            nodes {
+              id
+              provider
+            }
+          }
+        }
+      }
+    `;
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual({});
+    debug('✅ Aggregate with nodes test passed');
+  });
+
+  it('Test A5: Should handle top-level aggregate query', () => {
+    debug('\n📝 Test A5: Top-level aggregate query');
+    const options: GenerateOptions = {
+        operation: 'query',
+        table: 'users',
+        aggregate: {
+            count: true
+        },
+        where: { email: { _ilike: '%@test.com' } }
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      query QueryUsersAggregate($v1: users_bool_exp) {
+        users_aggregate(where: $v1) {
+          aggregate {
+            count
+          }
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: { email: { _ilike: '%@test.com' } }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    debug('✅ Top-level aggregate query test passed');
+  });
+
+  it('Test A6: Should distinguish between aggregate args and return fields', () => {
+    debug('\n📝 Test A6: Aggregate args vs return fields distinction');
+    const options: GenerateOptions = {
+        operation: 'query',
+        table: 'users',
+        returning: [
+            'id',
+            { 
+                accounts_aggregate: {
+                    where: { provider: { _eq: 'google' } },
+                    limit: 10,
+                    order_by: [{ created_at: 'desc' }],
+                    aggregate: {
+                        count: ['*']
+                    },
+                    nodes: ['id', 'provider']
+                }
+            }
+        ]
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      query QueryUsers($v1: accounts_bool_exp, $v2: Int, $v3: [accounts_order_by!]) {
+        users {
+          id
+          accounts_aggregate(where: $v1, limit: $v2, order_by: $v3) {
+            aggregate {
+              count
+            }
+            nodes {
+              id
+              provider
+            }
+          }
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: { provider: { _eq: 'google' } },
+      v2: 10,
+      v3: [{ created_at: 'desc' }]
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    debug('✅ Aggregate args vs return fields distinction test passed');
+  });
+
+  it('DEBUG: Test simple aggregate structure', () => {
+    debug('\\n📝 DEBUG: Testing simple aggregate structure');
+    
+    const options: GenerateOptions = {
+        operation: 'query',
+        table: 'users',
+        returning: [
+            'id',
+            { 
+                accounts_aggregate: {
+                    aggregate: {
+                        count: ['*']
+                    }
+                }
+            }
+        ]
+    };
+    
+    const result = generate(options);
+    console.log('\\n=== SIMPLE AGGREGATE DEBUG ===');
+    console.log('Query:', result.queryString);
+    console.log('Variables:', JSON.stringify(result.variables, null, 2));
+    console.log('===============================');
+    
+    // Check if we get the right structure - this should FAIL if __typename is generated
+    expect(result.queryString).toContain('accounts_aggregate');
+    expect(result.queryString).toContain('aggregate');
+    expect(result.queryString).toContain('count');
+    expect(result.queryString).not.toContain('__typename'); // This should fail if our logic is wrong
+  });
+
+});

@@ -477,4 +477,158 @@ describe('Hasyx Integration Tests', () => {
         });
     }, 30000); 
   });
+  
+  describe('Hasyx Aggregate Integration Tests', () => {
+    
+    it('should handle nested aggregate queries correctly', async () => {
+      debug('🧪 Testing nested aggregate query integration...');
+      
+      // Create a test user first for the aggregate test
+      const testEmail = `hasyx-aggregate-test-${uuidv4()}@example.com`;
+      const testPassword = await hashPassword('password123');
+      const testName = 'Aggregate Test User';
+      
+      const testUser = await adminHasyx.insert<TestUser>({
+        table: 'users',
+        object: { email: testEmail, password: testPassword, name: testName, hasura_role: 'user' },
+        returning: ['id', 'name']
+      });
+      
+      try {
+        // Test nested aggregate query
+        const result = await adminHasyx.select({
+          table: 'users',
+          where: { id: { _eq: testUser.id } },
+          returning: [
+            'id', 
+            'name',
+            { 
+              accounts_aggregate: {
+                aggregate: {
+                  count: ['*']
+                }
+              }
+            }
+          ]
+        });
+        
+        debug('📊 Aggregate query result:', JSON.stringify(result, null, 2));
+        
+        // Verify structure
+        expect(result).toBeInstanceOf(Array);
+        expect(result.length).toBe(1);
+        
+        const userResult = result[0];
+        expect(userResult.id).toBe(testUser.id);
+        expect(userResult.name).toBe(testName);
+        expect(userResult.accounts_aggregate).toBeDefined();
+        expect(userResult.accounts_aggregate.aggregate).toBeDefined();
+        expect(typeof userResult.accounts_aggregate.aggregate.count).toBe('number');
+        
+        debug('✅ Nested aggregate query integration test passed');
+        
+      } finally {
+        // Cleanup
+        await adminHasyx.delete({
+          table: 'users',
+          pk_columns: { id: testUser.id }
+        });
+      }
+    });
+
+    it('should handle multiple aggregate fields in one query', async () => {
+      debug('🧪 Testing multiple aggregate fields...');
+      
+      // This test would work with actual tournament data
+      // For now, test with user data structure
+      const result = await adminHasyx.select({
+        table: 'users',
+        limit: 1,
+        returning: [
+          'id', 
+          'name',
+          { 
+            accounts_aggregate: {
+              aggregate: {
+                count: ['*']
+              }
+            }
+          },
+          { 
+            notification_messages_aggregate: {
+              aggregate: {
+                count: ['*']
+              }
+            }
+          }
+        ]
+      });
+      
+      debug('📊 Multiple aggregates result:', JSON.stringify(result, null, 2));
+      
+      if (result.length > 0) {
+        const userResult = result[0];
+        expect(userResult.accounts_aggregate).toBeDefined();
+        expect(userResult.accounts_aggregate.aggregate).toBeDefined();
+        expect(userResult.notification_messages_aggregate).toBeDefined();
+        expect(userResult.notification_messages_aggregate.aggregate).toBeDefined();
+      }
+      
+      debug('✅ Multiple aggregate fields test passed');
+    });
+
+    it('should handle aggregate with filtering conditions', async () => {
+      debug('🧪 Testing aggregate with where conditions...');
+      
+      const result = await adminHasyx.select({
+        table: 'users',
+        limit: 1,
+        returning: [
+          'id', 
+          'name',
+          { 
+            accounts_aggregate: {
+              where: { provider: { _neq: 'invalid_provider' } },
+              aggregate: {
+                count: ['*']
+              }
+            }
+          }
+        ]
+      });
+      
+      debug('📊 Filtered aggregate result:', JSON.stringify(result, null, 2));
+      
+      if (result.length > 0) {
+        const userResult = result[0];
+        expect(userResult.accounts_aggregate).toBeDefined();
+        expect(userResult.accounts_aggregate.aggregate).toBeDefined();
+        expect(typeof userResult.accounts_aggregate.aggregate.count).toBe('number');
+      }
+      
+      debug('✅ Aggregate with filtering test passed');
+    });
+
+    it('should handle top-level aggregate queries', async () => {
+      debug('🧪 Testing top-level aggregate query...');
+      
+      const result = await adminHasyx.select({
+        table: 'users',
+        aggregate: {
+          count: true
+        },
+        where: { hasura_role: { _eq: 'user' } }
+      });
+      
+      debug('📊 Top-level aggregate result:', JSON.stringify(result, null, 2));
+      
+      expect(result).toBeDefined();
+      expect(result.users_aggregate).toBeDefined();
+      expect(result.users_aggregate.aggregate).toBeDefined();
+      expect(typeof result.users_aggregate.aggregate.count).toBe('number');
+      
+      debug('✅ Top-level aggregate query test passed');
+    });
+    
+  });
 });

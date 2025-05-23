@@ -108,95 +108,66 @@ export function Generator(schema: any): Generate { // We take the __schema objec
     }
 
     const { operation, table } = opts;
-    const where = opts.where || null;
-    const returning = opts.returning || null;
-    const aggregate = opts.aggregate || null;
+    const where = opts.where || undefined;
+    const returning = opts.returning || undefined;
+    const aggregate = opts.aggregate || undefined;
     const fragments = opts.fragments || [];
-    const distinctOn = opts.distinct_on || null; // Get distinct_on
-
-    const validOperations: GenerateOperation[] = ['query', 'subscription', 'insert', 'update', 'delete'];
-    if (!validOperations.includes(operation)) {
-      throw new Error(`❌ Invalid operation type: ${operation}. Allowed types: ${validOperations.join(', ')}`);
-    }
-
-    // --- Definition of root type and fields to search ---
-    let rootType: any = null; // Type will be 'OBJECT' from __schema.types
-    let rootFields: any[] = []; // Array of fields from root type
-
-    if (operation === 'query') {
-      rootType = queryRoot;
-      rootFields = queryRoot.fields || [];
+    const distinctOn = opts.distinct_on || undefined; // Get distinct_on
+    
+    // --- IMPROVED: Smart query name resolution ---
+    let queryName: string = table;
+    let queryInfo: any = null;
+    
+    // Determine the correct root type based on operation
+    let targetRoot: any = queryRoot;
+    if (operation === 'insert' || operation === 'update' || operation === 'delete') {
+        targetRoot = mutationRoot || queryRoot;
     } else if (operation === 'subscription') {
-      if (!subscriptionRoot) throw new Error('❌ Subscription operations not supported by the schema.');
-      rootType = subscriptionRoot;
-      rootFields = subscriptionRoot.fields || [];
-    } else { // insert, update, delete
-      if (!mutationRoot) throw new Error('❌ Mutation operations not supported by the schema.');
-      rootType = mutationRoot;
-      rootFields = mutationRoot.fields || [];
+        targetRoot = subscriptionRoot || queryRoot;
     }
-    // --- ---
-
-    // --- Logic for determining operation name (queryName) ---
-    let targetFieldName = table; // Field name we're looking for in the root type
-    let isByPkOperation = false;
-    let isAggregate = operation === 'query' && !!aggregate;
-
-    // Define prefixes and suffixes for mutations and by_pk queries
-    const mutationPrefix = operation === 'insert' ? 'insert_' : operation === 'update' ? 'update_' : operation === 'delete' ? 'delete_' : '';
-    const pkSuffix = '_by_pk';
-    const aggregateSuffix = '_aggregate';
-    const oneSuffix = '_one';
-
-    // Form expected field names (improved logic)
-    if (isAggregate) {
-        targetFieldName = `${table}${aggregateSuffix}`;
+    
+    // Try different naming patterns based on operation and options
+    const namesToTry: string[] = [];
+    
+    if (aggregate) {
+        namesToTry.push(`${table}_aggregate`);
     } else if (opts.pk_columns) {
-        isByPkOperation = true; // Mark as by_pk operation
         if (operation === 'query' || operation === 'subscription') {
-            targetFieldName = `${table}${pkSuffix}`;
+            namesToTry.push(`${table}_by_pk`);
         } else if (operation === 'update') {
-            targetFieldName = `${mutationPrefix}${table}${pkSuffix}`;
+            namesToTry.push(`update_${table}_by_pk`);
         } else if (operation === 'delete') {
-            targetFieldName = `${mutationPrefix}${table}${pkSuffix}`;
-        }
-        // pk_columns doesn't affect insert
-    } else if (operation === 'insert' && opts.object && !opts.objects) {
-        const oneFieldName = `${mutationPrefix}${table}${oneSuffix}`;
-        if (rootFields.find(f => f.name === oneFieldName)) {
-            targetFieldName = oneFieldName;
-            // We don't set isByPkOperation to true for insert_one, as the arguments are different
-        } else {
-            targetFieldName = `${mutationPrefix}${table}`;
+            namesToTry.push(`delete_${table}_by_pk`);
         }
     } else if (operation === 'insert') {
-        targetFieldName = `${mutationPrefix}${table}`;
+        if (opts.object && !opts.objects) {
+            namesToTry.push(`insert_${table}_one`);
+        }
+        namesToTry.push(`insert_${table}`);
     } else if (operation === 'update') {
-         targetFieldName = `${mutationPrefix}${table}`; // Bulk update
+        namesToTry.push(`update_${table}`);
     } else if (operation === 'delete') {
-         targetFieldName = `${mutationPrefix}${table}`; // Bulk delete
+        namesToTry.push(`delete_${table}`);
     }
-    // For regular query/subscription without pk_columns and aggregate, the table name (targetFieldName) remains the original 'table'
-
-
-    const queryInfo = rootFields.find(f => f.name === targetFieldName);
+    
+    // Always try the base table name as fallback
+    namesToTry.push(table);
+    
+    // Find the first matching field
+    for (const name of namesToTry) {
+        const found = targetRoot.fields.find((f: any) => f.name === name);
+        if (found) {
+            queryName = name;
+            queryInfo = found;
+            debug(`[generator] Using query name: ${queryName}`);
+            break;
+        }
+    }
 
     if (!queryInfo) {
-         // Fallback for cases when _by_pk/aggregate/etc are not found, but the base query exists
-         const fallbackQueryInfo = rootFields.find(f => f.name === table);
-         if (fallbackQueryInfo && ['query', 'subscription'].includes(operation) && !isAggregate && !isByPkOperation) {
-             // Use debug instead of console.warn
-             debug(`[generator] ⚠️ Exact field "%s" not found, using fallback "%s" in %s`, targetFieldName, table, rootType.name);
-             targetFieldName = table; // Use base name
-             // queryInfo = fallbackQueryInfo; // Reassign for further use
-              throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}" after fallback`); // Fail here if still not found
-         } else {
-             throw new Error(`❌ Field "${targetFieldName}" not found in root type "${rootType.name}"`);
-         }
+        throw new Error(`❌ No suitable field found for table "${table}" with operation "${operation}" in ${targetRoot.name}. Tried: ${namesToTry.join(', ')}`);
     }
-    const queryName = queryInfo.name; // GraphQL field name that we'll use
-    // --- ---
-
+    // --- End Smart Query Name Resolution ---
 
     const queryArgs: string[] = [];
     const variables: Record<string, any> = {};
@@ -235,9 +206,26 @@ export function Generator(schema: any): Generate { // We take the __schema objec
     };
 
     // 1. Processing direct arguments of the field (from queryInfo.args)
+    
+    // Special handling for _by_pk operations - add pk_columns keys as separate arguments
+    if (opts.pk_columns && (queryName.endsWith('_by_pk') || queryName.includes('_by_pk'))) {
+        Object.entries(opts.pk_columns).forEach(([pkKey, pkValue]) => {
+            const argDef = queryInfo.args?.find((a: any) => a.name === pkKey);
+            if (argDef) {
+                addArgument(pkKey, pkValue, argDef);
+            }
+        });
+    }
+    
     queryInfo.args?.forEach((argDef: any) => {
         const argName = argDef.name;
         let value: any = undefined;
+        
+        // Skip pk arguments if they were already processed above
+        if (opts.pk_columns && Object.hasOwnProperty.call(opts.pk_columns, argName) && (queryName.endsWith('_by_pk') || queryName.includes('_by_pk'))) {
+            return;
+        }
+        
         if (argName === 'pk_columns' && opts.pk_columns) {
                  value = opts.pk_columns;
         } else if (argName === '_set' && opts._set) {
@@ -274,8 +262,8 @@ export function Generator(schema: any): Generate { // We take the __schema objec
                     return;
                  }
              }
-        } else if (isByPkOperation && opts.pk_columns && opts.pk_columns[argName] !== undefined) {
-             value = opts.pk_columns[argName];
+        } else if (where && where[argName] !== undefined) {
+             value = where[argName];
         } else if (argName === 'distinct_on' && distinctOn && ['query', 'subscription'].includes(operation)) {
             // --- Handle distinct_on ---
             value = distinctOn;
@@ -316,72 +304,198 @@ export function Generator(schema: any): Generate { // We take the __schema objec
         parentTypeName: string | null,
         currentVarCounterRef: { count: number }
     ): string {
-        if (typeof field === 'string') return field.trim();
+        if (typeof field === 'string') {
+            return field.trim();
+        }
 
       if (typeof field === 'object' && field !== null) {
         const fieldName = Object.keys(field)[0];
         const subFieldsOrParams = field[fieldName];
 
-            // Find the field definition in the parent type
-            const parentTypeDetails = findTypeDetails(parentTypeName);
-            const fieldInfo = parentTypeDetails?.fields?.find((f: any) => f.name === fieldName);
+        if (typeof subFieldsOrParams === 'object' && subFieldsOrParams !== null && (subFieldsOrParams as any)._isColumnsFunctionCall) {
+            const fieldInfo = findTypeDetails(parentTypeName)?.fields?.find((f: any) => f.name === fieldName);
+            
+            if (fieldInfo?.args) {
+                const columnsArg = fieldInfo.args.find((a: any) => a.name === 'columns');
+                if (columnsArg) {
+                    const varName = `v${currentVarCounterRef.count++}`;
+                    const argValue = (subFieldsOrParams as any).columns;
+                    variables[varName] = argValue;
+                    
+                    const gqlType = getGqlTypeFromSchema(columnsArg.type);
+                    if (!varParts.some(p => p.startsWith(`$${varName}:`))) {
+                        varParts.push(`$${varName}: ${gqlType}`);
+                    }
+                    
+                    return `${fieldName}(columns: $${varName})`;
+                }
+            }
+            
+            return fieldName;
+        }
+
+            const fieldInfo = findTypeDetails(parentTypeName)?.fields?.find((f: any) => f.name === fieldName);
             if (!fieldInfo) {
-                 // Use debug instead of console.warn
                  debug(`Field "%s" not found in type "%s". Skipping.`, fieldName, parentTypeName);
-                 return ''; // Skip if field not found in parent
+                 return '';
             }
 
-            // Determine the return type of this field
             let fieldReturnTypeName: string | null = null;
             let currentFieldType = fieldInfo.type;
-            while (currentFieldType.ofType) currentFieldType = currentFieldType.ofType; // Unwrap LIST/NON_NULL
+            while (currentFieldType.ofType) currentFieldType = currentFieldType.ofType;
             fieldReturnTypeName = currentFieldType.name;
-
-
-            if (typeof subFieldsOrParams === 'boolean' && subFieldsOrParams) return fieldName;
-            if (typeof subFieldsOrParams === 'boolean' && !subFieldsOrParams) return ''; // Skip false
-
-            if (Array.isArray(subFieldsOrParams) || typeof subFieldsOrParams === 'string') {
-                // Simple nested fields (array of strings/objects or single string)
-                const nestedFields = Array.isArray(subFieldsOrParams) ? subFieldsOrParams : subFieldsOrParams.split(/\s+/).filter(Boolean);
-                const nestedProcessed = nestedFields
-                    .map(sf => processReturningField(sf, fieldReturnTypeName, currentVarCounterRef)) // <<< Pass return type as new parent
-                    .filter(Boolean)
-             .join('\n        ');
-                return nestedProcessed ? `${fieldName} {\n        ${nestedProcessed}\n      }` : fieldName; // Return just fieldName if no nested fields processed
+            
+            if (typeof subFieldsOrParams === 'boolean' && subFieldsOrParams) {
+                return fieldName;
+            }
+            if (typeof subFieldsOrParams === 'boolean' && !subFieldsOrParams) {
+                return '';
             }
 
-            if (typeof subFieldsOrParams === 'object') { // Nested query with potential args
-                const { returning: nestedReturning, alias, ...nestedArgsInput } = subFieldsOrParams;
+            if (Array.isArray(subFieldsOrParams) || typeof subFieldsOrParams === 'string') {
+                const nestedFields = Array.isArray(subFieldsOrParams) ? subFieldsOrParams : subFieldsOrParams.split(/\s+/).filter(Boolean);
+                const nestedProcessed = nestedFields
+                    .map(sf => processReturningField(sf, fieldReturnTypeName, currentVarCounterRef))
+                    .filter(Boolean)
+             .join('\n        ');
+                return nestedProcessed ? `${fieldName} {\n        ${nestedProcessed}\n      }` : fieldName;
+            }
+
+            if (typeof subFieldsOrParams === 'object') {
+                const isAggregateField = fieldName.endsWith('_aggregate');
+                
+                let nestedReturning: any = null;
+                let alias: string | undefined = undefined;
+                let nestedArgsInput: Record<string, any> = {};
+                
+                let isAggregateFunction = fieldReturnTypeName?.endsWith('_aggregate_fields') || false;
+                let fieldInfoInParent: any = null;
+                
+                if (isAggregateField) {
+                    const knownAggregateArgs = new Set(['where', 'limit', 'offset', 'order_by', 'distinct_on', 'alias', 'returning']);
+                    
+                    Object.entries(subFieldsOrParams).forEach(([key, value]) => {
+                        if (key === 'returning') {
+                            nestedReturning = value;
+                        } else if (key === 'alias') {
+                            alias = value as string;
+                        } else if (knownAggregateArgs.has(key)) {
+                            nestedArgsInput[key] = value;
+                        } else {
+                            debug(`[processReturningField] Treating as return field: ${key}`);
+                            if (!nestedReturning) {
+                                nestedReturning = {};
+                            }
+                            if (typeof nestedReturning === 'object' && !Array.isArray(nestedReturning)) {
+                                nestedReturning[key] = value;
+                            } else {
+                                const existingReturning = nestedReturning;
+                                nestedReturning = { [key]: value };
+                                if (Array.isArray(existingReturning)) {
+                                    existingReturning.forEach((field: string) => {
+                                        if (typeof field === 'string') {
+                                            nestedReturning[field] = true;
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    });
+                    
+                } else {
+                    const fieldTypeDetails = findTypeDetails(fieldReturnTypeName);
+                    isAggregateFunction = fieldReturnTypeName?.endsWith('_aggregate_fields') || false;
+                    
+                    const parentTypeDetails = findTypeDetails(parentTypeName);
+                    fieldInfoInParent = parentTypeDetails?.fields?.find((f: any) => f.name === fieldName);
+                    
+                    
+                    if (isAggregateFunction) {
+                        
+                        
+                        if (typeof subFieldsOrParams === 'object' && !Array.isArray(subFieldsOrParams)) {
+                            
+                            const processedReturning: Record<string, any> = {};
+                            Object.entries(subFieldsOrParams).forEach(([subFieldName, subFieldValue]) => {
+                                
+                                const subFieldInfo = fieldInfoInParent?.type?.ofType ? 
+                                    findTypeDetails(fieldInfoInParent.type.ofType.name)?.fields?.find((f: any) => f.name === subFieldName) :
+                                    findTypeDetails(fieldReturnTypeName)?.fields?.find((f: any) => f.name === subFieldName);
+                                
+                                if (subFieldInfo && Array.isArray(subFieldValue)) {
+                                    const columnsArg = subFieldInfo.args?.find((a: any) => a.name === 'columns');
+                                    if (columnsArg) {
+                                        
+                                        if (subFieldValue.length === 1 && subFieldValue[0] === '*') {
+                                            processedReturning[subFieldName] = true;
+                                        } else {
+                                            processedReturning[subFieldName] = { _isColumnsFunctionCall: true, columns: subFieldValue };
+                                        }
+                                    } else {
+                                        processedReturning[subFieldName] = subFieldValue;
+                                    }
+                                } else {
+                                    processedReturning[subFieldName] = subFieldValue;
+                                }
+                            });
+                            
+                            nestedReturning = processedReturning;
+                            nestedArgsInput = {};
+                        } else {
+                            if (Array.isArray(subFieldsOrParams) && fieldInfoInParent?.args && fieldInfoInParent.args.length > 0) {
+                                const columnsArg = fieldInfoInParent.args.find((a: any) => a.name === 'columns');
+                                if (columnsArg) {
+                                    nestedArgsInput = { columns: subFieldsOrParams };
+                                    nestedReturning = null;
+                                } else {
+                                    nestedReturning = subFieldsOrParams;
+                                }
+                            } else {
+                                ({ returning: nestedReturning, alias, ...nestedArgsInput } = subFieldsOrParams);
+                            }
+                        }
+                    } else {
+                        ({ returning: nestedReturning, alias, ...nestedArgsInput } = subFieldsOrParams);
+                        
+                        if (!nestedReturning && typeof subFieldsOrParams === 'object' && !Array.isArray(subFieldsOrParams)) {
+                            const { alias: extractedAlias, ...potentialReturningFields } = subFieldsOrParams;
+                            
+                            const knownArgKeys = new Set(['where', 'limit', 'offset', 'order_by', 'distinct_on', 'alias', 'returning']);
+                            const fieldKeys = Object.keys(potentialReturningFields).filter(key => !knownArgKeys.has(key));
+                            
+                            if (fieldKeys.length > 0) {
+                                nestedReturning = potentialReturningFields;
+                                nestedArgsInput = {};
+                                if (extractedAlias) alias = extractedAlias;
+                            }
+                        }
+                    }
+                }
+                
                 const fieldAliasOrName = alias || fieldName;
-                // Field definition might include alias
                 const fieldDefinition = alias ? `${alias}: ${fieldName}` : fieldName;
 
-                // --- Process Nested Arguments --- (IMPLEMENTED)
-          const nestedArgs: string[] = [];
+                const nestedArgs: string[] = [];
                 if (fieldInfo.args && Object.keys(nestedArgsInput).length > 0) {
+                     const argsSource = isAggregateFunction ? fieldInfoInParent : fieldInfo;
+                     
                      Object.entries(nestedArgsInput).forEach(([argName, argValue]) => {
-                         const argDef = fieldInfo.args.find((a: any) => a.name === argName);
+                         const argDef = argsSource?.args?.find((a: any) => a.name === argName);
                          if (argDef && argValue !== undefined) {
                 const varName = `v${currentVarCounterRef.count++}`;
                 nestedArgs.push(`${argName}: $${varName}`);
                              variables[varName] = argValue;
-                             const gqlType = getGqlTypeFromSchema(argDef.type); // Use existing helper
-                             // Check if var already exists before pushing
+                             const gqlType = getGqlTypeFromSchema(argDef.type);
                              if (!varParts.some(p => p.startsWith(`$${varName}:`))) {
                                   varParts.push(`$${varName}: ${gqlType}`);
                              }
                          } else {
-                              // Use debug instead of console.warn
                               debug(`Argument "%s" not found or value is undefined for field "%s"`, argName, fieldName);
                          }
                      });
                 }
                 const nestedArgsStr = nestedArgs.length > 0 ? `(${nestedArgs.join(', ')})` : '';
-                // --- End Nested Arguments ---
 
-
-                // --- Process Nested Returning Fields --- (Improved Default Logic)
                 let finalNestedReturning: (string | Record<string, any>)[] = [];
                  if (nestedReturning) {
                       if (Array.isArray(nestedReturning)) {
@@ -391,34 +505,52 @@ export function Generator(schema: any): Generate { // We take the __schema objec
                       } else if (typeof nestedReturning === 'object') {
                             finalNestedReturning = Object.entries(nestedReturning)
                                 .filter(([_, v]) => v)
-                                .map(([k, v]) => (typeof v === 'boolean' ? k : { [k]: v }));
+                                .map(([k, v]) => {
+                                    if (typeof v === 'object' && v !== null && (v as any)._isColumnsFunctionCall) {
+                                        return { [k]: v };
+                                    }
+                                    return typeof v === 'boolean' ? k : { [k]: v };
+                                });
                       }
                  }
-                 // If no nested returning specified, try to add default 'id' or '__typename'
                  if (finalNestedReturning.length === 0) {
                      const nestedTypeDetails = findTypeDetails(fieldReturnTypeName);
-                     if (nestedTypeDetails?.fields?.find((f: any) => f.name === 'id')) {
-                         finalNestedReturning.push('id');
+                     if (isAggregateField && nestedTypeDetails?.fields?.find((f: any) => f.name === 'aggregate')) {
+                         const aggregateField = nestedTypeDetails.fields.find((f: any) => f.name === 'aggregate');
+                         if (aggregateField) {
+                             let aggregateTypeName: string | null = null;
+                             let currentAggType = aggregateField.type;
+                             while (currentAggType.ofType) currentAggType = currentAggType.ofType;
+                             aggregateTypeName = currentAggType.name;
+                             
+                             const aggregateTypeDetails = findTypeDetails(aggregateTypeName);
+                             if (aggregateTypeDetails?.fields?.find((f: any) => f.name === 'count')) {
+                                 finalNestedReturning.push({ aggregate: { count: true } });
+                             } else {
+                                 finalNestedReturning.push('aggregate');
+                             }
+                         }
+                     } else if (nestedTypeDetails?.fields?.find((f: any) => f.name === 'id')) {
+                         if (!isAggregateFunction || !subFieldsOrParams || typeof subFieldsOrParams !== 'object') {
+                             finalNestedReturning.push('id');
+                         }
                      } else if (nestedTypeDetails?.kind === 'OBJECT' || nestedTypeDetails?.kind === 'INTERFACE') {
                           finalNestedReturning.push('__typename');
                      }
-                      // If it's a SCALAR/ENUM, no body needed
                  }
 
                 const nestedReturningStr = finalNestedReturning
-                    .map(f => processReturningField(f, fieldReturnTypeName, currentVarCounterRef)) // <<< Pass return type
+                    .map(f => processReturningField(f, fieldReturnTypeName, currentVarCounterRef))
                     .filter(Boolean)
                     .join('\n        ');
-                // --- End Nested Returning Fields ---
 
-                // Only add body if there are fields to return AND the type is OBJECT/INTERFACE
-                 const nestedFieldTypeDetails = findTypeDetails(fieldReturnTypeName);
-                 const needsNestedBody = (nestedFieldTypeDetails?.kind === 'OBJECT' || nestedFieldTypeDetails?.kind === 'INTERFACE') && nestedReturningStr;
+                const nestedFieldTypeDetails = findTypeDetails(fieldReturnTypeName);
+                const needsNestedBody = (nestedFieldTypeDetails?.kind === 'OBJECT' || nestedFieldTypeDetails?.kind === 'INTERFACE') && nestedReturningStr;
                 const nestedBody = needsNestedBody ? ` {\n        ${nestedReturningStr}\n      }` : '';
                 return `${fieldDefinition}${nestedArgsStr}${nestedBody}`;
             }
         }
-        return ''; // Should not happen for valid input
+        return '';
     }
 
     // --- Main Returning Logic (REWORKED) ---
@@ -427,14 +559,13 @@ export function Generator(schema: any): Generate { // We take the __schema objec
     while (currentQueryType.ofType) currentQueryType = currentQueryType.ofType;
     topLevelReturnTypeName = currentQueryType.name;
 
-    let finalReturningFields: string[] = []; // Initialize final list
+    let finalReturningFields: string[] = [];
 
     // Helper to generate base default fields
     const baseGenerateDefaultFields = (parentTypeName: string | null): string[] => {
       const defaults: string[] = [];
       if (aggregate) {
-          // Simplified default for aggregate
-           const aggregateFieldInfo = rootFields.find(f => f.name === queryName);
+           const aggregateFieldInfo = queryRoot.fields.find(f => f.name === queryName);
             let aggReturnTypeName: string | null = null;
              if(aggregateFieldInfo) {
                 let currentAggType = aggregateFieldInfo.type;
@@ -464,8 +595,6 @@ export function Generator(schema: any): Generate { // We take the __schema objec
           if (returnTypeDetails?.fields?.find((f: any) => f.name === 'id')) {
               defaults.push('id');
           }
-          // Add other simple default fields like name, email if they exist?
-          // Example: Check if 'name' exists and add it
            if (returnTypeDetails?.fields?.find((f: any) => f.name === 'name')) {
                defaults.push('name');
            }
@@ -478,7 +607,6 @@ export function Generator(schema: any): Generate { // We take the __schema objec
             if (returnTypeDetails?.fields?.find((f: any) => f.name === 'updated_at')) {
                  defaults.push('updated_at');
             }
-           // Fallback __typename if still empty and it's an object/interface
           if (defaults.length === 0 && (returnTypeDetails?.kind === 'OBJECT' || returnTypeDetails?.kind === 'INTERFACE')) {
               defaults.push('__typename');
           }
@@ -491,53 +619,38 @@ export function Generator(schema: any): Generate { // We take the __schema objec
         finalReturningFields = returning
           .map(field => processReturningField(field, topLevelReturnTypeName, varCounterRef))
           .filter(Boolean);
-        // Defaults are fully overridden by array
       } else if (typeof returning === 'string') {
         finalReturningFields = returning.split(/\s+/).filter(Boolean)
           .map(field => processReturningField(field, topLevelReturnTypeName, varCounterRef))
           .filter(Boolean);
-        // Defaults are fully overridden by string
       } else if (typeof returning === 'object' && returning !== null) {
-        // 1. Get default fields
         let currentDefaults = baseGenerateDefaultFields(topLevelReturnTypeName);
         const customFields: string[] = [];
 
-        // 2. Process fields from the returning object
-             Object.entries(returning).forEach(([key, value]) => {
+        Object.entries(returning).forEach(([key, value]) => {
                  const fieldObject = { [key]: value };
           const processedField = processReturningField(fieldObject, topLevelReturnTypeName, varCounterRef);
                  if (processedField) {
-            // Determine base name (handle alias: "alias: realName" or just "realName")
             const baseNameMatch = processedField.match(/^([\w\d_]+)(?:\s*:\s*[\w\d_]+)?/);
-             // If alias exists use the original field name (key), otherwise use the matched name
              const baseName = (value?.alias && typeof value === 'object') ? key : (baseNameMatch ? baseNameMatch[1] : key);
 
-            // Remove default if it exists with the same base name
             currentDefaults = currentDefaults.filter(defaultField => {
               const defaultBaseNameMatch = defaultField.match(/^([\w\d_]+)/);
               return !(defaultBaseNameMatch && defaultBaseNameMatch[1] === baseName);
             });
-            customFields.push(processedField); // Add the processed field
+            customFields.push(processedField);
           }
         });
-        // 3. Combine remaining defaults and custom fields
         finalReturningFields = [...currentDefaults, ...customFields];
         } else {
-        // Invalid type or null, use defaults
         finalReturningFields = baseGenerateDefaultFields(topLevelReturnTypeName);
         }
     } else {
-      // No returning provided, use defaults
       finalReturningFields = baseGenerateDefaultFields(topLevelReturnTypeName);
     }
-     varCounter = varCounterRef.count; // Update main counter
-    // --- End Returning ---
+     varCounter = varCounterRef.count;
 
-    // --- Final Query String Assembly --- (Adjusted section)
-    // const returningStr = finalReturningFields.length > 0 ? finalReturningFields.join('\n      ') : ''; // Use the calculated finalReturningFields
-
-    // Logic for affected_rows
-    let assembledReturningFields = [...finalReturningFields]; // Start with the combined list
+    let assembledReturningFields = [...finalReturningFields];
     if (['insert', 'update', 'delete'].includes(operation) && !queryName.endsWith('_by_pk') && !queryName.endsWith('_one')) {
       let directFieldReturnType = queryInfo.type;
       while(directFieldReturnType.ofType) directFieldReturnType = directFieldReturnType.ofType;
@@ -545,7 +658,7 @@ export function Generator(schema: any): Generate { // We take the __schema objec
 
       if (returnTypeDetails?.fields?.find((f:any) => f.name === 'affected_rows') && returnTypeDetails?.fields?.find((f:any) => f.name === 'returning')) {
         const fieldsForNestedReturning = assembledReturningFields.filter(f => !f.trim().startsWith('affected_rows'));
-        assembledReturningFields = ['affected_rows']; // Reset and start with affected_rows
+        assembledReturningFields = ['affected_rows'];
         if (fieldsForNestedReturning.length > 0) {
           const returningFieldsStr = fieldsForNestedReturning.join('\n        ');
           assembledReturningFields.push(`returning {\n        ${returningFieldsStr}\n      }`);
@@ -577,18 +690,15 @@ export function Generator(schema: any): Generate { // We take the __schema objec
         ${queryName}${argsStr}${bodyStr}
       }${fragmentsStr}
     `;
-    // --- End Assembly ---
 
     try {
-        // debug("Generated Query:", queryStr);
-        // debug("Generated Variables:", variables);
         const gqlQuery = gql(queryStr);
         return {
           queryString: queryStr,
           query: gqlQuery,
           variables,
           varCounter,
-          queryName // Return queryName
+          queryName
         };
     } catch (error: any) {
          console.error("❌ Error parsing GraphQL query:", error.message);
