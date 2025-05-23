@@ -1,6 +1,6 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile } from './assist-common';
+import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret } from './assist-common';
 import path from 'path';
 import fs from 'fs-extra';
 
@@ -27,8 +27,8 @@ export async function configureFirebaseNotifications(rl: readline.Interface, env
     );
     envVars.FIREBASE_PROJECT_ID = await askForInput(rl, 'Enter Firebase Project ID (from JSON: project_id)');
     envVars.FIREBASE_CLIENT_EMAIL = await askForInput(rl, 'Enter Firebase Client Email (from JSON: client_email)');
-    const privateKey = await askForInput(rl, 'Enter Firebase Private Key (from JSON: private_key - ensure it is a single line string, replace actual newlines with \\n if copying from terminal)');
-    envVars.FIREBASE_PRIVATE_KEY = `"${privateKey.replace(/\n/g, '\\n')}"`; // Ensure it is quoted and newlines escaped
+    const privateKey = await askForInput(rl, 'Enter Firebase Private Key (from JSON: private_key - ensure it is a single line string, replace actual newlines with \\n if copying from terminal)', '', true);
+    envVars.FIREBASE_PRIVATE_KEY = `"${privateKey.replace(/\n/g, '\\n')}"`;
 
     if (!fs.existsSync(firebaseServiceAccountPath)){
         console.warn(`⚠️  Remember to save your Firebase service account key as ${firebaseServiceAccountPath} in your project root.`);

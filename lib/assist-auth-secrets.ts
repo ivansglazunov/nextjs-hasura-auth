@@ -1,6 +1,6 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, parseEnvFile, writeEnvFile, askForInput } from './assist-common';
+import { createRlInterface, parseEnvFile, writeEnvFile, askForInput, maskDisplaySecret } from './assist-common';
 import path from 'path';
 import crypto from 'crypto';
 
@@ -12,12 +12,12 @@ export async function setupAuthSecrets(rl: readline.Interface, envPath: string):
 
   if (!envVars.NEXTAUTH_SECRET) {
     const defaultSecret = crypto.randomBytes(32).toString('hex');
-    envVars.NEXTAUTH_SECRET = await askForInput(rl, 'Enter NEXTAUTH_SECRET or press Enter to generate one', defaultSecret);
+    envVars.NEXTAUTH_SECRET = await askForInput(rl, 'Enter NEXTAUTH_SECRET or press Enter to generate one', defaultSecret, true);
     if (envVars.NEXTAUTH_SECRET === defaultSecret) {
-        console.log(`✨ Generated NEXTAUTH_SECRET: ${defaultSecret.substring(0,8)}...`);
+        console.log(`✨ Generated NEXTAUTH_SECRET: ${maskDisplaySecret(defaultSecret)}...`);
     }
   } else {
-    console.log('✅ NEXTAUTH_SECRET already set.');
+    console.log(`✅ NEXTAUTH_SECRET already set (${maskDisplaySecret(envVars.NEXTAUTH_SECRET)}).`);
   }
 
   writeEnvFile(envPath, envVars);

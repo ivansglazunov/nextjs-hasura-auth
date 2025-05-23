@@ -19,11 +19,6 @@ cytoscape.use(edgehandles);
 
 const generate = Generator(schema);
 
-const TITLE = 'hasyx';
-const DESCRIPTION = 'hasyx framework';
-// Get basePath from environment variable
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <>

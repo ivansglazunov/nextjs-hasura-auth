@@ -222,4 +222,49 @@ async function testProtectedFeature() {
 *   `ws` (or your chosen WebSocket library, for the `WebSocket` type hint)
 *   `debug` (for logging)
 *   Environment Variable: `NEXTAUTH_SECRET`
-*   Environment Variable: `HASURA_JWT_SECRET` (for Bearer token verification) 
+*   Environment Variable: `HASURA_JWT_SECRET` (for Bearer token verification)
+
+## Telegram Login Authentication
+
+The project now supports authentication via Telegram Login. This allows users to sign in using their Telegram account.
+
+**Setup Requirements:**
+
+1.  **Telegram Bot:** You need a Telegram bot. You can create one or use an existing one by talking to `@BotFather` on Telegram.
+    *   Obtain your bot's `USERNAME` (e.g., `MyWebAppBot`).
+    *   Obtain your bot's `API TOKEN`.
+2.  **Domain Linking:** Using `@BotFather`, you must link your website's domain to your bot. Use the `/setdomain` command. The domain should be the one where your application is hosted (e.g., `https://yourapp.com` or `http://localhost:3000` for development).
+3.  **Environment Variables:**
+    *   `TELEGRAM_LOGIN_BOT_TOKEN`: Your Telegram Bot API Token.
+    *   `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`: Your Telegram Bot Username (this is public and used by the client-side widget).
+
+**How it Works:**
+
+1.  A "Login with Telegram" button is displayed on the client-side.
+2.  When clicked, it uses the Telegram Login Widget, which requires `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` to be configured.
+3.  After the user authorizes via Telegram, the widget receives user data (ID, name, photo, auth_date, and a verification hash).
+4.  This data is sent to a NextAuth `CredentialsProvider` (ID: `telegram`).
+5.  The backend verifies the `hash` using your `TELEGRAM_LOGIN_BOT_TOKEN` to ensure the data is authentic and from Telegram.
+6.  It also checks `auth_date` to prevent replay attacks.
+7.  If valid, `getOrCreateUserAndAccount` is called to find or create a user in your database associated with the Telegram ID.
+8.  A session is established for the user.
+
+**Configuration Assistance:**
+
+The `hasyx-assist` CLI tool has been updated to help you configure these settings. It will prompt you for:
+*   Telegram Bot Username (`TELEGRAM_LOGIN_BOT_USERNAME`)
+*   Telegram Bot Token (`TELEGRAM_LOGIN_BOT_TOKEN`)
+
+It will also provide instructions on how to set up your bot with `@BotFather` and link your domain.
+
+**Client-Side Implementation:**
+
+*   The `components/auth/telegram-login-button.tsx` component renders the Telegram widget.
+*   It uses `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` from environment variables.
+*   Upon successful Telegram authentication, it calls `signIn('telegram', { ...userData })` from `next-auth/react`.
+
+**Backend Implementation:**
+
+*   `lib/telegram-credentials.ts` defines the `TelegramProvider` (a NextAuth Credentials provider).
+*   This provider handles the `authorize` callback, verifies the data from Telegram, and interacts with `getOrCreateUserAndAccount`.
+*   The `TelegramProvider` is integrated into `lib/auth-options.ts`. 

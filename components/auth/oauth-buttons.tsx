@@ -1,5 +1,6 @@
 import React from 'react';
 import { ProviderButton } from './provider-button';
+import TelegramLoginButton from './telegram-login-button';
 
 /**
  * Component with buttons for OAuth authorization through various providers
@@ -65,6 +66,14 @@ export function OAuthButtons() {
         }
         className="w-full bg-[#4680C2] hover:bg-[#4680C2]/90 text-white"
       />
+
+      {process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME && (
+        <TelegramLoginButton
+          botUsername={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}
+          buttonSize="large"
+          className="w-full flex justify-center"
+        />
+      )}
     </div>
   );
 } 

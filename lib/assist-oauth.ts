@@ -1,9 +1,15 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile } from './assist-common';
+import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret as globalMaskDisplaySecret } from './assist-common';
 import path from 'path';
 
 const debug = Debug('assist:oauth');
+
+// Local overloaded maskDisplaySecret for optional non-masking for IDs
+function maskDisplaySecret(secret: string | undefined | null, shouldMask: boolean = true): string {
+  if (!shouldMask && secret) return secret; // Return as is if not masking and secret exists
+  return globalMaskDisplaySecret(secret); // Use global/imported one for actual masking
+}
 
 const PROVIDERS = [
   {
@@ -46,6 +52,14 @@ const PROVIDERS = [
     instructions: 'Authorized redirect URI: {EFFECTIVE_OAUTH_CALLBACK_BASE_URL}/api/auth/callback/vk',
     docsLink: 'https://vk.com/apps?act=manage',
   },
+  {
+    name: 'Telegram Login',
+    envPrefix: 'TELEGRAM_LOGIN',
+    clientIdName: 'TELEGRAM_LOGIN_BOT_USERNAME', // Bot username for the login widget
+    clientSecretName: 'TELEGRAM_LOGIN_BOT_TOKEN',  // Bot token to verify login hash
+    instructions: 'Go to @BotFather on Telegram. Create a new bot or select an existing one. Get its USERNAME (e.g., MyWebAppBot) and API TOKEN. Then, use the /setdomain command in @BotFather to link your website\'s domain (e.g., {EFFECTIVE_OAUTH_CALLBACK_BASE_URL}) to your bot. This allows the login widget to work on your site. The NextAuth callback path will be {EFFECTIVE_OAUTH_CALLBACK_BASE_URL}/api/auth/callback/telegram, but you primarily authorize the domain where the widget is displayed.',
+    docsLink: 'https://core.telegram.org/widgets/login',
+  }
 ];
 
 export async function configureOAuth(rl: readline.Interface, envPath: string, effectiveOauthCallbackBaseUrl: string): Promise<Record<string, string>> {
@@ -55,11 +69,18 @@ export async function configureOAuth(rl: readline.Interface, envPath: string, ef
 
   for (const provider of PROVIDERS) {
     console.log(`\n--- ${provider.name} OAuth ---`);
-    if (envVars[provider.clientIdName] && envVars[provider.clientSecretName]) {
-      console.log(`✅ ${provider.name} already configured (ID: ${envVars[provider.clientIdName]?.substring(0,8)}...).`);
+    const clientId = envVars[provider.clientIdName];
+    const clientSecret = envVars[provider.clientSecretName];
+
+    if (clientId && clientSecret) {
+      // Display Client ID as is (usually not a secret), mask Client Secret
+      console.log(`✅ ${provider.name} already configured (ID: ${maskDisplaySecret(clientId, false)}, Secret: ${maskDisplaySecret(clientSecret, true)}).`);
       if (!await askYesNo(rl, `Do you want to reconfigure ${provider.name}?`, false)) {
         continue;
       }
+    } else if (clientId) {
+      // Only Client ID is set
+      console.log(`✅ ${provider.name} has Client ID set (ID: ${maskDisplaySecret(clientId, false)}), but secret is missing.`);
     }
 
     if (await askYesNo(rl, `Do you want to set up ${provider.name} OAuth?`, true)) {
@@ -74,13 +95,25 @@ export async function configureOAuth(rl: readline.Interface, envPath: string, ef
       if (provider.instructions) {
         console.log(`Instructions: ${instructionText}`);
       }
-      envVars[provider.clientIdName] = await askForInput(rl, `Enter ${provider.name} Client ID`);
-      envVars[provider.clientSecretName] = await askForInput(rl, `Enter ${provider.name} Client Secret`);
+      
+      const isClientIdSecret = provider.name === 'Telegram Login' ? false : false; // Telegram Bot Username is not secret, other Client IDs are not secret.
+      const isClientSecretSecret = true; // Client Secrets and Telegram Bot Token are always secret.
+
+      envVars[provider.clientIdName] = await askForInput(rl, `Enter ${provider.name} ${provider.name === 'Telegram Login' ? 'Bot Username' : 'Client ID'}`, envVars[provider.clientIdName] || '', isClientIdSecret);
+      envVars[provider.clientSecretName] = await askForInput(rl, `Enter ${provider.name} ${provider.name === 'Telegram Login' ? 'Bot Token' : 'Client Secret'}`, envVars[provider.clientSecretName] || '', isClientSecretSecret);
+      
+      if (provider.name === 'Telegram Login' && envVars[provider.clientIdName]) {
+        envVars['NEXT_PUBLIC_TELEGRAM_BOT_USERNAME'] = envVars[provider.clientIdName];
+        console.log(`✅ NEXT_PUBLIC_TELEGRAM_BOT_USERNAME set to: ${envVars['NEXT_PUBLIC_TELEGRAM_BOT_USERNAME']}`);
+      }
+      
       console.log(`✅ ${provider.name} configured.`);
     } else {
-      // Ensure old values are removed if user opts out of re-configuration or initial setup
       delete envVars[provider.clientIdName];
       delete envVars[provider.clientSecretName];
+      if (provider.name === 'Telegram Login') {
+        delete envVars['NEXT_PUBLIC_TELEGRAM_BOT_USERNAME'];
+      }
       console.log(`Skipping ${provider.name} OAuth setup.`);
     }
   }

@@ -1,6 +1,6 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile } from './assist-common';
+import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret } from './assist-common';
 import path from 'path';
 
 const debug = Debug('assist:openrouter');
@@ -23,13 +23,13 @@ export async function configureOpenRouter(rl: readline.Interface, envPath: strin
   );
 
   if (currentApiKey) {
-    if (await askYesNo(rl, `OpenRouter API Key is already set (starts with: ${currentApiKey.substring(0, 7)}...). Do you want to change it?`, false)) {
-      newApiKey = await askForInput(rl, 'Enter new OpenRouter API Key (press Enter to keep current)', currentApiKey);
+    if (await askYesNo(rl, `OpenRouter API Key is already set (starts with: ${maskDisplaySecret(currentApiKey)}...). Do you want to change it?`, false)) {
+      newApiKey = await askForInput(rl, 'Enter new OpenRouter API Key (press Enter to keep current)', currentApiKey, true);
     } else {
       newApiKey = currentApiKey; // Explicitly keep current if not changing
     }
   } else {
-    newApiKey = await askForInput(rl, 'Enter OpenRouter API Key');
+    newApiKey = await askForInput(rl, 'Enter OpenRouter API Key', '', true);
   }
 
   if (newApiKey !== currentApiKey) {

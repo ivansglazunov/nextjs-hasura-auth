@@ -11,6 +11,7 @@ import VkProvider from 'next-auth/providers/vk';
 import { createApolloClient } from './apollo'; // Import from generated package
 import { Hasyx } from './hasyx'; // Import from generated package
 import { SignJWT } from 'jose';
+import { TelegramProvider } from './telegram-credentials'; // Import TelegramProvider
 
 // Ensure type augmentation is applied globally (can be in a separate .d.ts file or here)
 import 'next-auth';
@@ -142,7 +143,8 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
       ...baseProviders,
       ...additionalProviders,
       ...(testTokenProvider ? [testTokenProvider] : []), // Add test provider only if defined
-    ];
+      TelegramProvider({ hasyx: client }), // Add TelegramProvider
+    ].filter(provider => provider !== null); // Filter out null providers
 
   debug('Final list of auth providers:', allProviders.map(p => p.id));
 

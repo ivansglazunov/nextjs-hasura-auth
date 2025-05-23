@@ -24,14 +24,33 @@ export async function askYesNo(rl: readline.Interface, question: string, default
   });
 }
 
-export async function askForInput(rl: readline.Interface, prompt: string, defaultValue: string = ''): Promise<string> {
+export async function askForInput(rl: readline.Interface, prompt: string, defaultValue: string = '', isSecret: boolean = false): Promise<string> {
   return new Promise<string>((resolve) => {
-    const promptText = defaultValue ? `${prompt} [${defaultValue}]: ` : `${prompt}: `;
-    debug(`Asking for input: ${prompt} (default: ${defaultValue})`);
+    const displayDefault = isSecret && defaultValue ? maskDisplaySecret(defaultValue) : defaultValue;
+    const promptText = defaultValue ? `${prompt} [${displayDefault}]: ` : `${prompt}: `;
+    debug(`Asking for input: ${prompt} (default: ${defaultValue})${isSecret ? ' (secret)' : ''}`);
+
+    const originalStdoutMuted = (rl as any).stdoutMuted;
+    if (isSecret) {
+      (rl as any).stdoutMuted = true;
+    }
+
     rl.question(promptText, (answer) => {
+      if (isSecret) {
+        (rl as any).stdoutMuted = originalStdoutMuted;
+        // Manually echo a newline because rl.question might not if its output was muted.
+        if ((rl as any).output) {
+            (rl as any).output.write('\n');
+        }
+      }
       const trimmedAnswer = answer.trim();
       resolve(trimmedAnswer === '' ? defaultValue : trimmedAnswer);
     });
+
+    // Ensure the prompt is displayed if stdoutMuted is true from the start
+    // This is usually handled by rl.question, but good to be mindful.
+    // If isSecret is true, rl._writeToOutput(promptText) could be called if rl.question doesn't output.
+    // However, testing shows rl.question still prints the prompt.
   });
 }
 
@@ -60,7 +79,16 @@ export function parseEnvFile(envPath: string): Record<string, string> {
 
 export function writeEnvFile(envPath: string, envVars: Record<string, string>): void {
   let content = '# Environment variables for hasyx project\n';
-  content += Object.entries(envVars).map(([key, value]) => `${key}=${value.includes(' ') ? `"${value}"` : value}`).join('\n');
+  content += Object.entries(envVars)
+    .map(([key, value]) => {
+      // Check if value is already quoted
+      const alreadyQuoted = (value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"));
+      if (alreadyQuoted || !value.includes(' ')) {
+        return `${key}=${value}`;
+      }
+      return `${key}="${value}"`; // Add quotes if it contains spaces and is not already quoted
+    })
+    .join('\n');
   content += '\n'; // Ensure a trailing newline
   fs.writeFileSync(envPath, content, 'utf-8');
   debug(`Wrote ${Object.keys(envVars).length} variables to ${envPath}`);
@@ -83,4 +111,16 @@ export function getGitHubRemoteUrl(): string | null {
     }
     debug('GitHub remote URL not found or not in expected format.');
     return null;
+}
+
+export function maskDisplaySecret(secret: string | undefined | null): string {
+  if (!secret || secret.length === 0) {
+    return '********';
+  }
+  if (secret.length < 4) {
+    // For secrets like "1", "12", "123", show "1***"
+    return secret[0] + '***';
+  }
+  // For secrets "1234" or longer, show "1234****"
+  return secret.substring(0, 4) + '****';
 } 

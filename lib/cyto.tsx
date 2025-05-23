@@ -20,12 +20,6 @@ import edgeConnections from 'cytoscape-edge-connections';
 import edgehandles from 'cytoscape-edgehandles';
 
 const debug = Debug('cyto');
-
-// const CytoscapeComponent = dynamic<any>(
-  //   // @ts-ignore
-  //   () => import('react-cytoscapejs').then((m) => m.default),
-  //   { ssr: false }
-  // );
   
 cytoscape.use(dagre);
 cytoscape.use(cola);

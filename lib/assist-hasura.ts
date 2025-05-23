@@ -1,6 +1,6 @@
 import readline from 'readline';
 import Debug from './debug';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile } from './assist-common';
+import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret } from './assist-common';
 import path from 'path';
 import crypto from 'crypto'; // Import crypto for JWT secret generation
 
@@ -27,9 +27,9 @@ export async function configureHasura(rl: readline.Interface, envPath: string): 
   // Configure HASURA_ADMIN_SECRET
   const currentAdminSecret = envVars.HASURA_ADMIN_SECRET;
   if (currentAdminSecret) {
-    envVars.HASURA_ADMIN_SECRET = await askForInput(rl, `Enter Hasura Admin Secret (current: ${currentAdminSecret.substring(0, 8)}...) or press Enter to keep`, currentAdminSecret);
+    envVars.HASURA_ADMIN_SECRET = await askForInput(rl, `Enter Hasura Admin Secret (current: ${maskDisplaySecret(currentAdminSecret)}) or press Enter to keep`, currentAdminSecret, true);
   } else {
-    envVars.HASURA_ADMIN_SECRET = await askForInput(rl, 'Enter Hasura Admin Secret');
+    envVars.HASURA_ADMIN_SECRET = await askForInput(rl, 'Enter Hasura Admin Secret', '', true);
   }
 
   // Configure HASURA_JWT_SECRET
@@ -46,14 +46,14 @@ export async function configureHasura(rl: readline.Interface, envPath: string): 
   }
 
   const jwtPromptMessage = existingRawJwtKey
-    ? `Enter raw JWT Secret Key (e.g., a 32-byte hex string) for HASURA_JWT_SECRET (current key starts with: ${existingRawJwtKey.substring(0, 8)}...) or press Enter to keep current key`
+    ? `Enter raw JWT Secret Key (e.g., a 32-byte hex string) for HASURA_JWT_SECRET (current key starts with: ${maskDisplaySecret(existingRawJwtKey)}) or press Enter to keep current key`
     : 'Enter raw JWT Secret Key (e.g., a 32-byte hex string) for HASURA_JWT_SECRET or press Enter to generate one';
   
-  let rawJwtKeyInput = await askForInput(rl, jwtPromptMessage, existingRawJwtKey || '');
+  let rawJwtKeyInput = await askForInput(rl, jwtPromptMessage, existingRawJwtKey || '', true);
 
   if (rawJwtKeyInput === '' && !existingRawJwtKey) { // User pressed Enter and no existing key, or wants to generate
     rawJwtKeyInput = crypto.randomBytes(32).toString('hex');
-    console.log(`✨ Generated new raw JWT key: ${rawJwtKeyInput.substring(0,8)}...`);
+    console.log(`✨ Generated new raw JWT key: ${maskDisplaySecret(rawJwtKeyInput)}...`);
   } else if (rawJwtKeyInput === '' && existingRawJwtKey) { // User pressed Enter and wants to keep existing
      rawJwtKeyInput = existingRawJwtKey;
   }
@@ -65,13 +65,13 @@ export async function configureHasura(rl: readline.Interface, envPath: string): 
   // Configure HASURA_EVENT_SECRET
   const currentEventSecret = envVars.HASURA_EVENT_SECRET;
   if (currentEventSecret) {
-    envVars.HASURA_EVENT_SECRET = await askForInput(rl, `Enter Hasura Event Secret (current: ${currentEventSecret.substring(0, 8)}...) or press Enter to keep`, currentEventSecret);
+    envVars.HASURA_EVENT_SECRET = await askForInput(rl, `Enter Hasura Event Secret (current: ${maskDisplaySecret(currentEventSecret)}) or press Enter to keep`, currentEventSecret, true);
   } else {
     if (await askYesNo(rl, 'Generate new Hasura Event Secret?', true)) {
       envVars.HASURA_EVENT_SECRET = crypto.randomBytes(32).toString('hex');
-       console.log(`✨ Generated Hasura Event Secret: ${envVars.HASURA_EVENT_SECRET.substring(0,8)}...`);
+       console.log(`✨ Generated Hasura Event Secret: ${maskDisplaySecret(envVars.HASURA_EVENT_SECRET)}...`);
     } else {
-      envVars.HASURA_EVENT_SECRET = await askForInput(rl, 'Enter Hasura Event Secret');
+      envVars.HASURA_EVENT_SECRET = await askForInput(rl, 'Enter Hasura Event Secret', '', true);
     }
   }
 
