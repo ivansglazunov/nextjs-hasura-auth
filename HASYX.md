@@ -557,6 +557,225 @@ function UserContentDashboard() {
 }
 ```
 
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
 These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
 
 ### Available Hooks

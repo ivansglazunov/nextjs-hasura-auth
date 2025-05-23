@@ -102,6 +102,10 @@ The `generate` function accepts an object with the following properties:
 *   [18. Using Field Aliases with Parameters](#18-using-field-aliases-with-parameters)
 *   [19. Mixed Array and Object Notation for Relations](#19-mixed-array-and-object-notation-for-relations)
 *   [20. Multiple Nested Relationships with Different Parameters](#20-multiple-nested-relationships-with-different-parameters)
+*   [21. Nested Aggregate Query (Relations with Aggregation)](#21-nested-aggregate-query-relations-with-aggregation)
+*   [22. Combined Aggregate with Regular Data](#22-combined-aggregate-with-regular-data)
+*   [23. Aggregate Functions with Column Specifications](#23-aggregate-functions-with-column-specifications)
+*   [24. Top-level Aggregate Query with Nodes](#24-top-level-aggregate-query-with-nodes)
 
 
 ### 1. Advanced Nested Query (Appending to Defaults)
@@ -1086,4 +1090,380 @@ query QueryUsers($v1: users_bool_exp, $v2: posts_bool_exp, $v3: Int, $v4: [posts
   "v6": 10
 }
 ```
-</details> 
+</details>
+
+### 21. Nested Aggregate Query (Relations with Aggregation)
+
+This example demonstrates how to include aggregate data for related entities within a query.
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    where: { is_active: { _eq: true } },
+    returning: [
+        'id',
+        'name', 
+        'email',
+        {
+            accounts_aggregate: {
+                aggregate: {
+                    count: ['*']
+                }
+            }
+        },
+        {
+            posts_aggregate: {
+                where: { published: { _eq: true } },
+                aggregate: {
+                    count: ['*'],
+                    max: { created_at: true },
+                    min: { created_at: true }
+                }
+            }
+        }
+    ]
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: users_bool_exp, $v2: posts_bool_exp) {
+  users(where: $v1) {
+    id
+    name
+    email
+    accounts_aggregate {
+      aggregate {
+        count
+      }
+    }
+    posts_aggregate(where: $v2) {
+      aggregate {
+        count
+        max {
+          created_at
+        }
+        min {
+          created_at
+        }
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "is_active": { "_eq": true } },
+  "v2": { "published": { "_eq": true } }
+}
+```
+</details>
+
+### 22. Combined Aggregate with Regular Data
+
+This example shows how to get both aggregated statistics and actual data nodes.
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    where: { role: { _eq: 'admin' } },
+    returning: [
+        'id',
+        'name',
+        {
+            posts_aggregate: {
+                where: { status: { _eq: 'published' } },
+                aggregate: {
+                    count: ['*'],
+                    avg: { view_count: true },
+                    sum: { view_count: true }
+                }
+            }
+        },
+        {
+            posts: {
+                where: { status: { _eq: 'published' } },
+                limit: 3,
+                order_by: [{ view_count: 'desc' }],
+                returning: ['id', 'title', 'view_count', 'created_at']
+            }
+        }
+    ]
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: users_bool_exp, $v2: posts_bool_exp, $v3: posts_bool_exp, $v4: Int, $v5: [posts_order_by!]) {
+  users(where: $v1) {
+    id
+    name
+    posts_aggregate(where: $v2) {
+      aggregate {
+        count
+        avg {
+          view_count
+        }
+        sum {
+          view_count
+        }
+      }
+    }
+    posts(where: $v3, limit: $v4, order_by: $v5) {
+      id
+      title
+      view_count
+      created_at
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "role": { "_eq": "admin" } },
+  "v2": { "status": { "_eq": "published" } },
+  "v3": { "status": { "_eq": "published" } },
+  "v4": 3,
+  "v5": [{ "view_count": "desc" }]
+}
+```
+</details>
+
+### 23. Aggregate Functions with Column Specifications
+
+This example demonstrates various aggregate functions with specific column selections.
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'tournaments',
+    where: { status: { _eq: 'completed' } },
+    returning: [
+        'id',
+        'name',
+        'status',
+        {
+            games_aggregate: {
+                where: { result: { _is_null: false } },
+                aggregate: {
+                    count: ['*'],
+                    sum: { score: true, duration: true },
+                    avg: { score: true, duration: true },
+                    max: { score: true, created_at: true },
+                    min: { score: true, created_at: true }
+                }
+            }
+        },
+        {
+            participants_aggregate: {
+                where: { status: { _eq: 'active' } },
+                aggregate: {
+                    count: ['*'],
+                    max: { rating: true },
+                    min: { rating: true },
+                    avg: { rating: true }
+                }
+            }
+        }
+    ]
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryTournaments($v1: tournaments_bool_exp, $v2: games_bool_exp, $v3: participants_bool_exp) {
+  tournaments(where: $v1) {
+    id
+    name
+    status
+    games_aggregate(where: $v2) {
+      aggregate {
+        count
+        sum {
+          score
+          duration
+        }
+        avg {
+          score
+          duration
+        }
+        max {
+          score
+          created_at
+        }
+        min {
+          score
+          created_at
+        }
+      }
+    }
+    participants_aggregate(where: $v3) {
+      aggregate {
+        count
+        max {
+          rating
+        }
+        min {
+          rating
+        }
+        avg {
+          rating
+        }
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "status": { "_eq": "completed" } },
+  "v2": { "result": { "_is_null": false } },
+  "v3": { "status": { "_eq": "active" } }
+}
+```
+</details>
+
+### 24. Top-level Aggregate Query with Nodes
+
+This example shows a top-level aggregate query that also includes node data.
+
+```typescript
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'users',
+    where: { created_at: { _gte: '2024-01-01' } },
+    aggregate: {
+        count: true,
+        max: { created_at: true, updated_at: true },
+        min: { created_at: true }
+    },
+    returning: ['id', 'name', 'email', 'created_at'] // Include nodes
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsersAggregate($v1: users_bool_exp) {
+  users_aggregate(where: $v1) {
+    aggregate {
+      count
+      max {
+        created_at
+        updated_at
+      }
+      min {
+        created_at
+      }
+    }
+    nodes {
+      id
+      name
+      email
+      created_at
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "created_at": { "_gte": "2024-01-01" } }
+}
+```
+</details>
+
+## Advanced Aggregation Patterns
+
+### Real-world Tournament Example
+
+Based on the use case from `aggregate.experiment.md`, here's how to query tournament statistics:
+
+```typescript
+// Tournament dashboard with comprehensive statistics
+const options: GenerateOptions = {
+    operation: 'query',
+    table: 'badma_tournaments',
+    where: { status: { _in: ['active', 'completed'] } },
+    returning: [
+        'id',
+        'name', 
+        'status',
+        'type',
+        'created_at',
+        {
+            tournament_games_aggregate: {
+                aggregate: { count: ['*'] }
+            }
+        },
+        {
+            tournament_games: {
+                where: { 
+                    game: { status: { _in: ['finished', 'checkmate', 'stalemate'] } }
+                },
+                limit: 5,
+                order_by: [{ created_at: 'desc' }],
+                returning: [
+                    'id', 
+                    { game: ['id', 'status', 'result', 'created_at'] }
+                ]
+            }
+        },
+        {
+            participants_aggregate: {
+                where: { role: { _eq: 1 } }, // Active participants
+                aggregate: { count: ['*'] }
+            }
+        },
+        {
+            participants: {
+                where: { role: { _eq: 1 } },
+                limit: 10,
+                order_by: [{ score: 'desc' }],
+                returning: ['id', 'user_id', 'score', 'wins', 'losses']
+            }
+        }
+    ]
+};
+
+// This generates a comprehensive query that gets:
+// - Tournament basic info
+// - Count of all games
+// - Last 5 finished games with details
+// - Count of active participants  
+// - Top 10 participants by score
+```
+
+These examples showcase the full power of Hasyx aggregation capabilities, allowing developers to efficiently query database statistics while maintaining the flexibility to include related data as needed. 

@@ -42,6 +42,97 @@ If you encounter unexpected behavior related to data fetching, mutations, or sub
     ```
     This allows you to execute short snippets of code with the admin `client` instance available (and use `await` directly) to see the output immediately, helping to verify hypotheses about data or permissions.
 
+## Testing Aggregation Features
+
+When working with or testing aggregation functionality in Hasyx:
+
+### Quick Aggregation Tests
+
+Use the CLI to quickly test aggregate queries for your data model:
+
+```bash
+# Test basic top-level aggregation
+npx hasyx js -e "
+const result = await client.select({
+  table: 'users',
+  where: { created_at: { _gte: '2024-01-01' } },
+  aggregate: { count: true, max: { created_at: true } }
+});
+console.log('Users aggregate:', JSON.stringify(result, null, 2));
+"
+
+# Test nested aggregation
+npx hasyx js -e "
+const result = await client.select({
+  table: 'users',
+  limit: 3,
+  returning: [
+    'id', 'name',
+    { posts_aggregate: { aggregate: { count: ['*'] } } },
+    { comments_aggregate: { aggregate: { count: ['*'] } } }
+  ]
+});
+console.log('Users with aggregates:', JSON.stringify(result, null, 2));
+"
+```
+
+### Aggregation Testing Guidelines
+
+*   **Always test both top-level and nested aggregations** when adding new aggregate functionality
+*   **Verify that aggregate results return actual numbers, not just `__typename`** 
+*   **Test aggregation with filtering conditions** (`where` clauses)
+*   **Test multiple aggregate functions together** (`count`, `sum`, `avg`, `min`, `max`)
+*   **Test combined queries** that return both aggregated data and regular node data
+*   **Performance test large datasets** to ensure aggregations perform efficiently
+
+### Common Aggregation Patterns to Test
+
+```bash
+# Combined aggregation with filtering
+npx hasyx js -e "
+const tournaments = await client.select({
+  table: 'tournaments',
+  where: { status: { _eq: 'active' } },
+  returning: [
+    'id', 'name', 'status',
+    {
+      games_aggregate: {
+        where: { status: { _eq: 'completed' } },
+        aggregate: { count: ['*'], avg: { duration: true } }
+      }
+    },
+    {
+      participants_aggregate: {
+        where: { active: { _eq: true } },
+        aggregate: { count: ['*'], max: { rating: true } }
+      }
+    }
+  ]
+});
+console.log('Tournament stats:', JSON.stringify(tournaments, null, 2));
+"
+```
+
+### Debugging Aggregation Issues
+
+If aggregations are returning only `__typename` or missing data:
+
+1.  **Check the generated GraphQL query** using the generator directly:
+    ```bash
+    npx hasyx js -e "
+    const { queryString } = generate({
+      operation: 'query',
+      table: 'users',
+      returning: [{ posts_aggregate: { aggregate: { count: ['*'] } } }]
+    });
+    console.log('Generated query:', queryString);
+    "
+    ```
+
+2.  **Test the raw GraphQL against Hasura console** to verify your schema supports the aggregation
+3.  **Check Hasura permissions** for aggregate fields - ensure your role can access `<table>_aggregate` fields
+4.  **Verify aggregate field naming** in your schema - aggregation fields should follow the pattern `<table>_aggregate`
+
 ## Writing Database Migrations
 
 When creating or modifying database migration scripts (typically located in the `migrations/` directory and written in SQL or TypeScript using the Hasyx Hasura client):
