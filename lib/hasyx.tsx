@@ -20,9 +20,7 @@ import {
   SubscriptionResult
 } from '@apollo/client';
 import { HasyxApolloClient } from './apollo';
-import Debug from './debug'; export {
-  useClient, useDelete, useInsert, useMutation, useQuery, useSelect, useSubscribe, useSubscription, useUpdate
-} from './hasyx-client';
+import Debug from './debug';
 
 const debug = Debug('hasyx:client'); const DEFAULT_POLLING_INTERVAL = 1000;
 

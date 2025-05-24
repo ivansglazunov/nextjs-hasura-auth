@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { useClient, useSubscription } from 'hasyx/lib/hasyx-client';
+import { useHasyx, useSubscription } from 'hasyx';
 import { getDeviceInfo, NotificationPermission } from 'hasyx/lib/notify';
 import { getFirebaseConfig } from 'hasyx/lib/notify-firebase';
 import { useSession } from 'next-auth/react';
@@ -59,7 +59,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { data: session } = useSession();
   // Safer retrieval of userId, assuming id is added to the session
   const userId = (session?.user as { id?: string; })?.id;
-  const client = useClient();
+  const client = useHasyx();
 
   const [isSupported, setIsSupported] = useState<boolean>(false); // Browser support + Firebase config
   const [isFcmInitialized, setIsFcmInitialized] = useState<boolean>(false);

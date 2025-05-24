@@ -1,17 +1,35 @@
+"use client"
+
 import { useCreateApolloClient } from './apollo';
 import { ThemeProvider } from "hasyx/components/theme-provider";
 import toUrl, { API_URL, url } from 'hasyx/lib/url';
 import { SessionProvider } from "next-auth/react";
-import { useMemo } from "react";
+import { useMemo, createContext, useContext } from "react";
 import Debug from './debug';
 import { Generate } from './generator';
+import { Hasyx } from './hasyx';
 import { NotificationProvider } from '../components/notify';
 import { Analytics } from "@vercel/analytics/next"
 
 const debug = Debug('provider');
 
+// Create Hasyx context
+const HasyxContext = createContext<Hasyx | null>(null);
+
+// Hook to get Hasyx instance from context
+export function useHasyx(): Hasyx {
+  const hasyx = useContext(HasyxContext);
+  if (!hasyx) {
+    throw new Error('useHasyx must be used within a HasyxProvider');
+  }
+  return hasyx;
+}
+
+// Alias for compatibility
+export const useClient = useHasyx;
+
 function HasyxProviderCore({ url, children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
-  const client = useCreateApolloClient(useMemo(() => {
+  const apolloClient = useCreateApolloClient(useMemo(() => {
     // Determine if current domain is localhost
     const isLocalhost = typeof window !== 'undefined' && (
       window.location.hostname === 'localhost' || 
@@ -37,11 +55,25 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
     };
   }, [url])); 
   
-  client.hasyxGenerator = generate;
+  // Keep the generator on Apollo client for compatibility
+  apolloClient.hasyxGenerator = generate;
 
-  return <client.Provider>
-    {children}
-  </client.Provider>;
+  // Create Hasyx instance when Apollo client changes
+  const hasyxInstance = useMemo(() => {
+    debug('Creating new Hasyx instance with Apollo client');
+    return new Hasyx(apolloClient, generate);
+  }, [apolloClient, generate]);
+
+  // @ts-ignore
+  global.hasyx = hasyxInstance;
+
+  return (
+    <apolloClient.Provider>
+      <HasyxContext.Provider value={hasyxInstance}>
+        {children}
+      </HasyxContext.Provider>
+    </apolloClient.Provider>
+  );
 }
 
 export function HasyxProvider({ children, generate }: { children: React.ReactNode, generate: Generate }) {
