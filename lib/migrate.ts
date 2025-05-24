@@ -75,9 +75,21 @@ const findMigrationScripts = async (direction: 'up' | 'down'): Promise<Migration
   }
 
   debug(`Found ${scripts.length} scripts before sorting.`);
-  // Sort alphabetically by directory name
-  scripts.sort((a, b) => a.dirName.localeCompare(b.dirName));
-  debug(`Scripts sorted alphabetically by dirname.`);
+  // Sort by numeric prefix extracted from directory name
+  scripts.sort((a, b) => {
+    // Extract numeric prefix from directory name (format: NUMBER-name)
+    const numA = parseInt(a.dirName.split('-')[0], 10);
+    const numB = parseInt(b.dirName.split('-')[0], 10);
+    
+    // If both are valid numbers, sort numerically
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return numA - numB;
+    }
+    
+    // Fallback to alphabetical for non-numeric prefixes
+    return a.dirName.localeCompare(b.dirName);
+  });
+  debug(`Scripts sorted numerically by dirname prefix.`);
 
   // Reverse order for 'down' migrations
   if (direction === 'down') {

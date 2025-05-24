@@ -130,22 +130,46 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         return new NextResponse("OK", { status: 200 });
     }
 
-    // Retrieve the user ID associated with this customerKey from a mapping table or other record
-    // Here we're making a simplified assumption that customerKey was stored with a mapping to userId
-    const userMappings = await hasyxClient.select({
-        table: 'payments_user_payment_provider_mappings', // You would need to create this table
-        where: { provider_id: providerResult.id, provider_customer_key: customerKey },
+    // Retrieve the user ID associated with this customerKey from existing payment methods or operations
+    // Since we don't have a mapping table, we'll try to find existing records for this customer
+    let internalUserId: string | null = null;
+    
+    // Try to find existing payment method with this customer key in metadata
+    const existingMethods = await hasyxClient.select({
+        table: 'payments_methods',
+        where: {
+            provider_id: { _eq: providerResult.id },
+            type: { _eq: 'card' },
+            recurrent_details: { _contains: { customerKey: customerKey } }
+        },
         limit: 1,
         returning: ['user_id']
     });
 
-    let internalUserId = userMappings && userMappings.length > 0 ? userMappings[0].user_id : null;
+    if (existingMethods && existingMethods.length > 0) {
+        internalUserId = existingMethods[0].user_id;
+    } else {
+        // Try to find from operations metadata
+        const existingOperations = await hasyxClient.select({
+            table: 'payments_operations',
+            where: {
+                provider_id: { _eq: providerResult.id },
+                metadata: { _contains: { customerKey: customerKey } }
+            },
+            limit: 1,
+            returning: ['user_id']
+        });
+        
+        if (existingOperations && existingOperations.length > 0) {
+            internalUserId = existingOperations[0].user_id;
+        }
+    }
     
-    // If no mapping found, we'll use a fallback or return an error
+    // If no mapping found, we'll acknowledge but not process 
     if (!internalUserId) {
         debug('Could not determine internalUserId for card webhook processing. CustomerKey:', customerKey);
-        // In a real implementation, you might try other means to identify the user
-        return new NextResponse("OK", { status: 200 }); // Acknowledge, but log error
+        debug('This likely means the card was added through external means or the addPaymentMethod flow was not completed through our system');
+        return new NextResponse("OK", { status: 200 }); // Acknowledge, but log warning
     }
 
     const paymentMethodData = {

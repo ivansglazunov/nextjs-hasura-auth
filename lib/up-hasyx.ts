@@ -7,6 +7,28 @@ import { DEFAULT_NAMESPACE } from './hid';
 
 const debug = Debug('migration:up-hasyx');
 
+// Retry function for critical operations
+async function retryOperation<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000,
+  operationName: string = 'operation'
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt === maxRetries) {
+        console.error(`❌ ${operationName} failed after ${maxRetries} attempts:`, error);
+        throw error;
+      }
+      console.warn(`⚠️ ${operationName} failed on attempt ${attempt}/${maxRetries}, retrying in ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      delayMs *= 2; // Exponential backoff
+    }
+  }
+  throw new Error(`Failed to complete ${operationName} after ${maxRetries} attempts`);
+}
 
 function getCurrentProjectName(projectRoot: string): string {
   const packageJsonPath = path.join(projectRoot, 'package.json');
@@ -245,12 +267,14 @@ export async function up(): Promise<boolean> {
           const columnsResult = await hasura.sql(`SELECT column_name FROM information_schema.columns 
                                                 WHERE table_schema = '${schemaName}' 
                                                 AND table_name = '${tableName}' 
-                                                AND column_name IN ('id', 'uuid');`);
+                                                AND column_name IN ('id', 'uuid')
+                                                ORDER BY CASE WHEN column_name = 'id' THEN 1 ELSE 2 END;`);
           
           console.log(`Primary key columns result:`, JSON.stringify(columnsResult));
           
-          if (columnsResult && columnsResult.result && columnsResult.result.length > 0) {
-            const pkColumn = columnsResult.result[0].column_name;
+          if (columnsResult && columnsResult.result && columnsResult.result.length > 1) {
+            // columnsResult.result[0] contains headers, columnsResult.result[1] contains first data row
+            const pkColumn = columnsResult.result[1][0]; // First column of first data row
             tableDef.primary_key = { columns: [pkColumn] };
             console.log(`Found primary key for ${schemaName}.${tableName}: ${pkColumn}`);
           } else {
@@ -326,15 +350,119 @@ export async function up(): Promise<boolean> {
       }
 
       debug('Tracking view public.hasyx...');
+      let viewTracked = false;
       try {
-        const trackResult = await hasura.v1({
-          type: 'pg_track_table',
-          args: { source: 'default', schema: 'public', name: 'hasyx' },
+        const trackResult = await retryOperation(async () => {
+          return await hasura.v1({
+            type: 'pg_track_table',
+            args: { source: 'default', schema: 'public', name: 'hasyx' },
+          });
         });
         console.log(`Track view result:`, JSON.stringify(trackResult));
+        viewTracked = true;
+        console.log('✅ View tracked successfully');
       } catch (error) {
         console.error(`❌ Error tracking view:`, error);
-      
+        console.warn('⚠️ View was created but could not be tracked. Continuing with relationships...');
+        // Don't return false here, view creation was successful
+        viewTracked = false;
+      }
+
+      // Create relationships only if we have existing tables and view tracking was attempted
+      if (tablesToProcess.length > 0) {
+        console.log('🔗 Creating relationships...');
+        for (const tableDef of tablesToProcess) {
+          const schemaName = tableDef.table.schema;
+          const tableName = tableDef.table.name;
+
+          // Skip non-existent tables
+          try {
+            const checkTableSql = `
+              SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = '${schemaName}' 
+                AND table_name = '${tableName}'
+              );
+            `;
+            const tableExists = await hasura.sql(checkTableSql);
+            
+            if (!tableExists.result || !tableExists.result[1] || tableExists.result[1][0] !== 't') {
+              console.warn(`⚠️ Skipping relationships for non-existent table ${schemaName}.${tableName}.`);
+              continue;
+            }
+          } catch (error) {
+            console.error(`❌ Error checking if table ${schemaName}.${tableName} exists for relationships:`, error);
+            continue;
+          }
+
+          const pkColumns = tableDef.primary_key?.columns;
+          if (!pkColumns || pkColumns.length === 0) continue;
+          const pkColumn = pkColumns[0];
+          
+          if (tableName === 'hasyx' && schemaName === 'public') continue;
+          if (['pg_catalog', 'information_schema', 'hdb_catalog', 'graphql_public'].includes(schemaName)) continue;
+
+          // Create relationship from table to hasyx view
+          const relToHasyxName = 'hasyx';
+          debug(`Creating relationship ${relToHasyxName} from ${schemaName}.${tableName} to public.hasyx`);
+          try {
+            await retryOperation(async () => {
+              await hasura.v1({
+                type: 'pg_create_object_relationship',
+                args: {
+                  source: 'default',
+                  table: { schema: schemaName, name: tableName },
+                  name: relToHasyxName,
+                  using: {
+                    manual_configuration: {
+                      remote_table: { schema: 'public', name: 'hasyx' },
+                      column_mapping: {
+                        [pkColumn]: 'id',
+                        '_hasyx_schema_name': 'schema',
+                        '_hasyx_table_name': 'table',
+                      },
+                    },
+                  },
+                },
+              });
+            });
+            console.log(`✅ Created relationship ${relToHasyxName} from ${schemaName}.${tableName}`);
+          } catch (error) {
+            console.warn(`⚠️ Error creating relationship ${relToHasyxName} from ${schemaName}.${tableName} to public.hasyx:`, error);
+          }
+
+          // Create relationship from hasyx view to table (only if view was tracked)
+          if (viewTracked) {
+            const relFromHasyxName = `${schemaName}_${tableName}`;
+            debug(`Creating relationship ${relFromHasyxName} from public.hasyx to ${schemaName}.${tableName}`);
+            try {
+              await retryOperation(async () => {
+                await hasura.v1({
+                  type: 'pg_create_object_relationship',
+                  args: {
+                    source: 'default',
+                    table: { schema: 'public', name: 'hasyx' },
+                    name: relFromHasyxName,
+                    using: {
+                      manual_configuration: {
+                        remote_table: { schema: schemaName, name: tableName },
+                        column_mapping: {
+                          id: pkColumn,
+                        },
+                      },
+                    },
+                    comment: `Points to ${schemaName}.${tableName} if this HID entry corresponds to it.`
+                  },
+                });
+              });
+              console.log(`✅ Created relationship ${relFromHasyxName} from public.hasyx`);
+            } catch (error) {
+              console.warn(`⚠️ Error creating relationship ${relFromHasyxName} from public.hasyx to ${schemaName}.${tableName}:`, error);
+            }
+          } else {
+            console.warn(`⚠️ Skipping reverse relationship from hasyx to ${schemaName}.${tableName} because view is not tracked`);
+          }
+        }
       }
     } else {
       console.warn("⚠️ No suitable tables (with assumed PKs) found to include in the hasyx view. View will not be created/updated.");
@@ -342,100 +470,12 @@ export async function up(): Promise<boolean> {
       debug('No tables for hasyx view, ensuring it is dropped if it exists:\n' + dropViewSql);
       await hasura.sql(dropViewSql);
       try {
-        await hasura.v1({ type: 'pg_untrack_table', args: { source: 'default', table: { schema: 'public', name: 'hasyx' } } });
+        await retryOperation(async () => {
+          await hasura.v1({ type: 'pg_untrack_table', args: { source: 'default', table: { schema: 'public', name: 'hasyx' } } });
+        });
       } catch (e) { /* ignore if not tracked */ }
     }
     
-    if (tablesToProcess.length > 0) {
-        for (const tableDef of tablesToProcess) {
-            const schemaName = tableDef.table.schema;
-            const tableName = tableDef.table.name;
-
-          
-            try {
-                const checkTableSql = `
-                    SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = '${schemaName}' 
-                        AND table_name = '${tableName}'
-                    );
-                `;
-                const tableExists = await hasura.sql(checkTableSql);
-                
-                if (!tableExists.result || !tableExists.result[1] || tableExists.result[1][0] !== 't') {
-                    console.warn(`⚠️ Skipping relationships for non-existent table ${schemaName}.${tableName}.`);
-                    continue;
-                }
-            } catch (error) {
-                console.error(`❌ Error checking if table ${schemaName}.${tableName} exists for relationships:`, error);
-                continue;
-            }
-
-            const pkColumns = tableDef.primary_key?.columns;
-            if (!pkColumns || pkColumns.length === 0) continue;
-            const pkColumn = pkColumns[0];
-            
-            if (tableName === 'hasyx' && schemaName === 'public') continue;
-            if (['pg_catalog', 'information_schema', 'hdb_catalog', 'graphql_public'].includes(schemaName)) continue;
-
-            const relToHasyxName = 'hasyx';
-            debug(`Creating relationship ${relToHasyxName} from ${schemaName}.${tableName} to public.hasyx`);
-            try {
-                await hasura.v1({
-                    type: 'pg_create_object_relationship',
-                    args: {
-                    source: 'default',
-                    table: { schema: schemaName, name: tableName },
-                    name: relToHasyxName,
-                    using: {
-                        manual_configuration: {
-                        remote_table: { schema: 'public', name: 'hasyx' },
-                        column_mapping: {
-                            [pkColumn]: 'id',
-                            '_hasyx_schema_name': 'schema',
-                            '_hasyx_table_name': 'table',
-                        },
-                        },
-                    },
-                    },
-                });
-            } catch (error) {
-                console.warn(`⚠️ Error creating relationship ${relToHasyxName} from ${schemaName}.${tableName} to public.hasyx:`, error);
-              
-            }
-
-            if (viewSqlUnionParts.length > 0) {
-                const relFromHasyxName = `${schemaName}_${tableName}`;
-                debug(`Creating relationship ${relFromHasyxName} from public.hasyx to ${schemaName}.${tableName}`);
-                try {
-                    await hasura.v1({
-                        type: 'pg_create_object_relationship',
-                        args: {
-                            source: 'default',
-                            table: { schema: 'public', name: 'hasyx' },
-                            name: relFromHasyxName,
-                            using: {
-                            manual_configuration: {
-                                remote_table: { schema: schemaName, name: tableName },
-                                column_mapping: {
-                                id: pkColumn,
-                                },
-                            },
-                            },
-                            comment: `Points to ${schemaName}.${tableName} if this HID entry corresponds to it.`
-                        },
-                    });
-                } catch (error) {
-                    console.warn(`⚠️ Error creating relationship ${relFromHasyxName} from public.hasyx to ${schemaName}.${tableName}:`, error);
-                  
-                }
-            }
-        }
-    }
-
-  
-  
-
     debug('✨ Hasyx View migration UP completed successfully!');
     return true;
   } catch (error: any) {

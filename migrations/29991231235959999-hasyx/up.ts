@@ -14,7 +14,7 @@ async function runHasuraSchema(): Promise<void> {
   return new Promise((resolve, reject) => {
     console.log('📊 Generating schema using hasyx schema command...');
     
-    const child = spawn('npx', ['hasyx', 'schema'], {
+    const child = spawn('npm', ['run', 'schema'], {
       stdio: 'inherit',
       cwd: projectRoot
     });

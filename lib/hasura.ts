@@ -26,6 +26,8 @@ export class Hasura {
         'Content-Type': 'application/json',
         'X-Hasura-Admin-Secret': secret,
       },
+      timeout: 30000, // 30 seconds timeout
+      validateStatus: (status) => status < 500, // Accept 4xx as valid responses (they may contain error info)
     });
     debug('✅ Hasura client initialized successfully.');
   }
