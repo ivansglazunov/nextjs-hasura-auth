@@ -761,6 +761,13 @@ describe('Generator Integration Tests', () => {
         } else {
             debug('  ⏭️ Skipping teardown: No client or user IDs found/created.');
         }
+        
+        // Cleanup Apollo Client to prevent resource leaks
+        if (adminClient && (adminClient as any).terminate) {
+            debug('🔌 Terminating adminClient Apollo connection...');
+            (adminClient as any).terminate();
+        }
+        
         debug('✅ Integration Teardown Complete.');
     }, HOOK_TIMEOUT);
 

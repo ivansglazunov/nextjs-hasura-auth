@@ -246,8 +246,11 @@ export class Hasyx {
       let lastData: TData | null = null;
       let isActive = true;
       let timeoutId: NodeJS.Timeout | null = null;
+      
       const pollForChanges = async () => {
-        if (!isActive) return;
+        if (!isActive) {
+          return;
+        }
 
         try {
 
@@ -262,6 +265,8 @@ export class Hasyx {
           }
           if (isActive) {
             timeoutId = setTimeout(pollForChanges, interval);
+            // Allow process to exit even if this timeout is pending
+            timeoutId.unref?.();
           }
         } catch (error) {
           debug('Error during polling subscription:', error);
@@ -277,6 +282,7 @@ export class Hasyx {
         isActive = false;
         if (timeoutId) {
           clearTimeout(timeoutId);
+          timeoutId = null;
         }
       };
     });
@@ -288,6 +294,7 @@ export class Hasyx {
     const generated: GenerateResult = this.generate({ ...genOptions, operation: 'subscription' });
     debug(`Hasyx._subscribeWithWebSocket: Using WebSocket-based subscription. Query name: ${generated.queryName}`);
     debug('Creating WebSocket-based subscription Observable');
+    
     return new Observable<TData>(observer => {
       let lastEmitTime = 0;
       let pendingData: TData | null = null;
@@ -337,6 +344,8 @@ export class Hasyx {
             emitTimeoutId = null;
             debug(`[throttledEmit] setTimeout: Cleared emitTimeoutId.`);
           }, delay);
+          // Allow process to exit even if this timeout is pending
+          emitTimeoutId.unref?.();
           debug(`[throttledEmit] Scheduled timeout ID: ${emitTimeoutId}`);
         } else {
           debug(`[throttledEmit] Condition 3: ELSE (timeSinceLastEmit < minEmitInterval AND emitTimeoutId is SET). Doing nothing but pendingData updated.`);

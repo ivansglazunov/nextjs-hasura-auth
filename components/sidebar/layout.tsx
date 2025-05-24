@@ -17,6 +17,7 @@ import {
   SidebarTrigger,
 } from "hasyx/components/ui/sidebar";
 import { SidebarData } from "hasyx/components/sidebar";
+import { UserProfileDropdown } from "./user-profile-dropdown";
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -50,6 +51,9 @@ export function SidebarLayout({
               </React.Fragment>))}
             </BreadcrumbList>
           </Breadcrumb>
+          <div className="ml-auto">
+            <UserProfileDropdown />
+          </div>
         </header>
         <div className="flex flex-1 flex-col">
           {children}

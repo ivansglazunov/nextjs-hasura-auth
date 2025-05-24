@@ -30,7 +30,13 @@ declare module 'next-auth' {
     error?: string;
     hasuraClaims?: Record<string, any>;
     accessToken?: string | null;
-    // user?: any;
+    // @ts-ignore
+    user?: {
+      id?: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
   }
 }
 declare module 'next-auth/jwt' {
@@ -234,6 +240,7 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
         const uniqueAllowedRoles = [...new Set(allowedRoles)];
 
         // Update the token with necessary info for session & Hasura claims
+        token.sub = userId; // Ensure NextAuth uses the correct user ID from database
         token.userId = userId;
         token.provider = provider ?? token.provider; // Keep existing if not sign-in
         token.emailVerified = emailVerified;
@@ -282,6 +289,11 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
         session.error = token.error;
         session.hasuraClaims = token["https://hasura.io/jwt/claims"];
         session.accessToken = (token as any).accessToken || null;
+
+        // IMPORTANT: Set the user ID from token to session.user.id
+        if (token.userId && session.user) {
+          session.user.id = token.userId;
+        }
 
         // Add emailVerified directly to the session root if needed, not user object
         // Or rely on it being in the hasuraClaims/token if client needs it

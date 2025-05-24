@@ -295,6 +295,14 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
       debug('apollo', '🔌 Disposing WebSocket client.');
       apolloClientInstance.graphqlWsClient?.dispose();
     }
+    
+    // Force cleanup of Apollo Client cache and subscriptions
+    try {
+      apolloClientInstance.stop();
+      apolloClientInstance.clearStore();
+    } catch (error) {
+      debug('apollo', 'Error during Apollo Client cleanup:', error);
+    }
   };
 
   return apolloClientInstance;
@@ -302,6 +310,16 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
 
 
 let clientInstance: ApolloClient<any> | null = null;
+
+/**
+ * Reset the singleton client instance (useful for tests)
+ */
+export function resetClientInstance() {
+  if (clientInstance && (clientInstance as any).terminate) {
+    (clientInstance as any).terminate();
+  }
+  clientInstance = null;
+}
 
 /**
  * Get or create Apollo client instance
@@ -353,6 +371,7 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
 export default {
   createApolloClient,
   getClient,
+  resetClientInstance,
   getJwtSecret,
   checkConnection
 }; 

@@ -193,13 +193,17 @@ export async function proxySOCKET(
   // Buffer for storing messages from the client until connection with Hasura is established
   const messageBuffer: string[] = [];
 
-  const closeConnections = (code = 1000, reason = 'Closing connection') => {
-    debugGraphql(`[${clientId}] Closing connections: Code=${code}, Reason=${reason}`);
+  const closeConnections = (code: number | string = 1000, reason = 'Closing connection') => {
+    // Ensure code is a valid WebSocket close code number
+    const closeCode = typeof code === 'number' ? code : 1000;
+    const closeReason = typeof reason === 'string' ? reason : 'Closing connection';
+    
+    debugGraphql(`[${clientId}] Closing connections: Code=${closeCode}, Reason=${closeReason}`);
     if (client.readyState === WebSocket.OPEN || client.readyState === WebSocket.CONNECTING) {
-      client.close(code, reason);
+      client.close(closeCode, closeReason);
     }
     if (hasuraWs && (hasuraWs.readyState === WebSocket.OPEN || hasuraWs.readyState === WebSocket.CONNECTING)) {
-      hasuraWs.close(code, reason);
+      hasuraWs.close(closeCode, closeReason);
     }
     debugGraphql(`[${clientId}] Connections closed.`);
   };
