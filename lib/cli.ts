@@ -551,6 +551,7 @@ program
           "migrate": "npx hasyx migrate",
           "unmigrate": "npx hasyx unmigrate",
           "events": "npx hasyx events",
+          "schema": "npx hasyx schema",
           "npm-publish": "npm run build && npm publish",
         };
         
