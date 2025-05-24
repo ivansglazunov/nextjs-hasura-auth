@@ -20,7 +20,8 @@ import {
 } from '@apollo/client';
 import { HasyxApolloClient } from './apollo';
 import Debug from './debug';
-import { GenerateOptions } from "./generator";
+import { GenerateOptions, Generate } from "./generator";
+import { Hasyx } from './hasyx';
 
 const debug = Debug('client');
 
@@ -255,6 +256,57 @@ export function useMutation<TData = any, TVariables extends OperationVariables =
   }, [mutate, queryName, context, baseVariables]);
 
   return [wrappedMutate, result];
+}
+
+/**
+ * Client-side Hasyx class that extends the base Hasyx class
+ * and overrides useQuery and useSubscription methods to work properly with React hooks
+ */
+export class HasyxClient extends Hasyx {
+  /**
+   * Client-side useQuery method that works with React hooks
+   * Uses the Apollo client from this instance instead of searching in React context
+   */
+  useQuery<TData = any, TVariables extends OperationVariables = OperationVariables>(
+    generateOptions: ClientGeneratorOptions,
+    hookOptions?: QueryHookOptions<TData, TVariables> & { variables?: TVariables }
+  ): QueryResult<TData, TVariables> {
+    return useQuery<TData, TVariables>(generateOptions, {
+      ...hookOptions,
+      client: this.apolloClient
+    });
+  }
+
+  /**
+   * Client-side useSubscription method that works with React hooks
+   * Uses the Apollo client from this instance instead of searching in React context
+   */
+  useSubscription<TData = any, TVariables extends OperationVariables = OperationVariables>(
+    generateOptions: ClientGeneratorOptions,
+    hookOptions?: SubscriptionHookOptions<TData, TVariables> & { variables?: TVariables }
+  ): SubscriptionResult<TData, TVariables> {
+    return useSubscription<TData, TVariables>(generateOptions, {
+      ...hookOptions,
+      client: this.apolloClient
+    });
+  }
+}
+
+/**
+ * Hook to get a HasyxClient instance (client-side version of Hasyx)
+ * This version includes working useQuery and useSubscription methods
+ */
+export function useClient(providedClient?: HasyxApolloClient | null): HasyxClient {
+  const apolloClient = useApolloClient();
+  const client = (providedClient ?? apolloClient) as HasyxApolloClient;
+  
+  if (!client?.hasyxGenerator) {
+    throw new Error('❌ useClient: No hasyxGenerator found on Apollo client. Ensure the client was created with createApolloClient.');
+  }
+
+  return useMemo(() => {
+    return new HasyxClient(client, client.hasyxGenerator, client._options);
+  }, [client, client.hasyxGenerator, client._options]);
 }
 
 // Convenience aliases

@@ -4,12 +4,13 @@ This document describes the `Hasyx` class and associated React hooks provided in
 
 ## Core Components
 
-1.  **`Hasyx` Class:** For direct use, typically server-side or outside React components. Requires an `ApolloClient` instance during construction. Offers `.select()`, `.insert()`, `.update()`, `.delete()`, and `.subscribe()` methods.
-2.  **React Hooks (`useQuery`, `useSubscription`, `useMutation`, `useClient`):** 
+1.  **`Hasyx` Class:** For direct use, typically server-side or outside React components. Requires an `ApolloClient` instance during construction. Offers `.select()`, `.insert()`, `.update()`, `.delete()`, `.subscribe()`, and `.sql()` methods.
+2.  **`HasyxClient` Class:** Client-side version of `Hasyx` that extends the base class with working `useQuery` and `useSubscription` methods for use within React components.
+3.  **React Hooks (`useQuery`, `useSubscription`, `useMutation`, `useClient`):** 
     *   `useQuery` / `useSelect` (alias): For fetching data.
     *   `useSubscription` / `useSubscribe` (alias): For real-time data.
     *   `useMutation`: For insert, update, or delete operations.
-    *   `useClient`: Hook to get an instance of the `Hasyx` class within a component, allowing direct calls to `.insert()`, `.update()`, `.delete()`, etc.
+    *   `useClient`: Hook to get an instance of the `HasyxClient` class within a component, allowing direct calls to `.insert()`, `.update()`, `.delete()`, `.useQuery()`, `.useSubscription()`, etc.
 
 **Note on Type Inference:** All methods and hooks automatically infer the return type based on the query structure and `returning` fields. There is no need to explicitly specify generic type parameters when calling these functions.
 
@@ -215,6 +216,80 @@ function subscribeToUserChanges(userId: string) {
 *   `async sql(sql: string, source?: string, cascade?: boolean): Promise<any>`: Executes raw SQL against the Hasura database. Requires admin-level access with URL and admin secret. Throws an error if Hasura instance is not available.
 
 Where `HasyxMethodOptions` extends `GenerateOptions` (from `lib/generator.ts`) and adds an optional `role: string` property and an optional `pollingInterval: number` property (for subscriptions).
+
+## `HasyxClient` Class (Client-Side)
+
+The `HasyxClient` class extends the base `Hasyx` class and is specifically designed for use within React components. It inherits all the functionality of the base class but overrides the `useQuery` and `useSubscription` methods to work properly with React hooks.
+
+### Key Features
+
+*   **Full Inheritance:** Inherits all methods from the base `Hasyx` class (`.select()`, `.insert()`, `.update()`, `.delete()`, `.subscribe()`, `.sql()`)
+*   **Working React Hooks:** Provides functional `useQuery` and `useSubscription` methods that can be called within React components
+*   **Bound Apollo Client:** Uses the Apollo client from the instance rather than searching in React context
+*   **Automatic Creation:** Created automatically by the `useClient()` hook
+
+### Usage with `useClient()` Hook
+
+```typescript
+import { useClient } from 'hasyx/lib/hasyx-client';
+
+function MyComponent() {
+  const client = useClient(); // Returns HasyxClient instance
+  
+  // Use React hook methods directly on the client
+  const userQuery = client.useQuery({
+    table: 'users',
+    pk_columns: { id: 'user-123' },
+    returning: ['id', 'name', 'email']
+  });
+  
+  const messagesSubscription = client.useSubscription({
+    table: 'messages',
+    where: { recipient_id: { _eq: 'user-123' } },
+    returning: ['id', 'content', 'created_at']
+  });
+  
+  // Also use regular async methods
+  const handleCreatePost = async () => {
+    await client.insert({
+      table: 'posts',
+      object: { title: 'New Post', content: 'Hello World!' },
+      returning: ['id']
+    });
+  };
+  
+  // Execute raw SQL (admin only)
+  const handleAnalytics = async () => {
+    const stats = await client.sql(`
+      SELECT COUNT(*) as total_users FROM users
+    `);
+    console.log('User count:', stats.result[1][0]);
+  };
+  
+  return (
+    <div>
+      {userQuery.loading && <p>Loading user...</p>}
+      {userQuery.data && <h1>Welcome, {userQuery.data.name}!</h1>}
+      
+      {messagesSubscription.data?.map(message => (
+        <div key={message.id}>{message.content}</div>
+      ))}
+      
+      <button onClick={handleCreatePost}>Create Post</button>
+      <button onClick={handleAnalytics}>Get Analytics</button>
+    </div>
+  );
+}
+```
+
+### `HasyxClient` Methods
+
+All methods from the base `Hasyx` class, plus:
+
+*   `useQuery<TData, TVariables>(generateOptions, hookOptions): QueryResult<TData, TVariables>`: React hook for queries
+*   `useSubscription<TData, TVariables>(generateOptions, hookOptions): SubscriptionResult<TData, TVariables>`: React hook for subscriptions
+
+**Important:** The `useQuery` and `useSubscription` methods on `HasyxClient` must be called within React components or custom hooks, following React's rules of hooks.
 
 ## React Hooks Usage
 

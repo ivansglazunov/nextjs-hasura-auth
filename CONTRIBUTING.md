@@ -44,13 +44,15 @@ If you encounter unexpected behavior related to data fetching, mutations, or sub
 
 ### Quick Testing with `npx hasyx js`
 
-The `npx hasyx js` command is especially useful for quick testing and debugging. It provides a Hasyx client instance with admin privileges, allowing you to:
+The `npx hasyx js` command is especially useful for quick testing and debugging. It provides a HasyxClient instance with admin privileges, allowing you to:
 
 *   **Test database operations directly**: Insert, update, delete, and query data without setting up test files
 *   **Debug permissions**: Test different operations to verify Hasura permissions are working as expected  
 *   **Validate schema changes**: Quickly test if new tables, columns, or relationships are accessible
 *   **Test type compatibility**: Verify that data types (especially timestamps) are working correctly
 *   **Execute raw SQL for debugging**: Use `await client.sql()` to run complex queries, maintenance tasks, or investigate database state directly
+
+The `client` instance available in `npx hasyx js` is a `HasyxClient` with admin access, providing both GraphQL operations through the generator and direct SQL execution capabilities.
 
 Examples:
 ```bash

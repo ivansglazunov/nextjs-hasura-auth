@@ -10,6 +10,7 @@ import { Generate } from './generator';
 import { Hasyx } from './hasyx';
 import { NotificationProvider } from '../components/notify';
 import { Analytics } from "@vercel/analytics/next"
+import { HasyxClient } from './hasyx-client';
 
 const debug = Debug('provider');
 
@@ -61,7 +62,7 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
   // Create Hasyx instance when Apollo client changes
   const hasyxInstance = useMemo(() => {
     debug('Creating new Hasyx instance with Apollo client');
-    return new Hasyx(apolloClient, generate);
+    return new HasyxClient(apolloClient, generate);
   }, [apolloClient, generate]);
 
   // @ts-ignore
