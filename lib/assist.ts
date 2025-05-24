@@ -1,34 +1,32 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
+import dotenv from 'dotenv';
 import fs from 'fs-extra';
 import path from 'path';
-import spawn from 'cross-spawn';
-import Debug from './debug';
 import readline from 'readline';
-import { Hasyx } from './hasyx';
-import { createApolloClient } from './apollo';
-import { Generator } from './generator';
 import schema from '../public/hasura-schema.json';
-import dotenv from 'dotenv';
-import { setBotName, setBotDescription, setBotCommands, BotCommand, setWebhook, setBotMenuButtonWebApp } from './telegram-bot';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, getGitHubRemoteUrl } from './assist-common';
-import { checkGitHubAuth, setupRepository } from './assist-github-auth';
-import { setupEnvironment, setupPackageJson } from './assist-env';
-import { initializeHasyx } from './assist-hasyx';
-import { configureHasura } from './assist-hasura';
+import { createApolloClient } from './apollo';
 import { setupAuthSecrets } from './assist-auth-secrets';
-import { configureOAuth } from './assist-oauth';
-import { configureResend } from './assist-resend';
-import { configureFirebaseNotifications } from './assist-firebase';
-import { setupVercel, getVercelProjectName } from './assist-vercel';
-import { syncEnvironmentVariables } from './assist-sync';
 import { commitChanges } from './assist-commit';
+import { askForInput, createRlInterface, parseEnvFile } from './assist-common';
+import { setupEnvironment, setupPackageJson } from './assist-env';
+import { configureFirebaseNotifications } from './assist-firebase';
+import { checkGitHubAuth, setupRepository } from './assist-github-auth';
+import { configureHasura } from './assist-hasura';
+import { initializeHasyx } from './assist-hasyx';
 import { runMigrations } from './assist-migrations';
-import { configureProjectUser } from './assist-project-user';
-import { configureTelegramBot, calibrateTelegramBot } from './assist-telegram';
+import { configureOAuth } from './assist-oauth';
 import { configureOpenRouter } from './assist-openrouter';
 import { configurePg } from './assist-pg';
+import { configureProjectUser } from './assist-project-user';
+import { configureResend } from './assist-resend';
+import { syncEnvironmentVariables } from './assist-sync';
+import { calibrateTelegramBot, configureTelegramBot } from './assist-telegram';
+import { setupVercel } from './assist-vercel';
+import Debug from './debug';
+import { Generator } from './generator';
+import { Hasyx } from './hasyx';
 
 // Ensure dotenv is configured only once
 if (require.main === module) {

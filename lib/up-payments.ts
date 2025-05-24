@@ -136,6 +136,22 @@ const sqlSchema = `
   COMMENT ON COLUMN "payments"."operations"."external_operation_id" IS 'Operation ID in the external system (e.g. PaymentId, TransactionId), may not be available immediately';
   COMMENT ON COLUMN "payments"."operations"."status" IS 'e.g., "pending_initiation", "pending_user_action", "pending_confirmation", "succeeded", "failed", "canceled", "refunded"';
 
+  CREATE TABLE IF NOT EXISTS "payments"."user_payment_provider_mappings" (
+      "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+      "user_id" uuid NOT NULL,
+      "provider_id" uuid NOT NULL,
+      "provider_customer_key" text NOT NULL,
+      "metadata" jsonb,
+      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+      PRIMARY KEY ("id"),
+      FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE,
+      FOREIGN KEY ("provider_id") REFERENCES "payments"."providers"("id") ON UPDATE CASCADE ON DELETE CASCADE,
+      UNIQUE ("user_id", "provider_id", "provider_customer_key")
+  );
+  COMMENT ON TABLE "payments"."user_payment_provider_mappings" IS 'Maps internal user IDs to provider-specific customer keys (e.g., TBank CustomerKey)';
+  COMMENT ON COLUMN "payments"."user_payment_provider_mappings"."provider_customer_key" IS 'Customer identifier in the payment provider system (e.g., CustomerKey for TBank)';
+
   -- Indexes
   -- Note: Index names need to be globally unique or unique per schema.
   -- It's good practice to prefix with schema or table name if not already unique.
@@ -167,7 +183,8 @@ const tablesToTrackPayload = [
   { type: "pg_track_table", args: { schema: "payments", name: "methods" } },
   { type: "pg_track_table", args: { schema: "payments", name: "plans" } },
   { type: "pg_track_table", args: { schema: "payments", name: "subscriptions" } },
-  { type: "pg_track_table", args: { schema: "payments", name: "operations" } }
+  { type: "pg_track_table", args: { schema: "payments", name: "operations" } },
+  { type: "pg_track_table", args: { schema: "payments", name: "user_payment_provider_mappings" } }
 ];
 
 const relationshipsPayload = [
@@ -257,6 +274,16 @@ const relationshipsPayload = [
     args: { table: { schema: "payments", name: "operations" }, name: "subscription", using: { foreign_key_constraint_on: "subscription_id" } }
   },
 
+  // Relationships for payments.user_payment_provider_mappings
+  {
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "payments", name: "user_payment_provider_mappings" }, name: "user", using: { foreign_key_constraint_on: "user_id" } }
+  },
+  {
+    type: "pg_create_object_relationship",
+    args: { table: { schema: "payments", name: "user_payment_provider_mappings" }, name: "provider", using: { foreign_key_constraint_on: "provider_id" } }
+  },
+
   // Array relationships from public.users table to new payments schema tables
   {
     type: "pg_create_array_relationship",
@@ -277,13 +304,45 @@ const relationshipsPayload = [
   {
     type: "pg_create_array_relationship",
     args: { table: { schema: "public", name: "users" }, name: "subscriptions", using: { foreign_key_constraint_on: { table: { schema: "payments", name: "subscriptions" }, column: "user_id" } } }
+  },
+  {
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "public", name: "users" }, name: "payment_provider_mappings", using: { foreign_key_constraint_on: { table: { schema: "payments", name: "user_payment_provider_mappings" }, column: "user_id" } } }
+  },
+
+  // Array relationships to new table
+  {
+    type: "pg_create_array_relationship",
+    args: { table: { schema: "payments", name: "providers" }, name: "user_mappings", using: { foreign_key_constraint_on: { table: { schema: "payments", name: "user_payment_provider_mappings" }, column: "provider_id" } } }
   }
 ];
 
 const permissionsPayload = [
+  // --- Permissions for role 'public' (anonymous) ---
+  // payments.providers - can see providers but not config
+  {
+    type: "pg_create_select_permission",
+    args: { table: { schema: "payments", name: "providers" }, role: "public", permission: { columns: ["id", "name", "type", "is_test_mode", "default_return_url", "default_webhook_url", "default_card_webhook_url", "user_id", "is_active", "created_at", "updated_at"], filter: {} } }
+  },
+
   // --- Permissions for role 'user' ---
-  // payments.providers (users typically cannot see or manage these directly, only admins or backend)
-  // If users were to have their own provider configs, select would be X-Hasura-User-Id
+  // payments.providers - can see all providers (not config), can insert with user_id set automatically
+  {
+    type: "pg_create_select_permission",
+    args: { table: { schema: "payments", name: "providers" }, role: "user", permission: { columns: ["id", "name", "type", "is_test_mode", "default_return_url", "default_webhook_url", "default_card_webhook_url", "user_id", "is_active", "created_at", "updated_at"], filter: {} } }
+  },
+  {
+    type: "pg_create_insert_permission",
+    args: { table: { schema: "payments", name: "providers" }, role: "user", permission: { check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, set: { "user_id": "X-Hasura-User-Id" }, columns: ["name", "type", "is_test_mode", "config", "default_return_url", "default_webhook_url", "default_card_webhook_url", "is_active"] } }
+  },
+  {
+    type: "pg_create_update_permission",
+    args: { table: { schema: "payments", name: "providers" }, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } }, check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, columns: ["name", "config", "default_return_url", "default_webhook_url", "default_card_webhook_url", "is_active"] } }
+  },
+  {
+    type: "pg_create_delete_permission",
+    args: { table: { schema: "payments", name: "providers" }, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
+  },
 
   // payments.methods
   {
@@ -306,9 +365,8 @@ const permissionsPayload = [
   // payments.plans
   {
     type: "pg_create_select_permission",
-    args: { table: { schema: "payments", name: "plans" }, role: "user", permission: { columns: "*", filter: { "_or": [{ "user_id": { "_is_null": true }, "active": {"_eq": true} }, { "user_id": { "_eq": "X-Hasura-User-Id" }, "active": {"_eq": true} }] } } }
+    args: { table: { schema: "payments", name: "plans" }, role: "user", permission: { columns: "*", filter: { "_or": [{ "user_id": { "_is_null": true }, "active": {"_eq": true} }, { "user_id": { "_eq": "X-Hasura-User-Id" } }] } } }
   },
-  // Users generally don't create/update/delete public plans. Custom plans for users might be managed by admin or specific logic.
 
   // payments.subscriptions
   {
@@ -321,7 +379,7 @@ const permissionsPayload = [
   },
   {
     type: "pg_create_update_permission",
-    args: { table: { schema: "payments", name: "subscriptions" }, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } }, check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, columns: ["method_id", "cancel_at_period_end", "metadata"] } } // User can change payment method or cancel
+    args: { table: { schema: "payments", name: "subscriptions" }, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } }, check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, columns: ["method_id", "cancel_at_period_end", "metadata"] } }
   },
 
   // payments.operations
@@ -333,11 +391,35 @@ const permissionsPayload = [
     type: "pg_create_insert_permission",
     args: { table: { schema: "payments", name: "operations" }, role: "user", permission: { check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, set: { "user_id": "X-Hasura-User-Id" }, columns: ["method_id", "provider_id", "subscription_id", "amount", "currency", "status", "description", "object_hid", "initiated_at", "metadata"] } },
   },
-  // User cannot update or delete operations directly; this is done via provider actions/webhooks processed by the backend.
 
-  // --- Permissions for role 'admin' (example, likely needs more granularity) ---
-  // Full access to all tables in 'payments' schema for 'admin' role
-  ...(["providers", "methods", "plans", "subscriptions", "operations"].flatMap(tableName => [
+  // payments.user_payment_provider_mappings
+  {
+    type: "pg_create_select_permission",
+    args: { table: { schema: "payments", name: "user_payment_provider_mappings" }, role: "user", permission: { columns: "*", filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
+  },
+  {
+    type: "pg_create_insert_permission",
+    args: { table: { schema: "payments", name: "user_payment_provider_mappings" }, role: "user", permission: { check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, set: { "user_id": "X-Hasura-User-Id" }, columns: ["provider_id", "provider_customer_key", "metadata"] } }
+  },
+  {
+    type: "pg_create_update_permission",
+    args: { table: { schema: "payments", name: "user_payment_provider_mappings" }, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } }, check: { "user_id": { "_eq": "X-Hasura-User-Id" } }, columns: ["provider_customer_key", "metadata"] } }
+  },
+  {
+    type: "pg_create_delete_permission",
+    args: { table: { schema: "payments", name: "user_payment_provider_mappings" }, role: "user", permission: { filter: { "user_id": { "_eq": "X-Hasura-User-Id" } } } }
+  },
+
+  // --- Permissions for role 'me' (can see everything including config) ---
+  ...(["providers", "methods", "plans", "subscriptions", "operations", "user_payment_provider_mappings"].flatMap(tableName => [
+    { type: "pg_create_select_permission", args: { table: { schema: "payments", name: tableName }, role: "me", permission: { columns: "*", filter: {} } } },
+    { type: "pg_create_insert_permission", args: { table: { schema: "payments", name: tableName }, role: "me", permission: { check: {}, columns: "*" } } },
+    { type: "pg_create_update_permission", args: { table: { schema: "payments", name: tableName }, role: "me", permission: { filter: {}, check: {}, columns: "*" } } },
+    { type: "pg_create_delete_permission", args: { table: { schema: "payments", name: tableName }, role: "me", permission: { filter: {} } } }
+  ])),
+
+  // --- Permissions for role 'admin' (full access) ---
+  ...(["providers", "methods", "plans", "subscriptions", "operations", "user_payment_provider_mappings"].flatMap(tableName => [
     { type: "pg_create_select_permission", args: { table: { schema: "payments", name: tableName }, role: "admin", permission: { columns: "*", filter: {} } } },
     { type: "pg_create_insert_permission", args: { table: { schema: "payments", name: tableName }, role: "admin", permission: { check: {}, columns: "*" } } },
     { type: "pg_create_update_permission", args: { table: { schema: "payments", name: tableName }, role: "admin", permission: { filter: {}, check: {}, columns: "*" } } },

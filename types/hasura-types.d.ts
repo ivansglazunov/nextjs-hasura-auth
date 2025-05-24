@@ -915,6 +915,10 @@ export type Mutation_Root = {
   delete_payments_subscriptions?: Maybe<Payments_Subscriptions_Mutation_Response>;
   /** delete single row from the table: "payments.subscriptions" */
   delete_payments_subscriptions_by_pk?: Maybe<Payments_Subscriptions>;
+  /** delete data from the table: "payments.user_payment_provider_mappings" */
+  delete_payments_user_payment_provider_mappings?: Maybe<Payments_User_Payment_Provider_Mappings_Mutation_Response>;
+  /** delete single row from the table: "payments.user_payment_provider_mappings" */
+  delete_payments_user_payment_provider_mappings_by_pk?: Maybe<Payments_User_Payment_Provider_Mappings>;
   /** delete data from the table: "users" */
   delete_users?: Maybe<Users_Mutation_Response>;
   /** delete single row from the table: "users" */
@@ -959,6 +963,10 @@ export type Mutation_Root = {
   insert_payments_subscriptions?: Maybe<Payments_Subscriptions_Mutation_Response>;
   /** insert a single row into the table: "payments.subscriptions" */
   insert_payments_subscriptions_one?: Maybe<Payments_Subscriptions>;
+  /** insert data into the table: "payments.user_payment_provider_mappings" */
+  insert_payments_user_payment_provider_mappings?: Maybe<Payments_User_Payment_Provider_Mappings_Mutation_Response>;
+  /** insert a single row into the table: "payments.user_payment_provider_mappings" */
+  insert_payments_user_payment_provider_mappings_one?: Maybe<Payments_User_Payment_Provider_Mappings>;
   /** insert data into the table: "users" */
   insert_users?: Maybe<Users_Mutation_Response>;
   /** insert a single row into the table: "users" */
@@ -1038,6 +1046,14 @@ export type Mutation_Root = {
   /** update multiples rows of table: "payments.subscriptions" */
   update_payments_subscriptions_many?: Maybe<
     Array<Maybe<Payments_Subscriptions_Mutation_Response>>
+  >;
+  /** update data of the table: "payments.user_payment_provider_mappings" */
+  update_payments_user_payment_provider_mappings?: Maybe<Payments_User_Payment_Provider_Mappings_Mutation_Response>;
+  /** update single row of the table: "payments.user_payment_provider_mappings" */
+  update_payments_user_payment_provider_mappings_by_pk?: Maybe<Payments_User_Payment_Provider_Mappings>;
+  /** update multiples rows of table: "payments.user_payment_provider_mappings" */
+  update_payments_user_payment_provider_mappings_many?: Maybe<
+    Array<Maybe<Payments_User_Payment_Provider_Mappings_Mutation_Response>>
   >;
   /** update data of the table: "users" */
   update_users?: Maybe<Users_Mutation_Response>;
@@ -1146,6 +1162,17 @@ export type Mutation_RootDelete_Payments_SubscriptionsArgs = {
 export type Mutation_RootDelete_Payments_Subscriptions_By_PkArgs = {
   id: Scalars["uuid"]["input"];
 };
+
+/** mutation root */
+export type Mutation_RootDelete_Payments_User_Payment_Provider_MappingsArgs = {
+  where: Payments_User_Payment_Provider_Mappings_Bool_Exp;
+};
+
+/** mutation root */
+export type Mutation_RootDelete_Payments_User_Payment_Provider_Mappings_By_PkArgs =
+  {
+    id: Scalars["uuid"]["input"];
+  };
 
 /** mutation root */
 export type Mutation_RootDelete_UsersArgs = {
@@ -1276,6 +1303,19 @@ export type Mutation_RootInsert_Payments_Subscriptions_OneArgs = {
   object: Payments_Subscriptions_Insert_Input;
   on_conflict?: InputMaybe<Payments_Subscriptions_On_Conflict>;
 };
+
+/** mutation root */
+export type Mutation_RootInsert_Payments_User_Payment_Provider_MappingsArgs = {
+  objects: Array<Payments_User_Payment_Provider_Mappings_Insert_Input>;
+  on_conflict?: InputMaybe<Payments_User_Payment_Provider_Mappings_On_Conflict>;
+};
+
+/** mutation root */
+export type Mutation_RootInsert_Payments_User_Payment_Provider_Mappings_OneArgs =
+  {
+    object: Payments_User_Payment_Provider_Mappings_Insert_Input;
+    on_conflict?: InputMaybe<Payments_User_Payment_Provider_Mappings_On_Conflict>;
+  };
 
 /** mutation root */
 export type Mutation_RootInsert_UsersArgs = {
@@ -1568,6 +1608,37 @@ export type Mutation_RootUpdate_Payments_Subscriptions_By_PkArgs = {
 export type Mutation_RootUpdate_Payments_Subscriptions_ManyArgs = {
   updates: Array<Payments_Subscriptions_Updates>;
 };
+
+/** mutation root */
+export type Mutation_RootUpdate_Payments_User_Payment_Provider_MappingsArgs = {
+  _append?: InputMaybe<Payments_User_Payment_Provider_Mappings_Append_Input>;
+  _delete_at_path?: InputMaybe<Payments_User_Payment_Provider_Mappings_Delete_At_Path_Input>;
+  _delete_elem?: InputMaybe<Payments_User_Payment_Provider_Mappings_Delete_Elem_Input>;
+  _delete_key?: InputMaybe<Payments_User_Payment_Provider_Mappings_Delete_Key_Input>;
+  _inc?: InputMaybe<Payments_User_Payment_Provider_Mappings_Inc_Input>;
+  _prepend?: InputMaybe<Payments_User_Payment_Provider_Mappings_Prepend_Input>;
+  _set?: InputMaybe<Payments_User_Payment_Provider_Mappings_Set_Input>;
+  where: Payments_User_Payment_Provider_Mappings_Bool_Exp;
+};
+
+/** mutation root */
+export type Mutation_RootUpdate_Payments_User_Payment_Provider_Mappings_By_PkArgs =
+  {
+    _append?: InputMaybe<Payments_User_Payment_Provider_Mappings_Append_Input>;
+    _delete_at_path?: InputMaybe<Payments_User_Payment_Provider_Mappings_Delete_At_Path_Input>;
+    _delete_elem?: InputMaybe<Payments_User_Payment_Provider_Mappings_Delete_Elem_Input>;
+    _delete_key?: InputMaybe<Payments_User_Payment_Provider_Mappings_Delete_Key_Input>;
+    _inc?: InputMaybe<Payments_User_Payment_Provider_Mappings_Inc_Input>;
+    _prepend?: InputMaybe<Payments_User_Payment_Provider_Mappings_Prepend_Input>;
+    _set?: InputMaybe<Payments_User_Payment_Provider_Mappings_Set_Input>;
+    pk_columns: Payments_User_Payment_Provider_Mappings_Pk_Columns_Input;
+  };
+
+/** mutation root */
+export type Mutation_RootUpdate_Payments_User_Payment_Provider_Mappings_ManyArgs =
+  {
+    updates: Array<Payments_User_Payment_Provider_Mappings_Updates>;
+  };
 
 /** mutation root */
 export type Mutation_RootUpdate_UsersArgs = {
@@ -4914,6 +4985,10 @@ export type Payments_Providers = {
   user?: Maybe<Users>;
   /** If NULL, the provider is system-wide. Otherwise, it might be specific to a user (e.g. for marketplaces). */
   user_id?: Maybe<Scalars["uuid"]["output"]>;
+  /** An array relationship */
+  user_mappings: Array<Payments_User_Payment_Provider_Mappings>;
+  /** An aggregate relationship */
+  user_mappings_aggregate: Payments_User_Payment_Provider_Mappings_Aggregate;
 };
 
 /** columns and relationships of "payments.providers" */
@@ -4973,6 +5048,32 @@ export type Payments_ProvidersSubscriptions_AggregateArgs = {
   offset?: InputMaybe<Scalars["Int"]["input"]>;
   order_by?: InputMaybe<Array<Payments_Subscriptions_Order_By>>;
   where?: InputMaybe<Payments_Subscriptions_Bool_Exp>;
+};
+
+/** columns and relationships of "payments.providers" */
+export type Payments_ProvidersUser_MappingsArgs = {
+  distinct_on?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+  >;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+  order_by?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Order_By>
+  >;
+  where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+};
+
+/** columns and relationships of "payments.providers" */
+export type Payments_ProvidersUser_Mappings_AggregateArgs = {
+  distinct_on?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+  >;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+  order_by?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Order_By>
+  >;
+  where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
 };
 
 /** aggregated selection of "payments.providers" */
@@ -5096,6 +5197,8 @@ export type Payments_Providers_Bool_Exp = {
   updated_at?: InputMaybe<Bigint_Comparison_Exp>;
   user?: InputMaybe<Users_Bool_Exp>;
   user_id?: InputMaybe<Uuid_Comparison_Exp>;
+  user_mappings?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+  user_mappings_aggregate?: InputMaybe<Payments_User_Payment_Provider_Mappings_Aggregate_Bool_Exp>;
 };
 
 /** unique or primary key constraints on table "payments.providers" */
@@ -5151,6 +5254,7 @@ export type Payments_Providers_Insert_Input = {
   user?: InputMaybe<Users_Obj_Rel_Insert_Input>;
   /** If NULL, the provider is system-wide. Otherwise, it might be specific to a user (e.g. for marketplaces). */
   user_id?: InputMaybe<Scalars["uuid"]["input"]>;
+  user_mappings?: InputMaybe<Payments_User_Payment_Provider_Mappings_Arr_Rel_Insert_Input>;
 };
 
 /** aggregate max on columns */
@@ -5256,6 +5360,7 @@ export type Payments_Providers_Order_By = {
   updated_at?: InputMaybe<Order_By>;
   user?: InputMaybe<Users_Order_By>;
   user_id?: InputMaybe<Order_By>;
+  user_mappings_aggregate?: InputMaybe<Payments_User_Payment_Provider_Mappings_Aggregate_Order_By>;
 };
 
 /** primary key columns input for table: payments.providers */
@@ -6235,6 +6340,436 @@ export type Payments_Subscriptions_Variance_Order_By = {
   updated_at?: InputMaybe<Order_By>;
 };
 
+/** Maps internal user IDs to provider-specific customer keys (e.g., TBank CustomerKey) */
+export type Payments_User_Payment_Provider_Mappings = {
+  __typename?: "payments_user_payment_provider_mappings";
+  created_at: Scalars["bigint"]["output"];
+  id: Scalars["uuid"]["output"];
+  metadata?: Maybe<Scalars["jsonb"]["output"]>;
+  /** An object relationship */
+  provider: Payments_Providers;
+  /** Customer identifier in the payment provider system (e.g., CustomerKey for TBank) */
+  provider_customer_key: Scalars["String"]["output"];
+  provider_id: Scalars["uuid"]["output"];
+  updated_at: Scalars["bigint"]["output"];
+  /** An object relationship */
+  user: Users;
+  user_id: Scalars["uuid"]["output"];
+};
+
+/** Maps internal user IDs to provider-specific customer keys (e.g., TBank CustomerKey) */
+export type Payments_User_Payment_Provider_MappingsMetadataArgs = {
+  path?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+/** aggregated selection of "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Aggregate = {
+  __typename?: "payments_user_payment_provider_mappings_aggregate";
+  aggregate?: Maybe<Payments_User_Payment_Provider_Mappings_Aggregate_Fields>;
+  nodes: Array<Payments_User_Payment_Provider_Mappings>;
+};
+
+export type Payments_User_Payment_Provider_Mappings_Aggregate_Bool_Exp = {
+  count?: InputMaybe<Payments_User_Payment_Provider_Mappings_Aggregate_Bool_Exp_Count>;
+};
+
+export type Payments_User_Payment_Provider_Mappings_Aggregate_Bool_Exp_Count = {
+  arguments?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+  >;
+  distinct?: InputMaybe<Scalars["Boolean"]["input"]>;
+  filter?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+  predicate: Int_Comparison_Exp;
+};
+
+/** aggregate fields of "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Aggregate_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_aggregate_fields";
+  avg?: Maybe<Payments_User_Payment_Provider_Mappings_Avg_Fields>;
+  count: Scalars["Int"]["output"];
+  max?: Maybe<Payments_User_Payment_Provider_Mappings_Max_Fields>;
+  min?: Maybe<Payments_User_Payment_Provider_Mappings_Min_Fields>;
+  stddev?: Maybe<Payments_User_Payment_Provider_Mappings_Stddev_Fields>;
+  stddev_pop?: Maybe<Payments_User_Payment_Provider_Mappings_Stddev_Pop_Fields>;
+  stddev_samp?: Maybe<Payments_User_Payment_Provider_Mappings_Stddev_Samp_Fields>;
+  sum?: Maybe<Payments_User_Payment_Provider_Mappings_Sum_Fields>;
+  var_pop?: Maybe<Payments_User_Payment_Provider_Mappings_Var_Pop_Fields>;
+  var_samp?: Maybe<Payments_User_Payment_Provider_Mappings_Var_Samp_Fields>;
+  variance?: Maybe<Payments_User_Payment_Provider_Mappings_Variance_Fields>;
+};
+
+/** aggregate fields of "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Aggregate_FieldsCountArgs =
+  {
+    columns?: InputMaybe<
+      Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+    >;
+    distinct?: InputMaybe<Scalars["Boolean"]["input"]>;
+  };
+
+/** order by aggregate values of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Aggregate_Order_By = {
+  avg?: InputMaybe<Payments_User_Payment_Provider_Mappings_Avg_Order_By>;
+  count?: InputMaybe<Order_By>;
+  max?: InputMaybe<Payments_User_Payment_Provider_Mappings_Max_Order_By>;
+  min?: InputMaybe<Payments_User_Payment_Provider_Mappings_Min_Order_By>;
+  stddev?: InputMaybe<Payments_User_Payment_Provider_Mappings_Stddev_Order_By>;
+  stddev_pop?: InputMaybe<Payments_User_Payment_Provider_Mappings_Stddev_Pop_Order_By>;
+  stddev_samp?: InputMaybe<Payments_User_Payment_Provider_Mappings_Stddev_Samp_Order_By>;
+  sum?: InputMaybe<Payments_User_Payment_Provider_Mappings_Sum_Order_By>;
+  var_pop?: InputMaybe<Payments_User_Payment_Provider_Mappings_Var_Pop_Order_By>;
+  var_samp?: InputMaybe<Payments_User_Payment_Provider_Mappings_Var_Samp_Order_By>;
+  variance?: InputMaybe<Payments_User_Payment_Provider_Mappings_Variance_Order_By>;
+};
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export type Payments_User_Payment_Provider_Mappings_Append_Input = {
+  metadata?: InputMaybe<Scalars["jsonb"]["input"]>;
+};
+
+/** input type for inserting array relation for remote table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Arr_Rel_Insert_Input = {
+  data: Array<Payments_User_Payment_Provider_Mappings_Insert_Input>;
+  /** upsert condition */
+  on_conflict?: InputMaybe<Payments_User_Payment_Provider_Mappings_On_Conflict>;
+};
+
+/** aggregate avg on columns */
+export type Payments_User_Payment_Provider_Mappings_Avg_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_avg_fields";
+  created_at?: Maybe<Scalars["Float"]["output"]>;
+  updated_at?: Maybe<Scalars["Float"]["output"]>;
+};
+
+/** order by avg() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Avg_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+};
+
+/** Boolean expression to filter rows from the table "payments.user_payment_provider_mappings". All fields are combined with a logical 'AND'. */
+export type Payments_User_Payment_Provider_Mappings_Bool_Exp = {
+  _and?: InputMaybe<Array<Payments_User_Payment_Provider_Mappings_Bool_Exp>>;
+  _not?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+  _or?: InputMaybe<Array<Payments_User_Payment_Provider_Mappings_Bool_Exp>>;
+  created_at?: InputMaybe<Bigint_Comparison_Exp>;
+  id?: InputMaybe<Uuid_Comparison_Exp>;
+  metadata?: InputMaybe<Jsonb_Comparison_Exp>;
+  provider?: InputMaybe<Payments_Providers_Bool_Exp>;
+  provider_customer_key?: InputMaybe<String_Comparison_Exp>;
+  provider_id?: InputMaybe<Uuid_Comparison_Exp>;
+  updated_at?: InputMaybe<Bigint_Comparison_Exp>;
+  user?: InputMaybe<Users_Bool_Exp>;
+  user_id?: InputMaybe<Uuid_Comparison_Exp>;
+};
+
+/** unique or primary key constraints on table "payments.user_payment_provider_mappings" */
+export enum Payments_User_Payment_Provider_Mappings_Constraint {
+  /** unique or primary key constraint on columns "user_id", "provider_customer_key", "provider_id" */
+  UserPaymentProviderMappingUserIdProviderIdProviderKey = "user_payment_provider_mapping_user_id_provider_id_provider__key",
+  /** unique or primary key constraint on columns "id" */
+  UserPaymentProviderMappingsPkey = "user_payment_provider_mappings_pkey",
+}
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export type Payments_User_Payment_Provider_Mappings_Delete_At_Path_Input = {
+  metadata?: InputMaybe<Array<Scalars["String"]["input"]>>;
+};
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export type Payments_User_Payment_Provider_Mappings_Delete_Elem_Input = {
+  metadata?: InputMaybe<Scalars["Int"]["input"]>;
+};
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export type Payments_User_Payment_Provider_Mappings_Delete_Key_Input = {
+  metadata?: InputMaybe<Scalars["String"]["input"]>;
+};
+
+/** input type for incrementing numeric columns in table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Inc_Input = {
+  created_at?: InputMaybe<Scalars["bigint"]["input"]>;
+  updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
+};
+
+/** input type for inserting data into table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Insert_Input = {
+  created_at?: InputMaybe<Scalars["bigint"]["input"]>;
+  id?: InputMaybe<Scalars["uuid"]["input"]>;
+  metadata?: InputMaybe<Scalars["jsonb"]["input"]>;
+  provider?: InputMaybe<Payments_Providers_Obj_Rel_Insert_Input>;
+  /** Customer identifier in the payment provider system (e.g., CustomerKey for TBank) */
+  provider_customer_key?: InputMaybe<Scalars["String"]["input"]>;
+  provider_id?: InputMaybe<Scalars["uuid"]["input"]>;
+  updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
+  user?: InputMaybe<Users_Obj_Rel_Insert_Input>;
+  user_id?: InputMaybe<Scalars["uuid"]["input"]>;
+};
+
+/** aggregate max on columns */
+export type Payments_User_Payment_Provider_Mappings_Max_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_max_fields";
+  created_at?: Maybe<Scalars["bigint"]["output"]>;
+  id?: Maybe<Scalars["uuid"]["output"]>;
+  /** Customer identifier in the payment provider system (e.g., CustomerKey for TBank) */
+  provider_customer_key?: Maybe<Scalars["String"]["output"]>;
+  provider_id?: Maybe<Scalars["uuid"]["output"]>;
+  updated_at?: Maybe<Scalars["bigint"]["output"]>;
+  user_id?: Maybe<Scalars["uuid"]["output"]>;
+};
+
+/** order by max() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Max_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  /** Customer identifier in the payment provider system (e.g., CustomerKey for TBank) */
+  provider_customer_key?: InputMaybe<Order_By>;
+  provider_id?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+  user_id?: InputMaybe<Order_By>;
+};
+
+/** aggregate min on columns */
+export type Payments_User_Payment_Provider_Mappings_Min_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_min_fields";
+  created_at?: Maybe<Scalars["bigint"]["output"]>;
+  id?: Maybe<Scalars["uuid"]["output"]>;
+  /** Customer identifier in the payment provider system (e.g., CustomerKey for TBank) */
+  provider_customer_key?: Maybe<Scalars["String"]["output"]>;
+  provider_id?: Maybe<Scalars["uuid"]["output"]>;
+  updated_at?: Maybe<Scalars["bigint"]["output"]>;
+  user_id?: Maybe<Scalars["uuid"]["output"]>;
+};
+
+/** order by min() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Min_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  /** Customer identifier in the payment provider system (e.g., CustomerKey for TBank) */
+  provider_customer_key?: InputMaybe<Order_By>;
+  provider_id?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+  user_id?: InputMaybe<Order_By>;
+};
+
+/** response of any mutation on the table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Mutation_Response = {
+  __typename?: "payments_user_payment_provider_mappings_mutation_response";
+  /** number of rows affected by the mutation */
+  affected_rows: Scalars["Int"]["output"];
+  /** data from the rows affected by the mutation */
+  returning: Array<Payments_User_Payment_Provider_Mappings>;
+};
+
+/** on_conflict condition type for table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_On_Conflict = {
+  constraint: Payments_User_Payment_Provider_Mappings_Constraint;
+  update_columns?: Array<Payments_User_Payment_Provider_Mappings_Update_Column>;
+  where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+};
+
+/** Ordering options when selecting data from "payments.user_payment_provider_mappings". */
+export type Payments_User_Payment_Provider_Mappings_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  id?: InputMaybe<Order_By>;
+  metadata?: InputMaybe<Order_By>;
+  provider?: InputMaybe<Payments_Providers_Order_By>;
+  provider_customer_key?: InputMaybe<Order_By>;
+  provider_id?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+  user?: InputMaybe<Users_Order_By>;
+  user_id?: InputMaybe<Order_By>;
+};
+
+/** primary key columns input for table: payments.user_payment_provider_mappings */
+export type Payments_User_Payment_Provider_Mappings_Pk_Columns_Input = {
+  id: Scalars["uuid"]["input"];
+};
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export type Payments_User_Payment_Provider_Mappings_Prepend_Input = {
+  metadata?: InputMaybe<Scalars["jsonb"]["input"]>;
+};
+
+/** select columns of table "payments.user_payment_provider_mappings" */
+export enum Payments_User_Payment_Provider_Mappings_Select_Column {
+  /** column name */
+  CreatedAt = "created_at",
+  /** column name */
+  Id = "id",
+  /** column name */
+  Metadata = "metadata",
+  /** column name */
+  ProviderCustomerKey = "provider_customer_key",
+  /** column name */
+  ProviderId = "provider_id",
+  /** column name */
+  UpdatedAt = "updated_at",
+  /** column name */
+  UserId = "user_id",
+}
+
+/** input type for updating data in table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Set_Input = {
+  created_at?: InputMaybe<Scalars["bigint"]["input"]>;
+  id?: InputMaybe<Scalars["uuid"]["input"]>;
+  metadata?: InputMaybe<Scalars["jsonb"]["input"]>;
+  /** Customer identifier in the payment provider system (e.g., CustomerKey for TBank) */
+  provider_customer_key?: InputMaybe<Scalars["String"]["input"]>;
+  provider_id?: InputMaybe<Scalars["uuid"]["input"]>;
+  updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
+  user_id?: InputMaybe<Scalars["uuid"]["input"]>;
+};
+
+/** aggregate stddev on columns */
+export type Payments_User_Payment_Provider_Mappings_Stddev_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_stddev_fields";
+  created_at?: Maybe<Scalars["Float"]["output"]>;
+  updated_at?: Maybe<Scalars["Float"]["output"]>;
+};
+
+/** order by stddev() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Stddev_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+};
+
+/** aggregate stddev_pop on columns */
+export type Payments_User_Payment_Provider_Mappings_Stddev_Pop_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_stddev_pop_fields";
+  created_at?: Maybe<Scalars["Float"]["output"]>;
+  updated_at?: Maybe<Scalars["Float"]["output"]>;
+};
+
+/** order by stddev_pop() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Stddev_Pop_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+};
+
+/** aggregate stddev_samp on columns */
+export type Payments_User_Payment_Provider_Mappings_Stddev_Samp_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_stddev_samp_fields";
+  created_at?: Maybe<Scalars["Float"]["output"]>;
+  updated_at?: Maybe<Scalars["Float"]["output"]>;
+};
+
+/** order by stddev_samp() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Stddev_Samp_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+};
+
+/** Streaming cursor of the table "payments_user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Stream_Cursor_Input = {
+  /** Stream column input with initial value */
+  initial_value: Payments_User_Payment_Provider_Mappings_Stream_Cursor_Value_Input;
+  /** cursor ordering */
+  ordering?: InputMaybe<Cursor_Ordering>;
+};
+
+/** Initial value of the column from where the streaming should start */
+export type Payments_User_Payment_Provider_Mappings_Stream_Cursor_Value_Input =
+  {
+    created_at?: InputMaybe<Scalars["bigint"]["input"]>;
+    id?: InputMaybe<Scalars["uuid"]["input"]>;
+    metadata?: InputMaybe<Scalars["jsonb"]["input"]>;
+    /** Customer identifier in the payment provider system (e.g., CustomerKey for TBank) */
+    provider_customer_key?: InputMaybe<Scalars["String"]["input"]>;
+    provider_id?: InputMaybe<Scalars["uuid"]["input"]>;
+    updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
+    user_id?: InputMaybe<Scalars["uuid"]["input"]>;
+  };
+
+/** aggregate sum on columns */
+export type Payments_User_Payment_Provider_Mappings_Sum_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_sum_fields";
+  created_at?: Maybe<Scalars["bigint"]["output"]>;
+  updated_at?: Maybe<Scalars["bigint"]["output"]>;
+};
+
+/** order by sum() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Sum_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+};
+
+/** update columns of table "payments.user_payment_provider_mappings" */
+export enum Payments_User_Payment_Provider_Mappings_Update_Column {
+  /** column name */
+  CreatedAt = "created_at",
+  /** column name */
+  Id = "id",
+  /** column name */
+  Metadata = "metadata",
+  /** column name */
+  ProviderCustomerKey = "provider_customer_key",
+  /** column name */
+  ProviderId = "provider_id",
+  /** column name */
+  UpdatedAt = "updated_at",
+  /** column name */
+  UserId = "user_id",
+}
+
+export type Payments_User_Payment_Provider_Mappings_Updates = {
+  /** append existing jsonb value of filtered columns with new jsonb value */
+  _append?: InputMaybe<Payments_User_Payment_Provider_Mappings_Append_Input>;
+  /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+  _delete_at_path?: InputMaybe<Payments_User_Payment_Provider_Mappings_Delete_At_Path_Input>;
+  /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+  _delete_elem?: InputMaybe<Payments_User_Payment_Provider_Mappings_Delete_Elem_Input>;
+  /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+  _delete_key?: InputMaybe<Payments_User_Payment_Provider_Mappings_Delete_Key_Input>;
+  /** increments the numeric columns with given value of the filtered values */
+  _inc?: InputMaybe<Payments_User_Payment_Provider_Mappings_Inc_Input>;
+  /** prepend existing jsonb value of filtered columns with new jsonb value */
+  _prepend?: InputMaybe<Payments_User_Payment_Provider_Mappings_Prepend_Input>;
+  /** sets the columns of the filtered rows to the given values */
+  _set?: InputMaybe<Payments_User_Payment_Provider_Mappings_Set_Input>;
+  /** filter the rows which have to be updated */
+  where: Payments_User_Payment_Provider_Mappings_Bool_Exp;
+};
+
+/** aggregate var_pop on columns */
+export type Payments_User_Payment_Provider_Mappings_Var_Pop_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_var_pop_fields";
+  created_at?: Maybe<Scalars["Float"]["output"]>;
+  updated_at?: Maybe<Scalars["Float"]["output"]>;
+};
+
+/** order by var_pop() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Var_Pop_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+};
+
+/** aggregate var_samp on columns */
+export type Payments_User_Payment_Provider_Mappings_Var_Samp_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_var_samp_fields";
+  created_at?: Maybe<Scalars["Float"]["output"]>;
+  updated_at?: Maybe<Scalars["Float"]["output"]>;
+};
+
+/** order by var_samp() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Var_Samp_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+};
+
+/** aggregate variance on columns */
+export type Payments_User_Payment_Provider_Mappings_Variance_Fields = {
+  __typename?: "payments_user_payment_provider_mappings_variance_fields";
+  created_at?: Maybe<Scalars["Float"]["output"]>;
+  updated_at?: Maybe<Scalars["Float"]["output"]>;
+};
+
+/** order by variance() on columns of table "payments.user_payment_provider_mappings" */
+export type Payments_User_Payment_Provider_Mappings_Variance_Order_By = {
+  created_at?: InputMaybe<Order_By>;
+  updated_at?: InputMaybe<Order_By>;
+};
+
 export type Query_Root = {
   __typename?: "query_root";
   /** An array relationship */
@@ -6297,6 +6832,12 @@ export type Query_Root = {
   payments_subscriptions_aggregate: Payments_Subscriptions_Aggregate;
   /** fetch data from the table: "payments.subscriptions" using primary key columns */
   payments_subscriptions_by_pk?: Maybe<Payments_Subscriptions>;
+  /** fetch data from the table: "payments.user_payment_provider_mappings" */
+  payments_user_payment_provider_mappings: Array<Payments_User_Payment_Provider_Mappings>;
+  /** fetch aggregated fields from the table: "payments.user_payment_provider_mappings" */
+  payments_user_payment_provider_mappings_aggregate: Payments_User_Payment_Provider_Mappings_Aggregate;
+  /** fetch data from the table: "payments.user_payment_provider_mappings" using primary key columns */
+  payments_user_payment_provider_mappings_by_pk?: Maybe<Payments_User_Payment_Provider_Mappings>;
   /** fetch data from the table: "users" */
   users: Array<Users>;
   /** fetch aggregated fields from the table: "users" */
@@ -6505,6 +7046,34 @@ export type Query_RootPayments_Subscriptions_By_PkArgs = {
   id: Scalars["uuid"]["input"];
 };
 
+export type Query_RootPayments_User_Payment_Provider_MappingsArgs = {
+  distinct_on?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+  >;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+  order_by?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Order_By>
+  >;
+  where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+};
+
+export type Query_RootPayments_User_Payment_Provider_Mappings_AggregateArgs = {
+  distinct_on?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+  >;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+  order_by?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Order_By>
+  >;
+  where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+};
+
+export type Query_RootPayments_User_Payment_Provider_Mappings_By_PkArgs = {
+  id: Scalars["uuid"]["input"];
+};
+
 export type Query_RootUsersArgs = {
   distinct_on?: InputMaybe<Array<Users_Select_Column>>;
   limit?: InputMaybe<Scalars["Int"]["input"]>;
@@ -6607,6 +7176,14 @@ export type Subscription_Root = {
   payments_subscriptions_by_pk?: Maybe<Payments_Subscriptions>;
   /** fetch data from the table in a streaming manner: "payments.subscriptions" */
   payments_subscriptions_stream: Array<Payments_Subscriptions>;
+  /** fetch data from the table: "payments.user_payment_provider_mappings" */
+  payments_user_payment_provider_mappings: Array<Payments_User_Payment_Provider_Mappings>;
+  /** fetch aggregated fields from the table: "payments.user_payment_provider_mappings" */
+  payments_user_payment_provider_mappings_aggregate: Payments_User_Payment_Provider_Mappings_Aggregate;
+  /** fetch data from the table: "payments.user_payment_provider_mappings" using primary key columns */
+  payments_user_payment_provider_mappings_by_pk?: Maybe<Payments_User_Payment_Provider_Mappings>;
+  /** fetch data from the table in a streaming manner: "payments.user_payment_provider_mappings" */
+  payments_user_payment_provider_mappings_stream: Array<Payments_User_Payment_Provider_Mappings>;
   /** fetch data from the table: "users" */
   users: Array<Users>;
   /** fetch aggregated fields from the table: "users" */
@@ -6877,6 +7454,45 @@ export type Subscription_RootPayments_Subscriptions_StreamArgs = {
   where?: InputMaybe<Payments_Subscriptions_Bool_Exp>;
 };
 
+export type Subscription_RootPayments_User_Payment_Provider_MappingsArgs = {
+  distinct_on?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+  >;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+  order_by?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Order_By>
+  >;
+  where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+};
+
+export type Subscription_RootPayments_User_Payment_Provider_Mappings_AggregateArgs =
+  {
+    distinct_on?: InputMaybe<
+      Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+    >;
+    limit?: InputMaybe<Scalars["Int"]["input"]>;
+    offset?: InputMaybe<Scalars["Int"]["input"]>;
+    order_by?: InputMaybe<
+      Array<Payments_User_Payment_Provider_Mappings_Order_By>
+    >;
+    where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+  };
+
+export type Subscription_RootPayments_User_Payment_Provider_Mappings_By_PkArgs =
+  {
+    id: Scalars["uuid"]["input"];
+  };
+
+export type Subscription_RootPayments_User_Payment_Provider_Mappings_StreamArgs =
+  {
+    batch_size: Scalars["Int"]["input"];
+    cursor: Array<
+      InputMaybe<Payments_User_Payment_Provider_Mappings_Stream_Cursor_Input>
+    >;
+    where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+  };
+
 export type Subscription_RootUsersArgs = {
   distinct_on?: InputMaybe<Array<Users_Select_Column>>;
   limit?: InputMaybe<Scalars["Int"]["input"]>;
@@ -6935,6 +7551,10 @@ export type Users = {
   payment_operations: Array<Payments_Operations>;
   /** An aggregate relationship */
   payment_operations_aggregate: Payments_Operations_Aggregate;
+  /** An array relationship */
+  payment_provider_mappings: Array<Payments_User_Payment_Provider_Mappings>;
+  /** An aggregate relationship */
+  payment_provider_mappings_aggregate: Payments_User_Payment_Provider_Mappings_Aggregate;
   /** An array relationship */
   payment_providers: Array<Payments_Providers>;
   /** An aggregate relationship */
@@ -7038,6 +7658,32 @@ export type UsersPayment_Operations_AggregateArgs = {
   offset?: InputMaybe<Scalars["Int"]["input"]>;
   order_by?: InputMaybe<Array<Payments_Operations_Order_By>>;
   where?: InputMaybe<Payments_Operations_Bool_Exp>;
+};
+
+/** columns and relationships of "users" */
+export type UsersPayment_Provider_MappingsArgs = {
+  distinct_on?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+  >;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+  order_by?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Order_By>
+  >;
+  where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+};
+
+/** columns and relationships of "users" */
+export type UsersPayment_Provider_Mappings_AggregateArgs = {
+  distinct_on?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Select_Column>
+  >;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+  order_by?: InputMaybe<
+    Array<Payments_User_Payment_Provider_Mappings_Order_By>
+  >;
+  where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
 };
 
 /** columns and relationships of "users" */
@@ -7155,6 +7801,8 @@ export type Users_Bool_Exp = {
   payment_methods_aggregate?: InputMaybe<Payments_Methods_Aggregate_Bool_Exp>;
   payment_operations?: InputMaybe<Payments_Operations_Bool_Exp>;
   payment_operations_aggregate?: InputMaybe<Payments_Operations_Aggregate_Bool_Exp>;
+  payment_provider_mappings?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
+  payment_provider_mappings_aggregate?: InputMaybe<Payments_User_Payment_Provider_Mappings_Aggregate_Bool_Exp>;
   payment_providers?: InputMaybe<Payments_Providers_Bool_Exp>;
   payment_providers_aggregate?: InputMaybe<Payments_Providers_Aggregate_Bool_Exp>;
   subscription_plans_created?: InputMaybe<Payments_Plans_Bool_Exp>;
@@ -7195,6 +7843,7 @@ export type Users_Insert_Input = {
   password?: InputMaybe<Scalars["String"]["input"]>;
   payment_methods?: InputMaybe<Payments_Methods_Arr_Rel_Insert_Input>;
   payment_operations?: InputMaybe<Payments_Operations_Arr_Rel_Insert_Input>;
+  payment_provider_mappings?: InputMaybe<Payments_User_Payment_Provider_Mappings_Arr_Rel_Insert_Input>;
   payment_providers?: InputMaybe<Payments_Providers_Arr_Rel_Insert_Input>;
   subscription_plans_created?: InputMaybe<Payments_Plans_Arr_Rel_Insert_Input>;
   subscriptions?: InputMaybe<Payments_Subscriptions_Arr_Rel_Insert_Input>;
@@ -7268,6 +7917,7 @@ export type Users_Order_By = {
   password?: InputMaybe<Order_By>;
   payment_methods_aggregate?: InputMaybe<Payments_Methods_Aggregate_Order_By>;
   payment_operations_aggregate?: InputMaybe<Payments_Operations_Aggregate_Order_By>;
+  payment_provider_mappings_aggregate?: InputMaybe<Payments_User_Payment_Provider_Mappings_Aggregate_Order_By>;
   payment_providers_aggregate?: InputMaybe<Payments_Providers_Aggregate_Order_By>;
   subscription_plans_created_aggregate?: InputMaybe<Payments_Plans_Aggregate_Order_By>;
   subscriptions_aggregate?: InputMaybe<Payments_Subscriptions_Aggregate_Order_By>;

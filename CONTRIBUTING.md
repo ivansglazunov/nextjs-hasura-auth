@@ -19,6 +19,46 @@ We welcome contributions to Hasyx! Please follow these guidelines to help us kee
 -   Please follow the existing code style. ESLint and Prettier should be configured and used.
 -   Use TypeScript for all new code in `lib/`, `components/`, `hooks/`, and `app/`.
 
+## ⚠️ CRITICAL: Table Naming in Hasyx
+
+**When working with Hasyx client operations, table names MUST use underscore format, NOT dot notation:**
+
+### ✅ CORRECT - Use underscores:
+```typescript
+// For tables in custom schemas like "payments"
+await hasyx.select({ table: "payments_providers", ... });
+await hasyx.insert({ table: "payments_operations", ... });
+await hasyx.update({ table: "payments_methods", ... });
+
+// For tables in public schema
+await hasyx.select({ table: "users", ... });
+await hasyx.insert({ table: "notifications", ... });
+```
+
+### ❌ INCORRECT - Do NOT use dots:
+```typescript
+// These will fail in Hasyx operations
+await hasyx.select({ table: "payments.providers", ... }); // ❌ Wrong!
+await hasyx.insert({ table: "payments.operations", ... }); // ❌ Wrong!
+```
+
+### Schema to Table Name Mapping:
+- Database: `payments.providers` → Hasyx: `payments_providers`
+- Database: `payments.operations` → Hasyx: `payments_operations`  
+- Database: `payments.methods` → Hasyx: `payments_methods`
+- Database: `payments.subscriptions` → Hasyx: `payments_subscriptions`
+- Database: `public.users` → Hasyx: `users`
+
+**This applies to ALL Hasyx client operations:**
+- `hasyx.select()`
+- `hasyx.insert()`
+- `hasyx.update()`
+- `hasyx.delete()`
+- `hasyx.useSubscription()`
+- `hasyx.useQuery()`
+
+**Remember:** The database schema uses dots (`schema.table`), but Hasyx client uses underscores (`schema_table`).
+
 ## Commit Messages
 
 -   Follow conventional commit message format (e.g., `feat: add new feature`, `fix: resolve a bug`). This helps in generating changelogs and understanding project history.

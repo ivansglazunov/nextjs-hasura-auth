@@ -11,10 +11,10 @@ const MIGRATION_NAME = '20240801120000-hasyx-payments';
 // 4. Drop all tables in payments schema.
 // 5. Drop the payments schema itself.
 
-const tablesInPaymentsSchema = ["operations", "subscriptions", "plans", "methods", "providers"];
+const tablesInPaymentsSchema = ["operations", "subscriptions", "plans", "methods", "providers", "user_payment_provider_mappings"];
 
 const permissionsToDropPayload: any[] = [];
-const roles = ["user", "admin"]; // Roles for which permissions were created
+const roles = ["public", "user", "me", "admin"]; // Roles for which permissions were created
 
 tablesInPaymentsSchema.forEach(table => {
   roles.forEach(role => {
@@ -60,7 +60,17 @@ const relationshipsToDropPayload = [
   { type: "pg_drop_relationship", args: { table: { schema: "payments", name: "operations" }, relationship: "user", source: "default" } },
   { type: "pg_drop_relationship", args: { table: { schema: "payments", name: "operations" }, relationship: "method", source: "default" } },
   { type: "pg_drop_relationship", args: { table: { schema: "payments", name: "operations" }, relationship: "provider", source: "default" } },
-  { type: "pg_drop_relationship", args: { table: { schema: "payments", name: "operations" }, relationship: "subscription", source: "default" } }
+  { type: "pg_drop_relationship", args: { table: { schema: "payments", name: "operations" }, relationship: "subscription", source: "default" } },
+
+  // Relationships within payments.user_payment_provider_mappings
+  { type: "pg_drop_relationship", args: { table: { schema: "payments", name: "user_payment_provider_mappings" }, relationship: "user", source: "default" } },
+  { type: "pg_drop_relationship", args: { table: { schema: "payments", name: "user_payment_provider_mappings" }, relationship: "provider", source: "default" } },
+
+  // Relationships from payments.providers to user_payment_provider_mappings
+  { type: "pg_drop_relationship", args: { table: { schema: "payments", name: "providers" }, relationship: "user_mappings", source: "default" } },
+
+  // Relationships from public.users to user_payment_provider_mappings
+  { type: "pg_drop_relationship", args: { table: { schema: "public", name: "users" }, relationship: "payment_provider_mappings", source: "default" } }
 ];
 
 const untrackTablesPayload = tablesInPaymentsSchema.map(table => ({
@@ -73,6 +83,7 @@ const sqlSchemaDown = `
   DROP TABLE IF EXISTS "payments"."subscriptions" CASCADE;
   DROP TABLE IF EXISTS "payments"."plans" CASCADE;
   DROP TABLE IF EXISTS "payments"."methods" CASCADE;
+  DROP TABLE IF EXISTS "payments"."user_payment_provider_mappings" CASCADE;
   DROP TABLE IF EXISTS "payments"."providers" CASCADE;
   DROP SCHEMA IF EXISTS "payments" CASCADE;
 `;
