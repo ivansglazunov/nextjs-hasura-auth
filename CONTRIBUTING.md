@@ -50,6 +50,7 @@ The `npx hasyx js` command is especially useful for quick testing and debugging.
 *   **Debug permissions**: Test different operations to verify Hasura permissions are working as expected  
 *   **Validate schema changes**: Quickly test if new tables, columns, or relationships are accessible
 *   **Test type compatibility**: Verify that data types (especially timestamps) are working correctly
+*   **Execute raw SQL for debugging**: Use `await client.sql()` to run complex queries, maintenance tasks, or investigate database state directly
 
 Examples:
 ```bash
@@ -81,6 +82,26 @@ const result = await client.update({
   _set: { updated_at: new Date().valueOf() }
 });
 console.log('Update result:', result);
+"
+
+# Execute raw SQL for debugging database state
+npx hasyx js -e "
+const result = await client.sql('SELECT COUNT(*) as total_users FROM users');
+console.log('Total users:', result.result[1][0]);
+"
+
+# Complex analytics with raw SQL
+npx hasyx js -e "
+const analytics = await client.sql(\`
+  SELECT 
+    DATE_TRUNC('day', created_at) as date,
+    COUNT(*) as count
+  FROM users 
+  WHERE created_at >= NOW() - INTERVAL '7 days'
+  GROUP BY DATE_TRUNC('day', created_at)
+  ORDER BY date
+\`);
+console.log('Weekly user registrations:', analytics.result.slice(1));
 "
 ```
 

@@ -112,6 +112,34 @@ async function deleteUser(userId: string) {
   }
 }
 
+// Example: Execute raw SQL (admin only)
+async function executeDatabaseMaintenance() {
+  try {
+    // Example: Update user statistics
+    const result = await client.sql(`
+      UPDATE users 
+      SET last_activity = NOW() 
+      WHERE last_seen > NOW() - INTERVAL '1 hour'
+    `);
+    console.log('Database maintenance result:', result);
+
+    // Example: Complex analytics query
+    const analyticsResult = await client.sql(`
+      SELECT 
+        DATE_TRUNC('day', created_at) as date,
+        COUNT(*) as user_count
+      FROM users 
+      WHERE created_at >= NOW() - INTERVAL '7 days'
+      GROUP BY DATE_TRUNC('day', created_at)
+      ORDER BY date
+    `);
+    console.log('Weekly user stats:', analyticsResult.result);
+  } catch (error) {
+    console.error('SQL execution failed:', error);
+    // Will throw error if no admin secret or URL configured
+  }
+}
+
 // Example: Subscribe (returns an Observable)
 function subscribeToUserChanges(userId: string) {
   // Specify TData as the expected unwrapped type (e.g., User)
@@ -184,6 +212,7 @@ function subscribeToUserChanges(userId: string) {
 *   `async update(options: HasyxMethodOptions): Promise<any>`: Executes an update mutation.
 *   `async delete(options: HasyxMethodOptions): Promise<any>`: Executes a delete mutation.
 *   `subscribe(options: HasyxMethodOptions): Observable<any>`: Initiates a subscription, returning an Apollo Observable. If WebSockets are disabled (`NEXT_PUBLIC_WS=0`), falls back to polling.
+*   `async sql(sql: string, source?: string, cascade?: boolean): Promise<any>`: Executes raw SQL against the Hasura database. Requires admin-level access with URL and admin secret. Throws an error if Hasura instance is not available.
 
 Where `HasyxMethodOptions` extends `GenerateOptions` (from `lib/generator.ts`) and adds an optional `role: string` property and an optional `pollingInterval: number` property (for subscriptions).
 

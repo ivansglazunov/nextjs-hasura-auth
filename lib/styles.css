@@ -935,6 +935,13 @@
   .gap-6 {
     gap: calc(var(--spacing) * 6);
   }
+  .space-y-1 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 1) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 1) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
   .space-y-1\.5 {
     :where(& > :not(:last-child)) {
       --tw-space-y-reverse: 0;
@@ -1467,6 +1474,9 @@
   }
   .text-yellow-800 {
     color: var(--color-yellow-800);
+  }
+  .capitalize {
+    text-transform: capitalize;
   }
   .tabular-nums {
     --tw-numeric-spacing: tabular-nums;
@@ -2253,6 +2263,11 @@
   .focus\:text-primary-foreground {
     &:focus {
       color: var(--primary-foreground);
+    }
+  }
+  .focus\:text-red-600 {
+    &:focus {
+      color: var(--color-red-600);
     }
   }
   .focus\:ring-2 {
@@ -3351,6 +3366,11 @@
   .sm\:flex {
     @media (width >= 40rem) {
       display: flex;
+    }
+  }
+  .sm\:inline-block {
+    @media (width >= 40rem) {
+      display: inline-block;
     }
   }
   .sm\:max-w-lg {

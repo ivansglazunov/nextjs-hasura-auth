@@ -6,6 +6,7 @@ import { SessionProvider } from "next-auth/react";
 import { useMemo } from "react";
 import isEqual from 'react-fast-compare';
 import { Generate, GenerateOptions, GenerateResult } from "./generator";
+import { Hasura } from './hasura';
 
 import {
   ApolloError,
@@ -33,6 +34,7 @@ interface ClientMethodOptions extends Omit<GenerateOptions, 'operation'> {
 export class Hasyx {
   public apolloClient: HasyxApolloClient;
   public generate: Generate;
+  public hasura?: Hasura;
   private _options?: { secret?: string };
 
   constructor(apolloClient: HasyxApolloClient, generate: Generate, options?: { secret?: string }) {
@@ -42,6 +44,19 @@ export class Hasyx {
     this.apolloClient = apolloClient;
     this.generate = generate;
     this._options = options;
+
+    // Create Hasura instance if URL and secret are available in Apollo client options
+    const apolloOptions = apolloClient._options;
+    if (apolloOptions?.url && apolloOptions?.secret) {
+      this.hasura = new Hasura({
+        url: apolloOptions.url,
+        secret: apolloOptions.secret
+      });
+      debug('✅ Hasura instance created for SQL operations.');
+    } else {
+      debug('⚠️ Hasura instance not created: missing url or secret in Apollo client options.');
+    }
+
     debug('Client class initialized with ApolloClient instance.');
   }
 
@@ -444,6 +459,26 @@ export class Hasyx {
   ): QueryResult<TData, TVariables> {
 
     throw new Error("This method should not be called directly from the server component.");
+  }
+
+  /**
+   * Executes raw SQL against the Hasura database.
+   * Requires admin-level access with URL and admin secret.
+   * @param sql - The SQL query to execute
+   * @param source - Database source name (defaults to 'default')
+   * @param cascade - Whether to enable cascade operations
+   * @returns Promise resolving with the SQL execution result
+   * @throws Error if Hasura instance is not available (missing URL or secret)
+   */
+  async sql(sql: string, source: string = 'default', cascade: boolean = false): Promise<any> {
+    if (!this.hasura) {
+      const errorMessage = '❌ SQL execution not available: Hasura instance not initialized. Ensure Apollo client was created with both URL and admin secret.';
+      debug(errorMessage);
+      throw new Error(errorMessage);
+    }
+    
+    debug('Executing SQL via Hasura instance:', sql);
+    return await this.hasura.sql(sql, source, cascade);
   }
 
   /**
