@@ -3,8 +3,8 @@
 import { useCreateApolloClient } from './apollo';
 import { ThemeProvider } from "hasyx/components/theme-provider";
 import toUrl, { API_URL, url } from 'hasyx/lib/url';
-import { SessionProvider } from "next-auth/react";
-import { useMemo, createContext, useContext } from "react";
+import { SessionProvider, useSession as useSessionNextAuth } from "next-auth/react";
+import { useMemo, createContext, useContext, useEffect } from "react";
 import Debug from './debug';
 import { Generate } from './generator';
 import { Hasyx } from './hasyx';
@@ -28,6 +28,9 @@ export function useHasyx(): Hasyx {
 
 // Alias for compatibility
 export const useClient = useHasyx;
+
+// Re-export useSession from next-auth/react for use throughout the app
+export const useSession = useSessionNextAuth;
 
 function HasyxProviderCore({ url, children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
   const apolloClient = useCreateApolloClient(useMemo(() => {
@@ -64,6 +67,16 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
     debug('Creating new Hasyx instance with Apollo client');
     return new HasyxClient(apolloClient, generate);
   }, [apolloClient, generate]);
+
+  // Get session and update hasyx user when session changes
+  const { data: session } = useSessionNextAuth();
+  
+  useEffect(() => {
+    if (hasyxInstance) {
+      hasyxInstance.user = session?.user || null;
+      debug('Updated hasyx user from session:', session?.user);
+    }
+  }, [hasyxInstance, session?.user]);
 
   // @ts-ignore
   global.hasyx = hasyxInstance;

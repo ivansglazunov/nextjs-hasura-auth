@@ -28,6 +28,72 @@ This document describes the `Hasyx` class and associated React hooks provided in
     *   Both `useSubscription` and `subscribe()` method support polling intervals customizable via `pollingInterval` option (defaults to 1000ms).
     *   Deep equality comparison ensures subscribers only receive updates when data actually changes.
 
+## User Management
+
+The Hasyx framework provides built-in user management capabilities that automatically sync with NextAuth sessions:
+
+### User Properties
+
+*   **`hasyx.user`**: Gets/sets the current user object from the session
+*   **`hasyx.userId`**: Gets the current user ID (extracted from `user.id`)
+
+### Automatic Session Sync
+
+The `HasyxProvider` automatically updates the user information when the NextAuth session changes:
+
+```typescript
+import { useHasyx, useSession } from 'hasyx';
+
+function UserComponent() {
+  const hasyx = useHasyx();
+  const { data: session } = useSession(); // Re-exported from hasyx for consistency
+  
+  // hasyx.user is automatically synced with session.user
+  console.log('Current user:', hasyx.user);
+  console.log('User ID:', hasyx.userId);
+  
+  // You can also manually set the user if needed
+  const handleSetTestUser = () => {
+    hasyx.user = { id: 'test-123', name: 'Test User', email: 'test@example.com' };
+  };
+  
+  const handleClearUser = () => {
+    hasyx.user = null;
+  };
+  
+  return (
+    <div>
+      <p>User: {hasyx.user?.name || 'Not logged in'}</p>
+      <p>User ID: {hasyx.userId || 'None'}</p>
+      <button onClick={handleSetTestUser}>Set Test User</button>
+      <button onClick={handleClearUser}>Clear User</button>
+    </div>
+  );
+}
+```
+
+### Session Hook
+
+The framework re-exports `useSession` from NextAuth for consistency:
+
+```typescript
+// Use this instead of importing from 'next-auth/react'
+import { useSession } from 'hasyx';
+
+function MyComponent() {
+  const { data: session, status } = useSession();
+  // ... component logic
+}
+```
+
+### Diagnostics
+
+The session card in the diagnostics page (`/hasyx/diagnostics`) includes a "Hasyx" tab that displays:
+- `hasyx.userId`: The current user ID
+- `hasyx.user`: The complete user object in JSON format
+
+This helps debug session management and verify that user data is properly synced between NextAuth and Hasyx.
+
 ## `Hasyx` Class Usage
 
 Ideal for server-side logic (API routes, server components, scripts) where you manage the `ApolloHasyx` instance directly.
@@ -215,6 +281,11 @@ function subscribeToUserChanges(userId: string) {
 *   `subscribe(options: HasyxMethodOptions): Observable<any>`: Initiates a subscription, returning an Apollo Observable. If WebSockets are disabled (`NEXT_PUBLIC_WS=0`), falls back to polling.
 *   `async sql(sql: string, source?: string, cascade?: boolean): Promise<any>`: Executes raw SQL against the Hasura database. Requires admin-level access with URL and admin secret. Throws an error if Hasura instance is not available.
 
+### `Hasyx` Class Properties
+
+*   `user`: Gets/sets the current user object. Automatically synced with NextAuth session in client-side usage.
+*   `userId`: Gets the current user ID (extracted from `user.id`). Returns `null` if no user is set.
+
 Where `HasyxMethodOptions` extends `GenerateOptions` (from `lib/generator.ts`) and adds an optional `role: string` property and an optional `pollingInterval: number` property (for subscriptions).
 
 ## `HasyxClient` Class (Client-Side)
@@ -298,8 +369,7 @@ Intended for use within React components. Hooks require an `ApolloProvider` high
 ```typescript
 import React from 'react';
 // Import available hooks (assuming these are now exported from 'hasyx' or './hasyx')
-import { useQuery, useSubscription, useMutation, useClient, useSelect, useSubscribe } from './hasyx'; // Adjust path
-import { useSession } from 'next-auth/react';
+import { useQuery, useSubscription, useMutation, useClient, useSelect, useSubscribe, useSession } from 'hasyx';
 
 // --- Example: Using useSelect (alias for useQuery) --- 
 function UserProfile() {
@@ -885,6 +955,7 @@ These examples showcase the flexibility and power of the Hasyx hooks when workin
 ### Available Hooks
 
 *   `useClient(providedClient?: ApolloClient<any> | null): Hasyx`: Hook to get an instance of the `Hasyx` class.
+*   `useSession()`: Re-exported from NextAuth for consistency. Returns session data and status.
 *   `useQuery(generateOptions: HasyxMethodOptions, hookOptions?: QueryHookOptions): QueryResult`: Core query hook.
 *   `useSubscription(generateOptions: HasyxMethodOptions, hookOptions?: SubscriptionHookOptions): SubscriptionResult`: Core subscription hook. Falls back to polling-based implementation if WebSockets are disabled (`NEXT_PUBLIC_WS=0`).
 *   `useMutation(generateOptions: HasyxMethodOptions & { operation: GenerateOperation }, hookOptions?: MutationHookOptions): [mutateFn, MutationResult]`: Core mutation hook (requires `operation` in `generateOptions`).
@@ -904,6 +975,7 @@ These examples showcase the flexibility and power of the Hasyx hooks when workin
 ## Important Considerations
 
 *   **ApolloProvider:** Hooks rely on `ApolloProvider` in the component tree.
+*   **User Management:** The Hasyx instance automatically syncs user data with NextAuth sessions. Access current user via `hasyx.user` and user ID via `hasyx.userId`. Always import `useSession` from 'hasyx' instead of 'next-auth/react' for consistency.
 *   **Generator Options:** Refer to `GENERATOR.md` for details on `GenerateOptions`.
 *   **Role Setting:** 
     *   The `role` passed in options is added to the Apollo operation's `context`. The `roleLink` configured in `lib/apollo.tsx` reads this context to set the `X-Hasura-Role` header for HTTP requests. WebSocket role handling is typically managed at connection time.

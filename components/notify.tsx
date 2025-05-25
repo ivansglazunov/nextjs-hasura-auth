@@ -1,10 +1,10 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
 import { useHasyx, useSubscription } from 'hasyx';
 import { getDeviceInfo, NotificationPermission } from 'hasyx/lib/notify';
 import { getFirebaseConfig } from 'hasyx/lib/notify-firebase';
-import { useSession } from 'next-auth/react';
+import { useSession } from 'hasyx';
 import { v4 as uuidv4 } from 'uuid';
 import Debug from 'hasyx/lib/debug';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from 'hasyx/components/ui/card';
@@ -14,7 +14,8 @@ import { Textarea } from 'hasyx/components/ui/textarea';
 import { Badge } from 'hasyx/components/ui/badge';
 import { Skeleton } from 'hasyx/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from 'hasyx/components/ui/alert';
-import { Ban, Bell, BellRing, Info, RefreshCw, X } from 'lucide-react';
+import { Ban, Bell, BellRing, Info, RefreshCw, X, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
+import { cn } from 'hasyx/lib/utils';
 
 const debug = Debug('notify:component');
 

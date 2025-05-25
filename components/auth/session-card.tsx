@@ -7,9 +7,35 @@ import { GetAuthStatus } from "./get-auth-status";
 import { SocketAuthStatus } from "./socket-auth-status";
 import { Session } from "next-auth";
 import React from "react";
+import { useHasyx } from "hasyx";
 
 interface SessionCardProps {
   serverSession: Session | null;
+}
+
+function HasyxSessionTab() {
+  const hasyx = useHasyx();
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Hasyx Session Data</CardTitle>
+        <CardDescription>Session data available through Hasyx instance.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium mb-2">hasyx.userId:</p>
+            <CodeBlock value={hasyx.userId || 'null'} />
+          </div>
+          <div>
+            <p className="text-sm font-medium mb-2">hasyx.user:</p>
+            <CodeBlock value={JSON.stringify(hasyx.user, null, 2)} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export function SessionCard({ serverSession }: SessionCardProps & React.HTMLAttributes<HTMLDivElement>) {
@@ -21,10 +47,11 @@ export function SessionCard({ serverSession }: SessionCardProps & React.HTMLAttr
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="ssr">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="ssr">SSR</TabsTrigger>
             <TabsTrigger value="get">GET</TabsTrigger>
             <TabsTrigger value="socket">Socket</TabsTrigger>
+            <TabsTrigger value="hasyx">Hasyx</TabsTrigger>
           </TabsList>
           <TabsContent value="ssr" className="mt-4">
             <Card>
@@ -48,6 +75,10 @@ export function SessionCard({ serverSession }: SessionCardProps & React.HTMLAttr
           <TabsContent value="socket" className="mt-4">
              {/* Mount SocketAuthStatus only when tab is active */}
             <SocketAuthStatus />
+          </TabsContent>
+          <TabsContent value="hasyx" className="mt-4">
+            {/* Mount HasyxSessionTab only when tab is active */}
+            <HasyxSessionTab />
           </TabsContent>
         </Tabs>
       </CardContent>

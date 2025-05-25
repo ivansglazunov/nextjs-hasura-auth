@@ -59,7 +59,7 @@ export async function configureHasura(rl: readline.Interface, envPath: string): 
   }
   // If user provided input, rawJwtKeyInput will have that value.
 
-  envVars.HASURA_JWT_SECRET = JSON.stringify({ type: "HS256", key: rawJwtKeyInput });
+  envVars.HASURA_JWT_SECRET = `"${JSON.stringify({ type: "HS256", key: rawJwtKeyInput })}"`;
 
 
   // Configure HASURA_EVENT_SECRET

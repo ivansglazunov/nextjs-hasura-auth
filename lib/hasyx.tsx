@@ -36,6 +36,7 @@ export class Hasyx {
   public generate: Generate;
   public hasura?: Hasura;
   private _options?: { secret?: string };
+  private _user: any = null;
 
   constructor(apolloClient: HasyxApolloClient, generate: Generate, options?: { secret?: string }) {
     if (!apolloClient) {
@@ -58,6 +59,31 @@ export class Hasyx {
     }
 
     debug('Client class initialized with ApolloClient instance.');
+  }
+
+  /**
+   * Sets the current user object
+   * @param user - User object from session
+   */
+  set user(user: any) {
+    this._user = user;
+    debug('User set:', user);
+  }
+
+  /**
+   * Gets the current user object
+   * @returns Current user object or null
+   */
+  get user(): any {
+    return this._user;
+  }
+
+  /**
+   * Gets the current user ID
+   * @returns User ID string or null
+   */
+  get userId(): string | null {
+    return this._user?.id || null;
   }
 
   /**
