@@ -378,44 +378,23 @@ export class Hasura {
       );
     `);
     
-    if (tableExists.result[1][0]) {
-      debug(`📋 Table ${schema}.${table} already exists, checking id column`);
-      
-      // Check id column
-      const idColumnInfo = await this.sql(`
-        SELECT column_name, data_type, is_nullable, column_default
-        FROM information_schema.columns 
-        WHERE table_schema = '${schema}' 
-        AND table_name = '${table}' 
-        AND column_name = '${id}';
-      `);
-      
-      if (idColumnInfo.result.length > 1) {
-        const columnData = idColumnInfo.result[1];
-        const actualType = columnData[1];
-        
-        if (actualType !== type) {
-          throw new Error(`❌ Table ${schema}.${table} exists but id column ${id} has type ${actualType}, expected ${type}`);
-        }
-        debug(`✅ Table ${schema}.${table} exists with correct id column`);
-      } else {
-        throw new Error(`❌ Table ${schema}.${table} exists but missing id column ${id}`);
-      }
-    } else {
-      // Create schema if not exists
-      await this.sql(`CREATE SCHEMA IF NOT EXISTS "${schema}";`);
-      
-      // Create table with id column
-      const defaultValue = type === ColumnType.UUID ? 'DEFAULT gen_random_uuid()' : '';
-      await this.sql(`
-        CREATE TABLE "${schema}"."${table}" (
-          "${id}" ${type} PRIMARY KEY ${defaultValue},
-          created_at bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-          updated_at bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
-        );
-      `);
-      debug(`✅ Created table ${schema}.${table}`);
+    if (tableExists.result[1][0] === 't') {
+      throw new Error(`❌ Table ${schema}.${table} already exists`);
     }
+    
+    // Create schema if not exists
+    await this.sql(`CREATE SCHEMA IF NOT EXISTS "${schema}";`);
+    
+    // Create table with id column
+    const defaultValue = type === ColumnType.UUID ? 'DEFAULT gen_random_uuid()' : '';
+    await this.sql(`
+      CREATE TABLE "${schema}"."${table}" (
+        "${id}" ${type} PRIMARY KEY ${defaultValue},
+        created_at bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
+        updated_at bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000
+      );
+    `);
+    debug(`✅ Created table ${schema}.${table}`);
     
     // Track table in Hasura
     await this.trackTable({ schema, table });
@@ -437,7 +416,7 @@ export class Hasura {
       );
     `);
     
-    if (tableExists.result[1][0]) {
+    if (tableExists.result[1][0] === 't') {
       debug(`📋 Table ${schema}.${table} already exists, checking id column`);
       
       // Check id column
@@ -803,7 +782,7 @@ export class Hasura {
       );
     `);
     
-    if (functionExists.result[1][0]) {
+    if (functionExists.result[1][0] === 't') {
       throw new Error(`❌ Function ${schema}.${name} already exists`);
     }
     
@@ -858,7 +837,7 @@ export class Hasura {
       );
     `);
     
-    if (triggerExists.result[1][0]) {
+    if (triggerExists.result[1][0] === 't') {
       throw new Error(`❌ Trigger ${name} already exists on ${schema}.${table}`);
     }
     
@@ -926,7 +905,7 @@ export class Hasura {
       );
     `);
     
-    if (constraintExists.result[1][0]) {
+    if (constraintExists.result[1][0] === 't') {
       throw new Error(`❌ Foreign key constraint ${constraintName} already exists`);
     }
     
@@ -986,7 +965,7 @@ export class Hasura {
       );
     `);
     
-    if (viewExists.result[1][0]) {
+    if (viewExists.result[1][0] === 't') {
       throw new Error(`❌ View ${schema}.${name} already exists`);
     }
     
@@ -1380,7 +1359,7 @@ export class Hasura {
       );
     `);
     
-    if (schemaExists.result[1][0]) {
+    if (schemaExists.result[1][0] === 't') {
       throw new Error(`❌ Schema ${schema} already exists`);
     }
     

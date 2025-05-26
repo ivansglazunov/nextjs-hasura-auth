@@ -6,141 +6,72 @@ import Debug from './debug';
 // Initialize debug
 const debug = Debug('migration:down-users');
 
-// SQL for dropping users tables
-const dropTablesSQL = `
-  DROP TABLE IF EXISTS public.accounts CASCADE;
-  DROP TABLE IF EXISTS public.users CASCADE;
-`;
-
-// Metadata for untracking tables
-const tablesToUntrack = [
-  {
-    type: 'pg_untrack_table',
-    args: {
-      source: 'default',
-      table: {
-        schema: 'public',
-        name: 'accounts'
-      },
-      cascade: true // Delete related permissions and relationships
-    }
-  },
-  {
-    type: 'pg_untrack_table',
-    args: {
-      source: 'default',
-      table: {
-        schema: 'public',
-        name: 'users'
-      },
-      cascade: true // Delete related permissions and relationships
-    }
-  }
-];
-
-// Metadata for dropping permissions
-const permissionsToDrop = [
-  // Anonymous permissions
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'users' },
-      role: 'anonymous'
-    }
-  },
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      role: 'anonymous'
-    }
-  },
-  // User permissions
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'users' },
-      role: 'user'
-    }
-  },
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      role: 'user'
-    }
-  },
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'users' },
-      role: 'me'
-    }
-  },
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      role: 'me'
-    }
-  },
-  // Admin permissions
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'users' },
-      role: 'admin'
-    }
-  },
-  {
-    type: 'pg_drop_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      role: 'admin'
-    }
-  }
-];
-
 /**
- * Drop permissions and untrack tables
+ * Drop permissions and untrack tables using high-level methods
  */
 export async function dropMetadata(hasura: Hasura) {
   debug('🧹 Dropping permissions and untracking tables...');
 
-  // Drop all permissions first
   debug('  🗑️ Dropping permissions...');
-  for (const dropRequest of permissionsToDrop) {
-    const perm = `${dropRequest.args.role} on ${dropRequest.args.table.schema}.${dropRequest.args.table.name}`;
-    debug(`     Dropping select permission for ${perm}...`);
-    await hasura.v1(dropRequest);
-    // Note: hasura.v1 handles 'not found' messages internally
-  }
+  
+  // Drop permissions for users table
+  await hasura.deletePermission({
+    schema: 'public',
+    table: 'users',
+    operation: 'select',
+    role: ['user', 'me', 'admin', 'anonymous']
+  });
+  
+  // Drop permissions for accounts table
+  await hasura.deletePermission({
+    schema: 'public',
+    table: 'accounts',
+    operation: 'select',
+    role: ['user', 'me', 'admin', 'anonymous']
+  });
+  
   debug('  ✅ Permissions dropped.');
 
+  debug('  🗑️ Dropping relationships...');
+  
+  // Drop relationships
+  await hasura.deleteRelationship({
+    schema: 'public',
+    table: 'accounts',
+    name: 'user'
+  });
+  
+  await hasura.deleteRelationship({
+    schema: 'public',
+    table: 'users',
+    name: 'accounts'
+  });
+  
+  debug('  ✅ Relationships dropped.');
+
   debug('  🗑️ Untracking tables users and accounts...');
-  for (const untrackRequest of tablesToUntrack) {
-    const tableName = `${untrackRequest.args.table.schema}.${untrackRequest.args.table.name}`;
-    debug(`  📝 Untracking table ${tableName}...`);
-    await hasura.v1(untrackRequest);
-     // Note: hasura.v1 handles 'not found' messages internally
-  }
+  await hasura.untrackTable({ schema: 'public', table: 'accounts' });
+  await hasura.untrackTable({ schema: 'public', table: 'users' });
   debug('✅ Tables untracked.');
 }
 
 /**
- * Drop user and account tables
+ * Drop user and account tables using high-level methods
  */
 export async function dropTables(hasura: Hasura) {
   debug('🧹 Dropping tables users and accounts...');
-  await hasura.sql(dropTablesSQL);
+  
+  // Drop foreign key constraints first
+  await hasura.deleteForeignKey({
+    schema: 'public',
+    table: 'accounts',
+    name: 'accounts_user_id_fkey'
+  });
+  
+  // Drop tables
+  await hasura.deleteTable({ schema: 'public', table: 'accounts' });
+  await hasura.deleteTable({ schema: 'public', table: 'users' });
+  
   debug('✅ Tables dropped successfully.');
 }
 
@@ -150,7 +81,6 @@ export async function dropTables(hasura: Hasura) {
 export async function down(customHasura?: Hasura) {
   debug('🚀 Starting Hasura Users migration DOWN...');
   
-  // Use provided hasura instance or create a new one
   const hasura = customHasura || new Hasura({
     url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!, 
     secret: process.env.HASURA_ADMIN_SECRET!,

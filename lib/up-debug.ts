@@ -1,120 +1,100 @@
-import { Hasura } from './hasura';
+import { Hasura, ColumnType } from './hasura';
 import Debug from './debug';
 
 // Initialize debug
 const debug = Debug('migration:up-debug');
 
-// SQL schema for debug table
-const sqlSchema = `
-  CREATE EXTENSION IF NOT EXISTS "pgcrypto"; -- Ensure pgcrypto is enabled for gen_random_uuid()
-  CREATE TABLE IF NOT EXISTS "public"."debug" (
-      "id" uuid NOT NULL DEFAULT gen_random_uuid(),
-      "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-      "value" jsonb,
-      PRIMARY KEY ("id")
-  );
-`;
-
-// Table to track in Hasura
-const tablesToTrack = [
-  { schema: 'public', name: 'debug' }
-];
-
-// Permissions for admin role
-const adminPermissions = [
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'debug' },
-      role: 'admin',
-      permission: {
-        columns: '*',
-        filter: {}
-      }
-    }
-  },
-  {
-    type: 'pg_create_insert_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'debug' },
-      role: 'admin',
-      permission: {
-        columns: ['value'], // Admin can only insert value, id and created_at are auto-generated
-        check: {},
-        set: {}
-      }
-    }
-  },
-  {
-    type: 'pg_create_update_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'debug' },
-      role: 'admin',
-      permission: {
-        columns: ['value'],
-        filter: {},
-        check: null // Or check: {} if you prefer an explicit empty check
-      }
-    }
-  },
-  {
-    type: 'pg_create_delete_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'debug' },
-      role: 'admin',
-      permission: {
-        filter: {}
-      }
-    }
-  }
-];
-
 /**
- * Apply SQL schema for debug table
+ * Apply SQL schema for debug table using high-level methods
  */
 export async function applySQLSchema(hasura: Hasura) {
   debug('🔧 Applying debug SQL schema...');
-  await hasura.sql(sqlSchema, 'default', true);
+  
+  // Ensure pgcrypto extension exists
+  await hasura.sql('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
+  
+  // Define debug table with columns
+  await hasura.defineTable({ 
+    schema: 'public', 
+    table: 'debug',
+    id: 'id',
+    type: ColumnType.UUID
+  });
+  
+  // Add value column
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'debug',
+    name: 'value',
+    type: ColumnType.JSONB,
+    comment: 'Debug value data'
+  });
+  
   debug('✅ Debug SQL schema applied.');
 }
 
 /**
- * Track debug table in Hasura
+ * Track debug table in Hasura using high-level methods
  */
 export async function trackTables(hasura: Hasura) {
   debug('🔍 Tracking debug table...');
-  for (const table of tablesToTrack) {
-    debug(`  📝 Tracking table ${table.schema}.${table.name}...`);
-    await hasura.v1({
-      type: 'pg_track_table',
-      args: {
-        source: 'default',
-        schema: table.schema,
-        name: table.name
-      }
-    });
-  }
+  
+  await hasura.trackTable({ 
+    schema: 'public', 
+    table: 'debug' 
+  });
+  
   debug('✅ Debug table tracking complete.');
 }
 
 /**
- * Apply all permissions for debug table
+ * Apply all permissions for debug table using high-level methods
  */
 export async function applyPermissions(hasura: Hasura) {
   debug('🔧 Applying debug permissions...');
 
   debug('  📝 Applying admin permissions...');
-  for (const permission of adminPermissions) {
-    const permType = permission.type.replace('pg_create_', '').replace('_permission', '');
-    debug(`     Applying admin ${permType} permission on public.debug...`);
-    await hasura.v1(permission);
-  }
+  
+  // Select permission for admin
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'debug',
+    operation: 'select',
+    role: 'admin',
+    filter: {},
+    columns: true // All columns
+  });
+  
+  // Insert permission for admin
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'debug',
+    operation: 'insert',
+    role: 'admin',
+    filter: {},
+    columns: ['value'] // Admin can only insert value, id and timestamps are auto-generated
+  });
+  
+  // Update permission for admin
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'debug',
+    operation: 'update',
+    role: 'admin',
+    filter: {},
+    columns: ['value']
+  });
+  
+  // Delete permission for admin
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'debug',
+    operation: 'delete',
+    role: 'admin',
+    filter: {}
+  });
+  
   debug('  ✅ Admin permissions applied.');
-
   debug('✅ Debug permissions successfully applied.');
 }
 

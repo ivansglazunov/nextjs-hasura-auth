@@ -153,9 +153,10 @@ Get your Next.js project integrated with Hasura and authentication in minutes!
     Create a `.env` file in your project root (or configure environment variables in your deployment platform). Fill in the necessary details for Hasura, NextAuth, and any OAuth providers you plan to use. See the "Environment Variables" section below for a full example and detailed setup instructions.
 
 4.  **Setup Database & Schema:**
-    *   Create your database tables and relationships. You can adapt the example migrations in the `hasyx` package under `migrations/hasyx/` ([up.ts](./migrations/hasyx/up.ts), [down.ts](./migrations/hasyx/down.ts)). Place your migration scripts in a `migrations/<your_migration_name>/` directory in your project root.
+    *   Create your database tables and relationships using the Hasura class. You can adapt the example migrations in the `hasyx` package under `migrations/hasyx/` ([up.ts](./migrations/hasyx/up.ts), [down.ts](./migrations/hasyx/down.ts)). Place your migration scripts in a `migrations/<your_migration_name>/` directory in your project root. Use `define*` methods for idempotent operations.
     *   Apply migrations: `npx hasyx migrate`
     *   Generate Hasura schema JSON and TypeScript types: `npx hasyx schema`
+    *   📖 **For comprehensive migration guidelines and patterns, see [CONTRIBUTING.md - Writing Database Migrations](./CONTRIBUTING.md#writing-database-migrations).**
 
 5.  **Easy configure ColorMode, Session and Apollo with HasyxProvider:**
     Wrap your application layout (e.g., `app/layout.tsx`) with the Apollo Provider.
@@ -380,10 +381,34 @@ Finds and executes `up.ts` migration scripts located in subdirectories of `./mig
 ```bash
 npx hasyx migrate
 ```
-Ensure your migration scripts handle database connections and operations correctly. See [`migrations`](./migrations/) for an example.
 
 **Important for Writing Migrations:**
-When writing your SQL or TypeScript migration scripts, always use constructs like `IF NOT EXISTS` for `CREATE TABLE`, `CREATE INDEX`, `ADD COLUMN`, etc., and `IF EXISTS` for `DROP` statements. This makes your migrations **idempotent**, meaning they can be run multiple times without causing errors or unintended side effects if the schema changes have already been applied. This is crucial for robust deployment pipelines and local development where migrations might be re-run.
+When writing migration scripts, use the Hasura class from `hasyx/lib/hasura` for consistent and reliable schema management. Always prefer `define*` methods over `create*` methods to ensure idempotency - migrations can be run multiple times without causing errors.
+
+**Quick Example:**
+```typescript
+// migrations/001_example/up.ts
+import { Hasura, ColumnType } from 'hasyx/lib/hasura';
+
+export default async function up() {
+  const hasura = new Hasura({
+    url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
+    secret: process.env.HASURA_ADMIN_SECRET!
+  });
+
+  await hasura.defineSchema({ schema: 'public' });
+  await hasura.defineTable({ schema: 'public', table: 'users' });
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'users',
+    name: 'email',
+    type: ColumnType.TEXT,
+    unique: true
+  });
+}
+```
+
+**📖 For comprehensive migration guidelines, patterns, and best practices, see [CONTRIBUTING.md - Writing Database Migrations](./CONTRIBUTING.md#writing-database-migrations).**
 
 ---
 
@@ -569,7 +594,7 @@ NEXT_PUBLIC_NOTIFICATION_ICON=/icon-192x192.png
 *   `HASURA_JWT_SECRET`: **Required** if your Hasura instance is configured to use JWT authentication mode. This variable must contain the *exact* same JWT configuration (type and key) as set in your Hasura environment variables. Hasyx uses this internally to generate Hasura-compatible JWTs based on the NextAuth session.
 *   `HASURA_EVENT_SECRET`: **Required** for secure communication between Hasura and your event trigger handlers. This secret is automatically added as a header to event trigger requests from Hasura and verified by your handlers. It prevents unauthorized requests to your event trigger endpoints. Generate a strong, random string similar to NEXTAUTH_SECRET.
 
-    *   **Migrations:** Define your database changes in `up.ts` and rollbacks in `down.ts` files within `./migrations/<n>/` directories (see [example up](./migrations/hasyx/up.ts), [example down](./migrations/hasyx/down.ts)). Run `npx hasyx migrate` to apply or `npx hasyx unmigrate` to revert.
+    *   **Migrations:** Define your database changes using the Hasura class in `up.ts` and rollbacks in `down.ts` files within `./migrations/<n>/` directories (see [example up](./migrations/hasyx/up.ts), [example down](./migrations/hasyx/down.ts)). Use `define*` methods for idempotent operations. Run `npx hasyx migrate` to apply or `npx hasyx unmigrate` to revert. See [CONTRIBUTING.md - Writing Database Migrations](./CONTRIBUTING.md#writing-database-migrations) for comprehensive guidelines.
     *   **Schema Updates:** After changing your database structure (and running migrations), update the local schema representation and types by running `npx hasyx schema`.
 
 #### NextAuth.js (`NEXTAUTH_SECRET`)

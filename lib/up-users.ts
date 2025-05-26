@@ -1,340 +1,321 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { Hasura } from './hasura';
+import { Hasura, ColumnType } from './hasura';
 import Debug from './debug';
 
 // Initialize debug
 const debug = Debug('migration:up-users');
 
-const sqlSchema = `
-  -- Create schema if not exists
-  CREATE SCHEMA IF NOT EXISTS public;
-
-  -- Users table
-  CREATE TABLE IF NOT EXISTS public.users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT,
-    email TEXT UNIQUE,
-    email_verified BIGINT,
-    image TEXT,
-    password TEXT,
-    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-    is_admin BOOLEAN DEFAULT FALSE,
-    hasura_role TEXT DEFAULT 'user' -- Make sure default role is 'user'
-  );
-
-  -- Accounts table
-  CREATE TABLE IF NOT EXISTS public.accounts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    type TEXT NOT NULL,
-    provider TEXT NOT NULL,
-    provider_account_id TEXT NOT NULL,
-    refresh_token TEXT,
-    access_token TEXT,
-    expires_at BIGINT,
-    token_type TEXT,
-    scope TEXT,
-    id_token TEXT,
-    session_state TEXT,
-    oauth_token_secret TEXT,
-    oauth_token TEXT,
-    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000,
-    UNIQUE(provider, provider_account_id)
-  );
-`;
-
-const tablesToTrack = [
-  { schema: 'public', name: 'users' },
-  { schema: 'public', name: 'accounts' }
-];
-
-const relationships = [
-  {
-    type: 'pg_create_object_relationship',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      name: 'user',
-      using: {
-        foreign_key_constraint_on: 'user_id'
-      }
-    }
-  },
-  {
-    type: 'pg_create_array_relationship',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'users' },
-      name: 'accounts',
-      using: {
-        foreign_key_constraint_on: {
-          table: { schema: 'public', name: 'accounts' },
-          column: 'user_id'
-        }
-      }
-    }
-  }
-];
-
-// Permission definitions from init-gql.js
-const permissionsToDrop = [
-  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'users' }, role: 'user' } },
-  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'users' }, role: 'admin' } },
-  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'accounts' }, role: 'admin' } },
-  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'accounts' }, role: 'anonymous' } },
-  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'accounts' }, role: 'me' } },
-  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'accounts' }, role: 'user' } },
-];
-
-const userPermissions = [
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'users' },
-      role: 'user',
-      permission: {
-        columns: ['id', 'name', 'image', 'created_at', 'updated_at', 'hasura_role'],
-        filter: {}
-      },
-      comment: 'Users can see limited data (including name and image) of other users'
-    }
-  },
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'users' },
-      role: 'me',
-      permission: {
-        columns: [
-          'id',
-          'name',
-          'email',
-          'email_verified',
-          'image',
-          'created_at',
-          'updated_at',
-          'is_admin',
-          'hasura_role'
-        ],
-        filter: {
-          id: { _eq: 'X-Hasura-User-Id' }
-        }
-      },
-      comment: 'Users can see their own full information'
-    }
-  },
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      role: 'me',
-      permission: {
-        columns: [
-          'id',
-          'user_id',
-          'type',
-          'provider',
-          'provider_account_id',
-          'refresh_token',
-          'access_token',
-          'expires_at',
-          'token_type',
-          'scope',
-          'id_token',
-          'session_state',
-          'created_at'
-        ],
-        filter: {
-          user_id: { _eq: 'X-Hasura-User-Id' }
-        }
-      },
-      comment: 'Users can see their own full account details'
-    }
-  },
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      role: 'user',
-      permission: {
-        columns: ['id', 'provider', 'user_id'],
-        filter: {}
-      },
-      comment: 'Users can see id, provider, and user_id of all accounts'
-    }
-  }
-];
-
-const adminPermissions = [
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'users' },
-      role: 'admin',
-      permission: {
-        columns: ['id', 'name', 'email', 'email_verified', 'image', 'created_at', 'updated_at', 'is_admin', 'hasura_role'],
-        filter: {}
-      },
-      comment: 'Admins can see full info of all users (excluding password)'
-    }
-  },
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      role: 'admin',
-      permission: {
-        columns: ['id', 'user_id', 'type', 'provider', 'provider_account_id', 'created_at'],
-        filter: {}
-      },
-      comment: 'Admins can see basic account info'
-    }
-  },
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      role: 'anonymous',
-      permission: {
-        columns: ['id', 'user_id', 'provider'],
-        filter: {}
-      },
-      comment: 'Anonymous users can see basic account info (id, user_id, provider)'
-    }
-  }
-];
-
-// Anonymous Permissions Definition
-const anonymousPermissions = [
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'users' },
-      role: 'anonymous',
-      permission: {
-        columns: ['id', 'name', 'image', 'created_at', 'updated_at', 'hasura_role'],
-        filter: {} // Allow access to all rows
-      },
-      comment: 'Anonymous users can see basic user info including name and image'
-    }
-  },
-  {
-    type: 'pg_create_select_permission',
-    args: {
-      source: 'default',
-      table: { schema: 'public', name: 'accounts' },
-      role: 'anonymous',
-      permission: {
-        columns: ['id', 'provider', 'user_id'],
-        filter: {}
-      },
-      comment: 'Anonymous users can see id, provider, and user_id of all accounts'
-    }
-  }
-];
-
-/**
- * Apply SQL schema for hasyx auth tables
- */
 export async function applySQLSchema(hasura: Hasura) {
-  debug('🔧 Applying SQL schema...');
-  await hasura.sql(sqlSchema, 'default', true); // cascade = true
-  debug('✅ SQL schema applied.');
+  debug('🔧 Applying users SQL schema...');
+  
+  // Ensure public schema exists
+  await hasura.defineSchema({ schema: 'public' });
+  
+  // Define users table
+  await hasura.defineTable({
+    schema: 'public',
+    table: 'users',
+    id: 'id',
+    type: ColumnType.UUID
+  });
+  
+  // Add users table columns
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'users',
+    name: 'name',
+    type: ColumnType.TEXT,
+    comment: 'User display name'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'users',
+    name: 'email',
+    type: ColumnType.TEXT,
+    unique: true,
+    comment: 'User email address'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'users',
+    name: 'email_verified',
+    type: ColumnType.BIGINT,
+    comment: 'Email verification timestamp'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'users',
+    name: 'image',
+    type: ColumnType.TEXT,
+    comment: 'User profile image URL'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'users',
+    name: 'password',
+    type: ColumnType.TEXT,
+    comment: 'User password hash'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'users',
+    name: 'is_admin',
+    type: ColumnType.BOOLEAN,
+    postfix: 'DEFAULT FALSE',
+    comment: 'Admin flag'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'users',
+    name: 'hasura_role',
+    type: ColumnType.TEXT,
+    postfix: "DEFAULT 'user'",
+    comment: 'Hasura role for permissions'
+  });
+  
+  // Define accounts table
+  await hasura.defineTable({
+    schema: 'public',
+    table: 'accounts',
+    id: 'id',
+    type: ColumnType.UUID
+  });
+  
+  // Add accounts table columns
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'user_id',
+    type: ColumnType.UUID,
+    postfix: 'NOT NULL',
+    comment: 'Reference to users table'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'type',
+    type: ColumnType.TEXT,
+    postfix: 'NOT NULL',
+    comment: 'Account type'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'provider',
+    type: ColumnType.TEXT,
+    postfix: 'NOT NULL',
+    comment: 'OAuth provider'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'provider_account_id',
+    type: ColumnType.TEXT,
+    postfix: 'NOT NULL',
+    comment: 'Provider account ID'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'refresh_token',
+    type: ColumnType.TEXT,
+    comment: 'OAuth refresh token'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'access_token',
+    type: ColumnType.TEXT,
+    comment: 'OAuth access token'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'expires_at',
+    type: ColumnType.BIGINT,
+    comment: 'Token expiration timestamp'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'token_type',
+    type: ColumnType.TEXT,
+    comment: 'Token type'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'scope',
+    type: ColumnType.TEXT,
+    comment: 'OAuth scope'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'id_token',
+    type: ColumnType.TEXT,
+    comment: 'OAuth ID token'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'session_state',
+    type: ColumnType.TEXT,
+    comment: 'OAuth session state'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'oauth_token_secret',
+    type: ColumnType.TEXT,
+    comment: 'OAuth token secret'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'oauth_token',
+    type: ColumnType.TEXT,
+    comment: 'OAuth token'
+  });
+  
+  // Create foreign key constraint
+  await hasura.defineForeignKey({
+    from: { schema: 'public', table: 'accounts', column: 'user_id' },
+    to: { schema: 'public', table: 'users', column: 'id' },
+    on_delete: 'CASCADE',
+    on_update: 'CASCADE'
+  });
+  
+  // Create unique constraint for provider + provider_account_id
+  await hasura.sql(`
+    ALTER TABLE "public"."accounts" 
+    DROP CONSTRAINT IF EXISTS "accounts_provider_provider_account_id_unique";
+    ALTER TABLE "public"."accounts" 
+    ADD CONSTRAINT "accounts_provider_provider_account_id_unique" 
+    UNIQUE ("provider", "provider_account_id");
+  `);
+  
+  debug('✅ Users SQL schema applied.');
 }
 
-/**
- * Track tables in Hasura
- */
 export async function trackTables(hasura: Hasura) {
-  debug('🔍 Tracking tables...');
-  for (const table of tablesToTrack) {
-    debug(`  📝 Tracking table ${table.schema}.${table.name}...`);
-    await hasura.v1({
-      type: 'pg_track_table',
-      args: {
-        source: 'default',
-        schema: table.schema,
-        name: table.name
-      }
-    });
-    // Note: hasura.v1 handles 'already tracked' messages internally
-  }
-  debug('✅ Table tracking complete.');
+  debug('🔍 Tracking users tables...');
+  
+  await hasura.trackTable({ schema: 'public', table: 'users' });
+  await hasura.trackTable({ schema: 'public', table: 'accounts' });
+  
+  debug('✅ Users tables tracking complete.');
 }
 
-/**
- * Create relationships between tables
- */
 export async function createRelationships(hasura: Hasura) {
-  debug('🔗 Creating relationships...');
-  for (const relationship of relationships) {
-     debug(`  📝 Creating relationship ${relationship.args.name} for table ${relationship.args.table.name}...`);
-     await hasura.v1(relationship);
-     // Note: hasura.v1 handles 'already exists' messages internally
-  }
-  debug('✅ Relationships created.');
+  debug('🔗 Creating users relationships...');
+  
+  // Object relationship: accounts -> user
+  await hasura.defineObjectRelationshipForeign({
+    schema: 'public',
+    table: 'accounts',
+    name: 'user',
+    key: 'user_id'
+  });
+  
+  // Array relationship: users -> accounts
+  await hasura.defineArrayRelationshipForeign({
+    schema: 'public',
+    table: 'users',
+    name: 'accounts',
+    key: 'accounts.user_id'
+  });
+  
+  debug('✅ Users relationships created.');
 }
 
-/**
- * Apply all permissions for users, admins, and anonymous roles
- */
 export async function applyPermissions(hasura: Hasura) {
-  debug('🔧 Applying permissions...');
+  debug('🔧 Applying users permissions...');
 
-  debug('  🗑️ Dropping existing permissions (if any)...');
-  for (const permToDrop of permissionsToDrop) {
-    debug(`     Dropping ${permToDrop.args.role}.${permToDrop.args.table.name}...`);
-    await hasura.v1(permToDrop);
-    // Note: hasura.v1 handles 'not found' messages internally
-  }
-  debug('  ✅ Existing permissions dropped.');
+  // User permissions
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'users',
+    operation: 'select',
+    role: 'user',
+    filter: {},
+    columns: ['id', 'name', 'image', 'created_at', 'updated_at', 'hasura_role']
+  });
 
-  debug('  📝 Applying user permissions...');
-  for (const permission of userPermissions) {
-    debug(`     Applying ${permission.args.role}.${permission.args.table.name}...`);
-    await hasura.v1(permission);
-    // Note: hasura.v1 handles 'already defined' messages internally
-  }
-  debug('  ✅ User permissions applied.');
+  // Me permissions (user can see their own full data)
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'users',
+    operation: 'select',
+    role: 'me',
+    filter: { id: { _eq: 'X-Hasura-User-Id' } },
+    columns: ['id', 'name', 'email', 'email_verified', 'image', 'created_at', 'updated_at', 'is_admin', 'hasura_role']
+  });
 
-  debug('  📝 Applying admin permissions...');
-  for (const permission of adminPermissions) {
-     debug(`     Applying ${permission.args.role}.${permission.args.table.name}...`);
-     await hasura.v1(permission);
-     // Note: hasura.v1 handles 'already defined' messages internally
-  }
-  debug('  ✅ Admin permissions applied.');
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'accounts',
+    operation: 'select',
+    role: 'me',
+    filter: { user_id: { _eq: 'X-Hasura-User-Id' } },
+    columns: ['id', 'user_id', 'type', 'provider', 'provider_account_id', 'refresh_token', 'access_token', 'expires_at', 'token_type', 'scope', 'id_token', 'session_state', 'created_at']
+  });
 
-  debug('  📝 Applying anonymous permissions...');
-  for (const permission of anonymousPermissions) {
-     debug(`     Applying ${permission.args.role}.${permission.args.table.name}...`);
-     await hasura.v1(permission);
-     // Note: hasura.v1 handles 'already defined' messages internally
-  }
-  debug('  ✅ Anonymous permissions applied.');
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'accounts',
+    operation: 'select',
+    role: 'user',
+    filter: {},
+    columns: ['id', 'provider', 'user_id']
+  });
 
-  debug('✅ Permissions successfully applied.');
+  // Admin permissions
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'users',
+    operation: 'select',
+    role: 'admin',
+    filter: {},
+    columns: ['id', 'name', 'email', 'email_verified', 'image', 'created_at', 'updated_at', 'is_admin', 'hasura_role']
+  });
+
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'accounts',
+    operation: 'select',
+    role: 'admin',
+    filter: {},
+    columns: ['id', 'user_id', 'type', 'provider', 'provider_account_id', 'created_at']
+  });
+
+  debug('✅ Users permissions applied.');
 }
 
-/**
- * Main migration function for hasyx users
- */
 export async function up(customHasura?: Hasura) {
   debug('🚀 Starting Hasura Users migration UP...');
   
-  // Use provided hasura instance or create a new one
   const hasura = customHasura || new Hasura({
-    url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!, 
+    url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
     secret: process.env.HASURA_ADMIN_SECRET!,
   });
   
@@ -342,11 +323,12 @@ export async function up(customHasura?: Hasura) {
     await applySQLSchema(hasura);
     await trackTables(hasura);
     await createRelationships(hasura);
-    await applyPermissions(hasura); // Apply GQL permissions after tables/relationships
+    await applyPermissions(hasura);
     debug('✨ Hasura Users migration UP completed successfully!');
     return true;
-  } catch (error: any) {
-    debug('❗ Critical error during Users UP migration:', error);
-    throw error;
+  } catch (error) {
+    console.error('❗ Critical error during Users UP migration:', error);
+    debug('❌ Users UP Migration failed.');
+    return false;
   }
 } 

@@ -541,7 +541,7 @@ program
         
         // Required npm scripts with their exact values
         const requiredScripts = {
-          "test": "jest",
+          "test": "jest --verbose",
           "build": "NODE_ENV=production npx -y hasyx build",
           "unbuild": "npx -y hasyx unbuild",
           "start": "NODE_ENV=production npx -y hasyx start",
@@ -1696,118 +1696,33 @@ program
   .option('-e, --eval <script>', 'Evaluate a string of JavaScript code')
   .action(async (filePath, options) => {
     debug('Executing "js" command with filePath:', filePath, 'and options:', options);
-    console.log('🚀 Initializing Hasyx JS environment...');
-
+    
     const projectRoot = findProjectRoot();
-
-    // 1. Load environment variables (already done at the top of cli.ts)
-    // Ensure dotenv.config() has been called.
-    if (!process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL || !process.env.HASURA_ADMIN_SECRET) {
-      console.error('❌ Missing required environment variables: NEXT_PUBLIC_HASURA_GRAPHQL_URL and/or HASURA_ADMIN_SECRET.');
-      console.error('   Please ensure they are set in your .env file.');
-      process.exit(1);
-    }
-
-    // 2. Load Hasura schema for Generator
-    let schema;
-    const schemaPath = path.join(projectRoot, 'public', 'hasura-schema.json');
-    try {
-      if (fs.existsSync(schemaPath)) {
-        schema = await fs.readJson(schemaPath);
-        debug('Successfully loaded hasura-schema.json');
-      } else {
-        console.error(`❌ Hasura schema not found at ${schemaPath}`);
-        console.error('   Please run `npx hasyx schema` first to generate it.');
-        process.exit(1);
-      }
-    } catch (err) {
-      console.error(`❌ Error reading Hasura schema at ${schemaPath}:`, err);
-      process.exit(1);
-    }
-
-    // 3. Create Hasyx client instance
-    let client: Hasyx;
-    try {
-      const apolloAdminClient = createApolloClient({
-        secret: process.env.HASURA_ADMIN_SECRET!,
-        url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
-      });
-      const generator = Generator(schema);
-      client = new Hasyx(apolloAdminClient, generator);
-      console.log('✅ Hasyx client initialized with admin privileges.');
-      debug('Hasyx client created successfully.');
-    } catch (err) {
-      console.error('❌ Failed to initialize Hasyx client:', err);
-      process.exit(1);
-    }
-
-    const scriptContext = vm.createContext({
-      client,
-      console,
-      process,
-      require,
-      __filename: filePath ? path.resolve(filePath) : 'eval',
-      __dirname: filePath ? path.dirname(path.resolve(filePath)) : process.cwd(),
-      setTimeout,
-      clearTimeout,
-      setInterval,
-      clearInterval,
-      URL, // Add URL constructor to the context
-      URLSearchParams, // Add URLSearchParams to the context
-      TextEncoder, // Add TextEncoder
-      TextDecoder, // Add TextDecoder
-      Buffer, // Add Buffer
-      // You can add more Node.js globals or custom utilities here
-    });
-
+    const jsScriptPath = path.join(projectRoot, 'lib', 'js.ts');
+    
+    // Build arguments for the js script
+    const args: string[] = [];
     if (options.eval) {
-      debug(`Executing script string: ${options.eval}`);
-      try {
-        // Wrap the user's script in an async IIFE to allow top-level await
-        const wrappedScript = `(async () => { ${options.eval} })();`;
-        const script = new vm.Script(wrappedScript, { filename: 'eval' });
-        script.runInContext(scriptContext);
-        // Consider if REPL should exit or stay open after -e. For now, it exits.
-      } catch (error) {
-        console.error('❌ Error executing script string:', error);
-        process.exit(1);
-      }
+      args.push('-e', options.eval);
     } else if (filePath) {
-      const fullPath = path.resolve(filePath);
-      debug(`Executing script file: ${fullPath}`);
-      if (!fs.existsSync(fullPath)) {
-        console.error(`❌ Script file not found: ${fullPath}`);
-        process.exit(1);
-      }
-      try {
-        // Wrap the file content in an async IIFE to allow top-level await if it's not already an ES module
-        // However, for files, it's better to let users manage async themselves or use ES modules with top-level await.
-        // For simplicity and direct execution of potentially more complex files, we don't auto-wrap file content here.
-        // If a file needs top-level await, it should be an ES module or use an IIFE itself.
-        const fileContent = await fs.readFile(fullPath, 'utf-8');
-        const script = new vm.Script(fileContent, { filename: fullPath });
-        script.runInContext(scriptContext);
-      } catch (error) {
-        console.error(`❌ Error executing script file ${filePath}:`, error);
-        process.exit(1);
-      }
-    } else {
-      debug('Starting REPL session.');
-      console.log('🟢 Hasyx REPL started. `client` variable is available.');
-      console.log('   Type .exit to close.');
-      const replServer = repl.start({
-        prompt: 'hasyx > ',
-        useGlobal: false, // Important to use the context
-      });
-
-      // Assign context variables to the REPL context
-      Object.assign(replServer.context, scriptContext);
-
-      replServer.on('exit', () => {
-        console.log('👋 Exiting Hasyx REPL.');
-        process.exit(0);
-      });
+      args.push(filePath);
     }
+    
+    // Execute the js script using tsx
+    const { spawn } = require('child_process');
+    const child = spawn('npx', ['tsx', jsScriptPath, ...args], {
+      stdio: 'inherit',
+      cwd: projectRoot
+    });
+    
+    child.on('exit', (code) => {
+      process.exit(code || 0);
+    });
+    
+    child.on('error', (error) => {
+      console.error('❌ Error executing JS environment:', error);
+      process.exit(1);
+    });
   });
 
 debug('Parsing CLI arguments...');

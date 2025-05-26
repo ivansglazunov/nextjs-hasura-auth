@@ -4,63 +4,62 @@ import Debug from './debug';
 // Initialize debug
 const debug = Debug('migration:down-debug');
 
-// SQL for dropping debug table
-const dropTablesSQL = `
-  DROP TABLE IF EXISTS "public"."debug" CASCADE;
-`;
-
-// Metadata for untracking table
-const tablesToUntrack = [
-  {
-    type: 'pg_untrack_table',
-    args: {
-      source: 'default',
-      table: {
-        schema: 'public',
-        name: 'debug'
-      },
-      cascade: true
-    }
-  }
-];
-
-// Metadata for dropping permissions
-const permissionsToDrop = [
-  { type: 'pg_drop_select_permission', args: { source: 'default', table: { schema: 'public', name: 'debug' }, role: 'admin' } },
-  { type: 'pg_drop_insert_permission', args: { source: 'default', table: { schema: 'public', name: 'debug' }, role: 'admin' } },
-  { type: 'pg_drop_update_permission', args: { source: 'default', table: { schema: 'public', name: 'debug' }, role: 'admin' } },
-  { type: 'pg_drop_delete_permission', args: { source: 'default', table: { schema: 'public', name: 'debug' }, role: 'admin' } }
-];
-
 /**
- * Drop permissions and untrack table
+ * Drop permissions and untrack table using high-level methods
  */
 export async function dropMetadata(hasura: Hasura) {
   debug('🧹 Dropping debug permissions and untracking table...');
 
   debug('  🗑️ Dropping permissions...');
-  for (const dropRequest of permissionsToDrop) {
-    const permType = dropRequest.type.replace('pg_drop_', '').replace('_permission', '');
-    debug(`     Dropping ${permType} permission for admin on public.debug...`);
-    await hasura.v1(dropRequest);
-  }
+  
+  // Drop all permissions for admin role
+  await hasura.deletePermission({
+    schema: 'public',
+    table: 'debug',
+    operation: 'select',
+    role: 'admin'
+  });
+  
+  await hasura.deletePermission({
+    schema: 'public',
+    table: 'debug',
+    operation: 'insert',
+    role: 'admin'
+  });
+  
+  await hasura.deletePermission({
+    schema: 'public',
+    table: 'debug',
+    operation: 'update',
+    role: 'admin'
+  });
+  
+  await hasura.deletePermission({
+    schema: 'public',
+    table: 'debug',
+    operation: 'delete',
+    role: 'admin'
+  });
+  
   debug('  ✅ Permissions dropped.');
   
   debug('  🗑️ Untracking table debug...');
-  for (const untrackRequest of tablesToUntrack) {
-    const tableName = `${untrackRequest.args.table.schema}.${untrackRequest.args.table.name}`;
-    debug(`  📝 Untracking table ${tableName}...`);
-    await hasura.v1(untrackRequest);
-  }
+  await hasura.untrackTable({ 
+    schema: 'public', 
+    table: 'debug' 
+  });
   debug('✅ Table untracked.');
 }
 
 /**
- * Drop debug table
+ * Drop debug table using high-level methods
  */
 export async function dropTables(hasura: Hasura) {
   debug('🧹 Dropping debug table...');
-  await hasura.sql(dropTablesSQL);
+  await hasura.deleteTable({ 
+    schema: 'public', 
+    table: 'debug' 
+  });
   debug('✅ Debug table dropped successfully.');
 }
 

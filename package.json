@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.190",
+  "version": "0.1.191",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -21,7 +21,7 @@
     "build:ios": "npm run build:client && npm run cli -- assets && npx cap sync ios",
     "start": "NODE_ENV=production npx -y hasyx start",
     "lint": "next lint --turbopack",
-    "test": "jest",
+    "test": "jest --verbose",
     "test:build": "jest build.test.ts",
     "postinstall": "npm run ws -- -y",
     "ws": "npx --yes next-ws-cli@latest patch -y",
@@ -33,7 +33,8 @@
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
     "npm-publish": "npm run build && npm publish",
     "cli": "tsx ./lib/cli.ts",
-    "assist": "tsx ./lib/assist.ts"
+    "assist": "tsx ./lib/assist.ts",
+    "js": "tsx lib/js.ts"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
