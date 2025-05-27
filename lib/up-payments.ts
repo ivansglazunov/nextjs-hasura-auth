@@ -15,7 +15,7 @@ async function createPaymentProviders(hasura: Hasura) {
   
   await hasura.defineTable({ schema: 'payments', table: 'providers' });
   
-  // Define columns
+  // Define columns using high-level methods
   await hasura.defineColumn({
     schema: 'payments',
     table: 'providers',
@@ -90,7 +90,7 @@ async function createPaymentProviders(hasura: Hasura) {
     comment: 'Active status'
   });
   
-  // Define foreign key
+  // Define foreign key using high-level method
   await hasura.defineForeignKey({
     from: { schema: 'payments', table: 'providers', column: 'user_id' },
     to: { schema: 'public', table: 'users', column: 'id' },
@@ -109,7 +109,7 @@ async function createPaymentMethods(hasura: Hasura) {
   
   await hasura.defineTable({ schema: 'payments', table: 'methods' });
   
-  // Define columns
+  // Define all columns
   await hasura.defineColumn({
     schema: 'payments',
     table: 'methods',
@@ -222,7 +222,7 @@ async function createPaymentPlans(hasura: Hasura) {
   
   await hasura.defineTable({ schema: 'payments', table: 'plans' });
   
-  // Define columns
+  // Define columns using high-level methods only
   await hasura.defineColumn({
     schema: 'payments',
     table: 'plans',
@@ -264,7 +264,7 @@ async function createPaymentPlans(hasura: Hasura) {
     name: 'interval',
     type: ColumnType.TEXT,
     postfix: 'NOT NULL',
-    comment: 'Billing interval'
+    comment: 'Billing interval: "minute", "hour", "day", "week", "month", "year"'
   });
   
   await hasura.defineColumn({
@@ -273,7 +273,7 @@ async function createPaymentPlans(hasura: Hasura) {
     name: 'interval_count',
     type: ColumnType.INTEGER,
     postfix: 'NOT NULL',
-    comment: 'Interval count'
+    comment: 'Interval count - how many intervals between charges (minimum 1)'
   });
   
   await hasura.defineColumn({
@@ -326,9 +326,6 @@ async function createPaymentPlans(hasura: Hasura) {
     on_update: 'SET NULL'
   });
   
-  // Add constraints
-  await hasura.sql(`ALTER TABLE "payments"."plans" ADD CONSTRAINT "plans_price_check" CHECK (price >= 0);`);
-  
   debug('payments.plans table created successfully.');
 }
 
@@ -337,7 +334,7 @@ async function createPaymentSubscriptions(hasura: Hasura) {
   
   await hasura.defineTable({ schema: 'payments', table: 'subscriptions' });
   
-  // Define columns
+  // Define all columns
   await hasura.defineColumn({
     schema: 'payments',
     table: 'subscriptions',
@@ -455,6 +452,49 @@ async function createPaymentSubscriptions(hasura: Hasura) {
     comment: 'Subscription metadata'
   });
   
+  // Scheduling fields for automatic billing
+  await hasura.defineColumn({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'next_billing_date',
+    type: ColumnType.BIGINT,
+    comment: 'Next billing date timestamp'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'last_billing_date',
+    type: ColumnType.BIGINT,
+    comment: 'Last successful billing date timestamp'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'billing_retry_count',
+    type: ColumnType.INTEGER,
+    postfix: 'DEFAULT 0',
+    comment: 'Number of failed billing attempts for current period'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'max_billing_retries',
+    type: ColumnType.INTEGER,
+    postfix: 'DEFAULT 3',
+    comment: 'Maximum number of billing retry attempts'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'billing_anchor_date',
+    type: ColumnType.BIGINT,
+    comment: 'Anchor date for billing cycle calculations'
+  });
+  
   // Define foreign keys
   await hasura.defineForeignKey({
     from: { schema: 'payments', table: 'subscriptions', column: 'user_id' },
@@ -466,7 +506,7 @@ async function createPaymentSubscriptions(hasura: Hasura) {
   await hasura.defineForeignKey({
     from: { schema: 'payments', table: 'subscriptions', column: 'method_id' },
     to: { schema: 'payments', table: 'methods', column: 'id' },
-    on_delete: 'CASCADE',
+    on_delete: 'RESTRICT',
     on_update: 'RESTRICT'
   });
   
@@ -492,7 +532,7 @@ async function createPaymentOperations(hasura: Hasura) {
   
   await hasura.defineTable({ schema: 'payments', table: 'operations' });
   
-  // Define columns
+  // Define all columns using high-level methods
   await hasura.defineColumn({
     schema: 'payments',
     table: 'operations',
@@ -656,9 +696,6 @@ async function createPaymentOperations(hasura: Hasura) {
     on_update: 'SET NULL'
   });
   
-  // Add constraints
-  await hasura.sql(`ALTER TABLE "payments"."operations" ADD CONSTRAINT "operations_amount_check" CHECK (amount >= 0);`);
-  
   debug('payments.operations table created successfully.');
 }
 
@@ -718,21 +755,7 @@ async function createUserPaymentProviderMappings(hasura: Hasura) {
     on_update: 'CASCADE'
   });
   
-  // Define unique constraint
-  await hasura.sql(`ALTER TABLE "payments"."user_payment_provider_mappings" ADD CONSTRAINT "user_payment_provider_mappings_unique" UNIQUE ("user_id", "provider_id", "provider_customer_key");`);
-  
   debug('payments.user_payment_provider_mappings table created successfully.');
-}
-
-async function createIndexes(hasura: Hasura) {
-  debug('Creating indexes for payment tables...');
-  
-  // Add indexes for better performance
-  await hasura.sql(`CREATE INDEX IF NOT EXISTS "idx_methods_user_id" ON "payments"."methods" ("user_id");`);
-  await hasura.sql(`CREATE INDEX IF NOT EXISTS "idx_operations_user_id" ON "payments"."operations" ("user_id");`);
-  await hasura.sql(`CREATE INDEX IF NOT EXISTS "idx_subscriptions_user_id" ON "payments"."subscriptions" ("user_id");`);
-  
-  debug('Indexes created successfully.');
 }
 
 async function trackPaymentTables(hasura: Hasura) {
@@ -1070,7 +1093,7 @@ async function applyPaymentPermissions(hasura: Hasura) {
     operation: 'insert',
     role: 'user',
     filter: { user_id: { _eq: 'X-Hasura-User-Id' } },
-    columns: ['method_id', 'plan_id', 'provider_id', 'status', 'current_period_start', 'current_period_end', 'trial_ends_at', 'object_hid', 'metadata']
+    columns: ['method_id', 'plan_id', 'provider_id', 'external_subscription_id', 'status', 'current_period_start', 'current_period_end', 'trial_ends_at', 'next_billing_date', 'last_billing_date', 'billing_retry_count', 'max_billing_retries', 'billing_anchor_date', 'object_hid', 'metadata']
   });
   
   await hasura.definePermission({
@@ -1098,7 +1121,7 @@ async function applyPaymentPermissions(hasura: Hasura) {
     operation: 'insert',
     role: 'user',
     filter: { user_id: { _eq: 'X-Hasura-User-Id' } },
-    columns: ['method_id', 'provider_id', 'subscription_id', 'amount', 'currency', 'status', 'description', 'object_hid', 'initiated_at', 'metadata']
+    columns: ['method_id', 'provider_id', 'external_operation_id', 'subscription_id', 'amount', 'currency', 'status', 'description', 'object_hid', 'provider_request_details', 'initiated_at', 'metadata']
   });
 
   // payments.user_payment_provider_mappings
@@ -1217,6 +1240,203 @@ async function applyPaymentPermissions(hasura: Hasura) {
   debug('Permissions for payment tables applied successfully.');
 }
 
+async function createBillingComputedFields(hasura: Hasura) {
+  debug('Creating billing computed fields and functions...');
+  
+  // Create PostgreSQL function to calculate next billing date from last successful operation
+  await hasura.defineFunction({
+    schema: 'payments',
+    name: 'calculate_next_billing_date',
+    definition: `
+    CREATE OR REPLACE FUNCTION payments.calculate_next_billing_date(subscription_row payments.subscriptions)
+    RETURNS bigint AS $$
+    DECLARE
+        last_operation_date bigint;
+        plan_interval text;
+        plan_interval_count integer;
+        next_date timestamp;
+    BEGIN
+        -- Get the last successful operation date for this subscription
+        SELECT paid_at INTO last_operation_date
+        FROM payments.operations 
+        WHERE subscription_id = subscription_row.id 
+          AND status = 'succeeded' 
+          AND paid_at IS NOT NULL
+        ORDER BY paid_at DESC 
+        LIMIT 1;
+        
+        -- If no successful operations, use subscription creation date or billing_anchor_date
+        IF last_operation_date IS NULL THEN
+            last_operation_date := COALESCE(subscription_row.billing_anchor_date, subscription_row.created_at);
+        END IF;
+        
+        -- Get plan details
+        SELECT interval, interval_count INTO plan_interval, plan_interval_count
+        FROM payments.plans 
+        WHERE id = subscription_row.plan_id;
+        
+        -- Calculate next billing date based on interval
+        next_date := to_timestamp(last_operation_date / 1000);
+        
+        CASE plan_interval
+            WHEN 'minute' THEN
+                next_date := next_date + (plan_interval_count || ' minutes')::interval;
+            WHEN 'hour' THEN
+                next_date := next_date + (plan_interval_count || ' hours')::interval;
+            WHEN 'day' THEN
+                next_date := next_date + (plan_interval_count || ' days')::interval;
+            WHEN 'week' THEN
+                next_date := next_date + (plan_interval_count || ' weeks')::interval;
+            WHEN 'month' THEN
+                next_date := next_date + (plan_interval_count || ' months')::interval;
+            WHEN 'year' THEN
+                next_date := next_date + (plan_interval_count || ' years')::interval;
+            ELSE
+                RAISE EXCEPTION 'Unsupported interval: %', plan_interval;
+        END CASE;
+        
+        RETURN EXTRACT(EPOCH FROM next_date) * 1000;
+    END;
+    $$ LANGUAGE plpgsql STABLE;`,
+    language: 'plpgsql',
+    replace: true
+  });
+  
+  // Create function to get last billing date from operations
+  await hasura.defineFunction({
+    schema: 'payments',
+    name: 'get_last_billing_date',
+    definition: `
+    CREATE OR REPLACE FUNCTION payments.get_last_billing_date(subscription_row payments.subscriptions)
+    RETURNS bigint AS $$
+    BEGIN
+        RETURN (
+            SELECT paid_at
+            FROM payments.operations 
+            WHERE subscription_id = subscription_row.id 
+              AND status = 'succeeded' 
+              AND paid_at IS NOT NULL
+            ORDER BY paid_at DESC 
+            LIMIT 1
+        );
+    END;
+    $$ LANGUAGE plpgsql STABLE;`,
+    language: 'plpgsql',
+    replace: true
+  });
+  
+  // Create function to count missed billing cycles
+  await hasura.defineFunction({
+    schema: 'payments',
+    name: 'count_missed_billing_cycles',
+    definition: `
+    CREATE OR REPLACE FUNCTION payments.count_missed_billing_cycles(subscription_row payments.subscriptions)
+    RETURNS integer AS $$
+    DECLARE
+        last_operation_date bigint;
+        plan_interval text;
+        plan_interval_count integer;
+        current_time bigint;
+        cycles_count integer := 0;
+        next_expected_date timestamp;
+    BEGIN
+        current_time := EXTRACT(EPOCH FROM NOW()) * 1000;
+        
+        -- Get the last successful operation date
+        SELECT paid_at INTO last_operation_date
+        FROM payments.operations 
+        WHERE subscription_id = subscription_row.id 
+          AND status = 'succeeded' 
+          AND paid_at IS NOT NULL
+        ORDER BY paid_at DESC 
+        LIMIT 1;
+        
+        -- If no operations yet, no missed cycles
+        IF last_operation_date IS NULL THEN
+            RETURN 0;
+        END IF;
+        
+        -- Get plan details
+        SELECT interval, interval_count INTO plan_interval, plan_interval_count
+        FROM payments.plans 
+        WHERE id = subscription_row.plan_id;
+        
+        -- Calculate how many cycles we should have had
+        next_expected_date := to_timestamp(last_operation_date / 1000);
+        
+        WHILE EXTRACT(EPOCH FROM next_expected_date) * 1000 <= current_time LOOP
+            CASE plan_interval
+                WHEN 'minute' THEN
+                    next_expected_date := next_expected_date + (plan_interval_count || ' minutes')::interval;
+                WHEN 'hour' THEN
+                    next_expected_date := next_expected_date + (plan_interval_count || ' hours')::interval;
+                WHEN 'day' THEN
+                    next_expected_date := next_expected_date + (plan_interval_count || ' days')::interval;
+                WHEN 'week' THEN
+                    next_expected_date := next_expected_date + (plan_interval_count || ' weeks')::interval;
+                WHEN 'month' THEN
+                    next_expected_date := next_expected_date + (plan_interval_count || ' months')::interval;
+                WHEN 'year' THEN
+                    next_expected_date := next_expected_date + (plan_interval_count || ' years')::interval;
+                ELSE
+                    RAISE EXCEPTION 'Unsupported interval: %', plan_interval;
+            END CASE;
+            
+            cycles_count := cycles_count + 1;
+            
+            -- Safety check to prevent infinite loops
+            IF cycles_count > 1000 THEN
+                EXIT;
+            END IF;
+        END LOOP;
+        
+        -- Subtract 1 because the last iteration goes beyond current time
+        RETURN GREATEST(0, cycles_count - 1);
+    END;
+    $$ LANGUAGE plpgsql STABLE;`,
+    language: 'plpgsql',
+    replace: true
+  });
+  
+  debug('Billing computed functions created successfully.');
+}
+
+async function addComputedFieldsToSubscriptions(hasura: Hasura) {
+  debug('Adding computed fields to subscriptions table...');
+  
+  // Add computed field for next billing date
+  await hasura.defineComputedField({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'computed_next_billing_date',
+    definition: {
+      function: { schema: 'payments', name: 'calculate_next_billing_date' }
+    }
+  });
+  
+  // Add computed field for last billing date
+  await hasura.defineComputedField({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'computed_last_billing_date', 
+    definition: {
+      function: { schema: 'payments', name: 'get_last_billing_date' }
+    }
+  });
+  
+  // Add computed field for missed cycles count
+  await hasura.defineComputedField({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'computed_missed_cycles',
+    definition: {
+      function: { schema: 'payments', name: 'count_missed_billing_cycles' }
+    }
+  });
+  
+  debug('Computed fields added successfully.');
+}
+
 export async function up(customHasura?: Hasura) {
   debug('🚀 Starting Hasura Payments migration UP...');
   
@@ -1233,10 +1453,13 @@ export async function up(customHasura?: Hasura) {
     await createPaymentSubscriptions(hasura);
     await createPaymentOperations(hasura);
     await createUserPaymentProviderMappings(hasura);
-    await createIndexes(hasura);
     await trackPaymentTables(hasura);
     await createPaymentRelationships(hasura);
     await applyPaymentPermissions(hasura);
+    
+    // Add computed fields for billing calculations
+    await createBillingComputedFields(hasura);
+    await addComputedFieldsToSubscriptions(hasura);
     
     debug('✨ Hasura Payments migration UP completed successfully!');
     return true;

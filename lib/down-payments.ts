@@ -4,6 +4,50 @@ import Debug from './debug';
 const debug = Debug('lib:down-payments');
 
 /**
+ * Drop computed fields and functions using high-level methods
+ */
+export async function dropComputedFields(hasura: Hasura) {
+  debug('🧹 Dropping computed fields and functions...');
+
+  // Drop computed fields first
+  await hasura.deleteComputedField({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'computed_next_billing_date'
+  });
+  
+  await hasura.deleteComputedField({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'computed_last_billing_date'
+  });
+  
+  await hasura.deleteComputedField({
+    schema: 'payments',
+    table: 'subscriptions',
+    name: 'computed_missed_cycles'
+  });
+
+  // Drop functions
+  await hasura.deleteFunction({
+    schema: 'payments',
+    name: 'calculate_next_billing_date'
+  });
+  
+  await hasura.deleteFunction({
+    schema: 'payments',
+    name: 'get_last_billing_date'
+  });
+  
+  await hasura.deleteFunction({
+    schema: 'payments',
+    name: 'count_missed_billing_cycles'
+  });
+
+  debug('✅ Computed fields and functions dropped.');
+}
+
+/**
  * Drop permissions and untrack tables using high-level methods
  */
 export async function dropMetadata(hasura: Hasura) {
@@ -70,143 +114,25 @@ export async function dropMetadata(hasura: Hasura) {
     name: 'payment_provider_mappings'
   });
   
-  // Drop relationships from payments.providers
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'providers',
-    name: 'user'
-  });
+  // Drop relationships from payments tables
+  const relationshipMappings = [
+    { table: 'providers', relationships: ['user', 'methods', 'subscriptions', 'operations', 'user_mappings'] },
+    { table: 'methods', relationships: ['user', 'provider', 'subscriptions', 'operations'] },
+    { table: 'plans', relationships: ['user', 'subscriptions'] },
+    { table: 'subscriptions', relationships: ['user', 'method', 'plan', 'provider', 'operations'] },
+    { table: 'operations', relationships: ['user', 'method', 'provider', 'subscription'] },
+    { table: 'user_payment_provider_mappings', relationships: ['user', 'provider'] }
+  ];
   
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'providers',
-    name: 'methods'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'providers',
-    name: 'subscriptions'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'providers',
-    name: 'operations'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'providers',
-    name: 'user_mappings'
-  });
-  
-  // Drop relationships from payments.methods
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'methods',
-    name: 'user'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'methods',
-    name: 'provider'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'methods',
-    name: 'subscriptions'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'methods',
-    name: 'operations'
-  });
-  
-  // Drop relationships from payments.plans
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'plans',
-    name: 'user'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'plans',
-    name: 'subscriptions'
-  });
-  
-  // Drop relationships from payments.subscriptions
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'subscriptions',
-    name: 'user'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'subscriptions',
-    name: 'method'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'subscriptions',
-    name: 'plan'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'subscriptions',
-    name: 'provider'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'subscriptions',
-    name: 'operations'
-  });
-  
-  // Drop relationships from payments.operations
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'operations',
-    name: 'user'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'operations',
-    name: 'method'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'operations',
-    name: 'provider'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'operations',
-    name: 'subscription'
-  });
-  
-  // Drop relationships from payments.user_payment_provider_mappings
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'user_payment_provider_mappings',
-    name: 'user'
-  });
-  
-  await hasura.deleteRelationship({
-    schema: 'payments',
-    table: 'user_payment_provider_mappings',
-    name: 'provider'
-  });
+  for (const { table, relationships } of relationshipMappings) {
+    for (const relationshipName of relationships) {
+      await hasura.deleteRelationship({
+        schema: 'payments',
+        table: table,
+        name: relationshipName
+      });
+    }
+  }
   
   debug('  ✅ Relationships dropped.');
 
@@ -229,99 +155,7 @@ export async function dropMetadata(hasura: Hasura) {
 export async function dropTables(hasura: Hasura) {
   debug('🧹 Dropping payment tables...');
   
-  // Drop foreign key constraints first (in reverse dependency order)
-  
-  // Drop foreign keys from operations table
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'operations',
-    name: 'operations_user_id_fkey'
-  });
-  
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'operations',
-    name: 'operations_method_id_fkey'
-  });
-  
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'operations',
-    name: 'operations_provider_id_fkey'
-  });
-  
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'operations',
-    name: 'operations_subscription_id_fkey'
-  });
-  
-  // Drop foreign keys from subscriptions table
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'subscriptions',
-    name: 'subscriptions_user_id_fkey'
-  });
-  
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'subscriptions',
-    name: 'subscriptions_method_id_fkey'
-  });
-  
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'subscriptions',
-    name: 'subscriptions_plan_id_fkey'
-  });
-  
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'subscriptions',
-    name: 'subscriptions_provider_id_fkey'
-  });
-  
-  // Drop foreign keys from user_payment_provider_mappings table
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'user_payment_provider_mappings',
-    name: 'user_payment_provider_mappings_user_id_fkey'
-  });
-  
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'user_payment_provider_mappings',
-    name: 'user_payment_provider_mappings_provider_id_fkey'
-  });
-  
-  // Drop foreign keys from methods table
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'methods',
-    name: 'methods_user_id_fkey'
-  });
-  
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'methods',
-    name: 'methods_provider_id_fkey'
-  });
-  
-  // Drop foreign keys from plans table
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'plans',
-    name: 'plans_user_id_fkey'
-  });
-  
-  // Drop foreign keys from providers table
-  await hasura.deleteForeignKey({
-    schema: 'payments',
-    table: 'providers',
-    name: 'providers_user_id_fkey'
-  });
-  
-  // Drop tables in reverse dependency order
+  // Drop tables in reverse dependency order using high-level methods
   await hasura.deleteTable({ schema: 'payments', table: 'operations' });
   await hasura.deleteTable({ schema: 'payments', table: 'subscriptions' });
   await hasura.deleteTable({ schema: 'payments', table: 'user_payment_provider_mappings' });
@@ -355,7 +189,10 @@ export async function down(customHasura?: Hasura) {
   });
   
   try {
-    // First remove metadata (tracking, relationships, permissions)
+    // First remove computed fields and functions
+    await dropComputedFields(hasura);
+
+    // Then remove metadata (tracking, relationships, permissions)
     await dropMetadata(hasura);
 
     // Then drop the tables themselves
