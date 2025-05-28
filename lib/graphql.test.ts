@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test, afterAll } from '@jest/globals';
-import { ApolloClient, NormalizedCacheObject, gql, ApolloError, FetchResult } from '@apollo/client/core';
+import { ApolloClient, NormalizedCacheObject, gql, ApolloError, FetchResult } from '@apollo/client/core/index.js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid'; // For unique emails

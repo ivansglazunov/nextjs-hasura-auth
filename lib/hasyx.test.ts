@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { ApolloError, gql } from '@apollo/client/core';
+import { ApolloError, gql } from '@apollo/client/core/index.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 import { Hasyx } from './hasyx'; 

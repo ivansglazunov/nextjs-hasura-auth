@@ -1,7 +1,8 @@
 "use server";
 
 import bcrypt from 'bcrypt';
-import { ApolloError } from '@apollo/client'; // Import ApolloError
+import { v4 as uuidv4 } from 'uuid';
+import { ApolloError } from '@apollo/client/core'; // Import ApolloError
 import { Hasyx } from './hasyx'; // Use the path alias
 import Debug from './debug';
 import { User as NextAuthUser } from 'next-auth'; // For typing

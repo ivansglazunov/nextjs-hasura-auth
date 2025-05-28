@@ -1,26 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import isEqual from 'react-fast-compare';
+import { DocumentNode, OperationVariables, gql } from '@apollo/client/core';
 import {
-  ApolloError,
   MutationHookOptions as ApolloMutationHookOptions,
   QueryHookOptions as ApolloQueryHookOptions,
   SubscriptionHookOptions as ApolloSubscriptionHookOptions,
-  DocumentNode,
   MutationTuple,
-  OperationVariables,
-  QueryResult,
-  SubscriptionResult,
-  gql,
-  useApolloClient,
-  useMutation as useApolloMutation,
-  useQuery as useApolloQuery, 
-  useSubscription as useApolloSubscription
-} from '@apollo/client';
+  QueryResult, SubscriptionResult,
+  useApolloClient, useMutation as useApolloMutation, useQuery as useApolloQuery, useSubscription as useApolloSubscription,
+} from '@apollo/client/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import isEqual from 'react-fast-compare';
 import { HasyxApolloClient } from './apollo';
 import Debug from './debug';
-import { GenerateOptions, Generate } from "./generator";
+import { GenerateOptions } from "./generator";
 import { Hasyx } from './hasyx';
 
 const debug = Debug('client');

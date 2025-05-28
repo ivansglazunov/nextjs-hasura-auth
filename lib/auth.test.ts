@@ -15,7 +15,7 @@ import Debug from './debug';
 import { Generator } from './generator';
 import { Hasyx } from './hasyx';
 import { generateJWT } from './jwt'; // Import generateJWT for manual JWT creation
-import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core';
+import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core/index.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
