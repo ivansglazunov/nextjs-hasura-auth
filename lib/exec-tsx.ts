@@ -3,7 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { Exec, ExecOptions, ExecContext } from './exec';
 import Debug from './debug';
 
-const debug = Debug('hasyx:exec-ts');
+const debug = Debug('hasyx:exec-tsx');
 
 // Static TypeScript configuration based on tsconfig.lib.json
 const getDefaultTsConfig = (): ts.CompilerOptions => {

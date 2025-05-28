@@ -12,6 +12,81 @@ The Ask command provides a powerful AI assistant interface for Hasyx projects, a
 - **Multiple Question Types**: Supports coding, math, general knowledge, and more
 - **Clean Output**: Shows only AI responses without additional console messages
 - **Environment Integration**: Automatically loads configuration from `.env` file
+- **🆕 Real-time Progress Indicators**: See exactly what AI is doing step-by-step
+- **🆕 Automatic Code Execution**: AI can execute JavaScript and TypeScript code automatically
+- **🆕 Iterative Responses**: AI can execute multiple code blocks and continue reasoning
+
+## 🎯 Real-time Progress Indicators
+
+The Ask command now shows you exactly what's happening during AI processing:
+
+### Progress Indicators
+
+- **🧠 AI думает...** - When AI is generating a response
+- **💭 AI ответил (N символов)** - When AI response is received with character count  
+- **📋 Найден JS/TSX код для выполнения** - When executable code is found in AI response
+- **⚡ Выполняется JS/TSX код...** - When code execution starts
+- **✅ Результат выполнения** - When code execution completes with results
+
+### Example Output
+
+```bash
+$ npm run ask -- -e "Calculate 5 factorial using JavaScript"
+
+🧠 AI думает...
+💭 AI ответил (245 символов)
+📋 Найден JS код для выполнения:
+```js
+function factorial(n) {
+  return n <= 1 ? 1 : n * factorial(n - 1);
+}
+factorial(5);
+```
+⚡ Выполняется JS код...
+✅ Результат выполнения:
+120
+
+The factorial of 5 is 120. This recursive function calculates...
+```
+
+### Automatic Code Execution
+
+The AI can automatically execute code and use the results to provide better answers:
+
+```bash
+$ npm run ask -- -e "Check what operating system we're running on"
+
+🧠 AI думает...
+💭 AI ответил (156 символов)
+📋 Найден JS код для выполнения:
+```js
+process.platform
+```
+⚡ Выполняется JS код...
+✅ Результат выполнения:
+darwin
+
+🧠 AI думает...
+💭 AI ответил (298 символов)
+
+Based on the code execution, you're running on macOS (darwin). 
+The system provides access to Node.js APIs like process.platform...
+```
+
+### Multi-iteration Processing
+
+AI can execute multiple code blocks and continue reasoning:
+
+1. **First iteration**: AI generates response with code
+2. **Code execution**: Code is automatically executed
+3. **Second iteration**: AI sees results and continues
+4. **Additional iterations**: Up to 3 iterations for complex problems
+
+This allows AI to:
+- Try different approaches if first one fails
+- Analyze results and provide better explanations  
+- Execute multiple related code snippets
+- Adapt responses based on execution outcomes
 
 ## Installation & Setup
 

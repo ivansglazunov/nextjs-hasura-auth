@@ -126,29 +126,47 @@ export class Exec {
       const wrappedCode = `
         (async () => {
           let __result;
+          const trimmedCode = \`${code.replace(/`/g, '\\`')}\`.trim();
+          
           try {
-            // Try to evaluate as expression first
-            __result = eval(\`(${code.replace(/`/g, '\\`')})\`);
-          } catch (e) {
-            // If that fails, execute as statements and try to get last expression
-            ${code}
-            
-            // Try to extract last line as expression
-            const lines = \`${code.replace(/`/g, '\\`')}\`.trim().split('\\n');
-            const lastLine = lines[lines.length - 1].trim();
-            
-            if (lines.length > 1 && lastLine && !lastLine.endsWith(';') && !lastLine.startsWith('//')) {
-              try {
-                // Check if last line contains await
-                if (lastLine.includes('await')) {
-                  __result = await eval(\`(async () => { return \${lastLine}; })()\`);
-                } else {
-                  __result = eval(lastLine);
+            // Check if the code is a single expression or variable
+            if (!trimmedCode.includes(';') && !trimmedCode.includes('\\n') && 
+                !trimmedCode.startsWith('const ') && !trimmedCode.startsWith('let ') && 
+                !trimmedCode.startsWith('var ') && !trimmedCode.startsWith('function ')) {
+              // Single expression
+              __result = await eval(\`(async () => { return \${trimmedCode}; })()\`);
+            } else {
+              // Execute the code as statements
+              ${code}
+              
+              // Try to extract last line as expression
+              const lines = trimmedCode.split('\\n').map(line => line.trim()).filter(line => line && !line.startsWith('//'));
+              const lastLine = lines[lines.length - 1];
+              
+              if (lastLine && !lastLine.endsWith(';') && !lastLine.startsWith('/*')) {
+                try {
+                  // Check if last line is a variable name, expression, or assignment
+                  if (/^[a-zA-Z_$][a-zA-Z0-9_$.\\[\\]]*$/.test(lastLine)) {
+                    // It's a variable name or property access
+                    __result = eval(lastLine);
+                  } else if (lastLine.includes('await')) {
+                    __result = await eval(\`(async () => { return \${lastLine}; })()\`);
+                  } else {
+                    __result = eval(lastLine);
+                  }
+                } catch (e2) {
+                  // Last line is not an expression, return undefined
+                  __result = undefined;
                 }
-              } catch (e2) {
-                // Last line is not an expression, return undefined
-                __result = undefined;
               }
+            }
+          } catch (e) {
+            // If all else fails, just execute as statements
+            try {
+              ${code}
+              __result = undefined;
+            } catch (e2) {
+              throw e2;
             }
           }
           return __result;

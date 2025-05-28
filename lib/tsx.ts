@@ -7,7 +7,7 @@ import * as repl from 'repl';
 import { Hasyx } from './hasyx';
 import { createApolloClient } from './apollo';
 import { Generator } from './generator';
-import { ExecTs } from './exec-ts';
+import { ExecTs } from './exec-tsx';
 import Debug from './debug';
 // Import all exports from index.ts to provide as context
 import * as hasyxLib from './index';

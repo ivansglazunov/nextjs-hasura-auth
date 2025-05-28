@@ -26,6 +26,21 @@
         },
         {
           "level": 2,
+          "text": "Real-time Progress Callbacks",
+          "id": "real-time-progress-callbacks"
+        },
+        {
+          "level": 3,
+          "text": "Available Callbacks",
+          "id": "available-callbacks"
+        },
+        {
+          "level": 3,
+          "text": "Command Line Interface",
+          "id": "command-line-interface"
+        },
+        {
+          "level": 2,
           "text": "Code Execution",
           "id": "code-execution"
         },
@@ -189,6 +204,31 @@
           "level": 2,
           "text": "Features",
           "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "🎯 Real-time Progress Indicators",
+          "id": "real-time-progress-indicators"
+        },
+        {
+          "level": 3,
+          "text": "Progress Indicators",
+          "id": "progress-indicators"
+        },
+        {
+          "level": 3,
+          "text": "Example Output",
+          "id": "example-output"
+        },
+        {
+          "level": 3,
+          "text": "Automatic Code Execution",
+          "id": "automatic-code-execution"
+        },
+        {
+          "level": 3,
+          "text": "Multi-iteration Processing",
+          "id": "multi-iteration-processing"
         },
         {
           "level": 2,
@@ -2480,6 +2520,11 @@
           "level": 3,
           "text": "🔧 CLI Extensibility in Child Projects",
           "id": "cli-extensibility-in-child-projects"
+        },
+        {
+          "level": 3,
+          "text": "`ask` 🤖",
+          "id": "ask"
         }
       ],
       "content": "",
@@ -3756,5 +3801,5 @@
       "path": "testing.experiment.md"
     }
   ],
-  "lastUpdated": "2025-05-28T20:02:11.826Z"
+  "lastUpdated": "2025-05-28T21:41:33.845Z"
 }

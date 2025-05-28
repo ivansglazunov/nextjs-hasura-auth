@@ -17,7 +17,7 @@ export * from './pwa';
 
 // Server-only modules are now in ./server.ts
 // export * from './exec';        // Moved to server.ts
-// export * from './exec-ts';     // Moved to server.ts  
+// export * from './exec-tsx';     // Moved to server.ts  
 // export * from './terminal';    // Moved to server.ts
 // export * from './openrouter';  // Moved to server.ts (uses exec)
 

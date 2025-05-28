@@ -1,8 +1,6 @@
 import { Observable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { OpenRouter, OpenRouterMessage, OpenRouterOptions } from './openrouter';
-import { ExecTs } from './exec-tsx';
-import { Exec } from './exec';
 import Debug from './debug';
 
 const debug = Debug('hasyx:ai');
@@ -19,11 +17,12 @@ export interface Do extends OpenRouterMessage {
 
 export class AI {
   private openRouter: OpenRouter;
-  private execTs: ExecTs;
-  private exec: Exec;
   
   public doSpecialSubstring = `> 🪬`;
   public memory: (OpenRouterMessage | Do)[] = [];
+  public systemPrompt?: string;
+  
+  // Callbacks for external handling
   public _onMemory?: (message: OpenRouterMessage | Do) => void;
   public _do?: (doItem: Do) => Promise<Do>;
   public _onThinking?: () => void;
@@ -35,11 +34,11 @@ export class AI {
   constructor(
     token: string,
     context: any = {},
-    options: OpenRouterOptions = {}
+    options: OpenRouterOptions = {},
+    systemPrompt?: string
   ) {
     this.openRouter = new OpenRouter(token, context, options);
-    this.execTs = new ExecTs(context);
-    this.exec = new Exec(context);
+    this.systemPrompt = systemPrompt;
     
     debug('AI instance created');
   }
@@ -328,7 +327,7 @@ ${executedDo.response}
   }
 
   /**
-   * Execute a Do operation
+   * Execute a Do operation (delegates to external handler)
    */
   async do(doItem: Do): Promise<Do> {
     debug(`Executing Do operation: ${doItem.id}`);
@@ -344,40 +343,9 @@ ${executedDo.response}
       return await this._do(doItem);
     }
     
-    // Notify that code is executing
-    if (this._onCodeExecuting) {
-      this._onCodeExecuting(doItem.request, doItem.format);
-    }
-    
-    try {
-      let result: string;
-      
-      if (doItem.format === 'tsx') {
-        debug(`Executing TSX code for: ${doItem.id}`);
-        result = await this.execTs.exec(doItem.request);
-      } else {
-        debug(`Executing JS code for: ${doItem.id}`);
-        result = await this.exec.exec(doItem.request);
-      }
-      
-      debug(`Execution result for ${doItem.id}:`, result);
-      doItem.response = result;
-      
-      // Notify that result is available
-      if (this._onCodeResult) {
-        this._onCodeResult(result);
-      }
-      
-    } catch (error) {
-      debug(`Execution error for ${doItem.id}:`, error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      doItem.response = `Error: ${errorMessage}`;
-      
-      // Notify about error result
-      if (this._onCodeResult) {
-        this._onCodeResult(`Error: ${errorMessage}`);
-      }
-    }
+    // Default behavior if no handler is provided
+    debug(`No _do handler provided for: ${doItem.id}`);
+    doItem.response = 'Code execution not available - no handler configured';
     
     return doItem;
   }
@@ -397,40 +365,15 @@ ${executedDo.response}
    * Generate context messages with memory
    */
   contextMemory(yourMessages: OpenRouterMessage[]): OpenRouterMessage[] {
-    // Add system message with Do operation instructions
-    const systemMessage: OpenRouterMessage = {
-      role: 'system',
-      content: `You are a helpful AI assistant with the ability to execute JavaScript and TypeScript code.
-
-When you need to execute code, write it in this special format:
-
-> 🪬<uuid>/do/exec/js
-\`\`\`js
-your javascript code here
-\`\`\`
-
-or
-
-> 🪬<uuid>/do/exec/tsx
-\`\`\`tsx
-your typescript code here
-\`\`\`
-
-Replace <uuid> with a unique identifier you generate (like a UUID). The code will be executed and results will be provided back to you.
-
-IMPORTANT BEHAVIOR:
-- After code execution, you will receive the results and can continue your response
-- You can execute multiple code blocks in sequence
-- If one approach fails (like using browser APIs in Node.js), try alternative approaches
-- Always provide a complete and helpful response, adapting based on execution results
-- You can analyze results and execute additional code as needed
-- Continue generating responses and executing additional code without limitation until you provide a complete answer
-
-The special Do operations will be removed from your final response to the user, but execution results will be shown separately.`
-    };
-
-    // Combine system message, memory, and current messages
-    const allMessages: OpenRouterMessage[] = [systemMessage];
+    // Add system message if provided
+    const allMessages: OpenRouterMessage[] = [];
+    
+    if (this.systemPrompt) {
+      allMessages.push({
+        role: 'system',
+        content: this.systemPrompt
+      });
+    }
     
     // Add relevant memory (limit to prevent context overflow)
     const recentMemory = this.memory.slice(-10); // Last 10 messages
@@ -462,5 +405,13 @@ The special Do operations will be removed from your final response to the user, 
    */
   getMemory(): (OpenRouterMessage | Do)[] {
     return [...this.memory];
+  }
+
+  /**
+   * Set system prompt
+   */
+  setSystemPrompt(prompt: string): void {
+    this.systemPrompt = prompt;
+    debug('System prompt updated');
   }
 } 

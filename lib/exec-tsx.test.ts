@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { ExecTs, createExecTs } from './exec-ts';
+import { ExecTs, createExecTs } from './exec-tsx';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { fileURLToPath } from 'url';

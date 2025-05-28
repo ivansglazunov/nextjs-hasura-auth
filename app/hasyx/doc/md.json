@@ -21,6 +21,21 @@
           "level": 2
         },
         {
+          "title": "Real-time Progress Callbacks",
+          "url": "/hasyx/doc/AI#real-time-progress-callbacks",
+          "level": 2
+        },
+        {
+          "title": "Available Callbacks",
+          "url": "/hasyx/doc/AI#available-callbacks",
+          "level": 3
+        },
+        {
+          "title": "Command Line Interface",
+          "url": "/hasyx/doc/AI#command-line-interface",
+          "level": 3
+        },
+        {
           "title": "Code Execution",
           "url": "/hasyx/doc/AI#code-execution",
           "level": 2
@@ -170,6 +185,31 @@
           "title": "Features",
           "url": "/hasyx/doc/ASK#features",
           "level": 2
+        },
+        {
+          "title": "🎯 Real-time Progress Indicators",
+          "url": "/hasyx/doc/ASK#real-time-progress-indicators",
+          "level": 2
+        },
+        {
+          "title": "Progress Indicators",
+          "url": "/hasyx/doc/ASK#progress-indicators",
+          "level": 3
+        },
+        {
+          "title": "Example Output",
+          "url": "/hasyx/doc/ASK#example-output",
+          "level": 3
+        },
+        {
+          "title": "Automatic Code Execution",
+          "url": "/hasyx/doc/ASK#automatic-code-execution",
+          "level": 3
+        },
+        {
+          "title": "Multi-iteration Processing",
+          "url": "/hasyx/doc/ASK#multi-iteration-processing",
+          "level": 3
         },
         {
           "title": "Installation & Setup",
@@ -2256,6 +2296,11 @@
           "title": "🔧 CLI Extensibility in Child Projects",
           "url": "/hasyx/doc/README#cli-extensibility-in-child-projects",
           "level": 3
+        },
+        {
+          "title": "`ask` 🤖",
+          "url": "/hasyx/doc/README#ask",
+          "level": 3
         }
       ],
       "level": 1
@@ -3131,5 +3176,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-28T20:02:11.858Z"
+  "lastUpdated": "2025-05-28T21:41:33.875Z"
 }

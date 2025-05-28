@@ -38,6 +38,73 @@ const response = await ai.ask('Calculate 5 * 7 using JavaScript');
 console.log(response);
 ```
 
+## Real-time Progress Callbacks
+
+The AI class provides callbacks to monitor execution progress in real-time:
+
+```typescript
+import { AI } from 'hasyx/lib/ai';
+
+const ai = new AI('your-api-key', {}, { model: 'deepseek/deepseek-chat-v3-0324:free' });
+
+// Set up progress callbacks
+ai._onThinking = () => {
+  console.log('🧠 AI is thinking...');
+};
+
+ai._onCodeFound = (code: string, format: 'js' | 'tsx') => {
+  console.log(`📋 Found ${format.toUpperCase()} code to execute:`);
+  console.log(`\`\`\`${format}\n${code}\n\`\`\``);
+};
+
+ai._onCodeExecuting = (code: string, format: 'js' | 'tsx') => {
+  console.log(`⚡ Executing ${format.toUpperCase()} code...`);
+};
+
+ai._onCodeResult = (result: string) => {
+  console.log(`✅ Execution result:\n${result}`);
+};
+
+ai._onResponse = (response: string) => {
+  console.log(`💭 AI responded (${response.length} characters)`);
+};
+
+// Now when you call ai.ask(), you'll see real-time progress
+const result = await ai.ask('Calculate 2 + 2 using JavaScript');
+```
+
+### Available Callbacks
+
+- **`_onThinking()`**: Called when AI starts generating a response
+- **`_onCodeFound(code, format)`**: Called when executable code is found in AI response
+- **`_onCodeExecuting(code, format)`**: Called just before code execution starts
+- **`_onCodeResult(result)`**: Called when code execution completes (success or error)
+- **`_onResponse(response)`**: Called when AI response is received
+
+### Command Line Interface
+
+The `hasyx ask` command now includes real-time progress indicators by default:
+
+```bash
+npm run ask -- -e "Calculate factorial of 5"
+```
+
+Output:
+```
+🧠 AI думает...
+💭 AI ответил (150 символов)
+📋 Найден JS код для выполнения:
+```js
+function factorial(n) {
+  return n <= 1 ? 1 : n * factorial(n - 1);
+}
+factorial(5);
+```
+⚡ Выполняется JS код...
+✅ Результат выполнения:
+120
+```
+
 ## Code Execution
 
 The AI can automatically execute code when it writes special Do operations:

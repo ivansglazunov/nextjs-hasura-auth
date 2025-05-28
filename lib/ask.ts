@@ -4,12 +4,23 @@ import * as dotenv from 'dotenv';
 import * as readline from 'readline';
 import { AI } from './ai';
 import { printMarkdown } from './markdown-terminal';
+import { AskExec, AskExecCallbacks } from './ask-exec';
+import { initializeHasyxAsk, generateSystemPrompt } from './ask-hasyx';
 import Debug from './debug';
 
 const debug = Debug('hasyx:ask');
 
 // Load environment variables
 dotenv.config();
+
+/**
+ * Command line options
+ */
+interface AskOptions {
+  question?: string;
+  autoConfirm?: boolean; // -y --yes
+  model?: string; // -m --model
+}
 
 /**
  * Check if text contains markdown formatting
@@ -33,36 +44,35 @@ function hasMarkdownFormatting(text: string): boolean {
 }
 
 /**
- * Show animated loading indicator
+ * Show confirmation dialog for code execution
  */
-function showLoadingIndicator(): () => void {
-  const frames = ['.', '..', '...'];
-  let frameIndex = 0;
-  let isActive = true;
-  
-  // Hide cursor and show initial loading
-  process.stdout.write('\x1B[?25l'); // Hide cursor
-  process.stdout.write('🤖 Thinking');
-  
-  const interval = setInterval(() => {
-    if (!isActive) return;
+async function confirmExecution(code: string, format: 'js' | 'tsx'): Promise<boolean> {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
     
-    // Clear current line and rewrite with new frame
-    process.stdout.write('\r🤖 Thinking' + frames[frameIndex]);
-    frameIndex = (frameIndex + 1) % frames.length;
-  }, 500);
-  
-  // Return cleanup function
-  return () => {
-    isActive = false;
-    clearInterval(interval);
-    process.stdout.write('\r\x1B[K'); // Clear line
-    process.stdout.write('\x1B[?25h'); // Show cursor
-  };
+    console.log(`\n⚠️  AI wants to execute ${format.toUpperCase()} code:`);
+    console.log(`\`\`\`${format}`);
+    console.log(code);
+    console.log('```');
+    
+    rl.question('\n❓ Allow execution? (y/N): ', (answer) => {
+      rl.close();
+      const confirmed = answer.toLowerCase().trim() === 'y' || answer.toLowerCase().trim() === 'yes';
+      if (confirmed) {
+        console.log('✅ Execution approved');
+      } else {
+        console.log('❌ Execution cancelled');
+      }
+      resolve(confirmed);
+    });
+  });
 }
 
-export async function askCommand(question?: string): Promise<void> {
-  debug('Starting ask command with question:', question);
+export async function askCommand(options: AskOptions = {}): Promise<void> {
+  debug('Starting ask command with options:', options);
 
   // Check for OpenRouter API key
   if (!process.env.OPENROUTER_API_KEY) {
@@ -71,33 +81,66 @@ export async function askCommand(question?: string): Promise<void> {
     process.exit(1);
   }
 
-  // Create AI instance with free DeepSeek model
+  // Initialize Hasyx context
+  const hasyxContext = initializeHasyxAsk();
+  debug('Hasyx context initialized:', hasyxContext.project);
+
+  // Determine model to use
+  const model = options.model || 'deepseek/deepseek-chat-v3-0324:free';
+  debug('Using model:', model);
+
+  // Create AI instance with Hasyx system prompt
+  const systemPrompt = generateSystemPrompt(hasyxContext);
   const ai = new AI(
     process.env.OPENROUTER_API_KEY,
-    {},
+    hasyxContext.recommendedContext,
     {
-      model: 'deepseek/deepseek-chat-v3-0324:free',
+      model: model,
       temperature: 0.1,
       max_tokens: 2048
-    }
+    },
+    systemPrompt
   );
   
-  // Set up real-time progress callbacks
+  // Setup execution callbacks
+  const execCallbacks: AskExecCallbacks = {
+    onCodeFound: (code: string, format: 'js' | 'tsx') => {
+      process.stdout.write(`\n📋 Найден ${format.toUpperCase()} код для выполнения:\n`);
+      process.stdout.write(`\`\`\`${format}\n${code}\n\`\`\`\n`);
+    },
+    
+    onCodeExecuting: (code: string, format: 'js' | 'tsx') => {
+      process.stdout.write(`\n⚡ Выполняется ${format.toUpperCase()} код...\n`);
+    },
+    
+    onCodeResult: (result: string) => {
+      process.stdout.write(`\n✅ Результат выполнения:\n${result}\n`);
+    },
+    
+    onConfirmationRequest: async (code: string, format: 'js' | 'tsx') => {
+      if (options.autoConfirm) {
+        console.log(`\n🔥 Auto-executing ${format.toUpperCase()} code (--yes flag)`);
+        return true;
+      }
+      return await confirmExecution(code, format);
+    }
+  };
+
+  // Setup AskExec
+  const askExec = new AskExec(
+    {
+      autoConfirm: options.autoConfirm,
+      context: hasyxContext.recommendedContext
+    },
+    execCallbacks
+  );
+
+  // Configure AI with exec capabilities
+  askExec.setupAI(ai);
+  
+  // Set up AI progress callbacks
   ai._onThinking = () => {
     process.stdout.write('\n🧠 AI думает...\n');
-  };
-  
-  ai._onCodeFound = (code: string, format: 'js' | 'tsx') => {
-    process.stdout.write(`\n📋 Найден ${format.toUpperCase()} код для выполнения:\n`);
-    process.stdout.write(`\`\`\`${format}\n${code}\n\`\`\`\n`);
-  };
-  
-  ai._onCodeExecuting = (code: string, format: 'js' | 'tsx') => {
-    process.stdout.write(`\n⚡ Выполняется ${format.toUpperCase()} код...\n`);
-  };
-  
-  ai._onCodeResult = (result: string) => {
-    process.stdout.write(`\n✅ Результат выполнения:\n${result}\n`);
   };
   
   ai._onResponse = (response: string) => {
@@ -106,11 +149,11 @@ export async function askCommand(question?: string): Promise<void> {
     }
   };
 
-  if (question) {
+  if (options.question) {
     // Direct question mode (-e flag)
-    debug('Processing direct question:', question);
+    debug('Processing direct question:', options.question);
     try {
-      const response = await ai.ask(question);
+      const response = await ai.ask(options.question);
       
       // Check if response contains markdown and format accordingly
       if (hasMarkdownFormatting(response)) {
@@ -132,9 +175,15 @@ export async function askCommand(question?: string): Promise<void> {
       prompt: '> '
     });
 
-    console.log('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
+    console.log(`🤖 Ask AI anything about "${hasyxContext.project.name}". Type your question and press Enter. Use Ctrl+C to exit.`);
     console.log('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
     console.log('🪬 AI can execute JavaScript and TypeScript code automatically!');
+    if (!options.autoConfirm) {
+      console.log('⚠️  Code execution requires confirmation (use --yes to auto-approve)');
+    } else {
+      console.log('🔥 Auto-execution enabled (--yes flag)');
+    }
+    console.log(`🎯 Model: ${model}`);
     rl.prompt();
 
     rl.on('line', async (input) => {
@@ -180,17 +229,58 @@ export async function askCommand(question?: string): Promise<void> {
 // CLI entry point
 async function main() {
   const args = process.argv.slice(2);
-  let question: string | undefined;
+  const options: AskOptions = {};
   
   // Parse arguments
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '-e' || args[i] === '--eval') {
-      question = args[i + 1];
+    const arg = args[i];
+    
+    if (arg === '-e' || arg === '--eval') {
+      options.question = args[i + 1];
       i++; // Skip next argument as it's the question
+    } else if (arg === '-y' || arg === '--yes') {
+      options.autoConfirm = true;
+    } else if (arg === '-m' || arg === '--model') {
+      options.model = args[i + 1];
+      i++; // Skip next argument as it's the model name
+    } else if (arg === '-h' || arg === '--help') {
+      console.log(`
+🤖 Hasyx Ask - AI Assistant with Code Execution
+
+Usage:
+  npm run ask                        # Interactive mode
+  npm run ask -- -e "question"      # Direct question
+  npx hasyx ask                      # Via npx
+  npx hasyx ask -e "question"        # Via npx with question
+
+Options:
+  -e, --eval <question>             Execute a direct question
+  -y, --yes                         Auto-approve code execution (no confirmation)
+  -m, --model <model>               Specify OpenRouter model
+  -h, --help                        Show this help
+
+Models (OpenRouter):
+  deepseek/deepseek-chat-v3-0324:free        # Default, free model
+  anthropic/claude-3-sonnet                  # High quality
+  openai/gpt-4                               # OpenAI GPT-4
+  meta-llama/llama-3-70b                     # Llama 3 70B
+
+Environment:
+  OPENROUTER_API_KEY                Must be set in .env or environment
+
+Examples:
+  npm run ask -- -e "What is 2 + 2?"
+  npm run ask -- -y -e "Calculate factorial of 5"
+  npm run ask -- -m "anthropic/claude-3-sonnet" -e "Analyze this data"
+  
+  # Interactive mode with auto-execution
+  npm run ask -- -y
+`);
+      process.exit(0);
     }
   }
 
-  await askCommand(question);
+  await askCommand(options);
 }
 
 // Run if called directly

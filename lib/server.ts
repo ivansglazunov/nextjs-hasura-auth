@@ -19,7 +19,7 @@ export * from './ai';
 
 // Server-only modules (use Node.js APIs like fs, node-pty, etc.)
 export * from './exec';
-export * from './exec-ts';
+export * from './exec-tsx';
 export * from './terminal';
 export * from './markdown-terminal';
 
