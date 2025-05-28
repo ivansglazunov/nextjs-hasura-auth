@@ -105,7 +105,7 @@ async function main() {
 }
 
 // Run if called directly
-if (require.main === module) {
+if (typeof(require) !== 'undefined' && require.main === module) {
   main().catch((error) => {
     console.error('❌ Error in ask command:', error);
     process.exit(1);
