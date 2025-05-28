@@ -127,6 +127,99 @@ const exec = new Exec({}, {
 });
 ```
 
+## Dynamic Module Loading with use-m
+
+The Exec class includes built-in integration with `use-m`, a powerful library for dynamically importing npm packages at runtime. The `use` function is automatically available in all execution contexts, allowing you to load any npm package on-demand within your executed code.
+
+### Basic use-m Usage
+
+```typescript
+import { Exec, createExec } from 'hasyx';
+
+// use-m is available by default in all Exec instances
+const exec = new Exec();
+
+// Load lodash and use it
+const result = await exec.exec(`
+  const _ = await use('lodash@4.17.21');
+  _.add(1, 2)
+`); // Returns: 3
+
+// Load multiple packages
+const result = await exec.exec(`
+  const [_, moment] = await Promise.all([
+    use('lodash@4.17.21'),
+    use('moment@2.29.4')
+  ]);
+  
+  const sum = _.add(5, 10);
+  const date = moment().format('YYYY-MM-DD');
+  
+  { sum, date }
+`);
+```
+
+### Package Version Specification
+
+use-m supports various ways to specify package versions:
+
+```typescript
+const exec = new Exec();
+
+// Specific version
+await exec.exec(`const _ = await use('lodash@4.17.21')`);
+
+// Latest version
+await exec.exec(`const _ = await use('lodash@latest')`);
+
+// Scoped packages
+await exec.exec(`const joi = await use('@hapi/joi@17.1.1')`);
+
+// Package with subpath
+await exec.exec(`const utils = await use('lodash@4.17.21/fp')`);
+```
+
+### How use-m Works
+
+**In Node.js Environment:**
+- Automatically installs packages globally using npm
+- Creates version-specific aliases to avoid conflicts
+- Resolves modules using Node.js module resolution
+
+**In Browser Environment:**
+- Loads packages from CDN (esm.sh by default)
+- No installation required
+- Works with ES modules
+
+### use-m Features
+
+- **Version Safety**: Multiple versions of the same package can coexist
+- **Automatic Installation**: Packages are installed on-demand in Node.js
+- **Cross-Platform**: Works in both Node.js and browser environments
+- **CDN Support**: Multiple CDN providers supported (esm.sh, unpkg, jsdelivr, etc.)
+- **Caching**: Installed packages are cached for reuse
+
+### Error Handling with use-m
+
+```typescript
+const exec = new Exec();
+
+try {
+  await exec.exec(`
+    const nonExistent = await use('non-existent-package-12345');
+  `);
+} catch (error) {
+  console.log('Package not found:', error.message);
+}
+```
+
+### Performance Considerations
+
+- **First Load**: Initial package installation may take time in Node.js
+- **Subsequent Loads**: Cached packages load quickly
+- **Timeout**: Consider increasing timeout for package-heavy operations
+- **Network**: Browser environment depends on CDN availability
+
 ## Async/Await Support
 
 The Exec class automatically handles asynchronous code:
@@ -377,6 +470,112 @@ async function evaluateFormula(formula: string, variables: Record<string, number
 
 // Usage
 const result = await evaluateFormula('(x + y) * z', { x: 10, y: 5, z: 2 }); // Returns: 30
+```
+
+### Dynamic Package Loading with use-m
+
+```typescript
+// Example: Data processing with dynamically loaded packages
+import { createExec } from 'hasyx';
+
+const exec = new Exec();
+
+// Process data using multiple npm packages
+const result = await exec.exec(`
+  // Load required packages
+  const [_, moment, validator] = await Promise.all([
+    use('lodash@4.17.21'),
+    use('moment@2.29.4'),
+    use('validator@13.9.0')
+  ]);
+  
+  // Sample data processing
+  const data = [
+    { email: 'user@example.com', date: '2023-01-01', score: 85 },
+    { email: 'invalid-email', date: '2023-01-02', score: 92 },
+    { email: 'test@domain.org', date: '2023-01-03', score: 78 }
+  ];
+  
+  // Process and validate data
+  const processed = data
+    .filter(item => validator.isEmail(item.email))
+    .map(item => ({
+      ...item,
+      formattedDate: moment(item.date).format('MMM DD, YYYY'),
+      grade: item.score >= 90 ? 'A' : item.score >= 80 ? 'B' : 'C'
+    }))
+    .sort((a, b) => b.score - a.score);
+  
+  return {
+    totalValid: processed.length,
+    averageScore: _.meanBy(processed, 'score'),
+    topPerformer: _.maxBy(processed, 'score'),
+    processed
+  };
+`);
+
+console.log(result);
+```
+
+### Microservice with Dynamic Dependencies
+
+```typescript
+// Example: Microservice that loads dependencies based on request
+import { createExec } from 'hasyx';
+
+class DynamicProcessor {
+  private exec = new Exec();
+  
+  async processRequest(type: string, data: any) {
+    const processingCode = this.getProcessingCode(type);
+    return await this.exec.exec(processingCode, { inputData: data });
+  }
+  
+  private getProcessingCode(type: string): string {
+    switch (type) {
+      case 'csv':
+        return `
+          const csv = await use('csv-parser@3.0.0');
+          const _ = await use('lodash@4.17.21');
+          
+          // Process CSV data
+          const rows = inputData.split('\\n').map(row => row.split(','));
+          const headers = rows[0];
+          const data = rows.slice(1).map(row => 
+            _.zipObject(headers, row)
+          );
+          
+          return { type: 'csv', count: data.length, data };
+        `;
+        
+      case 'json':
+        return `
+          const _ = await use('lodash@4.17.21');
+          const validator = await use('joi@17.9.2');
+          
+          // Validate and process JSON
+          const parsed = JSON.parse(inputData);
+          const schema = validator.object({
+            id: validator.number().required(),
+            name: validator.string().required()
+          });
+          
+          const { error } = schema.validate(parsed);
+          if (error) throw new Error('Invalid JSON structure');
+          
+          return { type: 'json', valid: true, data: parsed };
+        `;
+        
+      default:
+        return `return { type: 'unknown', data: inputData };`;
+    }
+  }
+}
+
+// Usage
+const processor = new DynamicProcessor();
+const csvResult = await processor.processRequest('csv', 'name,age\\nJohn,30\\nJane,25');
+const jsonResult = await processor.processRequest('json', '{"id": 1, "name": "Test"}');
 ```
 
 ## Best Practices

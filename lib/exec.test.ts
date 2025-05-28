@@ -331,4 +331,99 @@ describe('Exec', () => {
       expect(result).toBe(30);
     });
   });
+
+  describe('use-m Integration', () => {
+    it('should have use function available by default', async () => {
+      const result = await exec.exec('typeof use');
+      expect(result).toBe('function');
+    });
+
+    it('should be able to import lodash using use-m', async () => {
+      const result = await exec.exec(`
+        const _ = await use('lodash@4.17.21');
+        _.add(1, 2)
+      `);
+      expect(result).toBe(3);
+    }, 30000); // Increased timeout for npm install
+
+    it('should be able to import multiple packages', async () => {
+      const result = await exec.exec(`
+        const [_, moment] = await Promise.all([
+          use('lodash@4.17.21'),
+          use('moment@2.29.4')
+        ]);
+        
+        const sum = _.add(5, 10);
+        const isValid = moment.isMoment(moment());
+        
+        return { sum, isValid };
+      `);
+      expect(result.sum).toBe(15);
+      expect(result.isValid).toBe(true);
+    }, 45000); // Increased timeout for multiple npm installs
+
+    it('should handle use-m errors gracefully', async () => {
+      await expect(exec.exec(`
+        await use('non-existent-package-12345')
+      `)).rejects.toThrow();
+    }, 30000);
+
+    it('should work with createExec factory', async () => {
+      const execInstance = createExec();
+      const result = await execInstance.exec('typeof use');
+      expect(result).toBe('function');
+    });
+
+    it('should work with createExec and context', async () => {
+      const execInstance = createExec({ customVar: 'test' });
+      const result = await execInstance.exec(`
+        const _ = await use('lodash@4.17.21');
+        _.upperCase(customVar)
+      `);
+      expect(result).toBe('TEST');
+    }, 30000);
+
+    it('should preserve use function after context updates', async () => {
+      exec.updateContext({ newVar: 'updated' });
+      const result = await exec.exec(`
+        const _ = await use('lodash@4.17.21');
+        _.upperCase(newVar)
+      `);
+      expect(result).toBe('UPDATED');
+    }, 30000);
+
+    it('should preserve use function after context clear', async () => {
+      exec.updateContext({ tempVar: 'temp' });
+      exec.clearContext();
+      
+      const result = await exec.exec('typeof use');
+      expect(result).toBe('function');
+    });
+
+    it('should work with scoped packages', async () => {
+      const result = await exec.exec(`
+        const validator = await use('@hapi/joi@17.1.1');
+        const schema = validator.string().min(3).max(30);
+        const { error } = schema.validate('hello');
+        error === undefined
+      `);
+      expect(result).toBe(true);
+    }, 30000);
+
+    it('should handle package versions correctly', async () => {
+      const result = await exec.exec(`
+        const _ = await use('lodash@4.17.20');
+        _.VERSION
+      `);
+      expect(result).toBe('4.17.20');
+    }, 30000);
+
+    it('should work with latest version specifier', async () => {
+      const result = await exec.exec(`
+        const _ = await use('lodash@latest');
+        typeof _.add
+      `);
+      expect(result).toBe('function');
+    }, 30000);
+  });
 }); 

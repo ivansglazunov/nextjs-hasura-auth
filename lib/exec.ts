@@ -2,6 +2,7 @@
 // In browser environments, bundlers like webpack/browserify will automatically
 // replace 'vm' with 'vm-browserify'
 import vm from 'vm';
+import { createRequire } from 'module';
 
 export interface ExecOptions {
   timeout?: number;
@@ -32,7 +33,18 @@ const getEnvironmentGlobals = () => {
   if (typeof window === 'undefined') {
     // Node.js environment
     globals.process = process;
-    globals.require = require;
+    
+    // Create require function for ESM compatibility
+    try {
+      const require = createRequire(import.meta.url);
+      globals.require = require;
+    } catch (error) {
+      // Fallback for environments where createRequire is not available
+      if (typeof require !== 'undefined') {
+        globals.require = require;
+      }
+    }
+    
     globals.Buffer = Buffer;
   } else {
     // Browser environment - provide safe alternatives
@@ -50,10 +62,22 @@ const getEnvironmentGlobals = () => {
   return globals;
 };
 
+// Initialize use-m support
+const initializeUseM = async () => {
+  try {
+    const { use } = await import('use-m');
+    return use;
+  } catch (error) {
+    // use-m not available
+    return null;
+  }
+};
+
 export class Exec {
   private context: vm.Context;
   private options: ExecOptions;
   private initialContext: ExecContext;
+  private useMFunction: any = null;
 
   constructor(initialContext: ExecContext = {}, options: ExecOptions = {}) {
     this.options = {
@@ -72,11 +96,18 @@ export class Exec {
   }
 
   async exec(code: string, contextExtend: ExecContext = {}): Promise<any> {
+    // Initialize use-m if not already initialized
+    if (!this.useMFunction) {
+      this.useMFunction = await initializeUseM();
+    }
+
     // Create a fresh context for this execution
     const executionContext = vm.createContext({
       ...getEnvironmentGlobals(),
       ...this.initialContext,
-      ...contextExtend
+      ...contextExtend,
+      // Add use-m function if available
+      ...(this.useMFunction ? { use: this.useMFunction } : {})
     });
 
     try {
@@ -135,7 +166,11 @@ export class Exec {
   updateContext(updates: ExecContext): void {
     Object.assign(this.initialContext, updates);
     // Update the main context as well
-    Object.assign(this.context, updates);
+    const contextUpdates = {
+      ...updates,
+      ...(this.useMFunction ? { use: this.useMFunction } : {})
+    };
+    Object.assign(this.context, contextUpdates);
   }
 
   clearContext(): void {
@@ -143,7 +178,8 @@ export class Exec {
     
     // Recreate context with only essential globals
     this.context = vm.createContext({
-      ...getEnvironmentGlobals()
+      ...getEnvironmentGlobals(),
+      ...(this.useMFunction ? { use: this.useMFunction } : {})
     });
   }
 
