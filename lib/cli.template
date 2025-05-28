@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { setupCommands } from './cli-hasyx';
+import { setupCommands } from 'hasyx/lib/cli-hasyx';
 import Debug from './debug';
 
 // Import and configure dotenv to load environment variables from .env
@@ -9,7 +9,20 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs-extra';
 
-import pckg from '../package.json';
+// Get package info
+let pckg: any;
+try {
+  const packageJsonPath = path.join(__dirname, '../package.json');
+  if (fs.existsSync(packageJsonPath)) {
+    pckg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+  } else {
+    // Fallback if package.json not found
+    pckg = { name: 'hasyx-project', version: '1.0.0' };
+  }
+} catch (error) {
+  console.warn('⚠️ Could not read package.json, using defaults');
+  pckg = { name: 'hasyx-project', version: '1.0.0' };
+}
 
 console.log(`${pckg.name}@${pckg.version}`);
 
@@ -49,7 +62,7 @@ debug('Starting CLI script execution.');
 const program = new Command();
 debug('Commander instance created.');
 
-// Setup all commands using the base functionality
+// Setup all commands using the base functionality from hasyx
 setupCommands(program, pckg.name);
 
 debug('Parsing CLI arguments...');

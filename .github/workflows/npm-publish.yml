@@ -24,6 +24,7 @@ jobs:
           cp .npmrc .npmrc.template
           cp .gitignore .gitignore.template
           cp lib/debug.ts lib/debug.template
+          cp lib/cli.ts lib/cli.template
       - name: Install dependencies
         run: npm ci # Use ci for more reliable installs in CI
 

@@ -241,6 +241,56 @@ Get your Next.js project integrated with Hasura and authentication in minutes!
 
 Hasyx provides a CLI tool (run via `npx hasyx <command>`) to simplify common tasks:
 
+### 🔧 CLI Extensibility in Child Projects
+
+When you install Hasyx as a dependency in your project, you can extend the CLI with your own custom commands while keeping all the base Hasyx functionality. This is achieved through a template-based approach:
+
+**How it works:**
+1. Hasyx provides a base CLI with all standard commands (`dev`, `build`, `migrate`, `assets`, etc.)
+2. Child projects can create their own CLI that extends the base functionality
+3. The child project's CLI automatically inherits all Hasyx commands
+4. You can add custom commands specific to your project
+
+**Setting up CLI in your child project:**
+
+1. **Copy the CLI template** (done automatically during `npx hasyx init`):
+   ```bash
+   # The template is copied to your project as lib/cli.ts
+   # It imports and extends the base Hasyx CLI functionality
+   ```
+
+2. **Add your package to npm scripts** in your `package.json`:
+   ```json
+   {
+     "name": "your-project-name",
+     "bin": {
+       "your-project-name": "./lib/cli.js"
+     },
+     "scripts": {
+       "build:lib": "tsc -p tsconfig.lib.json",
+       "cli": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx ./lib/cli.ts"
+     }
+   }
+   ```
+
+3. **Build and use your CLI**:
+   ```bash
+   npm run build:lib
+   npx your-project-name --help  # Shows all Hasyx commands + your custom ones
+   npx your-project-name dev     # Same as npx hasyx dev
+   npx your-project-name assets  # Same as npx hasyx assets
+   ```
+
+**Adding custom commands:**
+You can extend the CLI by modifying your `lib/cli.ts` file to add project-specific commands while keeping all base Hasyx functionality.
+
+**Benefits:**
+- ✅ Keep all Hasyx commands (`dev`, `build`, `migrate`, `assets`, etc.)
+- ✅ Add your own project-specific commands
+- ✅ Consistent CLI experience across projects
+- ✅ Easy distribution via npm packages
+- ✅ Automatic environment variable loading from `.env`
+
 ---
 
 ### `init`
@@ -452,31 +502,61 @@ The CLI automatically loads environment variables from the `.env` file in your p
 
 ### `assets`
 
-Generate app icons and splash screens from logo.svg for web, Capacitor, and Electron apps.
+Generate app icons and splash screens from logo files for web, Capacitor, and mobile apps.
 
 ```bash
 npx hasyx assets
 ```
 
-This command automatically generates:
-- **PWA icons** in all required sizes (48px to 512px) in WebP format
-- **PNG fallbacks** for better compatibility (192px, 512px)
-- **Favicon** for browsers
-- **Capacitor assets** for mobile apps
-- **Electron assets** if Electron is detected
+This command automatically searches for logo files in your `public/` directory by priority and generates all necessary assets:
+
+**Logo File Search Priority:**
+1. `public/logo.svg` (preferred - vector format)
+2. `public/logo.png` (high quality raster)
+3. `public/logo.jpg` (JPEG format)
+4. `public/logo.jpeg` (JPEG format)
+
+The command provides detailed reporting of the search process and which file was selected.
+
+**Generated Assets:**
+- **PWA icons** (192px, 512px) for Progressive Web App support
+- **Favicon** (`favicon.ico`) for browsers
+- **Capacitor assets** for mobile apps (if `@capacitor/assets` is available)
+- **Telegram bot profile picture** (if `TELEGRAM_BOT_TOKEN` is set)
 
 **Requirements:**
-- Your `public/logo.svg` file (created automatically by `npx hasyx init`)
-- The command creates icons in `public/icons/` directory
-- Icons are automatically referenced in the PWA manifest
+- At least one logo file in `public/` directory (SVG preferred for best quality)
+- Sharp package for image processing (installed automatically with hasyx)
+- Optional: `@capacitor/assets` for mobile app icon generation
 
 **Generated Files:**
 - `public/favicon.ico` - Browser favicon
-- `public/logo.png` - Main logo in PNG format
-- `public/icons/icon-48.webp` through `icon-512.webp` - PWA icons
-- `public/icons/icon-192.png`, `public/icons/icon-512.png` - PNG fallbacks
-- Mobile app assets (if Capacitor is present)
-- Electron assets (if Electron directory exists)
+- `public/icons/icon-192.png` - PWA icon (192x192)
+- `public/icons/icon-512.png` - PWA icon (512x512)
+- Mobile app assets (if Capacitor is configured)
+
+**Example Output:**
+```
+🎨 Generating app icons and splash screens from logo file...
+🔍 Searching for logo file...
+   Checking: public/logo.svg
+✅ Found logo file: public/logo.svg (SVG)
+🎯 Using logo file: public/logo.svg (SVG)
+📦 Generating Capacitor assets...
+✅ Capacitor assets generated successfully!
+🌐 Ensuring PWA icons are available...
+📱 Generating PWA icons from SVG logo...
+✅ Generated icon-192.png
+✅ Generated icon-512.png
+🔖 Generating favicon from SVG logo...
+✅ Generated favicon.ico
+🤖 Setting Telegram bot profile picture...
+📸 Using existing PNG logo for Telegram bot
+📤 Uploading profile picture to Telegram bot...
+✅ Telegram bot profile picture updated
+✨ Assets generation complete!
+   Logo source: public/logo.svg (SVG)
+```
 
 ---
 
@@ -739,7 +819,7 @@ npx hasyx <command>
 - `events` - Synchronize Hasura event triggers with local definitions
   - Option: `--init` - Create default event trigger definitions
   - Option: `--clean` - Remove security headers from event definitions (they will be added automatically during sync)
-- `assets` - Generate app icons and splash screens from logo.svg for web, Capacitor, and Electron apps
+- `assets` - Generate app icons and splash screens from logo files for web, Capacitor, and mobile apps
 - `unbuild` - Remove compiled files (.js, .d.ts) from lib, components, and hooks directories, and clear build cache
 - `assist` - Interactive assistant to set up hasyx project with GitHub, Hasura, and Vercel
   - Option: `--skip-auth` - Skip GitHub authentication check
