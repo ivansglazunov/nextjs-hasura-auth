@@ -6,11 +6,11 @@ dotenv.config();
 
 describe('OpenRouter', () => {
   const testToken = process.env.OPENROUTER_API_KEY || 'test-token-123';
-  const hasRealToken = !!process.env.OPENROUTER_API_KEY;
+  const hasRealToken = !!(process?.env?.OPENROUTER_API_KEY);
   
   // Helper to skip tests that require real API calls when no token is available
-  const describeWithToken = hasRealToken ? describe : describe.skip;
-  const itWithToken = hasRealToken ? it : it.skip;
+  const describeWithToken = (!!process?.env?.OPENROUTER_API_KEY ? describe : describe.skip);
+  const itWithToken = (!!process?.env?.OPENROUTER_API_KEY ? it : it.skip);
 
   describe('Constructor and Basic Setup', () => {
     it('should throw error if no token provided', () => {
@@ -141,7 +141,7 @@ describe('OpenRouter', () => {
   });
 
   // Real API tests - only run if token is available
-  if (hasRealToken) {
+  if (!!process?.env?.OPENROUTER_API_KEY) {
     describe('Real API Integration', () => {
       // Note: These tests are commented out to avoid instability from real API calls
       // They can be enabled manually for integration testing with real OpenRouter API

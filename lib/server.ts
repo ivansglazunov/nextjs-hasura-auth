@@ -1,7 +1,7 @@
-// Client-safe exports
-// This file can be safely imported in both client and server environments
+// Server-side only exports
+// This file should only be imported in server-side code (API routes, server components, etc.)
 
-// Export all utilities from the lib directory (client-safe modules only)
+// Export all utilities from the lib directory (including server-only modules)
 export * from './apollo';
 export * from './auth';
 export * from './generator';
@@ -14,12 +14,12 @@ export * from './notify';
 export * from './hid';
 export * from './hasyx-client';
 export * from './pwa';
+export * from './openrouter';
 
-// Server-only modules are now in ./server.ts
-// export * from './exec';        // Moved to server.ts
-// export * from './exec-ts';     // Moved to server.ts  
-// export * from './terminal';    // Moved to server.ts
-// export * from './openrouter';  // Moved to server.ts (uses exec)
+// Server-only modules (use Node.js APIs like fs, node-pty, etc.)
+export * from './exec';
+export * from './exec-ts';
+export * from './terminal';
 
 // Re-export from auth.tsx (now including auth-next.ts indirectly)
 export * from './auth';
@@ -38,4 +38,4 @@ export {
   useUpdate, 
   useDelete, 
   useSubscribe 
-} from './hasyx-client';
+} from './hasyx-client'; 

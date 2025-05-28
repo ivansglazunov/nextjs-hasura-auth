@@ -12,6 +12,7 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![Generated Client Documentation](https://img.shields.io/badge/Generated%20Hasyx%20Docs-MD-cyan)](HASYX.md)
 [![GraphQL Proxy Documentation](https://img.shields.io/badge/GraphQL%20Proxy%20Docs-MD-yellow)](GRAPHQL-PROXY.md)
 [![Code Execution Engine Documentation](https://img.shields.io/badge/Exec%20Engine-MD-darkgreen)](EXEC.md)
+[![TypeScript Execution Engine Documentation](https://img.shields.io/badge/ExecTs%20Engine-MD-darkblue)](EXEC-TS.md)
 [![OpenRouter AI Integration Documentation](https://img.shields.io/badge/OpenRouter%20AI-MD-brightgreen)](OPENROUTER.md)
 [![Cytoscape Integration Documentation](https://img.shields.io/badge/Cyto%20Docs-MD-red)](CYTO.md)
 [![Hasyx Identifier (HID) Documentation](https://img.shields.io/badge/HID%20Docs-MD-lightgrey)](HID.md)
@@ -41,6 +42,7 @@ Hasyx takes responsibility for:
 *   Integrating Resend for sending email verification messages (when `RESEND_API_KEY` is set).
 *   Interactive `npx hasyx cli js [<filePath>] [-e "<script>" | --eval "<script>"]` for quick scripting, data exploration, or debugging interactions with your Hasura backend, with the `client` object available in the global scope.
 *   **Universal Code Execution Engine:** A secure JavaScript execution environment that works in both Node.js and browser contexts, with isolated VM contexts, timeout protection, async/await support, and built-in dynamic npm package loading via use-m. See [`EXEC.md`](EXEC.md) for details.
+*   **TypeScript Execution Engine:** A TypeScript-aware code execution engine that extends the base Exec class with in-memory TypeScript compilation, automatic tsconfig.lib.json loading, and seamless TypeScript syntax detection. Includes `npx hasyx tsx` command for TypeScript execution. See [`EXEC-TS.md`](EXEC-TS.md) for details.
 *   **OpenRouter AI Integration:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Allows AI to execute JavaScript code and maintain persistent context across conversations. See [`OPENROUTER.md`](OPENROUTER.md) for details.
 *   Migrations control with `npx hasyx migrate` and `npx hasyx unmigrate` for easy database schema management from `./migrations` directory.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
@@ -120,7 +122,9 @@ Explore the different modules and functionalities of Hasyx:
 *   **[HASYX.md](HASYX.md):** Documentation for the core `Hasyx` client class and its features.
 *   **[GRAPHQL-PROXY.md](GRAPHQL-PROXY.md):** How the secure GraphQL proxy to Hasura works.
 *   **[EXEC.md](EXEC.md):** Universal JavaScript code execution engine for both Node.js and browser environments.
+*   **[EXEC-TS.md](EXEC-TS.md):** TypeScript execution engine with in-memory compilation and automatic configuration loading.
 *   **[OPENROUTER.md](OPENROUTER.md):** AI integration with OpenRouter API and code execution capabilities.
+*   **[ASK.md](ASK.md):** AI assistant command-line interface for asking questions using OpenRouter with free DeepSeek model.
 *   **[CYTO.md](CYTO.md):** Guide to Cytoscape.js integration for graph visualizations.
 *   **[HID.md](HID.md):** Explanation of Hasyx Identifiers (HID) for resource identification.
 *   **[PWA.md](PWA.md):** Progressive Web App support with offline functionality, installability, and push notifications.
@@ -270,8 +274,15 @@ When you install Hasyx as a dependency in your project, you can extend the CLI w
        "your-project-name": "./lib/cli.js"
      },
      "scripts": {
-       "build:lib": "tsc -p tsconfig.lib.json",
-       "cli": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx ./lib/cli.ts"
+       "build": "NODE_ENV=production npx -y hasyx build",
+       "unbuild": "npx -y hasyx unbuild",
+       "start": "NODE_ENV=production npx -y hasyx start",
+       "dev": "npx -y hasyx dev",
+       "ws": "npx --yes next-ws-cli@latest patch -y",
+       "postinstall": "npm run ws -- -y",
+       "migrate": "npx hasyx migrate",
+       "unmigrate": "npx hasyx unmigrate",
+       "tsx": "npx hasyx tsx"
      }
    }
    ```
@@ -328,7 +339,8 @@ During initialization, Hasyx ensures that the following npm scripts are added to
   "ws": "npx --yes next-ws-cli@latest patch -y",
   "postinstall": "npm run ws -- -y",
   "migrate": "npx hasyx migrate",
-  "unmigrate": "npx hasyx unmigrate"
+  "unmigrate": "npx hasyx unmigrate",
+  "tsx": "npx hasyx tsx"
 }
 ```
 
@@ -503,6 +515,62 @@ The CLI automatically loads environment variables from the `.env` file in your p
 
 ---
 
+### `ask`
+
+Ask AI questions using OpenRouter with free DeepSeek model. Provides both direct question mode and interactive chat interface.
+
+```bash
+# Direct question mode
+npx hasyx ask -e "What is the capital of France?"
+npm run ask -- -e "Write a JavaScript function to add two numbers"
+
+# Interactive mode
+npx hasyx ask
+npm run ask
+```
+
+**Features:**
+- **Direct Questions:** Use `-e` or `--eval` flag to ask a single question and get an immediate response
+- **Interactive Mode:** Run without flags to start an interactive chat session with `> ` prompt
+- **Free AI Model:** Uses DeepSeek's free model via OpenRouter API
+- **Multiple Question Types:** Supports coding questions, math problems, general knowledge, and more
+- **Clean Output:** Shows only AI responses without additional console messages
+
+**Requirements:**
+- `OPENROUTER_API_KEY` environment variable must be set in your `.env` file
+- Get your free API key from [OpenRouter](https://openrouter.ai/)
+
+**Configuration:**
+The command uses the following default settings:
+- Model: `deepseek/deepseek-chat-v3-0324:free` (free tier)
+- Temperature: 0.7 (balanced creativity)
+- Max tokens: 4096 (long responses)
+
+**Examples:**
+```bash
+# Ask a coding question
+npm run ask -- -e "Write a React component for a todo list"
+
+# Ask for math help
+npm run ask -- -e "What is 15 * 27?"
+
+# Start interactive session
+npm run ask
+> What is TypeScript?
+> How do I use async/await in JavaScript?
+> Ctrl+C to exit
+```
+
+**Interactive Mode:**
+- Type your questions and press Enter
+- Use Ctrl+C to exit
+- Empty input is ignored
+- Each question is processed independently
+
+See [`ASK.md`](ASK.md) for detailed documentation and advanced usage examples.
+
+---
+
 ### `assets`
 
 Generate app icons and splash screens from logo files for web, Capacitor, and mobile apps.
@@ -560,6 +628,54 @@ The command provides detailed reporting of the search process and which file was
 ✨ Assets generation complete!
    Logo source: public/logo.svg (SVG)
 ```
+
+---
+
+### `tsx`
+
+Run TypeScript files or start a TypeScript REPL with Hasyx client in context. This command provides TypeScript execution capabilities with automatic compilation and intelligent syntax detection.
+
+```bash
+# Execute TypeScript code directly
+npx hasyx tsx -e "const message: string = 'Hello TypeScript'; console.log(message);"
+
+# Run a TypeScript file
+npx hasyx tsx script.ts
+
+# Start TypeScript REPL
+npx hasyx tsx
+```
+
+**Features:**
+- **In-memory TypeScript compilation** - Compiles TypeScript to JavaScript without creating files
+- **Automatic syntax detection** - Automatically detects TypeScript vs JavaScript syntax
+- **Full Hasyx context** - Access to `client`, `exec`, `ExecTs`, and all hasyx library exports
+- **REPL mode** - Interactive TypeScript environment with auto-completion
+- **File execution** - Run TypeScript files directly
+
+**Available in context:**
+- `client` - Hasyx client instance with admin privileges
+- `exec` - JavaScript execution engine
+- `ExecTs` - TypeScript execution engine class
+- All hasyx library exports (generators, utilities, etc.)
+- Node.js globals (console, process, fs, path, etc.)
+
+**TypeScript Examples:**
+```typescript
+// Type annotations and interfaces
+interface User { name: string; age: number }
+const user: User = { name: "John", age: 30 };
+
+// Generics and advanced types
+function identity<T>(arg: T): T { return arg; }
+const result = identity<string>("hello");
+
+// Enums and type aliases
+enum Status { Active = "active", Inactive = "inactive" }
+type UserWithStatus = User & { status: Status };
+```
+
+See [`EXEC-TS.md`](EXEC-TS.md) for comprehensive TypeScript execution documentation.
 
 ---
 
@@ -642,6 +758,11 @@ VERCEL_URL=https://your-project.vercel.app
 # Required if using EmailProvider or email features (like verification if implemented)
 # RESEND_API_KEY=re_your_resend_api_key
 
+# ===== OpenRouter AI Configuration =====
+# Required for AI features (ask command, OpenRouter integration)
+# Get your free API key from https://openrouter.ai/
+OPENROUTER_API_KEY=sk-or-v1-your_openrouter_api_key_here
+
 # ===== Push Notifications Configuration =====
 # Path to your Firebase service account JSON file for server-side authentication with FCM v1 API
 # GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-file.json
@@ -686,20 +807,6 @@ NEXT_PUBLIC_NOTIFICATION_ICON=/icon-192x192.png
 #### NextAuth.js (`NEXTAUTH_SECRET`)
 
 *   `NEXTAUTH_SECRET`: **Required** for securing sessions, signing JWTs, and CSRF protection. Generate a strong, random string (at least 32 characters). You can use `openssl rand -base64 32` to generate one.
-
-* **For client-side builds using different domains (GitHub Pages, Capacitor, etc.):**
-  * When deploying client-side builds (static export) that need to connect to your main backend API with NextAuth, the authentication is handled automatically via the `basePath` configuration in `SessionProvider`.
-  * The client-side build will use the URL from `NEXT_PUBLIC_API_URL` or `NEXT_PUBLIC_MAIN_URL` environment variables as the authentication API base.
-  * The `SessionProvider` automatically detects when the app is running on a different domain and configures the authentication endpoints properly.
-  * This allows authentication to work seamlessly across different environments (development, production) and deployments (client-side or server-side).
-
-#### Deployment & Build (`NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_BASE_PATH`, `NEXT_PUBLIC_MAIN_URL`, `NEXT_PUBLIC_BUILD_TARGET`, `NEXT_PUBLIC_WS`)
-
-*   `NEXT_PUBLIC_BASE_URL`: **Required**. The canonical base URL of your application deployment. Used by NextAuth.js for OAuth redirects and email links, and as a default fallback for `NEXT_PUBLIC_MAIN_URL`. Set it to your production domain (e.g., `https://yourdomain.com`) or `http://localhost:3000` for local development.
-*   `NEXT_PUBLIC_BASE_PATH`: *Optional*. If you deploy your application to a subdirectory of a domain (e.g., `https://example.com/my-app`), set this variable to the subdirectory path (e.g., `/my-app`). Next.js will use this to correctly prefix asset paths (`/_next/...` becomes `/my-app/_next/...`) and links. **For GitHub Pages deployments**, the included workflow (`.github/workflows/nextjs.yml`) **automatically detects and sets this** based on your repository name, so you typically don't need to set it manually for GH Pages.
-*   `NEXT_PUBLIC_MAIN_URL`: *Optional*. Specifies the absolute URL of your deployed backend API. This is primarily used by **client-side builds** (`build:client` for Capacitor/static export). When `NEXT_PUBLIC_BUILD_TARGET` is set to `client`, API calls from the client (e.g., via Apollo Client configured in `HasyxProvider`) will be directed to this URL (e.g., `https://yourdomain.com/api/graphql`) instead of relative paths (`/api/graphql`). If not set, it defaults to the value of `NEXT_PUBLIC_BASE_URL`.
-*   `NEXT_PUBLIC_BUILD_TARGET`: *Internal Use*. This variable is set automatically by specific build scripts (like `npm run build:client` which sets it to `client').
-*   `NEXT_PUBLIC_WS`: *Optional*. Controls WebSocket support for subscriptions (default: 1 = enabled). Set to 0 to disable WebSockets and use polling-based subscriptions instead. Particularly useful for serverless environments like Vercel where WebSockets are not supported.
 
 * **For client-side builds using different domains (GitHub Pages, Capacitor, etc.):**
   * When deploying client-side builds (static export) that need to connect to your main backend API with NextAuth, the authentication is handled automatically via the `basePath` configuration in `SessionProvider`.

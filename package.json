@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.201",
+  "version": "0.1.202",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -34,7 +34,9 @@
     "npm-publish": "npm run build && npm publish",
     "cli": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx ./lib/cli.ts",
     "assist": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx ./lib/assist.ts",
-    "js": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/js.ts"
+    "ask": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/ask.ts",
+    "js": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/js.ts",
+    "tsx": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/tsx.ts"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -99,6 +101,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.12",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/lodash": "^4.17.17",
     "@types/node": "^20.17.30",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -142,6 +145,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "jose": "^5.10.0",
     "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.488.0",
     "next": "15.3.1",
     "next-auth": "^4.24.11",

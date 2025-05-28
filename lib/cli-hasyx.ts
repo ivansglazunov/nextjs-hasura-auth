@@ -927,5 +927,79 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
       });
     });
 
+  // Ask command
+  program
+    .command('ask')
+    .description('Ask AI questions using OpenRouter with free DeepSeek model')
+    .option('-e, --eval <question>', 'Ask a direct question and get a response')
+    .action(async (options) => {
+      debug('Executing "ask" command with options:', options);
+      
+      const projectRoot = findProjectRoot();
+      const askScriptPath = path.join(projectRoot, 'lib', 'ask.ts');
+      
+      const args: string[] = [];
+      if (options.eval) {
+        args.push('-e', options.eval);
+      }
+      
+      const { spawn } = require('child_process');
+      const child = spawn('npx', ['tsx', askScriptPath, ...args], {
+        stdio: 'inherit',
+        cwd: projectRoot,
+        env: {
+          ...process.env,
+          NODE_OPTIONS: '--experimental-vm-modules'
+        }
+      });
+      
+      child.on('exit', (code: number) => {
+        process.exit(code || 0);
+      });
+      
+      child.on('error', (error: Error) => {
+        console.error('❌ Error executing ask command:', error);
+        process.exit(1);
+      });
+    });
+
+  // TSX command
+  program
+    .command('tsx [filePath]')
+    .description(`Run a TypeScript file or start a TypeScript REPL with ${packageName} client in context.`)
+    .option('-e, --eval <script>', 'Evaluate a string of TypeScript code')
+    .action(async (filePath, options) => {
+      debug('Executing "tsx" command with filePath:', filePath, 'and options:', options);
+      
+      const projectRoot = findProjectRoot();
+      const tsxScriptPath = path.join(projectRoot, 'lib', 'tsx.ts');
+      
+      const args: string[] = [];
+      if (options.eval) {
+        args.push('-e', options.eval);
+      } else if (filePath) {
+        args.push(filePath);
+      }
+      
+      const { spawn } = require('child_process');
+      const child = spawn('npx', ['tsx', tsxScriptPath, ...args], {
+        stdio: 'inherit',
+        cwd: projectRoot,
+        env: {
+          ...process.env,
+          NODE_OPTIONS: '--experimental-vm-modules'
+        }
+      });
+      
+      child.on('exit', (code: number) => {
+        process.exit(code || 0);
+      });
+      
+      child.on('error', (error: Error) => {
+        console.error('❌ Error executing TSX environment:', error);
+        process.exit(1);
+      });
+    });
+
   return program;
 }; 
