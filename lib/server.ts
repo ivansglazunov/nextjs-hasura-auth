@@ -20,6 +20,7 @@ export * from './openrouter';
 export * from './exec';
 export * from './exec-ts';
 export * from './terminal';
+export * from './markdown-terminal';
 
 // Re-export from auth.tsx (now including auth-next.ts indirectly)
 export * from './auth';

@@ -4,6 +4,7 @@ import path from 'path';
 import spawn from 'cross-spawn';
 import Debug from './debug';
 import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './events';
+import { buildDocumentation } from './doc-public';
 import assist from './assist';
 
 // Create a debugger instance for the CLI
@@ -229,10 +230,14 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/hasyx/payments/page.tsx': 'app/hasyx/payments/page.tsx',
     'app/hasyx/cyto/page.tsx': 'app/hasyx/cyto/page.tsx',
     'app/hasyx/cyto/client.tsx': 'app/hasyx/cyto/client.tsx',
+    'app/hasyx/doc/page.tsx': 'app/hasyx/doc/page.tsx',
+    'app/hasyx/doc/[filename]/page.tsx': 'app/hasyx/doc/[filename]/page.tsx',
     'components/sidebar/layout.tsx': 'components/sidebar/layout.tsx',
     'lib/diagnostics.tsx': 'lib/diagnostics.tsx',
     'lib/aframe.tsx': 'lib/aframe.tsx',
     'lib/payments.tsx': 'lib/payments.tsx',
+    'lib/doc.ts': 'lib/doc.ts',
+    'lib/doc-public.ts': 'lib/doc-public.ts',
     'public/favicon.ico': 'public/favicon.ico',
     'public/logo.svg': 'public/logo.svg',
     '.gitignore': '.gitignore.template',
@@ -271,7 +276,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/api/auth/verify',
     'app/api/graphql',
     'migrations/1746660891582-hasyx-users',
-    'migrations/1746670608552-hasyx-notify',
+    'migrations/174670608552-hasyx-notify',
     'migrations/1746837333136-hasyx-debug',
     'migrations/20240801120000-hasyx-payments',
     'migrations/29991231235959999-hasyx',
@@ -283,6 +288,8 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/hasyx/aframe',
     'app/hasyx/payments',
     'app/hasyx/cyto',
+    'app/hasyx/doc',
+    'app/hasyx/doc/[filename]',
     'components/sidebar',
   ];
 
@@ -460,6 +467,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
         "unbuild": `npx -y ${packageName} unbuild`,
         "start": `NODE_ENV=production NODE_OPTIONS=\"--experimental-vm-modules\" npx -y ${packageName} start`,
         "dev": `NODE_OPTIONS=\"--experimental-vm-modules\" npx -y ${packageName} dev`,
+        "doc:build": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} doc`,
         "ws": "npx --yes next-ws-cli@latest patch -y",
         "postinstall": "npm run ws -- -y",
         "migrate": `npx ${packageName} migrate`,
@@ -515,6 +523,15 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     debug(`npm install ${packageName}@latest --save successful.`);
   }
 
+  // Build documentation for the project
+  console.log('📚 Building documentation...');
+  try {
+    buildDocumentation(projectRoot);
+  } catch (error) {
+    console.warn('⚠️ Failed to build documentation:', error);
+    debug(`Documentation build failed: ${error}`);
+  }
+
   console.log(`✨ ${packageName} initialization complete!`);
 
   console.log('👉 Next steps:');
@@ -528,6 +545,15 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
 export const devCommand = () => {
   debug('Executing "dev" command.');
   const cwd = findProjectRoot();
+  
+  // Build documentation before starting dev server
+  console.log('📚 Building documentation...');
+  try {
+    buildDocumentation(cwd);
+  } catch (error) {
+    console.warn('⚠️ Failed to build documentation:', error);
+    debug(`Documentation build failed: ${error}`);
+  }
   
   console.log('🚀 Starting development server (using next dev --turbopack)...');
   debug(`Running command: npx next dev --turbopack in ${cwd}`);
@@ -554,6 +580,15 @@ export const buildCommand = () => {
   const cwd = findProjectRoot();
   
   ensureWebSocketSupport(cwd);
+  
+  // Build documentation before building Next.js app
+  console.log('📚 Building documentation...');
+  try {
+    buildDocumentation(cwd);
+  } catch (error) {
+    console.warn('⚠️ Failed to build documentation:', error);
+    debug(`Documentation build failed: ${error}`);
+  }
   
   console.log('🏗️ Building Next.js application...');
   debug(`Running command: npx next build --turbopack in ${cwd}`);
@@ -742,6 +777,18 @@ export const schemaCommand = async () => {
   }
 };
 
+// Doc command
+export const docCommand = (options: any) => {
+  debug('Executing "doc" command with options:', options);
+  try {
+    buildDocumentation(options.dir);
+  } catch (error) {
+    console.error('❌ Failed to build documentation:', error);
+    debug(`Documentation build failed: ${error}`);
+    process.exit(1);
+  }
+};
+
 // Export all command functions and utilities
 export const setupCommands = (program: Command, packageName: string = 'hasyx') => {
   // Init command
@@ -795,6 +842,22 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
     .command('schema')
     .description('Generate Hasura schema files and GraphQL types.')
     .action(schemaCommand);
+
+  // Doc command
+  program
+    .command('doc')
+    .description('Build documentation from markdown files')
+    .option('-d, --dir <directory>', 'Root directory to scan for markdown files', process.cwd())
+    .action((options) => {
+      debug('Executing "doc" command with options:', options);
+      try {
+        buildDocumentation(options.dir);
+      } catch (error) {
+        console.error('❌ Failed to build documentation:', error);
+        debug(`Documentation build failed: ${error}`);
+        process.exit(1);
+      }
+    });
 
   // Assets command
   program

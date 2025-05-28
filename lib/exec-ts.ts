@@ -1,68 +1,44 @@
 import * as ts from 'typescript';
-import * as path from 'path';
-import * as fs from 'fs-extra';
 import cloneDeep from 'lodash/cloneDeep';
 import { Exec, ExecOptions, ExecContext } from './exec';
 import Debug from './debug';
 
 const debug = Debug('hasyx:exec-ts');
 
-// Load and prepare TypeScript configuration at module level
-const loadTsConfig = (): ts.CompilerOptions => {
-  const projectRoot = process.cwd();
-  const tsconfigPath = path.join(projectRoot, 'tsconfig.lib.json');
-  
-  let baseOptions: ts.CompilerOptions = {
-    target: ts.ScriptTarget.ES2016,
+// Static TypeScript configuration based on tsconfig.lib.json
+const getDefaultTsConfig = (): ts.CompilerOptions => {
+  return {
+    // Base configuration from tsconfig.json
+    target: ts.ScriptTarget.ES2017,
+    lib: ['dom', 'dom.iterable', 'esnext'],
+    allowJs: true,
+    skipLibCheck: true,
+    strict: true,
+    esModuleInterop: true,
+    resolveJsonModule: true,
+    noImplicitAny: false,
+    isolatedModules: true,
+    
+    // Library-specific configuration from tsconfig.lib.json
     module: ts.ModuleKind.CommonJS,
     moduleResolution: ts.ModuleResolutionKind.NodeJs,
     jsx: ts.JsxEmit.ReactJSX,
-    esModuleInterop: true,
+    declaration: false, // We don't need declarations for execution
+    noEmit: false, // We need to emit for execution
+    
+    // Additional settings for in-memory execution
     allowSyntheticDefaultImports: true,
-    strict: true,
-    skipLibCheck: true,
     forceConsistentCasingInFileNames: true,
+    
+    // Types available in execution context
+    types: ['node', 'jest']
   };
-
-  // Try to load tsconfig.lib.json if it exists
-  if (fs.existsSync(tsconfigPath)) {
-    try {
-      debug('Loading tsconfig.lib.json from:', tsconfigPath);
-      
-      const configFile = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
-      if (!configFile.error) {
-        const parsedConfig = ts.parseJsonConfigFileContent(
-          configFile.config,
-          ts.sys,
-          projectRoot
-        );
-        
-        if (!parsedConfig.errors || parsedConfig.errors.length === 0) {
-          baseOptions = { ...baseOptions, ...parsedConfig.options };
-          debug('Successfully loaded tsconfig.lib.json options');
-        } else {
-          debug('Errors parsing tsconfig.lib.json:', parsedConfig.errors);
-        }
-      } else {
-        debug('Error reading tsconfig.lib.json:', configFile.error);
-      }
-    } catch (error) {
-      debug('Error loading tsconfig.lib.json, using defaults:', error);
-    }
-  } else {
-    debug('tsconfig.lib.json not found, using default options');
-  }
-
-  return baseOptions;
 };
 
-// Load configuration once at module level
-const baseTsConfig = loadTsConfig();
-
-// Create in-memory compilation options by deep cloning and modifying
+// Create in-memory compilation options
 const createInMemoryCompilerOptions = (userOptions?: Partial<ts.CompilerOptions>): ts.CompilerOptions => {
-  // Deep clone the base configuration
-  const options = cloneDeep(baseTsConfig);
+  // Start with default configuration
+  const options = cloneDeep(getDefaultTsConfig());
   
   // Modify for in-memory compilation (no file output)
   options.noEmit = true;

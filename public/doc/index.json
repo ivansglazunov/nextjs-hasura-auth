@@ -1,0 +1,3622 @@
+{
+  "files": [
+    {
+      "filename": "APOLLO.md",
+      "title": "Apollo Client",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Apollo Client",
+          "id": "apollo-client"
+        },
+        {
+          "level": 2,
+          "text": "useCreateApolloClient",
+          "id": "usecreateapolloclient"
+        },
+        {
+          "level": 3,
+          "text": "Purpose",
+          "id": "purpose"
+        },
+        {
+          "level": 3,
+          "text": "Arguments",
+          "id": "arguments"
+        },
+        {
+          "level": 3,
+          "text": "Return Value",
+          "id": "return-value"
+        },
+        {
+          "level": 3,
+          "text": "Key Features",
+          "id": "key-features"
+        },
+        {
+          "level": 3,
+          "text": "How `roleLink` Works",
+          "id": "how-rolelink-works"
+        }
+      ],
+      "content": "",
+      "path": "APOLLO.md"
+    },
+    {
+      "filename": "ASK.md",
+      "title": "Ask Command",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Ask Command",
+          "id": "ask-command"
+        },
+        {
+          "level": 2,
+          "text": "Features",
+          "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "Installation & Setup",
+          "id": "installation-setup"
+        },
+        {
+          "level": 3,
+          "text": "1. Install Hasyx",
+          "id": "1-install-hasyx"
+        },
+        {
+          "level": 3,
+          "text": "2. Get OpenRouter API Key",
+          "id": "2-get-openrouter-api-key"
+        },
+        {
+          "level": 3,
+          "text": "3. Configure Environment",
+          "id": "3-configure-environment"
+        },
+        {
+          "level": 2,
+          "text": "Usage",
+          "id": "usage"
+        },
+        {
+          "level": 3,
+          "text": "Direct Question Mode",
+          "id": "direct-question-mode"
+        },
+        {
+          "level": 3,
+          "text": "Interactive Chat Mode",
+          "id": "interactive-chat-mode"
+        },
+        {
+          "level": 2,
+          "text": "Examples",
+          "id": "examples"
+        },
+        {
+          "level": 3,
+          "text": "Coding Questions",
+          "id": "coding-questions"
+        },
+        {
+          "level": 3,
+          "text": "Math and Calculations",
+          "id": "math-and-calculations"
+        },
+        {
+          "level": 3,
+          "text": "General Knowledge",
+          "id": "general-knowledge"
+        },
+        {
+          "level": 3,
+          "text": "Interactive Session Example",
+          "id": "interactive-session-example"
+        },
+        {
+          "level": 2,
+          "text": "Configuration",
+          "id": "configuration"
+        },
+        {
+          "level": 3,
+          "text": "Default Settings",
+          "id": "default-settings"
+        },
+        {
+          "level": 3,
+          "text": "Model Information",
+          "id": "model-information"
+        },
+        {
+          "level": 2,
+          "text": "Error Handling",
+          "id": "error-handling"
+        },
+        {
+          "level": 3,
+          "text": "Missing API Key",
+          "id": "missing-api-key"
+        },
+        {
+          "level": 3,
+          "text": "API Errors",
+          "id": "api-errors"
+        },
+        {
+          "level": 3,
+          "text": "Interactive Mode Issues",
+          "id": "interactive-mode-issues"
+        },
+        {
+          "level": 2,
+          "text": "Integration with Hasyx Projects",
+          "id": "integration-with-hasyx-projects"
+        },
+        {
+          "level": 3,
+          "text": "npm Scripts",
+          "id": "npm-scripts"
+        },
+        {
+          "level": 3,
+          "text": "Environment Loading",
+          "id": "environment-loading"
+        },
+        {
+          "level": 3,
+          "text": "CLI Integration",
+          "id": "cli-integration"
+        },
+        {
+          "level": 2,
+          "text": "Advanced Usage",
+          "id": "advanced-usage"
+        },
+        {
+          "level": 3,
+          "text": "Coding Assistance Workflow",
+          "id": "coding-assistance-workflow"
+        },
+        {
+          "level": 3,
+          "text": "Learning and Documentation",
+          "id": "learning-and-documentation"
+        },
+        {
+          "level": 3,
+          "text": "Problem Solving",
+          "id": "problem-solving"
+        },
+        {
+          "level": 2,
+          "text": "Tips and Best Practices",
+          "id": "tips-and-best-practices"
+        },
+        {
+          "level": 3,
+          "text": "Effective Question Asking",
+          "id": "effective-question-asking"
+        },
+        {
+          "level": 3,
+          "text": "Interactive Mode Tips",
+          "id": "interactive-mode-tips"
+        },
+        {
+          "level": 3,
+          "text": "Performance Tips",
+          "id": "performance-tips"
+        },
+        {
+          "level": 2,
+          "text": "Troubleshooting",
+          "id": "troubleshooting"
+        },
+        {
+          "level": 3,
+          "text": "Common Issues",
+          "id": "common-issues"
+        },
+        {
+          "level": 3,
+          "text": "Debug Mode",
+          "id": "debug-mode"
+        },
+        {
+          "level": 2,
+          "text": "Related Documentation",
+          "id": "related-documentation"
+        },
+        {
+          "level": 2,
+          "text": "API Reference",
+          "id": "api-reference"
+        },
+        {
+          "level": 3,
+          "text": "Command Syntax",
+          "id": "command-syntax"
+        },
+        {
+          "level": 3,
+          "text": "Options",
+          "id": "options"
+        },
+        {
+          "level": 3,
+          "text": "Exit Codes",
+          "id": "exit-codes"
+        },
+        {
+          "level": 3,
+          "text": "Environment Variables",
+          "id": "environment-variables"
+        },
+        {
+          "level": 2,
+          "text": "Examples Repository",
+          "id": "examples-repository"
+        },
+        {
+          "level": 2,
+          "text": "Contributing",
+          "id": "contributing"
+        }
+      ],
+      "content": "",
+      "path": "ASK.md"
+    },
+    {
+      "filename": "AUTH.md",
+      "title": "Auth Helpers",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Auth Helpers",
+          "id": "auth-helpers"
+        },
+        {
+          "level": 2,
+          "text": "Purpose",
+          "id": "purpose"
+        },
+        {
+          "level": 2,
+          "text": "Usage",
+          "id": "usage"
+        },
+        {
+          "level": 3,
+          "text": "`WsClientsManager` (WebSocket Authentication)",
+          "id": "wsclientsmanager-websocket-authentication"
+        },
+        {
+          "level": 3,
+          "text": "`getTokenFromRequest` (HTTP/WebSocket Token Retrieval)",
+          "id": "gettokenfromrequest-httpwebsocket-token-retrieval"
+        },
+        {
+          "level": 2,
+          "text": "Test Authentication Helper",
+          "id": "test-authentication-helper"
+        },
+        {
+          "level": 3,
+          "text": "`testAuthorize` (Development & Testing Only)",
+          "id": "testauthorize-development-testing-only"
+        },
+        {
+          "level": 2,
+          "text": "Dependencies",
+          "id": "dependencies"
+        },
+        {
+          "level": 2,
+          "text": "Telegram Login Authentication",
+          "id": "telegram-login-authentication"
+        }
+      ],
+      "content": "",
+      "path": "AUTH.md"
+    },
+    {
+      "filename": "CONTRIBUTING.md",
+      "title": "Contributing",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Contributing",
+          "id": "contributing"
+        },
+        {
+          "level": 2,
+          "text": "Development Setup",
+          "id": "development-setup"
+        },
+        {
+          "level": 2,
+          "text": "Running Tests",
+          "id": "running-tests"
+        },
+        {
+          "level": 3,
+          "text": "Test Environment Guidelines",
+          "id": "test-environment-guidelines"
+        },
+        {
+          "level": 2,
+          "text": "Code Style",
+          "id": "code-style"
+        },
+        {
+          "level": 2,
+          "text": "⚠️ CRITICAL: Table Naming in Hasyx",
+          "id": "critical-table-naming-in-hasyx"
+        },
+        {
+          "level": 3,
+          "text": "✅ CORRECT - Use underscores:",
+          "id": "correct-use-underscores"
+        },
+        {
+          "level": 3,
+          "text": "❌ INCORRECT - Do NOT use dots:",
+          "id": "incorrect-do-not-use-dots"
+        },
+        {
+          "level": 3,
+          "text": "Schema to Table Name Mapping:",
+          "id": "schema-to-table-name-mapping"
+        },
+        {
+          "level": 2,
+          "text": "Commit Messages",
+          "id": "commit-messages"
+        },
+        {
+          "level": 2,
+          "text": "Pull Requests",
+          "id": "pull-requests"
+        },
+        {
+          "level": 2,
+          "text": "Debugging Data Issues",
+          "id": "debugging-data-issues"
+        },
+        {
+          "level": 3,
+          "text": "Quick Testing with `npx hasyx js`",
+          "id": "quick-testing-with-npx-hasyx-js"
+        },
+        {
+          "level": 2,
+          "text": "Testing Aggregation Features",
+          "id": "testing-aggregation-features"
+        },
+        {
+          "level": 3,
+          "text": "Quick Aggregation Tests",
+          "id": "quick-aggregation-tests"
+        },
+        {
+          "level": 3,
+          "text": "Aggregation Testing Guidelines",
+          "id": "aggregation-testing-guidelines"
+        },
+        {
+          "level": 3,
+          "text": "Common Aggregation Patterns to Test",
+          "id": "common-aggregation-patterns-to-test"
+        },
+        {
+          "level": 3,
+          "text": "Debugging Aggregation Issues",
+          "id": "debugging-aggregation-issues"
+        },
+        {
+          "level": 2,
+          "text": "Writing Database Migrations",
+          "id": "writing-database-migrations"
+        },
+        {
+          "level": 3,
+          "text": "Migration File Structure",
+          "id": "migration-file-structure"
+        },
+        {
+          "level": 3,
+          "text": "Core Migration Principles",
+          "id": "core-migration-principles"
+        },
+        {
+          "level": 4,
+          "text": "1. **Always Use `define*` Methods for Idempotency**",
+          "id": "1-always-use-define-methods-for-idempotency"
+        },
+        {
+          "level": 4,
+          "text": "2. **Use Transactions for Related Operations**",
+          "id": "2-use-transactions-for-related-operations"
+        },
+        {
+          "level": 4,
+          "text": "3. **Comprehensive Schema Management**",
+          "id": "3-comprehensive-schema-management"
+        },
+        {
+          "level": 4,
+          "text": "4. **Proper Down Migration Structure**",
+          "id": "4-proper-down-migration-structure"
+        },
+        {
+          "level": 3,
+          "text": "Advanced Migration Patterns",
+          "id": "advanced-migration-patterns"
+        },
+        {
+          "level": 4,
+          "text": "1. **Data Migrations with Type Safety**",
+          "id": "1-data-migrations-with-type-safety"
+        },
+        {
+          "level": 4,
+          "text": "2. **Complex Schema Migrations**",
+          "id": "2-complex-schema-migrations"
+        },
+        {
+          "level": 4,
+          "text": "3. **Remote Schema Integration**",
+          "id": "3-remote-schema-integration"
+        },
+        {
+          "level": 3,
+          "text": "Migration Testing and Validation",
+          "id": "migration-testing-and-validation"
+        },
+        {
+          "level": 4,
+          "text": "1. **Test Migration Scripts Locally**",
+          "id": "1-test-migration-scripts-locally"
+        },
+        {
+          "level": 4,
+          "text": "2. **Validate Schema State**",
+          "id": "2-validate-schema-state"
+        },
+        {
+          "level": 3,
+          "text": "Migration Best Practices Summary",
+          "id": "migration-best-practices-summary"
+        },
+        {
+          "level": 2,
+          "text": "Contribution Guidelines",
+          "id": "contribution-guidelines"
+        },
+        {
+          "level": 2,
+          "text": "Project Structure Philosophy",
+          "id": "project-structure-philosophy"
+        },
+        {
+          "level": 2,
+          "text": "Specific Guidance for `app/payments/tbank/options.ts`",
+          "id": "specific-guidance-for-apppaymentstbankoptionsts"
+        },
+        {
+          "level": 3,
+          "text": "`generateReceipt` Function Stub",
+          "id": "generatereceipt-function-stub"
+        }
+      ],
+      "content": "",
+      "path": "CONTRIBUTING.md"
+    },
+    {
+      "filename": "CYTO.md",
+      "title": "Graph Visualizations",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Graph Visualizations",
+          "id": "graph-visualizations"
+        },
+        {
+          "level": 2,
+          "text": "Overview",
+          "id": "overview"
+        },
+        {
+          "level": 2,
+          "text": "Core Components",
+          "id": "core-components"
+        },
+        {
+          "level": 3,
+          "text": "1. `<Cyto />`",
+          "id": "1-cyto"
+        },
+        {
+          "level": 3,
+          "text": "2. `<CytoNode />`",
+          "id": "2-cytonode"
+        },
+        {
+          "level": 3,
+          "text": "3. `<CytoEdge />`",
+          "id": "3-cytoedge"
+        },
+        {
+          "level": 3,
+          "text": "4. `<CytoStyle />`",
+          "id": "4-cytostyle"
+        },
+        {
+          "level": 3,
+          "text": "5. `useGraph()`",
+          "id": "5-usegraph"
+        },
+        {
+          "level": 2,
+          "text": "Comprehensive Usage Example",
+          "id": "comprehensive-usage-example"
+        },
+        {
+          "level": 2,
+          "text": "Key Aspects and Benefits",
+          "id": "key-aspects-and-benefits"
+        }
+      ],
+      "content": "",
+      "path": "CYTO.md"
+    },
+    {
+      "filename": "EXEC-TS.md",
+      "title": "TypeScript Execution",
+      "headings": [
+        {
+          "level": 1,
+          "text": "TypeScript Execution",
+          "id": "typescript-execution"
+        },
+        {
+          "level": 2,
+          "text": "Features",
+          "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "Installation",
+          "id": "installation"
+        },
+        {
+          "level": 2,
+          "text": "Usage",
+          "id": "usage"
+        },
+        {
+          "level": 3,
+          "text": "Basic Usage",
+          "id": "basic-usage"
+        },
+        {
+          "level": 3,
+          "text": "With Context",
+          "id": "with-context"
+        },
+        {
+          "level": 3,
+          "text": "Factory Function",
+          "id": "factory-function"
+        },
+        {
+          "level": 2,
+          "text": "Configuration",
+          "id": "configuration"
+        },
+        {
+          "level": 3,
+          "text": "Compiler Options",
+          "id": "compiler-options"
+        },
+        {
+          "level": 3,
+          "text": "Strict Mode",
+          "id": "strict-mode"
+        },
+        {
+          "level": 2,
+          "text": "TypeScript Features Supported",
+          "id": "typescript-features-supported"
+        },
+        {
+          "level": 3,
+          "text": "Type Annotations",
+          "id": "type-annotations"
+        },
+        {
+          "level": 3,
+          "text": "Interfaces",
+          "id": "interfaces"
+        },
+        {
+          "level": 3,
+          "text": "Type Aliases",
+          "id": "type-aliases"
+        },
+        {
+          "level": 3,
+          "text": "Generics",
+          "id": "generics"
+        },
+        {
+          "level": 3,
+          "text": "Enums",
+          "id": "enums"
+        },
+        {
+          "level": 3,
+          "text": "Type Assertions",
+          "id": "type-assertions"
+        },
+        {
+          "level": 2,
+          "text": "API Reference",
+          "id": "api-reference"
+        },
+        {
+          "level": 3,
+          "text": "Class: ExecTs",
+          "id": "class-exects"
+        },
+        {
+          "level": 4,
+          "text": "Constructor",
+          "id": "constructor"
+        },
+        {
+          "level": 4,
+          "text": "Methods",
+          "id": "methods"
+        },
+        {
+          "level": 5,
+          "text": "execTs(code, contextExtend?)",
+          "id": "exectscode-contextextend"
+        },
+        {
+          "level": 5,
+          "text": "updateCompilerOptions(options)",
+          "id": "updatecompileroptionsoptions"
+        },
+        {
+          "level": 5,
+          "text": "getCurrentCompilerOptions()",
+          "id": "getcurrentcompileroptions"
+        },
+        {
+          "level": 4,
+          "text": "Static Methods",
+          "id": "static-methods"
+        },
+        {
+          "level": 5,
+          "text": "isTypeScriptCode(code)",
+          "id": "istypescriptcodecode"
+        },
+        {
+          "level": 3,
+          "text": "Interface: ExecTsOptions",
+          "id": "interface-exectsoptions"
+        },
+        {
+          "level": 2,
+          "text": "Configuration Loading",
+          "id": "configuration-loading"
+        },
+        {
+          "level": 2,
+          "text": "TypeScript Detection",
+          "id": "typescript-detection"
+        },
+        {
+          "level": 2,
+          "text": "Error Handling",
+          "id": "error-handling"
+        },
+        {
+          "level": 2,
+          "text": "Integration with CLI",
+          "id": "integration-with-cli"
+        },
+        {
+          "level": 2,
+          "text": "Best Practices",
+          "id": "best-practices"
+        },
+        {
+          "level": 2,
+          "text": "Examples",
+          "id": "examples"
+        },
+        {
+          "level": 3,
+          "text": "Working with Hasyx Client",
+          "id": "working-with-hasyx-client"
+        },
+        {
+          "level": 3,
+          "text": "Complex Type Operations",
+          "id": "complex-type-operations"
+        },
+        {
+          "level": 2,
+          "text": "Troubleshooting",
+          "id": "troubleshooting"
+        },
+        {
+          "level": 3,
+          "text": "Common Issues",
+          "id": "common-issues"
+        },
+        {
+          "level": 3,
+          "text": "Debug Mode",
+          "id": "debug-mode"
+        },
+        {
+          "level": 2,
+          "text": "See Also",
+          "id": "see-also"
+        }
+      ],
+      "content": "",
+      "path": "EXEC-TS.md"
+    },
+    {
+      "filename": "EXEC.md",
+      "title": "Code Execution",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Code Execution",
+          "id": "code-execution"
+        },
+        {
+          "level": 2,
+          "text": "Purpose",
+          "id": "purpose"
+        },
+        {
+          "level": 2,
+          "text": "Core Features",
+          "id": "core-features"
+        },
+        {
+          "level": 3,
+          "text": "Environment Detection",
+          "id": "environment-detection"
+        },
+        {
+          "level": 3,
+          "text": "Execution Context Management",
+          "id": "execution-context-management"
+        },
+        {
+          "level": 2,
+          "text": "Usage",
+          "id": "usage"
+        },
+        {
+          "level": 3,
+          "text": "Basic Usage",
+          "id": "basic-usage"
+        },
+        {
+          "level": 3,
+          "text": "Factory Function",
+          "id": "factory-function"
+        },
+        {
+          "level": 3,
+          "text": "Advanced Context Management",
+          "id": "advanced-context-management"
+        },
+        {
+          "level": 3,
+          "text": "Execution with Context Extension",
+          "id": "execution-with-context-extension"
+        },
+        {
+          "level": 2,
+          "text": "Configuration Options",
+          "id": "configuration-options"
+        },
+        {
+          "level": 3,
+          "text": "ExecOptions Interface",
+          "id": "execoptions-interface"
+        },
+        {
+          "level": 3,
+          "text": "Example with Options",
+          "id": "example-with-options"
+        },
+        {
+          "level": 2,
+          "text": "Dynamic Module Loading with use-m",
+          "id": "dynamic-module-loading-with-use-m"
+        },
+        {
+          "level": 3,
+          "text": "Basic use-m Usage",
+          "id": "basic-use-m-usage"
+        },
+        {
+          "level": 3,
+          "text": "Package Version Specification",
+          "id": "package-version-specification"
+        },
+        {
+          "level": 3,
+          "text": "How use-m Works",
+          "id": "how-use-m-works"
+        },
+        {
+          "level": 3,
+          "text": "use-m Features",
+          "id": "use-m-features"
+        },
+        {
+          "level": 3,
+          "text": "Error Handling with use-m",
+          "id": "error-handling-with-use-m"
+        },
+        {
+          "level": 3,
+          "text": "Performance Considerations",
+          "id": "performance-considerations"
+        },
+        {
+          "level": 2,
+          "text": "Async/Await Support",
+          "id": "asyncawait-support"
+        },
+        {
+          "level": 2,
+          "text": "Built-in Objects and Functions",
+          "id": "built-in-objects-and-functions"
+        },
+        {
+          "level": 3,
+          "text": "Available Globals",
+          "id": "available-globals"
+        },
+        {
+          "level": 3,
+          "text": "Environment-Specific Globals",
+          "id": "environment-specific-globals"
+        },
+        {
+          "level": 2,
+          "text": "Error Handling",
+          "id": "error-handling"
+        },
+        {
+          "level": 3,
+          "text": "Syntax Errors",
+          "id": "syntax-errors"
+        },
+        {
+          "level": 3,
+          "text": "Runtime Errors",
+          "id": "runtime-errors"
+        },
+        {
+          "level": 3,
+          "text": "Timeout Handling",
+          "id": "timeout-handling"
+        },
+        {
+          "level": 2,
+          "text": "Advanced Examples",
+          "id": "advanced-examples"
+        },
+        {
+          "level": 3,
+          "text": "Complex Data Processing",
+          "id": "complex-data-processing"
+        },
+        {
+          "level": 3,
+          "text": "Async Data Processing",
+          "id": "async-data-processing"
+        },
+        {
+          "level": 3,
+          "text": "Function Definitions and Execution",
+          "id": "function-definitions-and-execution"
+        },
+        {
+          "level": 2,
+          "text": "Environment Detection",
+          "id": "environment-detection"
+        },
+        {
+          "level": 3,
+          "text": "Static Methods",
+          "id": "static-methods"
+        },
+        {
+          "level": 3,
+          "text": "Usage in Code",
+          "id": "usage-in-code"
+        },
+        {
+          "level": 2,
+          "text": "Security Considerations",
+          "id": "security-considerations"
+        },
+        {
+          "level": 3,
+          "text": "Context Isolation",
+          "id": "context-isolation"
+        },
+        {
+          "level": 3,
+          "text": "Timeout Protection",
+          "id": "timeout-protection"
+        },
+        {
+          "level": 3,
+          "text": "Environment Safety",
+          "id": "environment-safety"
+        },
+        {
+          "level": 2,
+          "text": "Testing",
+          "id": "testing"
+        },
+        {
+          "level": 2,
+          "text": "Integration Examples",
+          "id": "integration-examples"
+        },
+        {
+          "level": 3,
+          "text": "CLI Tool Integration",
+          "id": "cli-tool-integration"
+        },
+        {
+          "level": 3,
+          "text": "Dynamic Code Evaluation",
+          "id": "dynamic-code-evaluation"
+        },
+        {
+          "level": 3,
+          "text": "Dynamic Package Loading with use-m",
+          "id": "dynamic-package-loading-with-use-m"
+        },
+        {
+          "level": 3,
+          "text": "Microservice with Dynamic Dependencies",
+          "id": "microservice-with-dynamic-dependencies"
+        },
+        {
+          "level": 2,
+          "text": "Best Practices",
+          "id": "best-practices"
+        }
+      ],
+      "content": "",
+      "path": "EXEC.md"
+    },
+    {
+      "filename": "GENERATOR.md",
+      "title": "Query Generator",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Query Generator",
+          "id": "query-generator"
+        },
+        {
+          "level": 2,
+          "text": "Purpose",
+          "id": "purpose"
+        },
+        {
+          "level": 2,
+          "text": "Usage",
+          "id": "usage"
+        },
+        {
+          "level": 2,
+          "text": "Options (`GenerateOptions` Interface)",
+          "id": "options-generateoptions-interface"
+        },
+        {
+          "level": 2,
+          "text": "Examples",
+          "id": "examples"
+        },
+        {
+          "level": 3,
+          "text": "1. Advanced Nested Query (Appending to Defaults)",
+          "id": "1-advanced-nested-query-appending-to-defaults"
+        },
+        {
+          "level": 3,
+          "text": "2. Basic Query with `where`",
+          "id": "2-basic-query-with-where"
+        },
+        {
+          "level": 3,
+          "text": "3. Query with Pagination and Sorting",
+          "id": "3-query-with-pagination-and-sorting"
+        },
+        {
+          "level": 3,
+          "text": "4. Query by Primary Key",
+          "id": "4-query-by-primary-key"
+        },
+        {
+          "level": 3,
+          "text": "5. Nested Query with Parameters and Alias",
+          "id": "5-nested-query-with-parameters-and-alias"
+        },
+        {
+          "level": 3,
+          "text": "6. Aggregate Query",
+          "id": "6-aggregate-query"
+        },
+        {
+          "level": 3,
+          "text": "7. Insert Mutation (Single Object)",
+          "id": "7-insert-mutation-single-object"
+        },
+        {
+          "level": 3,
+          "text": "8. Insert Mutation (Bulk)",
+          "id": "8-insert-mutation-bulk"
+        },
+        {
+          "level": 3,
+          "text": "9. Update Mutation by Primary Key",
+          "id": "9-update-mutation-by-primary-key"
+        },
+        {
+          "level": 3,
+          "text": "10. Update Mutation by `where` Condition",
+          "id": "10-update-mutation-by-where-condition"
+        },
+        {
+          "level": 3,
+          "text": "11. Delete Mutation by Primary Key",
+          "id": "11-delete-mutation-by-primary-key"
+        },
+        {
+          "level": 3,
+          "text": "12. Delete Mutation by `where` Condition",
+          "id": "12-delete-mutation-by-where-condition"
+        },
+        {
+          "level": 3,
+          "text": "13. Subscription",
+          "id": "13-subscription"
+        },
+        {
+          "level": 3,
+          "text": "14. Query with `distinct_on`",
+          "id": "14-query-with-distinct-on"
+        },
+        {
+          "level": 3,
+          "text": "15. Advanced Nested Query with `where` Conditions",
+          "id": "15-advanced-nested-query-with-where-conditions"
+        },
+        {
+          "level": 3,
+          "text": "16. Deeply Nested Relations (Multiple Levels)",
+          "id": "16-deeply-nested-relations-multiple-levels"
+        },
+        {
+          "level": 3,
+          "text": "17. Complex `where` Clauses with Logical Operators",
+          "id": "17-complex-where-clauses-with-logical-operators"
+        },
+        {
+          "level": 3,
+          "text": "18. Using Field Aliases with Parameters",
+          "id": "18-using-field-aliases-with-parameters"
+        },
+        {
+          "level": 3,
+          "text": "19. Mixed Array and Object Notation for Relations",
+          "id": "19-mixed-array-and-object-notation-for-relations"
+        },
+        {
+          "level": 3,
+          "text": "20. Multiple Nested Relationships with Different Parameters",
+          "id": "20-multiple-nested-relationships-with-different-parameters"
+        },
+        {
+          "level": 3,
+          "text": "21. Nested Aggregate Query (Relations with Aggregation)",
+          "id": "21-nested-aggregate-query-relations-with-aggregation"
+        },
+        {
+          "level": 3,
+          "text": "22. Combined Aggregate with Regular Data",
+          "id": "22-combined-aggregate-with-regular-data"
+        },
+        {
+          "level": 3,
+          "text": "23. Aggregate Functions with Column Specifications",
+          "id": "23-aggregate-functions-with-column-specifications"
+        },
+        {
+          "level": 3,
+          "text": "24. Top-level Aggregate Query with Nodes",
+          "id": "24-top-level-aggregate-query-with-nodes"
+        },
+        {
+          "level": 2,
+          "text": "Advanced Aggregation Patterns",
+          "id": "advanced-aggregation-patterns"
+        },
+        {
+          "level": 3,
+          "text": "Real-world Tournament Example",
+          "id": "real-world-tournament-example"
+        }
+      ],
+      "content": "",
+      "path": "GENERATOR.md"
+    },
+    {
+      "filename": "GRAPHQL-PROXY.md",
+      "title": "GraphQL Proxy",
+      "headings": [
+        {
+          "level": 1,
+          "text": "GraphQL Proxy",
+          "id": "graphql-proxy"
+        },
+        {
+          "level": 2,
+          "text": "🎯 Purpose",
+          "id": "purpose"
+        },
+        {
+          "level": 2,
+          "text": "🤔 Why is it needed?",
+          "id": "why-is-it-needed"
+        },
+        {
+          "level": 2,
+          "text": "⚙️ How it Works",
+          "id": "how-it-works"
+        },
+        {
+          "level": 3,
+          "text": "1. GET Requests",
+          "id": "1-get-requests"
+        },
+        {
+          "level": 3,
+          "text": "2. POST Requests (Queries / Mutations)",
+          "id": "2-post-requests-queries-mutations"
+        },
+        {
+          "level": 3,
+          "text": "3. WebSocket Connections (Subscriptions) - via `SOCKET`",
+          "id": "3-websocket-connections-subscriptions-via-socket"
+        },
+        {
+          "level": 2,
+          "text": "🔧 Configuration",
+          "id": "configuration"
+        },
+        {
+          "level": 2,
+          "text": "🔗 Client Integration",
+          "id": "client-integration"
+        },
+        {
+          "level": 2,
+          "text": "✅ Summary",
+          "id": "summary"
+        }
+      ],
+      "content": "",
+      "path": "GRAPHQL-PROXY.md"
+    },
+    {
+      "filename": "HASURA.md",
+      "title": "Hasura Client",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Hasura Client",
+          "id": "hasura-client"
+        },
+        {
+          "level": 2,
+          "text": "Overview",
+          "id": "overview"
+        },
+        {
+          "level": 2,
+          "text": "Constructor",
+          "id": "constructor"
+        },
+        {
+          "level": 3,
+          "text": "Options",
+          "id": "options"
+        },
+        {
+          "level": 2,
+          "text": "Core Methods",
+          "id": "core-methods"
+        },
+        {
+          "level": 2,
+          "text": "Schema Operations",
+          "id": "schema-operations"
+        },
+        {
+          "level": 2,
+          "text": "Table Operations",
+          "id": "table-operations"
+        },
+        {
+          "level": 2,
+          "text": "Column Operations",
+          "id": "column-operations"
+        },
+        {
+          "level": 2,
+          "text": "Function Operations",
+          "id": "function-operations"
+        },
+        {
+          "level": 2,
+          "text": "Trigger Operations",
+          "id": "trigger-operations"
+        },
+        {
+          "level": 2,
+          "text": "Foreign Key Operations",
+          "id": "foreign-key-operations"
+        },
+        {
+          "level": 2,
+          "text": "View Operations",
+          "id": "view-operations"
+        },
+        {
+          "level": 3,
+          "text": "`",
+          "id": ""
+        }
+      ],
+      "content": "",
+      "path": "HASURA.md"
+    },
+    {
+      "filename": "HASYX.md",
+      "title": "Hasyx Class",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Hasyx Class",
+          "id": "hasyx-class"
+        },
+        {
+          "level": 2,
+          "text": "Core Components",
+          "id": "core-components"
+        },
+        {
+          "level": 2,
+          "text": "Key Features (Both Class & Hooks)",
+          "id": "key-features-both-class-hooks"
+        },
+        {
+          "level": 2,
+          "text": "User Management",
+          "id": "user-management"
+        },
+        {
+          "level": 3,
+          "text": "User Properties",
+          "id": "user-properties"
+        },
+        {
+          "level": 3,
+          "text": "Automatic Session Sync",
+          "id": "automatic-session-sync"
+        },
+        {
+          "level": 3,
+          "text": "Session Hook",
+          "id": "session-hook"
+        },
+        {
+          "level": 3,
+          "text": "Diagnostics",
+          "id": "diagnostics"
+        },
+        {
+          "level": 2,
+          "text": "`Hasyx` Class Usage",
+          "id": "hasyx-class-usage"
+        },
+        {
+          "level": 3,
+          "text": "`Hasyx` Class Methods",
+          "id": "hasyx-class-methods"
+        },
+        {
+          "level": 3,
+          "text": "`Hasyx` Class Properties",
+          "id": "hasyx-class-properties"
+        },
+        {
+          "level": 2,
+          "text": "`HasyxClient` Class (Client-Side)",
+          "id": "hasyxclient-class-client-side"
+        },
+        {
+          "level": 3,
+          "text": "Key Features",
+          "id": "key-features"
+        },
+        {
+          "level": 3,
+          "text": "Usage with `useClient()` Hook",
+          "id": "usage-with-useclient-hook"
+        },
+        {
+          "level": 3,
+          "text": "`HasyxClient` Methods",
+          "id": "hasyxclient-methods"
+        },
+        {
+          "level": 2,
+          "text": "React Hooks Usage",
+          "id": "react-hooks-usage"
+        }
+      ],
+      "content": "",
+      "path": "HASYX.md"
+    },
+    {
+      "filename": "HID.md",
+      "title": "HID Standard",
+      "headings": [
+        {
+          "level": 1,
+          "text": "HID Standard",
+          "id": "hid-standard"
+        },
+        {
+          "level": 2,
+          "text": "Overview",
+          "id": "overview"
+        },
+        {
+          "level": 2,
+          "text": "Format",
+          "id": "format"
+        },
+        {
+          "level": 3,
+          "text": "Components:",
+          "id": "components"
+        },
+        {
+          "level": 3,
+          "text": "Segment Rules:",
+          "id": "segment-rules"
+        },
+        {
+          "level": 2,
+          "text": "`lib/hid.ts` Utility",
+          "id": "libhidts-utility"
+        },
+        {
+          "level": 3,
+          "text": "Initialization",
+          "id": "initialization"
+        },
+        {
+          "level": 3,
+          "text": "`HidInstance` Methods",
+          "id": "hidinstance-methods"
+        },
+        {
+          "level": 4,
+          "text": "1. `fromHid(hidString: string, full?: boolean): HidParts | FullHidParts | null`",
+          "id": "1-fromhidhidstring-string-full-boolean-hidparts-fullhidparts-null"
+        },
+        {
+          "level": 4,
+          "text": "2. `toHid(...args): string`",
+          "id": "2-tohidargs-string"
+        },
+        {
+          "level": 2,
+          "text": "Environment Variable: `NEXT_PUBLIC_HID_NAMESPACE`",
+          "id": "environment-variable-next-public-hid-namespace"
+        },
+        {
+          "level": 2,
+          "text": "Use Cases",
+          "id": "use-cases"
+        },
+        {
+          "level": 2,
+          "text": "Hasyx View and Automated HID Generation",
+          "id": "hasyx-view-and-automated-hid-generation"
+        },
+        {
+          "level": 3,
+          "text": "Computed Columns for Relationships",
+          "id": "computed-columns-for-relationships"
+        },
+        {
+          "level": 3,
+          "text": "`public.hasyx` View Structure",
+          "id": "publichasyx-view-structure"
+        },
+        {
+          "level": 3,
+          "text": "Automated Relationships",
+          "id": "automated-relationships"
+        }
+      ],
+      "content": "",
+      "path": "HID.md"
+    },
+    {
+      "filename": "MARKDOWN-TERMINAL.md",
+      "title": "Markdown Terminal",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Markdown Terminal",
+          "id": "markdown-terminal"
+        },
+        {
+          "level": 2,
+          "text": "Features",
+          "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "Installation",
+          "id": "installation"
+        },
+        {
+          "level": 2,
+          "text": "Basic Usage",
+          "id": "basic-usage"
+        },
+        {
+          "level": 3,
+          "text": "Simple Formatting",
+          "id": "simple-formatting"
+        },
+        {
+          "level": 3,
+          "text": "Code Blocks",
+          "id": "code-blocks"
+        },
+        {
+          "level": 3,
+          "text": "Lists and Tables",
+          "id": "lists-and-tables"
+        },
+        {
+          "level": 2,
+          "text": "Advanced Usage",
+          "id": "advanced-usage"
+        },
+        {
+          "level": 3,
+          "text": "Custom Themes",
+          "id": "custom-themes"
+        },
+        {
+          "level": 3,
+          "text": "Utility Functions",
+          "id": "utility-functions"
+        },
+        {
+          "level": 2,
+          "text": "Supported Markdown Elements",
+          "id": "supported-markdown-elements"
+        },
+        {
+          "level": 3,
+          "text": "Headers",
+          "id": "headers"
+        },
+        {
+          "level": 3,
+          "text": "Text Formatting",
+          "id": "text-formatting"
+        },
+        {
+          "level": 3,
+          "text": "Code Blocks",
+          "id": "code-blocks"
+        },
+        {
+          "level": 3,
+          "text": "Lists",
+          "id": "lists"
+        },
+        {
+          "level": 3,
+          "text": "Links and Images",
+          "id": "links-and-images"
+        },
+        {
+          "level": 3,
+          "text": "Blockquotes",
+          "id": "blockquotes"
+        },
+        {
+          "level": 3,
+          "text": "Tables",
+          "id": "tables"
+        },
+        {
+          "level": 3,
+          "text": "Horizontal Rules",
+          "id": "horizontal-rules"
+        },
+        {
+          "level": 2,
+          "text": "Configuration Options",
+          "id": "configuration-options"
+        },
+        {
+          "level": 3,
+          "text": "FormatMarkdownCustom Options",
+          "id": "formatmarkdowncustom-options"
+        },
+        {
+          "level": 4,
+          "text": "Code Themes",
+          "id": "code-themes"
+        },
+        {
+          "level": 4,
+          "text": "Link Styles",
+          "id": "link-styles"
+        },
+        {
+          "level": 4,
+          "text": "Header Styles",
+          "id": "header-styles"
+        },
+        {
+          "level": 2,
+          "text": "Integration Examples",
+          "id": "integration-examples"
+        },
+        {
+          "level": 3,
+          "text": "With Ask Command",
+          "id": "with-ask-command"
+        },
+        {
+          "level": 3,
+          "text": "With Custom CLI Tools",
+          "id": "with-custom-cli-tools"
+        },
+        {
+          "level": 3,
+          "text": "With Documentation Generators",
+          "id": "with-documentation-generators"
+        },
+        {
+          "level": 2,
+          "text": "API Reference",
+          "id": "api-reference"
+        },
+        {
+          "level": 3,
+          "text": "Functions",
+          "id": "functions"
+        },
+        {
+          "level": 2,
+          "text": "Examples",
+          "id": "examples"
+        },
+        {
+          "level": 3,
+          "text": "Complete Example",
+          "id": "complete-example"
+        },
+        {
+          "level": 3,
+          "text": "Testing Example",
+          "id": "testing-example"
+        },
+        {
+          "level": 2,
+          "text": "Best Practices",
+          "id": "best-practices"
+        },
+        {
+          "level": 3,
+          "text": "1. Use Appropriate Functions",
+          "id": "1-use-appropriate-functions"
+        },
+        {
+          "level": 3,
+          "text": "2. Handle Long Content",
+          "id": "2-handle-long-content"
+        },
+        {
+          "level": 3,
+          "text": "3. Choose Appropriate Themes",
+          "id": "3-choose-appropriate-themes"
+        },
+        {
+          "level": 3,
+          "text": "4. Error Handling",
+          "id": "4-error-handling"
+        },
+        {
+          "level": 2,
+          "text": "Troubleshooting",
+          "id": "troubleshooting"
+        },
+        {
+          "level": 3,
+          "text": "Common Issues",
+          "id": "common-issues"
+        },
+        {
+          "level": 3,
+          "text": "Debug Mode",
+          "id": "debug-mode"
+        },
+        {
+          "level": 2,
+          "text": "Dependencies",
+          "id": "dependencies"
+        },
+        {
+          "level": 2,
+          "text": "Related Documentation",
+          "id": "related-documentation"
+        }
+      ],
+      "content": "",
+      "path": "MARKDOWN-TERMINAL.md"
+    },
+    {
+      "filename": "NOTIFY-FIREBASE.md",
+      "title": "Web Push Notifications with Firebase Cloud Messaging (FCM) in Hasyx",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Web Push Notifications with Firebase Cloud Messaging (FCM) in Hasyx",
+          "id": "web-push-notifications-with-firebase-cloud-messaging-fcm-in-hasyx"
+        },
+        {
+          "level": 2,
+          "text": "How It Works: End-to-End Flow",
+          "id": "how-it-works-end-to-end-flow"
+        },
+        {
+          "level": 2,
+          "text": "Prerequisites & Setup",
+          "id": "prerequisites-setup"
+        },
+        {
+          "level": 2,
+          "text": "Customizing Notifications",
+          "id": "customizing-notifications"
+        },
+        {
+          "level": 3,
+          "text": "Advanced FCM Options",
+          "id": "advanced-fcm-options"
+        },
+        {
+          "level": 2,
+          "text": "Client-Side Service Worker (`firebase-messaging-sw.js`)",
+          "id": "client-side-service-worker-firebase-messaging-swjs"
+        }
+      ],
+      "content": "",
+      "path": "NOTIFY-FIREBASE.md"
+    },
+    {
+      "filename": "NOTIFY-TELEGRAM-BOT.md",
+      "title": "Firebase Notifications",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Firebase Notifications",
+          "id": "firebase-notifications"
+        },
+        {
+          "level": 2,
+          "text": "How It Works: End-to-End Flow",
+          "id": "how-it-works-end-to-end-flow"
+        },
+        {
+          "level": 2,
+          "text": "Prerequisites & Setup",
+          "id": "prerequisites-setup"
+        },
+        {
+          "level": 2,
+          "text": "Customizing Notifications",
+          "id": "customizing-notifications"
+        },
+        {
+          "level": 3,
+          "text": "Advanced FCM Options",
+          "id": "advanced-fcm-options"
+        },
+        {
+          "level": 2,
+          "text": "Client-Side Service Worker (`firebase-messaging-sw.js`)",
+          "id": "client-side-service-worker-firebase-messaging-swjs"
+        },
+        {
+          "level": 1,
+          "text": "Telegram Bot Integration in Hasyx",
+          "id": "telegram-bot-integration-in-hasyx"
+        },
+        {
+          "level": 2,
+          "text": "Features",
+          "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "Setup",
+          "id": "setup"
+        },
+        {
+          "level": 2,
+          "text": "How it Works",
+          "id": "how-it-works"
+        },
+        {
+          "level": 2,
+          "text": "Customization",
+          "id": "customization"
+        }
+      ],
+      "content": "",
+      "path": "NOTIFY-TELEGRAM-BOT.md"
+    },
+    {
+      "filename": "NOTIFY.md",
+      "title": "Push Notifications",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Push Notifications",
+          "id": "push-notifications"
+        },
+        {
+          "level": 2,
+          "text": "Core Concepts",
+          "id": "core-concepts"
+        },
+        {
+          "level": 2,
+          "text": "Workflow Overview",
+          "id": "workflow-overview"
+        },
+        {
+          "level": 2,
+          "text": "Platform Support Status",
+          "id": "platform-support-status"
+        }
+      ],
+      "content": "",
+      "path": "NOTIFY.md"
+    },
+    {
+      "filename": "OPENROUTER.md",
+      "title": "OpenRouter",
+      "headings": [
+        {
+          "level": 1,
+          "text": "OpenRouter",
+          "id": "openrouter"
+        },
+        {
+          "level": 2,
+          "text": "Features",
+          "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "Installation",
+          "id": "installation"
+        },
+        {
+          "level": 2,
+          "text": "Environment Variables",
+          "id": "environment-variables"
+        },
+        {
+          "level": 2,
+          "text": "Basic Usage",
+          "id": "basic-usage"
+        },
+        {
+          "level": 3,
+          "text": "Creating an OpenRouter Instance",
+          "id": "creating-an-openrouter-instance"
+        },
+        {
+          "level": 3,
+          "text": "Simple AI Conversations",
+          "id": "simple-ai-conversations"
+        },
+        {
+          "level": 3,
+          "text": "AI with Code Execution",
+          "id": "ai-with-code-execution"
+        },
+        {
+          "level": 2,
+          "text": "Configuration Options",
+          "id": "configuration-options"
+        },
+        {
+          "level": 3,
+          "text": "OpenRouterOptions",
+          "id": "openrouteroptions"
+        },
+        {
+          "level": 3,
+          "text": "Default Configuration",
+          "id": "default-configuration"
+        },
+        {
+          "level": 2,
+          "text": "Context Management",
+          "id": "context-management"
+        },
+        {
+          "level": 2,
+          "text": "Message Creation Helpers",
+          "id": "message-creation-helpers"
+        },
+        {
+          "level": 2,
+          "text": "Advanced Usage",
+          "id": "advanced-usage"
+        },
+        {
+          "level": 3,
+          "text": "Custom Model Configuration",
+          "id": "custom-model-configuration"
+        },
+        {
+          "level": 3,
+          "text": "Persistent Context Across Conversations",
+          "id": "persistent-context-across-conversations"
+        },
+        {
+          "level": 3,
+          "text": "Error Handling",
+          "id": "error-handling"
+        },
+        {
+          "level": 2,
+          "text": "Available Models",
+          "id": "available-models"
+        },
+        {
+          "level": 2,
+          "text": "Integration with Hasyx",
+          "id": "integration-with-hasyx"
+        },
+        {
+          "level": 3,
+          "text": "Using with Hasyx Client",
+          "id": "using-with-hasyx-client"
+        },
+        {
+          "level": 3,
+          "text": "Using with Exec Engine",
+          "id": "using-with-exec-engine"
+        },
+        {
+          "level": 2,
+          "text": "Best Practices",
+          "id": "best-practices"
+        },
+        {
+          "level": 3,
+          "text": "1. API Key Security",
+          "id": "1-api-key-security"
+        },
+        {
+          "level": 3,
+          "text": "2. Error Handling",
+          "id": "2-error-handling"
+        },
+        {
+          "level": 3,
+          "text": "3. Context Management",
+          "id": "3-context-management"
+        },
+        {
+          "level": 3,
+          "text": "4. Model Selection",
+          "id": "4-model-selection"
+        },
+        {
+          "level": 2,
+          "text": "Troubleshooting",
+          "id": "troubleshooting"
+        },
+        {
+          "level": 3,
+          "text": "Common Issues",
+          "id": "common-issues"
+        },
+        {
+          "level": 3,
+          "text": "Debug Mode",
+          "id": "debug-mode"
+        },
+        {
+          "level": 2,
+          "text": "Examples",
+          "id": "examples"
+        },
+        {
+          "level": 3,
+          "text": "Example 1: Data Analysis Assistant",
+          "id": "example-1-data-analysis-assistant"
+        },
+        {
+          "level": 3,
+          "text": "Example 2: API Integration Helper",
+          "id": "example-2-api-integration-helper"
+        },
+        {
+          "level": 3,
+          "text": "Example 3: Code Generation and Testing",
+          "id": "example-3-code-generation-and-testing"
+        },
+        {
+          "level": 2,
+          "text": "API Reference",
+          "id": "api-reference"
+        },
+        {
+          "level": 3,
+          "text": "Class: OpenRouter",
+          "id": "class-openrouter"
+        },
+        {
+          "level": 4,
+          "text": "Constructor",
+          "id": "constructor"
+        },
+        {
+          "level": 4,
+          "text": "Methods",
+          "id": "methods"
+        },
+        {
+          "level": 4,
+          "text": "Static Methods",
+          "id": "static-methods"
+        }
+      ],
+      "content": "",
+      "path": "OPENROUTER.md"
+    },
+    {
+      "filename": "PWA.md",
+      "title": "PWA Support",
+      "headings": [
+        {
+          "level": 1,
+          "text": "PWA Support",
+          "id": "pwa-support"
+        },
+        {
+          "level": 2,
+          "text": "Features",
+          "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "Quick Start",
+          "id": "quick-start"
+        },
+        {
+          "level": 3,
+          "text": "1. Generate PWA Assets",
+          "id": "1-generate-pwa-assets"
+        },
+        {
+          "level": 3,
+          "text": "2. Enable PWA in Your App",
+          "id": "2-enable-pwa-in-your-app"
+        },
+        {
+          "level": 3,
+          "text": "3. Use PWA Components",
+          "id": "3-use-pwa-components"
+        },
+        {
+          "level": 3,
+          "text": "4. Use PWA Hooks",
+          "id": "4-use-pwa-hooks"
+        },
+        {
+          "level": 2,
+          "text": "Configuration",
+          "id": "configuration"
+        },
+        {
+          "level": 3,
+          "text": "Environment Variables",
+          "id": "environment-variables"
+        },
+        {
+          "level": 3,
+          "text": "Customizing the Web App Manifest",
+          "id": "customizing-the-web-app-manifest"
+        },
+        {
+          "level": 3,
+          "text": "Customizing App Icons",
+          "id": "customizing-app-icons"
+        },
+        {
+          "level": 2,
+          "text": "Service Worker Caching Strategies",
+          "id": "service-worker-caching-strategies"
+        },
+        {
+          "level": 3,
+          "text": "Network First (API Calls)",
+          "id": "network-first-api-calls"
+        },
+        {
+          "level": 3,
+          "text": "Cache First (Static Assets)",
+          "id": "cache-first-static-assets"
+        },
+        {
+          "level": 3,
+          "text": "Stale While Revalidate (Pages)",
+          "id": "stale-while-revalidate-pages"
+        },
+        {
+          "level": 2,
+          "text": "Offline Support",
+          "id": "offline-support"
+        },
+        {
+          "level": 3,
+          "text": "GraphQL Offline Handling",
+          "id": "graphql-offline-handling"
+        },
+        {
+          "level": 3,
+          "text": "Custom Offline Pages",
+          "id": "custom-offline-pages"
+        },
+        {
+          "level": 2,
+          "text": "Platform-Specific Features",
+          "id": "platform-specific-features"
+        },
+        {
+          "level": 3,
+          "text": "iOS Safari",
+          "id": "ios-safari"
+        },
+        {
+          "level": 3,
+          "text": "Android Chrome",
+          "id": "android-chrome"
+        },
+        {
+          "level": 3,
+          "text": "Desktop Browsers",
+          "id": "desktop-browsers"
+        },
+        {
+          "level": 2,
+          "text": "Testing PWA Features",
+          "id": "testing-pwa-features"
+        },
+        {
+          "level": 3,
+          "text": "1. Chrome DevTools",
+          "id": "1-chrome-devtools"
+        },
+        {
+          "level": 3,
+          "text": "2. PWA Checklist",
+          "id": "2-pwa-checklist"
+        },
+        {
+          "level": 3,
+          "text": "3. Testing Installation",
+          "id": "3-testing-installation"
+        },
+        {
+          "level": 3,
+          "text": "4. Testing Offline",
+          "id": "4-testing-offline"
+        },
+        {
+          "level": 2,
+          "text": "Deployment Considerations",
+          "id": "deployment-considerations"
+        },
+        {
+          "level": 3,
+          "text": "HTTPS Requirement",
+          "id": "https-requirement"
+        },
+        {
+          "level": 3,
+          "text": "Service Worker Scope",
+          "id": "service-worker-scope"
+        },
+        {
+          "level": 3,
+          "text": "CDN and Caching",
+          "id": "cdn-and-caching"
+        },
+        {
+          "level": 2,
+          "text": "Integration with Existing Features",
+          "id": "integration-with-existing-features"
+        },
+        {
+          "level": 3,
+          "text": "Firebase Notifications",
+          "id": "firebase-notifications"
+        },
+        {
+          "level": 3,
+          "text": "GraphQL Subscriptions",
+          "id": "graphql-subscriptions"
+        },
+        {
+          "level": 3,
+          "text": "Authentication",
+          "id": "authentication"
+        },
+        {
+          "level": 2,
+          "text": "Troubleshooting",
+          "id": "troubleshooting"
+        },
+        {
+          "level": 3,
+          "text": "Service Worker Not Registering",
+          "id": "service-worker-not-registering"
+        },
+        {
+          "level": 3,
+          "text": "Install Prompt Not Showing",
+          "id": "install-prompt-not-showing"
+        },
+        {
+          "level": 3,
+          "text": "Offline Functionality Not Working",
+          "id": "offline-functionality-not-working"
+        },
+        {
+          "level": 3,
+          "text": "Notifications Not Working",
+          "id": "notifications-not-working"
+        },
+        {
+          "level": 2,
+          "text": "Best Practices",
+          "id": "best-practices"
+        },
+        {
+          "level": 3,
+          "text": "1. Progressive Enhancement",
+          "id": "1-progressive-enhancement"
+        },
+        {
+          "level": 3,
+          "text": "2. User Communication",
+          "id": "2-user-communication"
+        },
+        {
+          "level": 3,
+          "text": "3. Graceful Degradation",
+          "id": "3-graceful-degradation"
+        },
+        {
+          "level": 3,
+          "text": "4. Performance Optimization",
+          "id": "4-performance-optimization"
+        },
+        {
+          "level": 2,
+          "text": "Advanced Usage",
+          "id": "advanced-usage"
+        },
+        {
+          "level": 3,
+          "text": "Custom Service Worker",
+          "id": "custom-service-worker"
+        },
+        {
+          "level": 3,
+          "text": "Background Sync",
+          "id": "background-sync"
+        },
+        {
+          "level": 3,
+          "text": "Push Notification Customization",
+          "id": "push-notification-customization"
+        },
+        {
+          "level": 2,
+          "text": "API Reference",
+          "id": "api-reference"
+        },
+        {
+          "level": 3,
+          "text": "`usePWA()` Hook",
+          "id": "usepwa-hook"
+        },
+        {
+          "level": 3,
+          "text": "PWA Utility Functions",
+          "id": "pwa-utility-functions"
+        },
+        {
+          "level": 2,
+          "text": "Learn More",
+          "id": "learn-more"
+        }
+      ],
+      "content": "",
+      "path": "PWA.md"
+    },
+    {
+      "filename": "README.md",
+      "title": "Hasyx",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Hasyx",
+          "id": "hasyx"
+        },
+        {
+          "level": 2,
+          "text": "Technologies Used",
+          "id": "technologies-used"
+        },
+        {
+          "level": 2,
+          "text": "Detailed Documentation",
+          "id": "detailed-documentation"
+        },
+        {
+          "level": 2,
+          "text": "🚀 Quick Start",
+          "id": "quick-start"
+        },
+        {
+          "level": 2,
+          "text": "⚙️ CLI Commands",
+          "id": "cli-commands"
+        },
+        {
+          "level": 3,
+          "text": "🔧 CLI Extensibility in Child Projects",
+          "id": "cli-extensibility-in-child-projects"
+        }
+      ],
+      "content": "",
+      "path": "README.md"
+    },
+    {
+      "filename": "TBANK.md",
+      "title": "TBank Payments",
+      "headings": [
+        {
+          "level": 1,
+          "text": "TBank Payments",
+          "id": "tbank-payments"
+        },
+        {
+          "level": 2,
+          "text": "Хранение конфигурации",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "Реализованные методы адаптера",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "1. `initiatePayment`",
+          "id": "1-initiatepayment"
+        },
+        {
+          "level": 3,
+          "text": "2. `handleWebhook`",
+          "id": "2-handlewebhook"
+        },
+        {
+          "level": 3,
+          "text": "3. `getPaymentStatus`",
+          "id": "3-getpaymentstatus"
+        },
+        {
+          "level": 3,
+          "text": "4. `createSubscription`",
+          "id": "4-createsubscription"
+        },
+        {
+          "level": 3,
+          "text": "5. `cancelSubscription`",
+          "id": "5-cancelsubscription"
+        },
+        {
+          "level": 3,
+          "text": "6. `addPaymentMethod`",
+          "id": "6-addpaymentmethod"
+        },
+        {
+          "level": 3,
+          "text": "Вспомогательные/внутренние методы",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "`confirmPayment` и `cancelPayment`",
+          "id": "confirmpayment-cancelpayment"
+        },
+        {
+          "level": 2,
+          "text": "Структуры данных TBank (используемые адаптером)",
+          "id": "tbank"
+        },
+        {
+          "level": 2,
+          "text": "Полный список методов для поддержки сценариев",
+          "id": ""
+        }
+      ],
+      "content": "",
+      "path": "TBANK.md"
+    },
+    {
+      "filename": "TBANK_RECURRENT_STATUS.md",
+      "title": "TBank Recurrent",
+      "headings": [
+        {
+          "level": 1,
+          "text": "TBank Recurrent",
+          "id": "tbank-recurrent"
+        },
+        {
+          "level": 2,
+          "text": "📊 Текущий Статус Реализации",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "✅ Что Полностью Реализовано",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "1. Базовая Инфраструктура Рекуррентных Платежей",
+          "id": "1"
+        },
+        {
+          "level": 4,
+          "text": "2. Интеграция с TBank API",
+          "id": "2-tbank-api"
+        },
+        {
+          "level": 4,
+          "text": "3. База Данных и Схема",
+          "id": "3"
+        },
+        {
+          "level": 4,
+          "text": "4. Автоматический Планировщик Подписок",
+          "id": "4"
+        },
+        {
+          "level": 4,
+          "text": "5. Полный UI для Управления Платежами",
+          "id": "5-ui"
+        },
+        {
+          "level": 4,
+          "text": "6. Валидация и Ограничения",
+          "id": "6"
+        },
+        {
+          "level": 3,
+          "text": "🔄 Что Работает в Автоматическом Режиме",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Планировщик Подписок (`/api/events/subscription-billing`)",
+          "id": "apieventssubscription-billing"
+        },
+        {
+          "level": 4,
+          "text": "Функции Расчета Интервалов",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "🎯 Готово к Тестированию",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Сценарий Тестирования",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Команды для Мониторинга",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "📋 План Тестирования",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Этап 1: Базовая Функциональность",
+          "id": "1"
+        },
+        {
+          "level": 4,
+          "text": "Этап 2: Автоматические Списания",
+          "id": "2"
+        },
+        {
+          "level": 4,
+          "text": "Этап 3: Обработка Ошибок",
+          "id": "3"
+        },
+        {
+          "level": 4,
+          "text": "Этап 4: Различные Интервалы",
+          "id": "4"
+        },
+        {
+          "level": 3,
+          "text": "🚀 Готовность к Продакшену",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Что Готово",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Рекомендации для Продакшена",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "📈 Метрики для Мониторинга",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Ключевые Показатели",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Debug События для Анализа",
+          "id": "debug"
+        },
+        {
+          "level": 2,
+          "text": "🎉 Заключение",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "🔒 Безопасность API Эндпоинтов",
+          "id": "api"
+        },
+        {
+          "level": 4,
+          "text": "Принципы Безопасности",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Что Изменилось",
+          "id": ""
+        },
+        {
+          "level": 4,
+          "text": "Обновленные Permissions",
+          "id": "permissions"
+        },
+        {
+          "level": 2,
+          "text": "✅ Completed Features",
+          "id": "completed-features"
+        },
+        {
+          "level": 3,
+          "text": "1. Database Schema",
+          "id": "1-database-schema"
+        },
+        {
+          "level": 3,
+          "text": "2. Automatic Billing System",
+          "id": "2-automatic-billing-system"
+        },
+        {
+          "level": 3,
+          "text": "3. API Endpoints",
+          "id": "3-api-endpoints"
+        },
+        {
+          "level": 3,
+          "text": "4. UI Components",
+          "id": "4-ui-components"
+        },
+        {
+          "level": 2,
+          "text": "🔄 Architecture Change: Computed vs Stored Dates",
+          "id": "architecture-change-computed-vs-stored-dates"
+        },
+        {
+          "level": 3,
+          "text": "Previous Approach (Stored Dates)",
+          "id": "previous-approach-stored-dates"
+        },
+        {
+          "level": 3,
+          "text": "**NEW Approach (Computed Fields)**",
+          "id": "new-approach-computed-fields"
+        },
+        {
+          "level": 3,
+          "text": "Benefits of Computed Approach",
+          "id": "benefits-of-computed-approach"
+        },
+        {
+          "level": 3,
+          "text": "PostgreSQL Functions Created",
+          "id": "postgresql-functions-created"
+        },
+        {
+          "level": 2,
+          "text": "🧪 Testing Status",
+          "id": "testing-status"
+        },
+        {
+          "level": 3,
+          "text": "Manual Testing Required",
+          "id": "manual-testing-required"
+        },
+        {
+          "level": 3,
+          "text": "Test Commands Updated",
+          "id": "test-commands-updated"
+        },
+        {
+          "level": 2,
+          "text": "📋 Implementation Checklist",
+          "id": "implementation-checklist"
+        },
+        {
+          "level": 2,
+          "text": "🚀 Ready for Production",
+          "id": "ready-for-production"
+        },
+        {
+          "level": 3,
+          "text": "Next Steps",
+          "id": "next-steps"
+        }
+      ],
+      "content": "",
+      "path": "TBANK_RECURRENT_STATUS.md"
+    },
+    {
+      "filename": "TBANK_TESTING.md",
+      "title": "TBank Payment Testing Guide",
+      "headings": [
+        {
+          "level": 1,
+          "text": "TBank Payment Testing Guide",
+          "id": "tbank-payment-testing-guide"
+        },
+        {
+          "level": 2,
+          "text": "🎯 Полная Система Готова к Тестированию",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "📋 Пошаговый План Тестирования",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Этап 1: Подготовка Окружения",
+          "id": "1"
+        },
+        {
+          "level": 4,
+          "text": "1.1 Применение Миграций",
+          "id": "11"
+        },
+        {
+          "level": 4,
+          "text": "1.2 Проверка Cron События",
+          "id": "12-cron"
+        },
+        {
+          "level": 4,
+          "text": "1.3 Переменные Окружения",
+          "id": "13"
+        },
+        {
+          "level": 3,
+          "text": "Этап 2: Настройка Провайдера",
+          "id": "2"
+        },
+        {
+          "level": 4,
+          "text": "2.1 Открыть Страницу Платежей",
+          "id": "21"
+        },
+        {
+          "level": 4,
+          "text": "2.2 Добавить TBank Test Провайдер",
+          "id": "22-tbank-test"
+        },
+        {
+          "level": 4,
+          "text": "2.3 Проверка Провайдера",
+          "id": "23"
+        },
+        {
+          "level": 3,
+          "text": "Этап 3: Создание Тестового Плана",
+          "id": "3"
+        },
+        {
+          "level": 4,
+          "text": "3.1 Создать План для Быстрого Тестирования",
+          "id": "31"
+        },
+        {
+          "level": 4,
+          "text": "3.2 Проверка Плана",
+          "id": "32"
+        },
+        {
+          "level": 3,
+          "text": "Этап 4: Добавление Метода Оплаты",
+          "id": "4"
+        },
+        {
+          "level": 4,
+          "text": "4.1 Добавить Карту",
+          "id": "41"
+        },
+        {
+          "level": 4,
+          "text": "4.2 Завершить Добавление Карты",
+          "id": "42"
+        },
+        {
+          "level": 4,
+          "text": "4.3 Проверка Метода Оплаты",
+          "id": "43"
+        },
+        {
+          "level": 3,
+          "text": "Этап 5: Создание Подписки",
+          "id": "5"
+        },
+        {
+          "level": 4,
+          "text": "5.1 Создать Подписку",
+          "id": "51"
+        },
+        {
+          "level": 4,
+          "text": "5.2 Завершить Первый Платеж",
+          "id": "52"
+        },
+        {
+          "level": 4,
+          "text": "5.3 Проверка Подписки",
+          "id": "53"
+        },
+        {
+          "level": 3,
+          "text": "Этап 6: Мониторинг Автоматических Списаний",
+          "id": "6"
+        },
+        {
+          "level": 4,
+          "text": "6.1 Ожидание (10-15 минут)",
+          "id": "61-10-15"
+        },
+        {
+          "level": 4,
+          "text": "6.2 Проверка Debug Логов",
+          "id": "62-debug"
+        },
+        {
+          "level": 4,
+          "text": "6.3 Проверка Новых Операций",
+          "id": "63"
+        },
+        {
+          "level": 4,
+          "text": "6.4 Проверка Обновления Подписки",
+          "id": "64"
+        },
+        {
+          "level": 3,
+          "text": "Этап 7: Тестирование Обработки Ошибок",
+          "id": "7"
+        },
+        {
+          "level": 4,
+          "text": "7.1 Создать План с Большой Суммой",
+          "id": "71"
+        },
+        {
+          "level": 4,
+          "text": "7.2 Проверка Retry Логики",
+          "id": "72-retry"
+        },
+        {
+          "level": 2,
+          "text": "🔍 Команды для Диагностики",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Общий Статус Системы",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Debug Логи по Категориям",
+          "id": "debug"
+        },
+        {
+          "level": 3,
+          "text": "Детальная Информация о Подписке",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "📊 Ожидаемые Результаты",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "После Создания Подписки",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "После Первого Автоматического Списания",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "При Ошибке Списания",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "После Исчерпания Retry",
+          "id": "retry"
+        },
+        {
+          "level": 2,
+          "text": "🚨 Возможные Проблемы и Решения",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Cron Событие Не Срабатывает",
+          "id": "cron"
+        },
+        {
+          "level": 3,
+          "text": "Методы Оплаты Не Становятся Recurrent Ready",
+          "id": "recurrent-ready"
+        },
+        {
+          "level": 3,
+          "text": "Автоматические Списания Не Работают",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "✅ Критерии Успешного Тестирования",
+          "id": ""
+        }
+      ],
+      "content": "",
+      "path": "TBANK_TESTING.md"
+    },
+    {
+      "filename": "TELEGRAM-BOT.md",
+      "title": "Telegram Bot",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Telegram Bot",
+          "id": "telegram-bot"
+        },
+        {
+          "level": 2,
+          "text": "Features",
+          "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "Setup",
+          "id": "setup"
+        },
+        {
+          "level": 2,
+          "text": "Implementation Details",
+          "id": "implementation-details"
+        },
+        {
+          "level": 3,
+          "text": "Core Components",
+          "id": "core-components"
+        },
+        {
+          "level": 3,
+          "text": "Notification System Integration",
+          "id": "notification-system-integration"
+        },
+        {
+          "level": 2,
+          "text": "Usage Examples",
+          "id": "usage-examples"
+        },
+        {
+          "level": 3,
+          "text": "Simple Echo Bot",
+          "id": "simple-echo-bot"
+        },
+        {
+          "level": 3,
+          "text": "Command Handler",
+          "id": "command-handler"
+        },
+        {
+          "level": 2,
+          "text": "Future Enhancements",
+          "id": "future-enhancements"
+        },
+        {
+          "level": 2,
+          "text": "Implementation Roadmap",
+          "id": "implementation-roadmap"
+        },
+        {
+          "level": 2,
+          "text": "Resources",
+          "id": "resources"
+        }
+      ],
+      "content": "",
+      "path": "TELEGRAM-BOT.md"
+    },
+    {
+      "filename": "TINKOFF_API.md",
+      "title": "Tinkoff API Documentation",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Tinkoff API Documentation",
+          "id": "tinkoff-api-documentation"
+        },
+        {
+          "level": 2,
+          "text": "Base URL",
+          "id": "base-url"
+        },
+        {
+          "level": 2,
+          "text": "Available Endpoints",
+          "id": "available-endpoints"
+        },
+        {
+          "level": 3,
+          "text": "Init",
+          "id": "init"
+        },
+        {
+          "level": 3,
+          "text": "GetState",
+          "id": "getstate"
+        },
+        {
+          "level": 3,
+          "text": "Confirm",
+          "id": "confirm"
+        },
+        {
+          "level": 3,
+          "text": "Cancel",
+          "id": "cancel"
+        },
+        {
+          "level": 3,
+          "text": "AddCard",
+          "id": "addcard"
+        },
+        {
+          "level": 3,
+          "text": "GetCardList",
+          "id": "getcardlist"
+        },
+        {
+          "level": 3,
+          "text": "RemoveCard",
+          "id": "removecard"
+        },
+        {
+          "level": 3,
+          "text": "Charge",
+          "id": "charge"
+        },
+        {
+          "level": 2,
+          "text": "Authentication and Security",
+          "id": "authentication-and-security"
+        },
+        {
+          "level": 3,
+          "text": "Token Generation",
+          "id": "token-generation"
+        },
+        {
+          "level": 2,
+          "text": "Response Format",
+          "id": "response-format"
+        },
+        {
+          "level": 2,
+          "text": "Resources",
+          "id": "resources"
+        },
+        {
+          "level": 2,
+          "text": "Note",
+          "id": "note"
+        }
+      ],
+      "content": "",
+      "path": "TINKOFF_API.md"
+    },
+    {
+      "filename": "aggregate.experiment.md",
+      "title": "Aggregation Issue",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Aggregation Issue",
+          "id": "aggregation-issue"
+        },
+        {
+          "level": 2,
+          "text": "🚨 Problem Summary",
+          "id": "problem-summary"
+        },
+        {
+          "level": 2,
+          "text": "Problem Description",
+          "id": "problem-description"
+        },
+        {
+          "level": 2,
+          "text": "Current Behavior vs Expected Behavior",
+          "id": "current-behavior-vs-expected-behavior"
+        },
+        {
+          "level": 3,
+          "text": "Current Behavior (❌ Broken)",
+          "id": "current-behavior-broken"
+        },
+        {
+          "level": 3,
+          "text": "Expected Behavior (✅ Should Work)",
+          "id": "expected-behavior-should-work"
+        },
+        {
+          "level": 2,
+          "text": "Technical Details",
+          "id": "technical-details"
+        },
+        {
+          "level": 3,
+          "text": "Hasura Schema Verification",
+          "id": "hasura-schema-verification"
+        },
+        {
+          "level": 3,
+          "text": "Raw GraphQL Works",
+          "id": "raw-graphql-works"
+        },
+        {
+          "level": 3,
+          "text": "Hasyx Limitation",
+          "id": "hasyx-limitation"
+        },
+        {
+          "level": 2,
+          "text": "Current Workaround",
+          "id": "current-workaround"
+        },
+        {
+          "level": 2,
+          "text": "Testing Instructions",
+          "id": "testing-instructions"
+        },
+        {
+          "level": 3,
+          "text": "Test Environment Setup",
+          "id": "test-environment-setup"
+        },
+        {
+          "level": 3,
+          "text": "Test Case 1: Basic Aggregation Count",
+          "id": "test-case-1-basic-aggregation-count"
+        },
+        {
+          "level": 4,
+          "text": "Actual Test Result:",
+          "id": "actual-test-result"
+        },
+        {
+          "level": 3,
+          "text": "Test Case 2: Aggregation with Conditions",
+          "id": "test-case-2-aggregation-with-conditions"
+        },
+        {
+          "level": 3,
+          "text": "Test Case 3: Multiple Aggregation Types",
+          "id": "test-case-3-multiple-aggregation-types"
+        },
+        {
+          "level": 3,
+          "text": "Test Case 4: Direct Hasura Comparison",
+          "id": "test-case-4-direct-hasura-comparison"
+        },
+        {
+          "level": 2,
+          "text": "Proposed Solution Areas",
+          "id": "proposed-solution-areas"
+        },
+        {
+          "level": 2,
+          "text": "Impact on Projects",
+          "id": "impact-on-projects"
+        },
+        {
+          "level": 2,
+          "text": "Priority",
+          "id": "priority"
+        }
+      ],
+      "content": "",
+      "path": "aggregate.experiment.md"
+    },
+    {
+      "filename": "README.md",
+      "title": "Sidebar Components",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Sidebar Components",
+          "id": "sidebar-components"
+        },
+        {
+          "level": 2,
+          "text": "Components",
+          "id": "components"
+        },
+        {
+          "level": 3,
+          "text": "SidebarLayout",
+          "id": "sidebarlayout"
+        },
+        {
+          "level": 3,
+          "text": "UserProfileDropdown",
+          "id": "userprofiledropdown"
+        },
+        {
+          "level": 2,
+          "text": "Features",
+          "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "Dependencies",
+          "id": "dependencies"
+        },
+        {
+          "level": 2,
+          "text": "Usage with Authentication",
+          "id": "usage-with-authentication"
+        },
+        {
+          "level": 2,
+          "text": "Styling",
+          "id": "styling"
+        }
+      ],
+      "content": "",
+      "path": "components/sidebar/README.md"
+    },
+    {
+      "filename": "hasura.experiment.md",
+      "title": "Hasura Migration Refactoring Plan",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Hasura Migration Refactoring Plan",
+          "id": "hasura-migration-refactoring-plan"
+        },
+        {
+          "level": 2,
+          "text": "Files to be rewritten using new Hasura methods",
+          "id": "files-to-be-rewritten-using-new-hasura-methods"
+        },
+        {
+          "level": 3,
+          "text": "Current Project (hasyx)",
+          "id": "current-project-hasyx"
+        },
+        {
+          "level": 3,
+          "text": "Deep7 Project",
+          "id": "deep7-project"
+        },
+        {
+          "level": 3,
+          "text": "Badma Project",
+          "id": "badma-project"
+        },
+        {
+          "level": 2,
+          "text": "New Methods Implementation Plan",
+          "id": "new-methods-implementation-plan"
+        },
+        {
+          "level": 3,
+          "text": "✅ Already Implemented",
+          "id": "already-implemented"
+        },
+        {
+          "level": 3,
+          "text": "🔄 To Implement",
+          "id": "to-implement"
+        },
+        {
+          "level": 4,
+          "text": "Triggers and Functions",
+          "id": "triggers-and-functions"
+        },
+        {
+          "level": 4,
+          "text": "Foreign Keys",
+          "id": "foreign-keys"
+        },
+        {
+          "level": 4,
+          "text": "Views",
+          "id": "views"
+        },
+        {
+          "level": 4,
+          "text": "Computed Fields",
+          "id": "computed-fields"
+        },
+        {
+          "level": 4,
+          "text": "Remote Schemas and Relationships",
+          "id": "remote-schemas-and-relationships"
+        },
+        {
+          "level": 4,
+          "text": "Event Triggers",
+          "id": "event-triggers"
+        },
+        {
+          "level": 4,
+          "text": "Cron Triggers",
+          "id": "cron-triggers"
+        },
+        {
+          "level": 4,
+          "text": "Metadata Operations",
+          "id": "metadata-operations"
+        },
+        {
+          "level": 3,
+          "text": "🔧 Needs Fixing",
+          "id": "needs-fixing"
+        },
+        {
+          "level": 2,
+          "text": "CLI Updates Required",
+          "id": "cli-updates-required"
+        },
+        {
+          "level": 3,
+          "text": "Event System Integration",
+          "id": "event-system-integration"
+        },
+        {
+          "level": 3,
+          "text": "Current CLI Implementation Analysis",
+          "id": "current-cli-implementation-analysis"
+        },
+        {
+          "level": 3,
+          "text": "Integration Plan for New Methods",
+          "id": "integration-plan-for-new-methods"
+        },
+        {
+          "level": 3,
+          "text": "Testing Plan",
+          "id": "testing-plan"
+        },
+        {
+          "level": 2,
+          "text": "Migration Patterns",
+          "id": "migration-patterns"
+        },
+        {
+          "level": 3,
+          "text": "Define vs Create Philosophy",
+          "id": "define-vs-create-philosophy"
+        },
+        {
+          "level": 3,
+          "text": "Usage in Migrations",
+          "id": "usage-in-migrations"
+        },
+        {
+          "level": 2,
+          "text": "Priority Implementation Order",
+          "id": "priority-implementation-order"
+        }
+      ],
+      "content": "",
+      "path": "hasura.experiment.md"
+    },
+    {
+      "filename": "README.md",
+      "title": "Library Structure",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Library Structure",
+          "id": "library-structure"
+        },
+        {
+          "level": 2,
+          "text": "Import Structure",
+          "id": "import-structure"
+        },
+        {
+          "level": 3,
+          "text": "Client-Safe Imports",
+          "id": "client-safe-imports"
+        },
+        {
+          "level": 3,
+          "text": "Server-Only Imports",
+          "id": "server-only-imports"
+        },
+        {
+          "level": 2,
+          "text": "Files",
+          "id": "files"
+        },
+        {
+          "level": 2,
+          "text": "Migration Guide",
+          "id": "migration-guide"
+        }
+      ],
+      "content": "",
+      "path": "lib/README.md"
+    },
+    {
+      "filename": "testing.experiment.md",
+      "title": "TBank Testing",
+      "headings": [
+        {
+          "level": 1,
+          "text": "TBank Testing",
+          "id": "tbank-testing"
+        },
+        {
+          "level": 2,
+          "text": "⚠️ ВАЖНОЕ ПРЕДУПРЕЖДЕНИЕ: Именование таблиц",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "Подготовка к тестированию",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "1. Настройка тестового терминала TBank",
+          "id": "1-tbank"
+        },
+        {
+          "level": 3,
+          "text": "2. Применение миграций",
+          "id": "2"
+        },
+        {
+          "level": 3,
+          "text": "3. Создание тестового терминала в базе",
+          "id": "3"
+        },
+        {
+          "level": 2,
+          "text": "Тестовые сценарии",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Блок 1: Управление терминалами",
+          "id": "1"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 1.1: Добавление тестового терминала через UI",
+          "id": "11-ui"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 1.2: Проверка отображения терминалов",
+          "id": "12"
+        },
+        {
+          "level": 3,
+          "text": "Блок 2: Одноразовые платежи",
+          "id": "2"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 2.1: Создание простого платежа",
+          "id": "21"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 2.2: Обработка webhook успешного платежа",
+          "id": "22-webhook"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 2.3: Обработка webhook неуспешного платежа",
+          "id": "23-webhook"
+        },
+        {
+          "level": 3,
+          "text": "Блок 3: Привязка карт",
+          "id": "3"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 3.1: Создание маппинга пользователь-провайдер",
+          "id": "31"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 3.2: Инициация привязки карты",
+          "id": "32"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 3.3: Обработка webhook привязки карты",
+          "id": "33-webhook"
+        },
+        {
+          "level": 3,
+          "text": "Блок 4: Рекуррентные платежи",
+          "id": "4"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 4.1: Первый рекуррентный платеж",
+          "id": "41"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 4.2: Последующий рекуррентный платеж",
+          "id": "42"
+        },
+        {
+          "level": 3,
+          "text": "Блок 5: Подписки",
+          "id": "5"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 5.1: Создание подписки",
+          "id": "51"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 5.2: Отмена подписки",
+          "id": "52"
+        },
+        {
+          "level": 3,
+          "text": "Блок 6: Проверка статусов",
+          "id": "6"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 6.1: Получение статуса платежа",
+          "id": "61"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 6.2: Получение списка карт",
+          "id": "62"
+        },
+        {
+          "level": 3,
+          "text": "Блок 7: Обработка ошибок",
+          "id": "7"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 7.1: Неверный TerminalKey в webhook",
+          "id": "71-terminalkey-webhook"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 7.2: Неверный токен в webhook",
+          "id": "72-webhook"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 7.3: Отсутствующий провайдер",
+          "id": "73"
+        },
+        {
+          "level": 3,
+          "text": "Блок 8: UI тестирование",
+          "id": "8-ui"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 8.1: Отображение операций",
+          "id": "81"
+        },
+        {
+          "level": 4,
+          "text": "✅ Тест 8.2: Фильтрация по терминалу",
+          "id": "82"
+        },
+        {
+          "level": 2,
+          "text": "Чек-лист для запуска тестов",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Подготовка:",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Базовые функции:",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Продвинутые функции:",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Безопасность:",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "UI:",
+          "id": "ui"
+        },
+        {
+          "level": 2,
+          "text": "Инструменты для тестирования",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "1. Генератор тестовых webhook",
+          "id": "1-webhook"
+        },
+        {
+          "level": 3,
+          "text": "2. Мониторинг логов",
+          "id": "2"
+        },
+        {
+          "level": 3,
+          "text": "3. Проверка базы данных",
+          "id": "3"
+        },
+        {
+          "level": 2,
+          "text": "Критерии успешного тестирования",
+          "id": ""
+        }
+      ],
+      "content": "",
+      "path": "testing.experiment.md"
+    }
+  ],
+  "lastUpdated": "2025-05-28T13:03:48.519Z"
+}

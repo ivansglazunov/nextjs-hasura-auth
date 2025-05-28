@@ -1,0 +1,2424 @@
+{
+  "items": [
+    {
+      "title": "Apollo Client",
+      "url": "/hasyx/doc/APOLLO",
+      "collapse": true,
+      "items": [
+        {
+          "title": "useCreateApolloClient",
+          "url": "/hasyx/doc/APOLLO#usecreateapolloclient"
+        },
+        {
+          "title": "Purpose",
+          "url": "/hasyx/doc/APOLLO#purpose"
+        },
+        {
+          "title": "Arguments",
+          "url": "/hasyx/doc/APOLLO#arguments"
+        },
+        {
+          "title": "Return Value",
+          "url": "/hasyx/doc/APOLLO#return-value"
+        },
+        {
+          "title": "Key Features",
+          "url": "/hasyx/doc/APOLLO#key-features"
+        },
+        {
+          "title": "How `roleLink` Works",
+          "url": "/hasyx/doc/APOLLO#how-rolelink-works"
+        }
+      ]
+    },
+    {
+      "title": "Ask Command",
+      "url": "/hasyx/doc/ASK",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/ASK#features"
+        },
+        {
+          "title": "Installation & Setup",
+          "url": "/hasyx/doc/ASK#installation-setup"
+        },
+        {
+          "title": "1. Install Hasyx",
+          "url": "/hasyx/doc/ASK#1-install-hasyx"
+        },
+        {
+          "title": "2. Get OpenRouter API Key",
+          "url": "/hasyx/doc/ASK#2-get-openrouter-api-key"
+        },
+        {
+          "title": "3. Configure Environment",
+          "url": "/hasyx/doc/ASK#3-configure-environment"
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/ASK#usage"
+        },
+        {
+          "title": "Direct Question Mode",
+          "url": "/hasyx/doc/ASK#direct-question-mode"
+        },
+        {
+          "title": "Interactive Chat Mode",
+          "url": "/hasyx/doc/ASK#interactive-chat-mode"
+        },
+        {
+          "title": "Examples",
+          "url": "/hasyx/doc/ASK#examples"
+        },
+        {
+          "title": "Coding Questions",
+          "url": "/hasyx/doc/ASK#coding-questions"
+        },
+        {
+          "title": "Math and Calculations",
+          "url": "/hasyx/doc/ASK#math-and-calculations"
+        },
+        {
+          "title": "General Knowledge",
+          "url": "/hasyx/doc/ASK#general-knowledge"
+        },
+        {
+          "title": "Interactive Session Example",
+          "url": "/hasyx/doc/ASK#interactive-session-example"
+        },
+        {
+          "title": "Configuration",
+          "url": "/hasyx/doc/ASK#configuration"
+        },
+        {
+          "title": "Default Settings",
+          "url": "/hasyx/doc/ASK#default-settings"
+        },
+        {
+          "title": "Model Information",
+          "url": "/hasyx/doc/ASK#model-information"
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/ASK#error-handling"
+        },
+        {
+          "title": "Missing API Key",
+          "url": "/hasyx/doc/ASK#missing-api-key"
+        },
+        {
+          "title": "API Errors",
+          "url": "/hasyx/doc/ASK#api-errors"
+        },
+        {
+          "title": "Interactive Mode Issues",
+          "url": "/hasyx/doc/ASK#interactive-mode-issues"
+        },
+        {
+          "title": "Integration with Hasyx Projects",
+          "url": "/hasyx/doc/ASK#integration-with-hasyx-projects"
+        },
+        {
+          "title": "npm Scripts",
+          "url": "/hasyx/doc/ASK#npm-scripts"
+        },
+        {
+          "title": "Environment Loading",
+          "url": "/hasyx/doc/ASK#environment-loading"
+        },
+        {
+          "title": "CLI Integration",
+          "url": "/hasyx/doc/ASK#cli-integration"
+        },
+        {
+          "title": "Advanced Usage",
+          "url": "/hasyx/doc/ASK#advanced-usage"
+        },
+        {
+          "title": "Coding Assistance Workflow",
+          "url": "/hasyx/doc/ASK#coding-assistance-workflow"
+        },
+        {
+          "title": "Learning and Documentation",
+          "url": "/hasyx/doc/ASK#learning-and-documentation"
+        },
+        {
+          "title": "Problem Solving",
+          "url": "/hasyx/doc/ASK#problem-solving"
+        },
+        {
+          "title": "Tips and Best Practices",
+          "url": "/hasyx/doc/ASK#tips-and-best-practices"
+        },
+        {
+          "title": "Effective Question Asking",
+          "url": "/hasyx/doc/ASK#effective-question-asking"
+        },
+        {
+          "title": "Interactive Mode Tips",
+          "url": "/hasyx/doc/ASK#interactive-mode-tips"
+        },
+        {
+          "title": "Performance Tips",
+          "url": "/hasyx/doc/ASK#performance-tips"
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/ASK#troubleshooting"
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/ASK#common-issues"
+        },
+        {
+          "title": "Debug Mode",
+          "url": "/hasyx/doc/ASK#debug-mode"
+        },
+        {
+          "title": "Related Documentation",
+          "url": "/hasyx/doc/ASK#related-documentation"
+        },
+        {
+          "title": "API Reference",
+          "url": "/hasyx/doc/ASK#api-reference"
+        },
+        {
+          "title": "Command Syntax",
+          "url": "/hasyx/doc/ASK#command-syntax"
+        },
+        {
+          "title": "Options",
+          "url": "/hasyx/doc/ASK#options"
+        },
+        {
+          "title": "Exit Codes",
+          "url": "/hasyx/doc/ASK#exit-codes"
+        },
+        {
+          "title": "Environment Variables",
+          "url": "/hasyx/doc/ASK#environment-variables"
+        },
+        {
+          "title": "Examples Repository",
+          "url": "/hasyx/doc/ASK#examples-repository"
+        },
+        {
+          "title": "Contributing",
+          "url": "/hasyx/doc/ASK#contributing"
+        }
+      ]
+    },
+    {
+      "title": "Auth Helpers",
+      "url": "/hasyx/doc/AUTH",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Purpose",
+          "url": "/hasyx/doc/AUTH#purpose"
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/AUTH#usage"
+        },
+        {
+          "title": "`WsClientsManager` (WebSocket Authentication)",
+          "url": "/hasyx/doc/AUTH#wsclientsmanager-websocket-authentication"
+        },
+        {
+          "title": "`getTokenFromRequest` (HTTP/WebSocket Token Retrieval)",
+          "url": "/hasyx/doc/AUTH#gettokenfromrequest-httpwebsocket-token-retrieval"
+        },
+        {
+          "title": "Test Authentication Helper",
+          "url": "/hasyx/doc/AUTH#test-authentication-helper"
+        },
+        {
+          "title": "`testAuthorize` (Development & Testing Only)",
+          "url": "/hasyx/doc/AUTH#testauthorize-development-testing-only"
+        },
+        {
+          "title": "Dependencies",
+          "url": "/hasyx/doc/AUTH#dependencies"
+        },
+        {
+          "title": "Telegram Login Authentication",
+          "url": "/hasyx/doc/AUTH#telegram-login-authentication"
+        }
+      ]
+    },
+    {
+      "title": "Contributing",
+      "url": "/hasyx/doc/CONTRIBUTING",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Development Setup",
+          "url": "/hasyx/doc/CONTRIBUTING#development-setup"
+        },
+        {
+          "title": "Running Tests",
+          "url": "/hasyx/doc/CONTRIBUTING#running-tests"
+        },
+        {
+          "title": "Test Environment Guidelines",
+          "url": "/hasyx/doc/CONTRIBUTING#test-environment-guidelines"
+        },
+        {
+          "title": "Code Style",
+          "url": "/hasyx/doc/CONTRIBUTING#code-style"
+        },
+        {
+          "title": "⚠️ CRITICAL: Table Naming in Hasyx",
+          "url": "/hasyx/doc/CONTRIBUTING#critical-table-naming-in-hasyx"
+        },
+        {
+          "title": "✅ CORRECT - Use underscores:",
+          "url": "/hasyx/doc/CONTRIBUTING#correct-use-underscores"
+        },
+        {
+          "title": "❌ INCORRECT - Do NOT use dots:",
+          "url": "/hasyx/doc/CONTRIBUTING#incorrect-do-not-use-dots"
+        },
+        {
+          "title": "Schema to Table Name Mapping:",
+          "url": "/hasyx/doc/CONTRIBUTING#schema-to-table-name-mapping"
+        },
+        {
+          "title": "Commit Messages",
+          "url": "/hasyx/doc/CONTRIBUTING#commit-messages"
+        },
+        {
+          "title": "Pull Requests",
+          "url": "/hasyx/doc/CONTRIBUTING#pull-requests"
+        },
+        {
+          "title": "Debugging Data Issues",
+          "url": "/hasyx/doc/CONTRIBUTING#debugging-data-issues"
+        },
+        {
+          "title": "Quick Testing with `npx hasyx js`",
+          "url": "/hasyx/doc/CONTRIBUTING#quick-testing-with-npx-hasyx-js"
+        },
+        {
+          "title": "Testing Aggregation Features",
+          "url": "/hasyx/doc/CONTRIBUTING#testing-aggregation-features"
+        },
+        {
+          "title": "Quick Aggregation Tests",
+          "url": "/hasyx/doc/CONTRIBUTING#quick-aggregation-tests"
+        },
+        {
+          "title": "Aggregation Testing Guidelines",
+          "url": "/hasyx/doc/CONTRIBUTING#aggregation-testing-guidelines"
+        },
+        {
+          "title": "Common Aggregation Patterns to Test",
+          "url": "/hasyx/doc/CONTRIBUTING#common-aggregation-patterns-to-test"
+        },
+        {
+          "title": "Debugging Aggregation Issues",
+          "url": "/hasyx/doc/CONTRIBUTING#debugging-aggregation-issues"
+        },
+        {
+          "title": "Writing Database Migrations",
+          "url": "/hasyx/doc/CONTRIBUTING#writing-database-migrations"
+        },
+        {
+          "title": "Migration File Structure",
+          "url": "/hasyx/doc/CONTRIBUTING#migration-file-structure"
+        },
+        {
+          "title": "Core Migration Principles",
+          "url": "/hasyx/doc/CONTRIBUTING#core-migration-principles"
+        },
+        {
+          "title": "Advanced Migration Patterns",
+          "url": "/hasyx/doc/CONTRIBUTING#advanced-migration-patterns"
+        },
+        {
+          "title": "Migration Testing and Validation",
+          "url": "/hasyx/doc/CONTRIBUTING#migration-testing-and-validation"
+        },
+        {
+          "title": "Migration Best Practices Summary",
+          "url": "/hasyx/doc/CONTRIBUTING#migration-best-practices-summary"
+        },
+        {
+          "title": "Contribution Guidelines",
+          "url": "/hasyx/doc/CONTRIBUTING#contribution-guidelines"
+        },
+        {
+          "title": "Project Structure Philosophy",
+          "url": "/hasyx/doc/CONTRIBUTING#project-structure-philosophy"
+        },
+        {
+          "title": "Specific Guidance for `app/payments/tbank/options.ts`",
+          "url": "/hasyx/doc/CONTRIBUTING#specific-guidance-for-apppaymentstbankoptionsts"
+        },
+        {
+          "title": "`generateReceipt` Function Stub",
+          "url": "/hasyx/doc/CONTRIBUTING#generatereceipt-function-stub"
+        }
+      ]
+    },
+    {
+      "title": "Graph Visualizations",
+      "url": "/hasyx/doc/CYTO",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Overview",
+          "url": "/hasyx/doc/CYTO#overview"
+        },
+        {
+          "title": "Core Components",
+          "url": "/hasyx/doc/CYTO#core-components"
+        },
+        {
+          "title": "1. `<Cyto />`",
+          "url": "/hasyx/doc/CYTO#1-cyto"
+        },
+        {
+          "title": "2. `<CytoNode />`",
+          "url": "/hasyx/doc/CYTO#2-cytonode"
+        },
+        {
+          "title": "3. `<CytoEdge />`",
+          "url": "/hasyx/doc/CYTO#3-cytoedge"
+        },
+        {
+          "title": "4. `<CytoStyle />`",
+          "url": "/hasyx/doc/CYTO#4-cytostyle"
+        },
+        {
+          "title": "5. `useGraph()`",
+          "url": "/hasyx/doc/CYTO#5-usegraph"
+        },
+        {
+          "title": "Comprehensive Usage Example",
+          "url": "/hasyx/doc/CYTO#comprehensive-usage-example"
+        },
+        {
+          "title": "Key Aspects and Benefits",
+          "url": "/hasyx/doc/CYTO#key-aspects-and-benefits"
+        }
+      ]
+    },
+    {
+      "title": "TypeScript Execution",
+      "url": "/hasyx/doc/EXEC-TS",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/EXEC-TS#features"
+        },
+        {
+          "title": "Installation",
+          "url": "/hasyx/doc/EXEC-TS#installation"
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/EXEC-TS#usage"
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/EXEC-TS#basic-usage"
+        },
+        {
+          "title": "With Context",
+          "url": "/hasyx/doc/EXEC-TS#with-context"
+        },
+        {
+          "title": "Factory Function",
+          "url": "/hasyx/doc/EXEC-TS#factory-function"
+        },
+        {
+          "title": "Configuration",
+          "url": "/hasyx/doc/EXEC-TS#configuration"
+        },
+        {
+          "title": "Compiler Options",
+          "url": "/hasyx/doc/EXEC-TS#compiler-options"
+        },
+        {
+          "title": "Strict Mode",
+          "url": "/hasyx/doc/EXEC-TS#strict-mode"
+        },
+        {
+          "title": "TypeScript Features Supported",
+          "url": "/hasyx/doc/EXEC-TS#typescript-features-supported"
+        },
+        {
+          "title": "Type Annotations",
+          "url": "/hasyx/doc/EXEC-TS#type-annotations"
+        },
+        {
+          "title": "Interfaces",
+          "url": "/hasyx/doc/EXEC-TS#interfaces"
+        },
+        {
+          "title": "Type Aliases",
+          "url": "/hasyx/doc/EXEC-TS#type-aliases"
+        },
+        {
+          "title": "Generics",
+          "url": "/hasyx/doc/EXEC-TS#generics"
+        },
+        {
+          "title": "Enums",
+          "url": "/hasyx/doc/EXEC-TS#enums"
+        },
+        {
+          "title": "Type Assertions",
+          "url": "/hasyx/doc/EXEC-TS#type-assertions"
+        },
+        {
+          "title": "API Reference",
+          "url": "/hasyx/doc/EXEC-TS#api-reference"
+        },
+        {
+          "title": "Class: ExecTs",
+          "url": "/hasyx/doc/EXEC-TS#class-exects"
+        },
+        {
+          "title": "Interface: ExecTsOptions",
+          "url": "/hasyx/doc/EXEC-TS#interface-exectsoptions"
+        },
+        {
+          "title": "Configuration Loading",
+          "url": "/hasyx/doc/EXEC-TS#configuration-loading"
+        },
+        {
+          "title": "TypeScript Detection",
+          "url": "/hasyx/doc/EXEC-TS#typescript-detection"
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/EXEC-TS#error-handling"
+        },
+        {
+          "title": "Integration with CLI",
+          "url": "/hasyx/doc/EXEC-TS#integration-with-cli"
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/EXEC-TS#best-practices"
+        },
+        {
+          "title": "Examples",
+          "url": "/hasyx/doc/EXEC-TS#examples"
+        },
+        {
+          "title": "Working with Hasyx Client",
+          "url": "/hasyx/doc/EXEC-TS#working-with-hasyx-client"
+        },
+        {
+          "title": "Complex Type Operations",
+          "url": "/hasyx/doc/EXEC-TS#complex-type-operations"
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/EXEC-TS#troubleshooting"
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/EXEC-TS#common-issues"
+        },
+        {
+          "title": "Debug Mode",
+          "url": "/hasyx/doc/EXEC-TS#debug-mode"
+        },
+        {
+          "title": "See Also",
+          "url": "/hasyx/doc/EXEC-TS#see-also"
+        }
+      ]
+    },
+    {
+      "title": "Code Execution",
+      "url": "/hasyx/doc/EXEC",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Purpose",
+          "url": "/hasyx/doc/EXEC#purpose"
+        },
+        {
+          "title": "Core Features",
+          "url": "/hasyx/doc/EXEC#core-features"
+        },
+        {
+          "title": "Environment Detection",
+          "url": "/hasyx/doc/EXEC#environment-detection"
+        },
+        {
+          "title": "Execution Context Management",
+          "url": "/hasyx/doc/EXEC#execution-context-management"
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/EXEC#usage"
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/EXEC#basic-usage"
+        },
+        {
+          "title": "Factory Function",
+          "url": "/hasyx/doc/EXEC#factory-function"
+        },
+        {
+          "title": "Advanced Context Management",
+          "url": "/hasyx/doc/EXEC#advanced-context-management"
+        },
+        {
+          "title": "Execution with Context Extension",
+          "url": "/hasyx/doc/EXEC#execution-with-context-extension"
+        },
+        {
+          "title": "Configuration Options",
+          "url": "/hasyx/doc/EXEC#configuration-options"
+        },
+        {
+          "title": "ExecOptions Interface",
+          "url": "/hasyx/doc/EXEC#execoptions-interface"
+        },
+        {
+          "title": "Example with Options",
+          "url": "/hasyx/doc/EXEC#example-with-options"
+        },
+        {
+          "title": "Dynamic Module Loading with use-m",
+          "url": "/hasyx/doc/EXEC#dynamic-module-loading-with-use-m"
+        },
+        {
+          "title": "Basic use-m Usage",
+          "url": "/hasyx/doc/EXEC#basic-use-m-usage"
+        },
+        {
+          "title": "Package Version Specification",
+          "url": "/hasyx/doc/EXEC#package-version-specification"
+        },
+        {
+          "title": "How use-m Works",
+          "url": "/hasyx/doc/EXEC#how-use-m-works"
+        },
+        {
+          "title": "use-m Features",
+          "url": "/hasyx/doc/EXEC#use-m-features"
+        },
+        {
+          "title": "Error Handling with use-m",
+          "url": "/hasyx/doc/EXEC#error-handling-with-use-m"
+        },
+        {
+          "title": "Performance Considerations",
+          "url": "/hasyx/doc/EXEC#performance-considerations"
+        },
+        {
+          "title": "Async/Await Support",
+          "url": "/hasyx/doc/EXEC#asyncawait-support"
+        },
+        {
+          "title": "Built-in Objects and Functions",
+          "url": "/hasyx/doc/EXEC#built-in-objects-and-functions"
+        },
+        {
+          "title": "Available Globals",
+          "url": "/hasyx/doc/EXEC#available-globals"
+        },
+        {
+          "title": "Environment-Specific Globals",
+          "url": "/hasyx/doc/EXEC#environment-specific-globals"
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/EXEC#error-handling"
+        },
+        {
+          "title": "Syntax Errors",
+          "url": "/hasyx/doc/EXEC#syntax-errors"
+        },
+        {
+          "title": "Runtime Errors",
+          "url": "/hasyx/doc/EXEC#runtime-errors"
+        },
+        {
+          "title": "Timeout Handling",
+          "url": "/hasyx/doc/EXEC#timeout-handling"
+        },
+        {
+          "title": "Advanced Examples",
+          "url": "/hasyx/doc/EXEC#advanced-examples"
+        },
+        {
+          "title": "Complex Data Processing",
+          "url": "/hasyx/doc/EXEC#complex-data-processing"
+        },
+        {
+          "title": "Async Data Processing",
+          "url": "/hasyx/doc/EXEC#async-data-processing"
+        },
+        {
+          "title": "Function Definitions and Execution",
+          "url": "/hasyx/doc/EXEC#function-definitions-and-execution"
+        },
+        {
+          "title": "Environment Detection",
+          "url": "/hasyx/doc/EXEC#environment-detection"
+        },
+        {
+          "title": "Static Methods",
+          "url": "/hasyx/doc/EXEC#static-methods"
+        },
+        {
+          "title": "Usage in Code",
+          "url": "/hasyx/doc/EXEC#usage-in-code"
+        },
+        {
+          "title": "Security Considerations",
+          "url": "/hasyx/doc/EXEC#security-considerations"
+        },
+        {
+          "title": "Context Isolation",
+          "url": "/hasyx/doc/EXEC#context-isolation"
+        },
+        {
+          "title": "Timeout Protection",
+          "url": "/hasyx/doc/EXEC#timeout-protection"
+        },
+        {
+          "title": "Environment Safety",
+          "url": "/hasyx/doc/EXEC#environment-safety"
+        },
+        {
+          "title": "Testing",
+          "url": "/hasyx/doc/EXEC#testing"
+        },
+        {
+          "title": "Integration Examples",
+          "url": "/hasyx/doc/EXEC#integration-examples"
+        },
+        {
+          "title": "CLI Tool Integration",
+          "url": "/hasyx/doc/EXEC#cli-tool-integration"
+        },
+        {
+          "title": "Dynamic Code Evaluation",
+          "url": "/hasyx/doc/EXEC#dynamic-code-evaluation"
+        },
+        {
+          "title": "Dynamic Package Loading with use-m",
+          "url": "/hasyx/doc/EXEC#dynamic-package-loading-with-use-m"
+        },
+        {
+          "title": "Microservice with Dynamic Dependencies",
+          "url": "/hasyx/doc/EXEC#microservice-with-dynamic-dependencies"
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/EXEC#best-practices"
+        }
+      ]
+    },
+    {
+      "title": "Query Generator",
+      "url": "/hasyx/doc/GENERATOR",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Purpose",
+          "url": "/hasyx/doc/GENERATOR#purpose"
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/GENERATOR#usage"
+        },
+        {
+          "title": "Options (`GenerateOptions` Interface)",
+          "url": "/hasyx/doc/GENERATOR#options-generateoptions-interface"
+        },
+        {
+          "title": "Examples",
+          "url": "/hasyx/doc/GENERATOR#examples"
+        },
+        {
+          "title": "1. Advanced Nested Query (Appending to Defaults)",
+          "url": "/hasyx/doc/GENERATOR#1-advanced-nested-query-appending-to-defaults"
+        },
+        {
+          "title": "2. Basic Query with `where`",
+          "url": "/hasyx/doc/GENERATOR#2-basic-query-with-where"
+        },
+        {
+          "title": "3. Query with Pagination and Sorting",
+          "url": "/hasyx/doc/GENERATOR#3-query-with-pagination-and-sorting"
+        },
+        {
+          "title": "4. Query by Primary Key",
+          "url": "/hasyx/doc/GENERATOR#4-query-by-primary-key"
+        },
+        {
+          "title": "5. Nested Query with Parameters and Alias",
+          "url": "/hasyx/doc/GENERATOR#5-nested-query-with-parameters-and-alias"
+        },
+        {
+          "title": "6. Aggregate Query",
+          "url": "/hasyx/doc/GENERATOR#6-aggregate-query"
+        },
+        {
+          "title": "7. Insert Mutation (Single Object)",
+          "url": "/hasyx/doc/GENERATOR#7-insert-mutation-single-object"
+        },
+        {
+          "title": "8. Insert Mutation (Bulk)",
+          "url": "/hasyx/doc/GENERATOR#8-insert-mutation-bulk"
+        },
+        {
+          "title": "9. Update Mutation by Primary Key",
+          "url": "/hasyx/doc/GENERATOR#9-update-mutation-by-primary-key"
+        },
+        {
+          "title": "10. Update Mutation by `where` Condition",
+          "url": "/hasyx/doc/GENERATOR#10-update-mutation-by-where-condition"
+        },
+        {
+          "title": "11. Delete Mutation by Primary Key",
+          "url": "/hasyx/doc/GENERATOR#11-delete-mutation-by-primary-key"
+        },
+        {
+          "title": "12. Delete Mutation by `where` Condition",
+          "url": "/hasyx/doc/GENERATOR#12-delete-mutation-by-where-condition"
+        },
+        {
+          "title": "13. Subscription",
+          "url": "/hasyx/doc/GENERATOR#13-subscription"
+        },
+        {
+          "title": "14. Query with `distinct_on`",
+          "url": "/hasyx/doc/GENERATOR#14-query-with-distinct-on"
+        },
+        {
+          "title": "15. Advanced Nested Query with `where` Conditions",
+          "url": "/hasyx/doc/GENERATOR#15-advanced-nested-query-with-where-conditions"
+        },
+        {
+          "title": "16. Deeply Nested Relations (Multiple Levels)",
+          "url": "/hasyx/doc/GENERATOR#16-deeply-nested-relations-multiple-levels"
+        },
+        {
+          "title": "17. Complex `where` Clauses with Logical Operators",
+          "url": "/hasyx/doc/GENERATOR#17-complex-where-clauses-with-logical-operators"
+        },
+        {
+          "title": "18. Using Field Aliases with Parameters",
+          "url": "/hasyx/doc/GENERATOR#18-using-field-aliases-with-parameters"
+        },
+        {
+          "title": "19. Mixed Array and Object Notation for Relations",
+          "url": "/hasyx/doc/GENERATOR#19-mixed-array-and-object-notation-for-relations"
+        },
+        {
+          "title": "20. Multiple Nested Relationships with Different Parameters",
+          "url": "/hasyx/doc/GENERATOR#20-multiple-nested-relationships-with-different-parameters"
+        },
+        {
+          "title": "21. Nested Aggregate Query (Relations with Aggregation)",
+          "url": "/hasyx/doc/GENERATOR#21-nested-aggregate-query-relations-with-aggregation"
+        },
+        {
+          "title": "22. Combined Aggregate with Regular Data",
+          "url": "/hasyx/doc/GENERATOR#22-combined-aggregate-with-regular-data"
+        },
+        {
+          "title": "23. Aggregate Functions with Column Specifications",
+          "url": "/hasyx/doc/GENERATOR#23-aggregate-functions-with-column-specifications"
+        },
+        {
+          "title": "24. Top-level Aggregate Query with Nodes",
+          "url": "/hasyx/doc/GENERATOR#24-top-level-aggregate-query-with-nodes"
+        },
+        {
+          "title": "Advanced Aggregation Patterns",
+          "url": "/hasyx/doc/GENERATOR#advanced-aggregation-patterns"
+        },
+        {
+          "title": "Real-world Tournament Example",
+          "url": "/hasyx/doc/GENERATOR#real-world-tournament-example"
+        }
+      ]
+    },
+    {
+      "title": "GraphQL Proxy",
+      "url": "/hasyx/doc/GRAPHQL-PROXY",
+      "collapse": true,
+      "items": [
+        {
+          "title": "🎯 Purpose",
+          "url": "/hasyx/doc/GRAPHQL-PROXY#purpose"
+        },
+        {
+          "title": "🤔 Why is it needed?",
+          "url": "/hasyx/doc/GRAPHQL-PROXY#why-is-it-needed"
+        },
+        {
+          "title": "⚙️ How it Works",
+          "url": "/hasyx/doc/GRAPHQL-PROXY#how-it-works"
+        },
+        {
+          "title": "1. GET Requests",
+          "url": "/hasyx/doc/GRAPHQL-PROXY#1-get-requests"
+        },
+        {
+          "title": "2. POST Requests (Queries / Mutations)",
+          "url": "/hasyx/doc/GRAPHQL-PROXY#2-post-requests-queries-mutations"
+        },
+        {
+          "title": "3. WebSocket Connections (Subscriptions) - via `SOCKET`",
+          "url": "/hasyx/doc/GRAPHQL-PROXY#3-websocket-connections-subscriptions-via-socket"
+        },
+        {
+          "title": "🔧 Configuration",
+          "url": "/hasyx/doc/GRAPHQL-PROXY#configuration"
+        },
+        {
+          "title": "🔗 Client Integration",
+          "url": "/hasyx/doc/GRAPHQL-PROXY#client-integration"
+        },
+        {
+          "title": "✅ Summary",
+          "url": "/hasyx/doc/GRAPHQL-PROXY#summary"
+        }
+      ]
+    },
+    {
+      "title": "Hasura Client",
+      "url": "/hasyx/doc/HASURA",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Overview",
+          "url": "/hasyx/doc/HASURA#overview"
+        },
+        {
+          "title": "Constructor",
+          "url": "/hasyx/doc/HASURA#constructor"
+        },
+        {
+          "title": "Options",
+          "url": "/hasyx/doc/HASURA#options"
+        },
+        {
+          "title": "Core Methods",
+          "url": "/hasyx/doc/HASURA#core-methods"
+        },
+        {
+          "title": "Schema Operations",
+          "url": "/hasyx/doc/HASURA#schema-operations"
+        },
+        {
+          "title": "Table Operations",
+          "url": "/hasyx/doc/HASURA#table-operations"
+        },
+        {
+          "title": "Column Operations",
+          "url": "/hasyx/doc/HASURA#column-operations"
+        },
+        {
+          "title": "Function Operations",
+          "url": "/hasyx/doc/HASURA#function-operations"
+        },
+        {
+          "title": "Trigger Operations",
+          "url": "/hasyx/doc/HASURA#trigger-operations"
+        },
+        {
+          "title": "Foreign Key Operations",
+          "url": "/hasyx/doc/HASURA#foreign-key-operations"
+        },
+        {
+          "title": "View Operations",
+          "url": "/hasyx/doc/HASURA#view-operations"
+        },
+        {
+          "title": "`",
+          "url": "/hasyx/doc/HASURA#"
+        }
+      ]
+    },
+    {
+      "title": "Hasyx Class",
+      "url": "/hasyx/doc/HASYX",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Core Components",
+          "url": "/hasyx/doc/HASYX#core-components"
+        },
+        {
+          "title": "Key Features (Both Class & Hooks)",
+          "url": "/hasyx/doc/HASYX#key-features-both-class-hooks"
+        },
+        {
+          "title": "User Management",
+          "url": "/hasyx/doc/HASYX#user-management"
+        },
+        {
+          "title": "User Properties",
+          "url": "/hasyx/doc/HASYX#user-properties"
+        },
+        {
+          "title": "Automatic Session Sync",
+          "url": "/hasyx/doc/HASYX#automatic-session-sync"
+        },
+        {
+          "title": "Session Hook",
+          "url": "/hasyx/doc/HASYX#session-hook"
+        },
+        {
+          "title": "Diagnostics",
+          "url": "/hasyx/doc/HASYX#diagnostics"
+        },
+        {
+          "title": "`Hasyx` Class Usage",
+          "url": "/hasyx/doc/HASYX#hasyx-class-usage"
+        },
+        {
+          "title": "`Hasyx` Class Methods",
+          "url": "/hasyx/doc/HASYX#hasyx-class-methods"
+        },
+        {
+          "title": "`Hasyx` Class Properties",
+          "url": "/hasyx/doc/HASYX#hasyx-class-properties"
+        },
+        {
+          "title": "`HasyxClient` Class (Client-Side)",
+          "url": "/hasyx/doc/HASYX#hasyxclient-class-client-side"
+        },
+        {
+          "title": "Key Features",
+          "url": "/hasyx/doc/HASYX#key-features"
+        },
+        {
+          "title": "Usage with `useClient()` Hook",
+          "url": "/hasyx/doc/HASYX#usage-with-useclient-hook"
+        },
+        {
+          "title": "`HasyxClient` Methods",
+          "url": "/hasyx/doc/HASYX#hasyxclient-methods"
+        },
+        {
+          "title": "React Hooks Usage",
+          "url": "/hasyx/doc/HASYX#react-hooks-usage"
+        }
+      ]
+    },
+    {
+      "title": "HID Standard",
+      "url": "/hasyx/doc/HID",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Overview",
+          "url": "/hasyx/doc/HID#overview"
+        },
+        {
+          "title": "Format",
+          "url": "/hasyx/doc/HID#format"
+        },
+        {
+          "title": "Components:",
+          "url": "/hasyx/doc/HID#components"
+        },
+        {
+          "title": "Segment Rules:",
+          "url": "/hasyx/doc/HID#segment-rules"
+        },
+        {
+          "title": "`lib/hid.ts` Utility",
+          "url": "/hasyx/doc/HID#libhidts-utility"
+        },
+        {
+          "title": "Initialization",
+          "url": "/hasyx/doc/HID#initialization"
+        },
+        {
+          "title": "`HidInstance` Methods",
+          "url": "/hasyx/doc/HID#hidinstance-methods"
+        },
+        {
+          "title": "Environment Variable: `NEXT_PUBLIC_HID_NAMESPACE`",
+          "url": "/hasyx/doc/HID#environment-variable-next-public-hid-namespace"
+        },
+        {
+          "title": "Use Cases",
+          "url": "/hasyx/doc/HID#use-cases"
+        },
+        {
+          "title": "Hasyx View and Automated HID Generation",
+          "url": "/hasyx/doc/HID#hasyx-view-and-automated-hid-generation"
+        },
+        {
+          "title": "Computed Columns for Relationships",
+          "url": "/hasyx/doc/HID#computed-columns-for-relationships"
+        },
+        {
+          "title": "`public.hasyx` View Structure",
+          "url": "/hasyx/doc/HID#publichasyx-view-structure"
+        },
+        {
+          "title": "Automated Relationships",
+          "url": "/hasyx/doc/HID#automated-relationships"
+        }
+      ]
+    },
+    {
+      "title": "Markdown Terminal",
+      "url": "/hasyx/doc/MARKDOWN-TERMINAL",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#features"
+        },
+        {
+          "title": "Installation",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#installation"
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#basic-usage"
+        },
+        {
+          "title": "Simple Formatting",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#simple-formatting"
+        },
+        {
+          "title": "Code Blocks",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#code-blocks"
+        },
+        {
+          "title": "Lists and Tables",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#lists-and-tables"
+        },
+        {
+          "title": "Advanced Usage",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#advanced-usage"
+        },
+        {
+          "title": "Custom Themes",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#custom-themes"
+        },
+        {
+          "title": "Utility Functions",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#utility-functions"
+        },
+        {
+          "title": "Supported Markdown Elements",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#supported-markdown-elements"
+        },
+        {
+          "title": "Headers",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#headers"
+        },
+        {
+          "title": "Text Formatting",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#text-formatting"
+        },
+        {
+          "title": "Code Blocks",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#code-blocks"
+        },
+        {
+          "title": "Lists",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#lists"
+        },
+        {
+          "title": "Links and Images",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#links-and-images"
+        },
+        {
+          "title": "Blockquotes",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#blockquotes"
+        },
+        {
+          "title": "Tables",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#tables"
+        },
+        {
+          "title": "Horizontal Rules",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#horizontal-rules"
+        },
+        {
+          "title": "Configuration Options",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#configuration-options"
+        },
+        {
+          "title": "FormatMarkdownCustom Options",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#formatmarkdowncustom-options"
+        },
+        {
+          "title": "Integration Examples",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#integration-examples"
+        },
+        {
+          "title": "With Ask Command",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#with-ask-command"
+        },
+        {
+          "title": "With Custom CLI Tools",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#with-custom-cli-tools"
+        },
+        {
+          "title": "With Documentation Generators",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#with-documentation-generators"
+        },
+        {
+          "title": "API Reference",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#api-reference"
+        },
+        {
+          "title": "Functions",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#functions"
+        },
+        {
+          "title": "Examples",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#examples"
+        },
+        {
+          "title": "Complete Example",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#complete-example"
+        },
+        {
+          "title": "Testing Example",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#testing-example"
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#best-practices"
+        },
+        {
+          "title": "1. Use Appropriate Functions",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#1-use-appropriate-functions"
+        },
+        {
+          "title": "2. Handle Long Content",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#2-handle-long-content"
+        },
+        {
+          "title": "3. Choose Appropriate Themes",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#3-choose-appropriate-themes"
+        },
+        {
+          "title": "4. Error Handling",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#4-error-handling"
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#troubleshooting"
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#common-issues"
+        },
+        {
+          "title": "Debug Mode",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#debug-mode"
+        },
+        {
+          "title": "Dependencies",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#dependencies"
+        },
+        {
+          "title": "Related Documentation",
+          "url": "/hasyx/doc/MARKDOWN-TERMINAL#related-documentation"
+        }
+      ]
+    },
+    {
+      "title": "Web Push Notifications with Firebase Cloud Messaging (FCM) in Hasyx",
+      "url": "/hasyx/doc/NOTIFY-FIREBASE",
+      "collapse": true,
+      "items": [
+        {
+          "title": "How It Works: End-to-End Flow",
+          "url": "/hasyx/doc/NOTIFY-FIREBASE#how-it-works-end-to-end-flow"
+        },
+        {
+          "title": "Prerequisites & Setup",
+          "url": "/hasyx/doc/NOTIFY-FIREBASE#prerequisites-setup"
+        },
+        {
+          "title": "Customizing Notifications",
+          "url": "/hasyx/doc/NOTIFY-FIREBASE#customizing-notifications"
+        },
+        {
+          "title": "Advanced FCM Options",
+          "url": "/hasyx/doc/NOTIFY-FIREBASE#advanced-fcm-options"
+        },
+        {
+          "title": "Client-Side Service Worker (`firebase-messaging-sw.js`)",
+          "url": "/hasyx/doc/NOTIFY-FIREBASE#client-side-service-worker-firebase-messaging-swjs"
+        }
+      ]
+    },
+    {
+      "title": "Firebase Notifications",
+      "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT",
+      "collapse": true,
+      "items": [
+        {
+          "title": "How It Works: End-to-End Flow",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#how-it-works-end-to-end-flow"
+        },
+        {
+          "title": "Prerequisites & Setup",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#prerequisites-setup"
+        },
+        {
+          "title": "Customizing Notifications",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#customizing-notifications"
+        },
+        {
+          "title": "Advanced FCM Options",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#advanced-fcm-options"
+        },
+        {
+          "title": "Client-Side Service Worker (`firebase-messaging-sw.js`)",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#client-side-service-worker-firebase-messaging-swjs"
+        },
+        {
+          "title": "Telegram Bot Integration in Hasyx",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#telegram-bot-integration-in-hasyx"
+        },
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#features"
+        },
+        {
+          "title": "Setup",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#setup"
+        },
+        {
+          "title": "How it Works",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#how-it-works"
+        },
+        {
+          "title": "Customization",
+          "url": "/hasyx/doc/NOTIFY-TELEGRAM-BOT#customization"
+        }
+      ]
+    },
+    {
+      "title": "Push Notifications",
+      "url": "/hasyx/doc/NOTIFY",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Core Concepts",
+          "url": "/hasyx/doc/NOTIFY#core-concepts"
+        },
+        {
+          "title": "Workflow Overview",
+          "url": "/hasyx/doc/NOTIFY#workflow-overview"
+        },
+        {
+          "title": "Platform Support Status",
+          "url": "/hasyx/doc/NOTIFY#platform-support-status"
+        }
+      ]
+    },
+    {
+      "title": "OpenRouter",
+      "url": "/hasyx/doc/OPENROUTER",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/OPENROUTER#features"
+        },
+        {
+          "title": "Installation",
+          "url": "/hasyx/doc/OPENROUTER#installation"
+        },
+        {
+          "title": "Environment Variables",
+          "url": "/hasyx/doc/OPENROUTER#environment-variables"
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/OPENROUTER#basic-usage"
+        },
+        {
+          "title": "Creating an OpenRouter Instance",
+          "url": "/hasyx/doc/OPENROUTER#creating-an-openrouter-instance"
+        },
+        {
+          "title": "Simple AI Conversations",
+          "url": "/hasyx/doc/OPENROUTER#simple-ai-conversations"
+        },
+        {
+          "title": "AI with Code Execution",
+          "url": "/hasyx/doc/OPENROUTER#ai-with-code-execution"
+        },
+        {
+          "title": "Configuration Options",
+          "url": "/hasyx/doc/OPENROUTER#configuration-options"
+        },
+        {
+          "title": "OpenRouterOptions",
+          "url": "/hasyx/doc/OPENROUTER#openrouteroptions"
+        },
+        {
+          "title": "Default Configuration",
+          "url": "/hasyx/doc/OPENROUTER#default-configuration"
+        },
+        {
+          "title": "Context Management",
+          "url": "/hasyx/doc/OPENROUTER#context-management"
+        },
+        {
+          "title": "Message Creation Helpers",
+          "url": "/hasyx/doc/OPENROUTER#message-creation-helpers"
+        },
+        {
+          "title": "Advanced Usage",
+          "url": "/hasyx/doc/OPENROUTER#advanced-usage"
+        },
+        {
+          "title": "Custom Model Configuration",
+          "url": "/hasyx/doc/OPENROUTER#custom-model-configuration"
+        },
+        {
+          "title": "Persistent Context Across Conversations",
+          "url": "/hasyx/doc/OPENROUTER#persistent-context-across-conversations"
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/OPENROUTER#error-handling"
+        },
+        {
+          "title": "Available Models",
+          "url": "/hasyx/doc/OPENROUTER#available-models"
+        },
+        {
+          "title": "Integration with Hasyx",
+          "url": "/hasyx/doc/OPENROUTER#integration-with-hasyx"
+        },
+        {
+          "title": "Using with Hasyx Client",
+          "url": "/hasyx/doc/OPENROUTER#using-with-hasyx-client"
+        },
+        {
+          "title": "Using with Exec Engine",
+          "url": "/hasyx/doc/OPENROUTER#using-with-exec-engine"
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/OPENROUTER#best-practices"
+        },
+        {
+          "title": "1. API Key Security",
+          "url": "/hasyx/doc/OPENROUTER#1-api-key-security"
+        },
+        {
+          "title": "2. Error Handling",
+          "url": "/hasyx/doc/OPENROUTER#2-error-handling"
+        },
+        {
+          "title": "3. Context Management",
+          "url": "/hasyx/doc/OPENROUTER#3-context-management"
+        },
+        {
+          "title": "4. Model Selection",
+          "url": "/hasyx/doc/OPENROUTER#4-model-selection"
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/OPENROUTER#troubleshooting"
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/OPENROUTER#common-issues"
+        },
+        {
+          "title": "Debug Mode",
+          "url": "/hasyx/doc/OPENROUTER#debug-mode"
+        },
+        {
+          "title": "Examples",
+          "url": "/hasyx/doc/OPENROUTER#examples"
+        },
+        {
+          "title": "Example 1: Data Analysis Assistant",
+          "url": "/hasyx/doc/OPENROUTER#example-1-data-analysis-assistant"
+        },
+        {
+          "title": "Example 2: API Integration Helper",
+          "url": "/hasyx/doc/OPENROUTER#example-2-api-integration-helper"
+        },
+        {
+          "title": "Example 3: Code Generation and Testing",
+          "url": "/hasyx/doc/OPENROUTER#example-3-code-generation-and-testing"
+        },
+        {
+          "title": "API Reference",
+          "url": "/hasyx/doc/OPENROUTER#api-reference"
+        },
+        {
+          "title": "Class: OpenRouter",
+          "url": "/hasyx/doc/OPENROUTER#class-openrouter"
+        }
+      ]
+    },
+    {
+      "title": "PWA Support",
+      "url": "/hasyx/doc/PWA",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/PWA#features"
+        },
+        {
+          "title": "Quick Start",
+          "url": "/hasyx/doc/PWA#quick-start"
+        },
+        {
+          "title": "1. Generate PWA Assets",
+          "url": "/hasyx/doc/PWA#1-generate-pwa-assets"
+        },
+        {
+          "title": "2. Enable PWA in Your App",
+          "url": "/hasyx/doc/PWA#2-enable-pwa-in-your-app"
+        },
+        {
+          "title": "3. Use PWA Components",
+          "url": "/hasyx/doc/PWA#3-use-pwa-components"
+        },
+        {
+          "title": "4. Use PWA Hooks",
+          "url": "/hasyx/doc/PWA#4-use-pwa-hooks"
+        },
+        {
+          "title": "Configuration",
+          "url": "/hasyx/doc/PWA#configuration"
+        },
+        {
+          "title": "Environment Variables",
+          "url": "/hasyx/doc/PWA#environment-variables"
+        },
+        {
+          "title": "Customizing the Web App Manifest",
+          "url": "/hasyx/doc/PWA#customizing-the-web-app-manifest"
+        },
+        {
+          "title": "Customizing App Icons",
+          "url": "/hasyx/doc/PWA#customizing-app-icons"
+        },
+        {
+          "title": "Service Worker Caching Strategies",
+          "url": "/hasyx/doc/PWA#service-worker-caching-strategies"
+        },
+        {
+          "title": "Network First (API Calls)",
+          "url": "/hasyx/doc/PWA#network-first-api-calls"
+        },
+        {
+          "title": "Cache First (Static Assets)",
+          "url": "/hasyx/doc/PWA#cache-first-static-assets"
+        },
+        {
+          "title": "Stale While Revalidate (Pages)",
+          "url": "/hasyx/doc/PWA#stale-while-revalidate-pages"
+        },
+        {
+          "title": "Offline Support",
+          "url": "/hasyx/doc/PWA#offline-support"
+        },
+        {
+          "title": "GraphQL Offline Handling",
+          "url": "/hasyx/doc/PWA#graphql-offline-handling"
+        },
+        {
+          "title": "Custom Offline Pages",
+          "url": "/hasyx/doc/PWA#custom-offline-pages"
+        },
+        {
+          "title": "Platform-Specific Features",
+          "url": "/hasyx/doc/PWA#platform-specific-features"
+        },
+        {
+          "title": "iOS Safari",
+          "url": "/hasyx/doc/PWA#ios-safari"
+        },
+        {
+          "title": "Android Chrome",
+          "url": "/hasyx/doc/PWA#android-chrome"
+        },
+        {
+          "title": "Desktop Browsers",
+          "url": "/hasyx/doc/PWA#desktop-browsers"
+        },
+        {
+          "title": "Testing PWA Features",
+          "url": "/hasyx/doc/PWA#testing-pwa-features"
+        },
+        {
+          "title": "1. Chrome DevTools",
+          "url": "/hasyx/doc/PWA#1-chrome-devtools"
+        },
+        {
+          "title": "2. PWA Checklist",
+          "url": "/hasyx/doc/PWA#2-pwa-checklist"
+        },
+        {
+          "title": "3. Testing Installation",
+          "url": "/hasyx/doc/PWA#3-testing-installation"
+        },
+        {
+          "title": "4. Testing Offline",
+          "url": "/hasyx/doc/PWA#4-testing-offline"
+        },
+        {
+          "title": "Deployment Considerations",
+          "url": "/hasyx/doc/PWA#deployment-considerations"
+        },
+        {
+          "title": "HTTPS Requirement",
+          "url": "/hasyx/doc/PWA#https-requirement"
+        },
+        {
+          "title": "Service Worker Scope",
+          "url": "/hasyx/doc/PWA#service-worker-scope"
+        },
+        {
+          "title": "CDN and Caching",
+          "url": "/hasyx/doc/PWA#cdn-and-caching"
+        },
+        {
+          "title": "Integration with Existing Features",
+          "url": "/hasyx/doc/PWA#integration-with-existing-features"
+        },
+        {
+          "title": "Firebase Notifications",
+          "url": "/hasyx/doc/PWA#firebase-notifications"
+        },
+        {
+          "title": "GraphQL Subscriptions",
+          "url": "/hasyx/doc/PWA#graphql-subscriptions"
+        },
+        {
+          "title": "Authentication",
+          "url": "/hasyx/doc/PWA#authentication"
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/PWA#troubleshooting"
+        },
+        {
+          "title": "Service Worker Not Registering",
+          "url": "/hasyx/doc/PWA#service-worker-not-registering"
+        },
+        {
+          "title": "Install Prompt Not Showing",
+          "url": "/hasyx/doc/PWA#install-prompt-not-showing"
+        },
+        {
+          "title": "Offline Functionality Not Working",
+          "url": "/hasyx/doc/PWA#offline-functionality-not-working"
+        },
+        {
+          "title": "Notifications Not Working",
+          "url": "/hasyx/doc/PWA#notifications-not-working"
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/PWA#best-practices"
+        },
+        {
+          "title": "1. Progressive Enhancement",
+          "url": "/hasyx/doc/PWA#1-progressive-enhancement"
+        },
+        {
+          "title": "2. User Communication",
+          "url": "/hasyx/doc/PWA#2-user-communication"
+        },
+        {
+          "title": "3. Graceful Degradation",
+          "url": "/hasyx/doc/PWA#3-graceful-degradation"
+        },
+        {
+          "title": "4. Performance Optimization",
+          "url": "/hasyx/doc/PWA#4-performance-optimization"
+        },
+        {
+          "title": "Advanced Usage",
+          "url": "/hasyx/doc/PWA#advanced-usage"
+        },
+        {
+          "title": "Custom Service Worker",
+          "url": "/hasyx/doc/PWA#custom-service-worker"
+        },
+        {
+          "title": "Background Sync",
+          "url": "/hasyx/doc/PWA#background-sync"
+        },
+        {
+          "title": "Push Notification Customization",
+          "url": "/hasyx/doc/PWA#push-notification-customization"
+        },
+        {
+          "title": "API Reference",
+          "url": "/hasyx/doc/PWA#api-reference"
+        },
+        {
+          "title": "`usePWA()` Hook",
+          "url": "/hasyx/doc/PWA#usepwa-hook"
+        },
+        {
+          "title": "PWA Utility Functions",
+          "url": "/hasyx/doc/PWA#pwa-utility-functions"
+        },
+        {
+          "title": "Learn More",
+          "url": "/hasyx/doc/PWA#learn-more"
+        }
+      ]
+    },
+    {
+      "title": "Hasyx",
+      "url": "/hasyx/doc/README",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Technologies Used",
+          "url": "/hasyx/doc/README#technologies-used"
+        },
+        {
+          "title": "Detailed Documentation",
+          "url": "/hasyx/doc/README#detailed-documentation"
+        },
+        {
+          "title": "🚀 Quick Start",
+          "url": "/hasyx/doc/README#quick-start"
+        },
+        {
+          "title": "⚙️ CLI Commands",
+          "url": "/hasyx/doc/README#cli-commands"
+        },
+        {
+          "title": "🔧 CLI Extensibility in Child Projects",
+          "url": "/hasyx/doc/README#cli-extensibility-in-child-projects"
+        }
+      ]
+    },
+    {
+      "title": "TBank Payments",
+      "url": "/hasyx/doc/TBANK",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Хранение конфигурации",
+          "url": "/hasyx/doc/TBANK#"
+        },
+        {
+          "title": "Реализованные методы адаптера",
+          "url": "/hasyx/doc/TBANK#"
+        },
+        {
+          "title": "1. `initiatePayment`",
+          "url": "/hasyx/doc/TBANK#1-initiatepayment"
+        },
+        {
+          "title": "2. `handleWebhook`",
+          "url": "/hasyx/doc/TBANK#2-handlewebhook"
+        },
+        {
+          "title": "3. `getPaymentStatus`",
+          "url": "/hasyx/doc/TBANK#3-getpaymentstatus"
+        },
+        {
+          "title": "4. `createSubscription`",
+          "url": "/hasyx/doc/TBANK#4-createsubscription"
+        },
+        {
+          "title": "5. `cancelSubscription`",
+          "url": "/hasyx/doc/TBANK#5-cancelsubscription"
+        },
+        {
+          "title": "6. `addPaymentMethod`",
+          "url": "/hasyx/doc/TBANK#6-addpaymentmethod"
+        },
+        {
+          "title": "Вспомогательные/внутренние методы",
+          "url": "/hasyx/doc/TBANK#"
+        },
+        {
+          "title": "Структуры данных TBank (используемые адаптером)",
+          "url": "/hasyx/doc/TBANK#tbank"
+        },
+        {
+          "title": "Полный список методов для поддержки сценариев",
+          "url": "/hasyx/doc/TBANK#"
+        }
+      ]
+    },
+    {
+      "title": "TBank Recurrent",
+      "url": "/hasyx/doc/TBANK_RECURRENT_STATUS",
+      "collapse": true,
+      "items": [
+        {
+          "title": "📊 Текущий Статус Реализации",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#"
+        },
+        {
+          "title": "✅ Что Полностью Реализовано",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#"
+        },
+        {
+          "title": "🔄 Что Работает в Автоматическом Режиме",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#"
+        },
+        {
+          "title": "🎯 Готово к Тестированию",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#"
+        },
+        {
+          "title": "📋 План Тестирования",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#"
+        },
+        {
+          "title": "🚀 Готовность к Продакшену",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#"
+        },
+        {
+          "title": "📈 Метрики для Мониторинга",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#"
+        },
+        {
+          "title": "🎉 Заключение",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#"
+        },
+        {
+          "title": "🔒 Безопасность API Эндпоинтов",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#api"
+        },
+        {
+          "title": "✅ Completed Features",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#completed-features"
+        },
+        {
+          "title": "1. Database Schema",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#1-database-schema"
+        },
+        {
+          "title": "2. Automatic Billing System",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#2-automatic-billing-system"
+        },
+        {
+          "title": "3. API Endpoints",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#3-api-endpoints"
+        },
+        {
+          "title": "4. UI Components",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#4-ui-components"
+        },
+        {
+          "title": "🔄 Architecture Change: Computed vs Stored Dates",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#architecture-change-computed-vs-stored-dates"
+        },
+        {
+          "title": "Previous Approach (Stored Dates)",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#previous-approach-stored-dates"
+        },
+        {
+          "title": "**NEW Approach (Computed Fields)**",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#new-approach-computed-fields"
+        },
+        {
+          "title": "Benefits of Computed Approach",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#benefits-of-computed-approach"
+        },
+        {
+          "title": "PostgreSQL Functions Created",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#postgresql-functions-created"
+        },
+        {
+          "title": "🧪 Testing Status",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#testing-status"
+        },
+        {
+          "title": "Manual Testing Required",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#manual-testing-required"
+        },
+        {
+          "title": "Test Commands Updated",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#test-commands-updated"
+        },
+        {
+          "title": "📋 Implementation Checklist",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#implementation-checklist"
+        },
+        {
+          "title": "🚀 Ready for Production",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#ready-for-production"
+        },
+        {
+          "title": "Next Steps",
+          "url": "/hasyx/doc/TBANK_RECURRENT_STATUS#next-steps"
+        }
+      ]
+    },
+    {
+      "title": "TBank Payment Testing Guide",
+      "url": "/hasyx/doc/TBANK_TESTING",
+      "collapse": true,
+      "items": [
+        {
+          "title": "🎯 Полная Система Готова к Тестированию",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "📋 Пошаговый План Тестирования",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "Этап 1: Подготовка Окружения",
+          "url": "/hasyx/doc/TBANK_TESTING#1"
+        },
+        {
+          "title": "Этап 2: Настройка Провайдера",
+          "url": "/hasyx/doc/TBANK_TESTING#2"
+        },
+        {
+          "title": "Этап 3: Создание Тестового Плана",
+          "url": "/hasyx/doc/TBANK_TESTING#3"
+        },
+        {
+          "title": "Этап 4: Добавление Метода Оплаты",
+          "url": "/hasyx/doc/TBANK_TESTING#4"
+        },
+        {
+          "title": "Этап 5: Создание Подписки",
+          "url": "/hasyx/doc/TBANK_TESTING#5"
+        },
+        {
+          "title": "Этап 6: Мониторинг Автоматических Списаний",
+          "url": "/hasyx/doc/TBANK_TESTING#6"
+        },
+        {
+          "title": "Этап 7: Тестирование Обработки Ошибок",
+          "url": "/hasyx/doc/TBANK_TESTING#7"
+        },
+        {
+          "title": "🔍 Команды для Диагностики",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "Общий Статус Системы",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "Debug Логи по Категориям",
+          "url": "/hasyx/doc/TBANK_TESTING#debug"
+        },
+        {
+          "title": "Детальная Информация о Подписке",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "📊 Ожидаемые Результаты",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "После Создания Подписки",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "После Первого Автоматического Списания",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "При Ошибке Списания",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "После Исчерпания Retry",
+          "url": "/hasyx/doc/TBANK_TESTING#retry"
+        },
+        {
+          "title": "🚨 Возможные Проблемы и Решения",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "Cron Событие Не Срабатывает",
+          "url": "/hasyx/doc/TBANK_TESTING#cron"
+        },
+        {
+          "title": "Методы Оплаты Не Становятся Recurrent Ready",
+          "url": "/hasyx/doc/TBANK_TESTING#recurrent-ready"
+        },
+        {
+          "title": "Автоматические Списания Не Работают",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        },
+        {
+          "title": "✅ Критерии Успешного Тестирования",
+          "url": "/hasyx/doc/TBANK_TESTING#"
+        }
+      ]
+    },
+    {
+      "title": "Telegram Bot",
+      "url": "/hasyx/doc/TELEGRAM-BOT",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/TELEGRAM-BOT#features"
+        },
+        {
+          "title": "Setup",
+          "url": "/hasyx/doc/TELEGRAM-BOT#setup"
+        },
+        {
+          "title": "Implementation Details",
+          "url": "/hasyx/doc/TELEGRAM-BOT#implementation-details"
+        },
+        {
+          "title": "Core Components",
+          "url": "/hasyx/doc/TELEGRAM-BOT#core-components"
+        },
+        {
+          "title": "Notification System Integration",
+          "url": "/hasyx/doc/TELEGRAM-BOT#notification-system-integration"
+        },
+        {
+          "title": "Usage Examples",
+          "url": "/hasyx/doc/TELEGRAM-BOT#usage-examples"
+        },
+        {
+          "title": "Simple Echo Bot",
+          "url": "/hasyx/doc/TELEGRAM-BOT#simple-echo-bot"
+        },
+        {
+          "title": "Command Handler",
+          "url": "/hasyx/doc/TELEGRAM-BOT#command-handler"
+        },
+        {
+          "title": "Future Enhancements",
+          "url": "/hasyx/doc/TELEGRAM-BOT#future-enhancements"
+        },
+        {
+          "title": "Implementation Roadmap",
+          "url": "/hasyx/doc/TELEGRAM-BOT#implementation-roadmap"
+        },
+        {
+          "title": "Resources",
+          "url": "/hasyx/doc/TELEGRAM-BOT#resources"
+        }
+      ]
+    },
+    {
+      "title": "Tinkoff API Documentation",
+      "url": "/hasyx/doc/TINKOFF_API",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Base URL",
+          "url": "/hasyx/doc/TINKOFF_API#base-url"
+        },
+        {
+          "title": "Available Endpoints",
+          "url": "/hasyx/doc/TINKOFF_API#available-endpoints"
+        },
+        {
+          "title": "Init",
+          "url": "/hasyx/doc/TINKOFF_API#init"
+        },
+        {
+          "title": "GetState",
+          "url": "/hasyx/doc/TINKOFF_API#getstate"
+        },
+        {
+          "title": "Confirm",
+          "url": "/hasyx/doc/TINKOFF_API#confirm"
+        },
+        {
+          "title": "Cancel",
+          "url": "/hasyx/doc/TINKOFF_API#cancel"
+        },
+        {
+          "title": "AddCard",
+          "url": "/hasyx/doc/TINKOFF_API#addcard"
+        },
+        {
+          "title": "GetCardList",
+          "url": "/hasyx/doc/TINKOFF_API#getcardlist"
+        },
+        {
+          "title": "RemoveCard",
+          "url": "/hasyx/doc/TINKOFF_API#removecard"
+        },
+        {
+          "title": "Charge",
+          "url": "/hasyx/doc/TINKOFF_API#charge"
+        },
+        {
+          "title": "Authentication and Security",
+          "url": "/hasyx/doc/TINKOFF_API#authentication-and-security"
+        },
+        {
+          "title": "Token Generation",
+          "url": "/hasyx/doc/TINKOFF_API#token-generation"
+        },
+        {
+          "title": "Response Format",
+          "url": "/hasyx/doc/TINKOFF_API#response-format"
+        },
+        {
+          "title": "Resources",
+          "url": "/hasyx/doc/TINKOFF_API#resources"
+        },
+        {
+          "title": "Note",
+          "url": "/hasyx/doc/TINKOFF_API#note"
+        }
+      ]
+    },
+    {
+      "title": "Aggregation Issue",
+      "url": "/hasyx/doc/aggregate.experiment",
+      "collapse": true,
+      "items": [
+        {
+          "title": "🚨 Problem Summary",
+          "url": "/hasyx/doc/aggregate.experiment#problem-summary"
+        },
+        {
+          "title": "Problem Description",
+          "url": "/hasyx/doc/aggregate.experiment#problem-description"
+        },
+        {
+          "title": "Current Behavior vs Expected Behavior",
+          "url": "/hasyx/doc/aggregate.experiment#current-behavior-vs-expected-behavior"
+        },
+        {
+          "title": "Current Behavior (❌ Broken)",
+          "url": "/hasyx/doc/aggregate.experiment#current-behavior-broken"
+        },
+        {
+          "title": "Expected Behavior (✅ Should Work)",
+          "url": "/hasyx/doc/aggregate.experiment#expected-behavior-should-work"
+        },
+        {
+          "title": "Technical Details",
+          "url": "/hasyx/doc/aggregate.experiment#technical-details"
+        },
+        {
+          "title": "Hasura Schema Verification",
+          "url": "/hasyx/doc/aggregate.experiment#hasura-schema-verification"
+        },
+        {
+          "title": "Raw GraphQL Works",
+          "url": "/hasyx/doc/aggregate.experiment#raw-graphql-works"
+        },
+        {
+          "title": "Hasyx Limitation",
+          "url": "/hasyx/doc/aggregate.experiment#hasyx-limitation"
+        },
+        {
+          "title": "Current Workaround",
+          "url": "/hasyx/doc/aggregate.experiment#current-workaround"
+        },
+        {
+          "title": "Testing Instructions",
+          "url": "/hasyx/doc/aggregate.experiment#testing-instructions"
+        },
+        {
+          "title": "Test Environment Setup",
+          "url": "/hasyx/doc/aggregate.experiment#test-environment-setup"
+        },
+        {
+          "title": "Test Case 1: Basic Aggregation Count",
+          "url": "/hasyx/doc/aggregate.experiment#test-case-1-basic-aggregation-count"
+        },
+        {
+          "title": "Test Case 2: Aggregation with Conditions",
+          "url": "/hasyx/doc/aggregate.experiment#test-case-2-aggregation-with-conditions"
+        },
+        {
+          "title": "Test Case 3: Multiple Aggregation Types",
+          "url": "/hasyx/doc/aggregate.experiment#test-case-3-multiple-aggregation-types"
+        },
+        {
+          "title": "Test Case 4: Direct Hasura Comparison",
+          "url": "/hasyx/doc/aggregate.experiment#test-case-4-direct-hasura-comparison"
+        },
+        {
+          "title": "Proposed Solution Areas",
+          "url": "/hasyx/doc/aggregate.experiment#proposed-solution-areas"
+        },
+        {
+          "title": "Impact on Projects",
+          "url": "/hasyx/doc/aggregate.experiment#impact-on-projects"
+        },
+        {
+          "title": "Priority",
+          "url": "/hasyx/doc/aggregate.experiment#priority"
+        }
+      ]
+    },
+    {
+      "title": "Sidebar Components",
+      "url": "/hasyx/doc/README",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Components",
+          "url": "/hasyx/doc/README#components"
+        },
+        {
+          "title": "SidebarLayout",
+          "url": "/hasyx/doc/README#sidebarlayout"
+        },
+        {
+          "title": "UserProfileDropdown",
+          "url": "/hasyx/doc/README#userprofiledropdown"
+        },
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/README#features"
+        },
+        {
+          "title": "Dependencies",
+          "url": "/hasyx/doc/README#dependencies"
+        },
+        {
+          "title": "Usage with Authentication",
+          "url": "/hasyx/doc/README#usage-with-authentication"
+        },
+        {
+          "title": "Styling",
+          "url": "/hasyx/doc/README#styling"
+        }
+      ]
+    },
+    {
+      "title": "Hasura Migration Refactoring Plan",
+      "url": "/hasyx/doc/hasura.experiment",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Files to be rewritten using new Hasura methods",
+          "url": "/hasyx/doc/hasura.experiment#files-to-be-rewritten-using-new-hasura-methods"
+        },
+        {
+          "title": "Current Project (hasyx)",
+          "url": "/hasyx/doc/hasura.experiment#current-project-hasyx"
+        },
+        {
+          "title": "Deep7 Project",
+          "url": "/hasyx/doc/hasura.experiment#deep7-project"
+        },
+        {
+          "title": "Badma Project",
+          "url": "/hasyx/doc/hasura.experiment#badma-project"
+        },
+        {
+          "title": "New Methods Implementation Plan",
+          "url": "/hasyx/doc/hasura.experiment#new-methods-implementation-plan"
+        },
+        {
+          "title": "✅ Already Implemented",
+          "url": "/hasyx/doc/hasura.experiment#already-implemented"
+        },
+        {
+          "title": "🔄 To Implement",
+          "url": "/hasyx/doc/hasura.experiment#to-implement"
+        },
+        {
+          "title": "🔧 Needs Fixing",
+          "url": "/hasyx/doc/hasura.experiment#needs-fixing"
+        },
+        {
+          "title": "CLI Updates Required",
+          "url": "/hasyx/doc/hasura.experiment#cli-updates-required"
+        },
+        {
+          "title": "Event System Integration",
+          "url": "/hasyx/doc/hasura.experiment#event-system-integration"
+        },
+        {
+          "title": "Current CLI Implementation Analysis",
+          "url": "/hasyx/doc/hasura.experiment#current-cli-implementation-analysis"
+        },
+        {
+          "title": "Integration Plan for New Methods",
+          "url": "/hasyx/doc/hasura.experiment#integration-plan-for-new-methods"
+        },
+        {
+          "title": "Testing Plan",
+          "url": "/hasyx/doc/hasura.experiment#testing-plan"
+        },
+        {
+          "title": "Migration Patterns",
+          "url": "/hasyx/doc/hasura.experiment#migration-patterns"
+        },
+        {
+          "title": "Define vs Create Philosophy",
+          "url": "/hasyx/doc/hasura.experiment#define-vs-create-philosophy"
+        },
+        {
+          "title": "Usage in Migrations",
+          "url": "/hasyx/doc/hasura.experiment#usage-in-migrations"
+        },
+        {
+          "title": "Priority Implementation Order",
+          "url": "/hasyx/doc/hasura.experiment#priority-implementation-order"
+        }
+      ]
+    },
+    {
+      "title": "Library Structure",
+      "url": "/hasyx/doc/README",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Import Structure",
+          "url": "/hasyx/doc/README#import-structure"
+        },
+        {
+          "title": "Client-Safe Imports",
+          "url": "/hasyx/doc/README#client-safe-imports"
+        },
+        {
+          "title": "Server-Only Imports",
+          "url": "/hasyx/doc/README#server-only-imports"
+        },
+        {
+          "title": "Files",
+          "url": "/hasyx/doc/README#files"
+        },
+        {
+          "title": "Migration Guide",
+          "url": "/hasyx/doc/README#migration-guide"
+        }
+      ]
+    },
+    {
+      "title": "TBank Testing",
+      "url": "/hasyx/doc/testing.experiment",
+      "collapse": true,
+      "items": [
+        {
+          "title": "⚠️ ВАЖНОЕ ПРЕДУПРЕЖДЕНИЕ: Именование таблиц",
+          "url": "/hasyx/doc/testing.experiment#"
+        },
+        {
+          "title": "Подготовка к тестированию",
+          "url": "/hasyx/doc/testing.experiment#"
+        },
+        {
+          "title": "1. Настройка тестового терминала TBank",
+          "url": "/hasyx/doc/testing.experiment#1-tbank"
+        },
+        {
+          "title": "2. Применение миграций",
+          "url": "/hasyx/doc/testing.experiment#2"
+        },
+        {
+          "title": "3. Создание тестового терминала в базе",
+          "url": "/hasyx/doc/testing.experiment#3"
+        },
+        {
+          "title": "Тестовые сценарии",
+          "url": "/hasyx/doc/testing.experiment#"
+        },
+        {
+          "title": "Блок 1: Управление терминалами",
+          "url": "/hasyx/doc/testing.experiment#1"
+        },
+        {
+          "title": "Блок 2: Одноразовые платежи",
+          "url": "/hasyx/doc/testing.experiment#2"
+        },
+        {
+          "title": "Блок 3: Привязка карт",
+          "url": "/hasyx/doc/testing.experiment#3"
+        },
+        {
+          "title": "Блок 4: Рекуррентные платежи",
+          "url": "/hasyx/doc/testing.experiment#4"
+        },
+        {
+          "title": "Блок 5: Подписки",
+          "url": "/hasyx/doc/testing.experiment#5"
+        },
+        {
+          "title": "Блок 6: Проверка статусов",
+          "url": "/hasyx/doc/testing.experiment#6"
+        },
+        {
+          "title": "Блок 7: Обработка ошибок",
+          "url": "/hasyx/doc/testing.experiment#7"
+        },
+        {
+          "title": "Блок 8: UI тестирование",
+          "url": "/hasyx/doc/testing.experiment#8-ui"
+        },
+        {
+          "title": "Чек-лист для запуска тестов",
+          "url": "/hasyx/doc/testing.experiment#"
+        },
+        {
+          "title": "Подготовка:",
+          "url": "/hasyx/doc/testing.experiment#"
+        },
+        {
+          "title": "Базовые функции:",
+          "url": "/hasyx/doc/testing.experiment#"
+        },
+        {
+          "title": "Продвинутые функции:",
+          "url": "/hasyx/doc/testing.experiment#"
+        },
+        {
+          "title": "Безопасность:",
+          "url": "/hasyx/doc/testing.experiment#"
+        },
+        {
+          "title": "UI:",
+          "url": "/hasyx/doc/testing.experiment#ui"
+        },
+        {
+          "title": "Инструменты для тестирования",
+          "url": "/hasyx/doc/testing.experiment#"
+        },
+        {
+          "title": "1. Генератор тестовых webhook",
+          "url": "/hasyx/doc/testing.experiment#1-webhook"
+        },
+        {
+          "title": "2. Мониторинг логов",
+          "url": "/hasyx/doc/testing.experiment#2"
+        },
+        {
+          "title": "3. Проверка базы данных",
+          "url": "/hasyx/doc/testing.experiment#3"
+        },
+        {
+          "title": "Критерии успешного тестирования",
+          "url": "/hasyx/doc/testing.experiment#"
+        }
+      ]
+    }
+  ],
+  "lastUpdated": "2025-05-28T13:03:48.614Z"
+}

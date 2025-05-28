@@ -1,6 +1,4 @@
-# Firebase Notifications
-
-Web Push Notifications with Firebase Cloud Messaging (FCM) in Hasyx
+# Web Push Notifications with Firebase Cloud Messaging (FCM) in Hasyx
 
 This document details how Hasyx implements web push notifications using Firebase Cloud Messaging (FCM) via the modern FCM HTTP v1 API.
 
@@ -74,7 +72,7 @@ To use Firebase web push notifications with Hasyx, you need to configure the fol
 4.  **Environment Variables**: Set the following in your `.env` file (and in your Vercel project settings):
 
     ```env
-    # --- Firebase Service Account ---
+    # --- Firebase Service Account --- 
     # Path to your Firebase service account JSON file (for server-side logic)
     # On Vercel, you might paste the JSON content directly into the environment variable.
     # GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/secure/service-account-file.json
@@ -92,7 +90,7 @@ To use Firebase web push notifications with Hasyx, you need to configure the fol
     # Default icon for notifications (path relative to public directory)
     # NEXT_PUBLIC_NOTIFICATION_ICON=/icons/icon-192x192.png
     # Default URL to open when a notification is clicked
-    # NEXT_PUBLIC_BASE_URL=https://your-app.com
+    # NEXT_PUBLIC_BASE_URL=https://your-app.com 
     ```
 
     *   The `npx hasyx assist` command can help guide you through setting many of these variables.
@@ -190,83 +188,8 @@ self.addEventListener('notificationclick', function(event) {
 });
 ```
 
-**Important**:
+**Important**: 
 *   Replace placeholder values in `firebaseConfig` within `firebase-messaging-sw.js` with your actual Firebase project configuration values (the same `NEXT_PUBLIC_` values, but without `NEXT_PUBLIC_` prefix and directly in the script).
 *   This service worker file needs to be accessible at the root of your site (e.g., `https://your-app.com/firebase-messaging-sw.js`). The Firebase SDK on the client will register it.
 
 By following these steps and understanding the flow, you can effectively manage and send web push notifications using Firebase FCM v1 within your Hasyx application.
-
-# Telegram Bot Integration in Hasyx
-
-This document outlines how Hasyx integrates with Telegram Bots for user interaction and notifications.
-
-## Features
-
-1.  **User Registration on `/start`**: When a user first interacts with the bot by sending the `/start` command:
-    *   The bot registers the user in your Hasyx application.
-    *   A `notification_permissions` record is created with `provider: 'telegram_bot'` and `device_token` set to the user's Telegram `chat_id`. This enables sending direct notifications to the user via the bot.
-2.  **Direct User Notifications**: Hasyx can send notifications directly to users via the Telegram bot using the `telegram_bot` provider in the notification system.
-3.  **AI Responses**: If configured with an `OPENROUTER_API_KEY`, the bot can respond to user messages using an AI model.
-
-## Setup
-
-1.  **Create a Telegram Bot**:
-    *   Open Telegram and search for "BotFather".
-    *   Send `/start` to BotFather.
-    *   Send `/newbot` and follow the prompts to choose a name (e.g., "My Project Bot") and a username (e.g., `myproject_bot`).
-    *   BotFather will provide you with an **API Token**. Keep this token secure.
-
-2.  **Configure Environment Variables**:
-    Add the following to your `.env` file:
-    ```env
-    # Required for Telegram Bot functionality
-    TELEGRAM_BOT_TOKEN="YOUR_TELEGRAM_BOT_API_TOKEN"
-
-    # Optional: For AI responses via OpenRouter
-    OPENROUTER_API_KEY="YOUR_OPENROUTER_API_KEY"
-    # Optional: Custom pre-prompt for the AI for Telegram interactions
-    TELEGRAM_AI_PREPROMPT="You are a very helpful assistant."
-    ```
-    The `npx hasyx assist` command can guide you through setting `TELEGRAM_BOT_TOKEN`.
-
-3.  **Set Webhook**:
-    *   Hasyx relies on a webhook to receive updates from Telegram. The API route `app/api/telegram_bot/route.ts` handles these updates.
-    *   You need to tell Telegram where to send these updates.
-    *   **Manual**: You can set the webhook by sending a GET request to the Telegram API (replace `YOUR_BOT_TOKEN` and `YOUR_WEBHOOK_URL`):
-        `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=<YOUR_WEBHOOK_URL>/api/telegram_bot`
-        *   `YOUR_WEBHOOK_URL` should be your publicly accessible application URL (e.g., your Vercel deployment URL like `https://your-project.vercel.app`).
-        *   Make sure your `/api/telegram_bot` endpoint is reachable from the internet.
-
-4.  **Bot Profile Picture (Optional but Recommended)**:
-    *   The `npx hasyx assist` command (after configuring the bot token) or `npx hasyx assets` (if `TELEGRAM_BOT_TOKEN` is set) will attempt to set your bot's profile picture using the `public/logo.png` from your project.
-    *   Ensure `public/logo.png` is your desired bot avatar.
-    *   Alternatively, you can set the bot's profile picture manually via BotFather using the `/setuserpic` command.
-
-## How it Works
-
-*   **Incoming Updates**: Telegram sends updates (new messages, commands, etc.) to your `/api/telegram_bot` webhook.
-*   **Route Handler (`app/api/telegram_bot/route.ts`)**: This Next.js route parses the incoming request.
-    *   It initializes a Hasyx client for database operations (like user registration).
-    *   It sets up a processor for AI responses (`defaultGetAiResponse`) if `OPENROUTER_API_KEY` is configured.
-    *   It then calls `handleTelegramWebhook` from `lib/telegram-handler.ts`.
-*   **Webhook Handler (`lib/telegram-handler.ts`)**:
-    *   Calls `processTelegramEvent` (`lib/telegram-bot.ts`) for core event processing.
-    *   If the event is a user message eligible for AI, it calls the `getAiResponse` processor.
-    *   The AI response (if any) is sent back to the user via `sendTelegramMessage`.
-*   **Core Event Processor (`lib/telegram-bot.ts` -> `processTelegramEvent`)**:
-    *   Parses the update.
-    *   If it's a `/start` command from a new user, it performs the registration steps (creates/updates `notification_permissions` record for the user with their `chat_id`).
-    *   Other messages are generally passed through for potential AI handling.
-*   **AI Response Processor (`app/api/telegram_bot/route.ts` -> `defaultGetAiResponse`)**:
-    *   Constructs a prompt using `TELEGRAM_AI_PREPROMPT`.
-    *   Calls the `ask` function from `lib/ask.ts` (which interacts with OpenRouter).
-    *   Returns the AI's textual response.
-*   **Outgoing Notifications**: When a Hasyx notification is triggered for the `telegram_bot` provider:
-    *   `lib/notify-telegram.ts` is used.
-    *   It calls the Telegram `sendMessage` API to send the notification content to the user's `chat_id` (stored as `device_token` in `notification_permissions`).
-
-## Customization
-
-*   **Bot Commands**: You can extend `lib/telegram_bot.ts` to handle more commands (e.g., `/help`, `/settings`).
-*   **AI Behavior**: Modify `TELEGRAM_AI_PREPROMPT` to change the AI's persona or instructions. For more advanced AI logic, you can customize or replace `defaultGetAiResponse`.
-*   **Message Formatting**: Messages sent by the bot use Markdown by default. You can customize this in `sendTelegramMessage` or within the notification sending logic.

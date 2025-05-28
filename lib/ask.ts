@@ -3,12 +3,34 @@
 import * as dotenv from 'dotenv';
 import * as readline from 'readline';
 import { OpenRouter } from './openrouter';
+import { printMarkdown } from './markdown-terminal';
 import Debug from './debug';
 
 const debug = Debug('hasyx:ask');
 
 // Load environment variables
 dotenv.config();
+
+/**
+ * Check if text contains markdown formatting
+ */
+function hasMarkdownFormatting(text: string): boolean {
+  // Check for common markdown patterns
+  const markdownPatterns = [
+    /```[\s\S]*?```/,           // Code blocks
+    /`[^`]+`/,                  // Inline code
+    /^#{1,6}\s/m,               // Headers
+    /\*\*[^*]+\*\*/,            // Bold
+    /\*[^*]+\*/,                // Italic
+    /\[[^\]]+\]\([^)]+\)/,      // Links
+    /^\s*[-*+]\s/m,             // Lists
+    /^\s*\d+\.\s/m,             // Numbered lists
+    /^>\s/m,                    // Blockquotes
+    /^\s*\|.*\|/m               // Tables
+  ];
+  
+  return markdownPatterns.some(pattern => pattern.test(text));
+}
 
 export async function askCommand(question?: string): Promise<void> {
   debug('Starting ask command with question:', question);
@@ -36,7 +58,13 @@ export async function askCommand(question?: string): Promise<void> {
     debug('Processing direct question:', question);
     try {
       const response = await openrouter.ask(question);
-      console.log(response);
+      
+      // Check if response contains markdown and format accordingly
+      if (hasMarkdownFormatting(response)) {
+        await printMarkdown(response);
+      } else {
+        console.log(response);
+      }
     } catch (error) {
       debug('Error in direct question mode:', error);
       console.error('❌ Error:', error instanceof Error ? error.message : String(error));
@@ -51,7 +79,8 @@ export async function askCommand(question?: string): Promise<void> {
       prompt: '> '
     });
 
-    console.log('Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
+    console.log('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
+    console.log('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
     rl.prompt();
 
     rl.on('line', async (input) => {
@@ -65,7 +94,13 @@ export async function askCommand(question?: string): Promise<void> {
       debug('Processing interactive question:', question);
       try {
         const response = await openrouter.ask(question);
-        console.log(response);
+        
+        // Check if response contains markdown and format accordingly
+        if (hasMarkdownFormatting(response)) {
+          await printMarkdown(response);
+        } else {
+          console.log(response);
+        }
       } catch (error) {
         debug('Error in interactive mode:', error);
         console.error('❌ Error:', error instanceof Error ? error.message : String(error));
@@ -76,13 +111,13 @@ export async function askCommand(question?: string): Promise<void> {
 
     rl.on('close', () => {
       debug('Interactive mode closed');
-      console.log('\nGoodbye!');
+      console.log('\n👋 Goodbye!');
       process.exit(0);
     });
 
     rl.on('SIGINT', () => {
       debug('SIGINT received in interactive mode');
-      console.log('\nGoodbye!');
+      console.log('\n👋 Goodbye!');
       process.exit(0);
     });
   }
