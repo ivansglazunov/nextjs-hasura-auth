@@ -3,7 +3,6 @@
 // replace 'vm' with 'vm-browserify'
 import vm from 'vm';
 import { createRequire } from 'module';
-import { use } from 'use-m';
 
 export interface ExecOptions {
   timeout?: number;
@@ -13,6 +12,32 @@ export interface ExecOptions {
 export interface ExecContext {
   [key: string]: any;
 }
+
+// Cache for use-m function
+let useFunction: any = null;
+let useInitialized = false;
+
+// Initialize use-m function (only in Node.js)
+const initializeUse = async () => {
+  if (useInitialized) return useFunction;
+  
+  // Only load use-m in Node.js environment
+  if (typeof window === 'undefined') {
+    try {
+      const { use } = await import('use-m');
+      useFunction = use;
+    } catch (error) {
+      console.warn('Failed to load use-m:', error);
+      useFunction = null;
+    }
+  } else {
+    // In browser, use-m is not available
+    useFunction = null;
+  }
+  
+  useInitialized = true;
+  return useFunction;
+};
 
 // Get environment-appropriate globals
 const getEnvironmentGlobals = () => {
@@ -84,12 +109,15 @@ export class Exec {
   }
 
   async exec(code: string, contextExtend: ExecContext = {}): Promise<any> {
+    // Initialize use-m function if not already done
+    const use = await initializeUse();
+    
     // Create a fresh context for this execution
     const executionContext = vm.createContext({
       ...getEnvironmentGlobals(),
       ...this.initialContext,
       ...contextExtend,
-      // Add use-m function (now available as static import)
+      // Add use-m function (dynamically loaded)
       use: use
     });
 
