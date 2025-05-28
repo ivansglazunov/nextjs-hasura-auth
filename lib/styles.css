@@ -1669,6 +1669,9 @@
     -webkit-user-select: none;
     user-select: none;
   }
+  .\[hasura\:test\] {
+    hasura: test;
+  }
   .\[test\:hasyx\] {
     test: hasyx;
   }

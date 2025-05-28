@@ -26,6 +26,7 @@ jobs:
       - name: Run tests
         run: npm test
         env:
+          JEST_LOCAL: 1
           TEST_TOKEN: ${{secrets.TEST_TOKEN}}
           NEXT_PUBLIC_HASURA_GRAPHQL_URL: ${{secrets.NEXT_PUBLIC_HASURA_GRAPHQL_URL}}
           HASURA_ADMIN_SECRET: ${{secrets.HASURA_ADMIN_SECRET}}

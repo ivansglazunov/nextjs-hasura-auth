@@ -1,13 +1,17 @@
 import { Hasura, ColumnType } from './hasura';
 import { v4 as uuidv4 } from 'uuid';
-import Debug from './debug';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // Load environment variables for real Hasura tests
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-const debug = Debug('hasura:test');
+// Simple debug function for tests
+const debug = (...args: any[]) => {
+  if (process.env.DEBUG) {
+    console.log('[hasura:test]', ...args);
+  }
+};
 
 // Check for required environment variables
 if (!process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL || !process.env.HASURA_ADMIN_SECRET) {

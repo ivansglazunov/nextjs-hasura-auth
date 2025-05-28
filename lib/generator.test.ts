@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { gql, ApolloClient, NormalizedCacheObject, FetchResult } from '@apollo/client'; // Import gql
+import { gql, ApolloClient, NormalizedCacheObject, FetchResult } from '@apollo/client/core'; // Import gql from core
 import { GenerateOptions, GenerateResult } from './generator'; // Import types
 import { Generator } from './generator'; // Import the default export (the ready-to-use function)
 // @ts-ignore

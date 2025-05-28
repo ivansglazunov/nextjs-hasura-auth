@@ -1,11 +1,4 @@
-import _debug from 'debug';
-// @ts-ignore
-import pckg from '../package.json'; // Using relative path
-
 export type DebuggerFunction = (...args: any[]) => void;
-
-// Initialize root debugger using package name
-const rootDebug = _debug(pckg.name);
 
 /**
  * Debug utility factory.
@@ -17,8 +10,20 @@ const rootDebug = _debug(pckg.name);
  * @returns A debugger function for the specified namespace.
  */
 function Debug(namespace?: string): DebuggerFunction {
-  // Return the debugger function for that namespace, defaulting to 'app'
-  return rootDebug.extend(namespace || 'app') as DebuggerFunction;
+  const fullNamespace = `hasyx:${namespace || 'app'}`;
+  
+  return (...args: any[]) => {
+    if (process.env.DEBUG) {
+      console.log(`[${fullNamespace}]`, ...args);
+    }
+  };
 }
 
-export default Debug; 
+// Export as default and also as module.exports for compatibility
+export default Debug;
+
+// For CommonJS compatibility
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = Debug;
+  module.exports.default = Debug;
+} 
