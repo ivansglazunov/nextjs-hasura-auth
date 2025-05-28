@@ -248,12 +248,12 @@ async function main() {
 🤖 Hasyx Ask - AI Assistant with Code Execution
 
 Usage:
-  npm run ask                        # Interactive mode (npm script)
-  npm run ask -- -e "question"      # Direct question (npm script)
+  npx hasyx ask                      # Interactive mode (primary)
+  npx hasyx ask -e "question"        # Direct question (primary)
   npm run cli -- ask                 # Interactive mode (inside hasyx project)
   npm run cli -- ask -e "question"   # Direct question (inside hasyx project)
-  npx hasyx ask                      # Via npx (external projects)
-  npx hasyx ask -e "question"        # Via npx with question (external projects)
+  npm run ask                        # Interactive mode (npm script)
+  npm run ask -- -e "question"      # Direct question (npm script)
 
 Options:
   -e, --eval <question>             Execute a direct question
@@ -271,16 +271,16 @@ Environment:
   OPENROUTER_API_KEY                Must be set in .env or environment
 
 Examples:
-  npm run ask -- -e "What is 2 + 2?"
-  npm run ask -- -y -e "Calculate factorial of 5"
-  npm run ask -- -m "anthropic/claude-3-sonnet" -e "Analyze this data"
+  npx hasyx ask -e "What is 2 + 2?"
+  npx hasyx ask -y -e "Calculate factorial of 5"
+  npx hasyx ask -m "anthropic/claude-3-sonnet" -e "Analyze this data"
   
   # Inside hasyx project development:
   npm run cli -- ask -e "What is 2 + 2?"
   npm run cli -- ask -y -e "Calculate factorial of 5"
   
   # Interactive mode with auto-execution
-  npm run ask -- -y
+  npx hasyx ask -y
 `);
       process.exit(0);
     }

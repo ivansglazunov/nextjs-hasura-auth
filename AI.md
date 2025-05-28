@@ -86,12 +86,12 @@ const result = await ai.ask('Calculate 2 + 2 using JavaScript');
 
 The `hasyx ask` command now includes real-time progress indicators by default:
 
-**For external projects:**
+**Primary usage:**
 ```bash
 npx hasyx ask -e "Calculate factorial of 5"
 ```
 
-**For development inside hasyx project:**
+**Alternative for development inside hasyx project:**
 ```bash
 npm run cli -- ask -e "Calculate factorial of 5"
 ```

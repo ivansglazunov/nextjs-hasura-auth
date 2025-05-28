@@ -527,21 +527,19 @@ The CLI automatically loads environment variables from the `.env` file in your p
 Interactive AI assistant powered by OpenRouter with automatic code execution capabilities. Features real-time progress indicators showing exactly what AI is doing step-by-step.
 
 ```bash
-# For external projects using hasyx:
+# Primary usage via npx hasyx:
 npx hasyx ask -e "Calculate factorial of 5 using JavaScript"
 npx hasyx ask -y -m "anthropic/claude-3-sonnet" -e "Question"
 
-# For development inside hasyx project:
+# Interactive chat mode
+npx hasyx ask
+
+# Alternative usage for development inside hasyx project:
 npm run cli -- ask -e "Calculate factorial of 5 using JavaScript"
 npm run cli -- ask -y -m "anthropic/claude-3-sonnet" -e "Question"
 
-# Or using npm script (recommended for projects):
+# Or using npm script (for projects with hasyx integration):
 npm run ask -- -e "What is the capital of France?"
-
-# Interactive chat mode
-npx hasyx ask                    # External projects
-npm run cli -- ask               # Inside hasyx project
-npm run ask                      # Using npm script
 ```
 
 **🎯 Command Options:**
@@ -565,7 +563,7 @@ npm run ask                      # Using npm script
 
 **Example Output:**
 ```bash
-$ npm run ask -- -e "Check process.platform"
+$ npx hasyx ask -e "Check process.platform"
 
 🧠 AI думает...
 💭 AI ответил (156 символов)

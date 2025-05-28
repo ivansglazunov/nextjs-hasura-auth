@@ -31,7 +31,7 @@ The Ask command now shows you exactly what's happening during AI processing:
 ### Example Output
 
 ```bash
-$ npm run ask -- -e "Calculate 5 factorial using JavaScript"
+$ npx hasyx ask -e "Calculate 5 factorial using JavaScript"
 
 🧠 AI думает...
 💭 AI ответил (245 символов)
@@ -54,7 +54,7 @@ The factorial of 5 is 120. This recursive function calculates...
 The AI can automatically execute code and use the results to provide better answers:
 
 ```bash
-$ npm run ask -- -e "Check what operating system we're running on"
+$ npx hasyx ask -e "Check what operating system we're running on"
 
 🧠 AI думает...
 💭 AI ответил (156 символов)
@@ -125,15 +125,15 @@ OPENROUTER_API_KEY=sk-or-v1-your_openrouter_api_key_here
 Ask a single question and get an immediate response:
 
 ```bash
-# For external projects using hasyx
+# Primary usage via npx hasyx
 npx hasyx ask -e "What is the capital of France?"
 npx hasyx ask --eval "Write a JavaScript function to add two numbers"
 
-# For development inside hasyx project
+# Alternative for development inside hasyx project
 npm run cli -- ask -e "What is the capital of France?"
 npm run cli -- ask --eval "Write a JavaScript function to add two numbers"
 
-# Using npm script (recommended for projects with hasyx integration)
+# For projects with hasyx integration (npm scripts)
 npm run ask -- -e "What is the capital of France?"
 npm run ask -- --eval "Write a JavaScript function to add two numbers"
 ```
@@ -143,13 +143,13 @@ npm run ask -- --eval "Write a JavaScript function to add two numbers"
 Start an interactive conversation session:
 
 ```bash
-# For external projects using hasyx
+# Primary usage via npx hasyx
 npx hasyx ask
 
-# For development inside hasyx project
+# Alternative for development inside hasyx project
 npm run cli -- ask
 
-# Using npm script (recommended for projects)
+# For projects with hasyx integration (npm scripts)
 npm run ask
 ```
 
@@ -165,48 +165,48 @@ In interactive mode:
 
 ```bash
 # React component
-npm run ask -- -e "Write a React component for a todo list with add and delete functionality"
+npx hasyx ask -e "Write a React component for a todo list with add and delete functionality"
 
 # JavaScript functions
-npm run ask -- -e "Create a function that debounces another function"
+npx hasyx ask -e "Create a function that debounces another function"
 
 # TypeScript interfaces
-npm run ask -- -e "Design TypeScript interfaces for a user management system"
+npx hasyx ask -e "Design TypeScript interfaces for a user management system"
 
 # Algorithm help
-npm run ask -- -e "Explain how to implement a binary search algorithm"
+npx hasyx ask -e "Explain how to implement a binary search algorithm"
 ```
 
 ### Math and Calculations
 
 ```bash
 # Simple math
-npm run ask -- -e "What is 15 * 27?"
+npx hasyx ask -e "What is 15 * 27?"
 
 # Complex calculations
-npm run ask -- -e "Calculate the compound interest for $1000 at 5% annually for 10 years"
+npx hasyx ask -e "Calculate the compound interest for $1000 at 5% annually for 10 years"
 
 # Mathematical concepts
-npm run ask -- -e "Explain the difference between mean, median, and mode"
+npx hasyx ask -e "Explain the difference between mean, median, and mode"
 ```
 
 ### General Knowledge
 
 ```bash
 # Geography
-npm run ask -- -e "What are the capitals of all European countries?"
+npx hasyx ask -e "What are the capitals of all European countries?"
 
 # Science
-npm run ask -- -e "Explain how photosynthesis works"
+npx hasyx ask -e "Explain how photosynthesis works"
 
 # Technology
-npm run ask -- -e "What is the difference between REST and GraphQL APIs?"
+npx hasyx ask -e "What is the difference between REST and GraphQL APIs?"
 ```
 
 ### Interactive Session Example
 
 ```bash
-$ npm run ask
+$ npx hasyx ask
 
 > What is TypeScript?
 TypeScript is a strongly typed programming language that builds on JavaScript...
@@ -328,14 +328,14 @@ The command automatically loads environment variables from:
 
 The Ask command is fully integrated with the Hasyx CLI system and supports different usage patterns depending on your context:
 
-**For External Projects (using hasyx as dependency):**
+**Primary Usage (via npx hasyx):**
 ```bash
-# Available as hasyx command
+# Available as hasyx command for any project
 npx hasyx ask -e "question"
 npx hasyx ask --help
 ```
 
-**For Development Inside Hasyx Project:**
+**Alternative for Development Inside Hasyx Project:**
 ```bash
 # Use CLI script directly
 npm run cli -- ask -e "question"
@@ -344,7 +344,7 @@ npm run cli -- ask --help
 
 **For Projects with Hasyx Integration (npm scripts):**
 ```bash
-# Available as npm script (recommended)
+# Available as npm script when configured
 npm run ask -- -e "question"
 npm run ask -- --help
 ```
@@ -355,42 +355,42 @@ npm run ask -- --help
 
 ```bash
 # 1. Ask for code structure
-npm run ask -- -e "Design the folder structure for a React TypeScript project"
+npx hasyx ask -e "Design the folder structure for a React TypeScript project"
 
 # 2. Get specific implementations
-npm run ask -- -e "Write a custom React hook for API data fetching"
+npx hasyx ask -e "Write a custom React hook for API data fetching"
 
 # 3. Debug issues
-npm run ask -- -e "Why might useState not update immediately in React?"
+npx hasyx ask -e "Why might useState not update immediately in React?"
 
 # 4. Optimization advice
-npm run ask -- -e "How to optimize React component performance?"
+npx hasyx ask -e "How to optimize React component performance?"
 ```
 
 ### Learning and Documentation
 
 ```bash
 # Understand concepts
-npm run ask -- -e "Explain GraphQL subscriptions with examples"
+npx hasyx ask -e "Explain GraphQL subscriptions with examples"
 
 # Compare technologies
-npm run ask -- -e "Compare Next.js vs Nuxt.js vs SvelteKit"
+npx hasyx ask -e "Compare Next.js vs Nuxt.js vs SvelteKit"
 
 # Best practices
-npm run ask -- -e "What are TypeScript best practices for large projects?"
+npx hasyx ask -e "What are TypeScript best practices for large projects?"
 ```
 
 ### Problem Solving
 
 ```bash
 # Algorithm design
-npm run ask -- -e "Design an algorithm to find the shortest path in a graph"
+npx hasyx ask -e "Design an algorithm to find the shortest path in a graph"
 
 # Architecture decisions
-npm run ask -- -e "How to structure a microservices architecture?"
+npx hasyx ask -e "How to structure a microservices architecture?"
 
 # Performance optimization
-npm run ask -- -e "How to optimize database queries for large datasets?"
+npx hasyx ask -e "How to optimize database queries for large datasets?"
 ```
 
 ## Tips and Best Practices
@@ -400,20 +400,20 @@ npm run ask -- -e "How to optimize database queries for large datasets?"
 1. **Be Specific**: Include context and requirements
    ```bash
    # Good
-   npm run ask -- -e "Write a React component that fetches user data from an API and displays it in a table with sorting"
+   npx hasyx ask -e "Write a React component that fetches user data from an API and displays it in a table with sorting"
    
    # Less effective
-   npm run ask -- -e "Make a React component"
+   npx hasyx ask -e "Make a React component"
    ```
 
 2. **Provide Context**: Mention the technology stack
    ```bash
-   npm run ask -- -e "How to implement authentication in a Next.js app with TypeScript and Hasura?"
+   npx hasyx ask -e "How to implement authentication in a Next.js app with TypeScript and Hasura?"
    ```
 
 3. **Ask for Examples**: Request code examples when needed
    ```bash
-   npm run ask -- -e "Explain Promise.all() with a practical example"
+   npx hasyx ask -e "Explain Promise.all() with a practical example"
    ```
 
 ### Interactive Mode Tips
@@ -437,8 +437,8 @@ npm run ask -- -e "How to optimize database queries for large datasets?"
    # Ensure Hasyx is installed
    npm install hasyx
    
-   # Check npm scripts
-   npm run ask -- --help
+   # Test npx hasyx command
+   npx hasyx ask --help
    ```
 
 2. **Environment Variables Not Loading**
@@ -532,23 +532,3 @@ The Ask command supports the following options:
 -m, --model <model>     Specify OpenRouter model (e.g., 'anthropic/claude-3-sonnet')
 -h, --help              Show help information
 ```
-
-### Usage Examples with Options
-
-```bash
-# Direct question with auto-execution
-npm run ask -- -y -e "Calculate 10 factorial using JavaScript"
-npm run cli -- ask -y -e "Calculate 10 factorial using JavaScript"
-
-# Use specific AI model  
-npm run ask -- -m "anthropic/claude-3-sonnet" -e "Explain async/await"
-npm run cli -- ask -m "anthropic/claude-3-sonnet" -e "Explain async/await"
-
-# Combine all options
-npm run ask -- -y -m "openai/gpt-4" -e "Write a React component"
-npm run cli -- ask -y -m "openai/gpt-4" -e "Write a React component"
-
-# Show help
-npm run ask -- -h
-npm run cli -- ask -h
-``` 
