@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.202",
+  "version": "0.1.203",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -160,9 +160,13 @@
     "react-dom": "^19.0.0",
     "react-fast-compare": "^3.2.2",
     "react-hook-form": "^7.56.4",
+    "react-markdown": "^10.1.0",
     "react-resizable-panels": "^2.1.9",
     "react-resize-detector": "^12.0.2",
     "recharts": "^2.15.3",
+    "rehype-autolink-headings": "^7.1.0",
+    "rehype-slug": "^6.0.0",
+    "remark-gfm": "^4.0.1",
     "resend": "^4.3.0",
     "sharp": "^0.33.4",
     "sonner": "^2.0.3",

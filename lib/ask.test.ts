@@ -109,7 +109,7 @@ dotenv.config();
         console.error = originalConsoleError;
         process.exit = originalProcessExit;
       }
-    }, 30000);
+    }, 60000);
   });
 
   describe('Error Handling', () => {
@@ -188,7 +188,7 @@ dotenv.config();
       expect(typeof response).toBe('string');
       expect(response.length).toBeGreaterThan(0);
       expect(response.toLowerCase()).toContain('function');
-    }, 30000);
+    }, 60000);
 
     it('should handle general knowledge questions', async () => {
       const openrouter = new OpenRouter(
