@@ -2,7 +2,7 @@
 
 import * as dotenv from 'dotenv';
 import * as readline from 'readline';
-import { OpenRouter } from './openrouter';
+import { AI } from './ai';
 import { printMarkdown } from './markdown-terminal';
 import Debug from './debug';
 
@@ -32,6 +32,35 @@ function hasMarkdownFormatting(text: string): boolean {
   return markdownPatterns.some(pattern => pattern.test(text));
 }
 
+/**
+ * Show animated loading indicator
+ */
+function showLoadingIndicator(): () => void {
+  const frames = ['.', '..', '...'];
+  let frameIndex = 0;
+  let isActive = true;
+  
+  // Hide cursor and show initial loading
+  process.stdout.write('\x1B[?25l'); // Hide cursor
+  process.stdout.write('🤖 Thinking');
+  
+  const interval = setInterval(() => {
+    if (!isActive) return;
+    
+    // Clear current line and rewrite with new frame
+    process.stdout.write('\r🤖 Thinking' + frames[frameIndex]);
+    frameIndex = (frameIndex + 1) % frames.length;
+  }, 500);
+  
+  // Return cleanup function
+  return () => {
+    isActive = false;
+    clearInterval(interval);
+    process.stdout.write('\r\x1B[K'); // Clear line
+    process.stdout.write('\x1B[?25h'); // Show cursor
+  };
+}
+
 export async function askCommand(question?: string): Promise<void> {
   debug('Starting ask command with question:', question);
 
@@ -42,22 +71,46 @@ export async function askCommand(question?: string): Promise<void> {
     process.exit(1);
   }
 
-  // Create OpenRouter instance with free DeepSeek model
-  const openrouter = new OpenRouter(
+  // Create AI instance with free DeepSeek model
+  const ai = new AI(
     process.env.OPENROUTER_API_KEY,
     {},
     {
       model: 'deepseek/deepseek-chat-v3-0324:free',
-      temperature: 0.7,
-      max_tokens: 4096
+      temperature: 0.1,
+      max_tokens: 2048
     }
   );
+  
+  // Set up real-time progress callbacks
+  ai._onThinking = () => {
+    process.stdout.write('\n🧠 AI думает...\n');
+  };
+  
+  ai._onCodeFound = (code: string, format: 'js' | 'tsx') => {
+    process.stdout.write(`\n📋 Найден ${format.toUpperCase()} код для выполнения:\n`);
+    process.stdout.write(`\`\`\`${format}\n${code}\n\`\`\`\n`);
+  };
+  
+  ai._onCodeExecuting = (code: string, format: 'js' | 'tsx') => {
+    process.stdout.write(`\n⚡ Выполняется ${format.toUpperCase()} код...\n`);
+  };
+  
+  ai._onCodeResult = (result: string) => {
+    process.stdout.write(`\n✅ Результат выполнения:\n${result}\n`);
+  };
+  
+  ai._onResponse = (response: string) => {
+    if (response && response.trim()) {
+      process.stdout.write(`\n💭 AI ответил (${response.length} символов)\n`);
+    }
+  };
 
   if (question) {
     // Direct question mode (-e flag)
     debug('Processing direct question:', question);
     try {
-      const response = await openrouter.ask(question);
+      const response = await ai.ask(question);
       
       // Check if response contains markdown and format accordingly
       if (hasMarkdownFormatting(response)) {
@@ -81,6 +134,7 @@ export async function askCommand(question?: string): Promise<void> {
 
     console.log('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
     console.log('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
+    console.log('🪬 AI can execute JavaScript and TypeScript code automatically!');
     rl.prompt();
 
     rl.on('line', async (input) => {
@@ -93,7 +147,7 @@ export async function askCommand(question?: string): Promise<void> {
 
       debug('Processing interactive question:', question);
       try {
-        const response = await openrouter.ask(question);
+        const response = await ai.ask(question);
         
         // Check if response contains markdown and format accordingly
         if (hasMarkdownFormatting(response)) {

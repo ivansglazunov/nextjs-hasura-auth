@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.208",
+  "version": "0.1.209",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -172,6 +172,7 @@
     "rehype-slug": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "resend": "^4.3.0",
+    "rxjs": "^7.8.2",
     "sharp": "^0.33.4",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",

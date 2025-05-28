@@ -11,6 +11,46 @@ We welcome contributions to Hasyx! Please follow these guidelines to help us kee
 3.  **Environment:** Copy `.env.example` to `.env` and fill in the required variables for your local Hasura instance, GitHub, etc. (If `.env.example` is not present, refer to `README.md` for necessary environment variables).
 4.  **Run Hasyx Init (Optional):** If you are setting up a fresh clone for development *within* the Hasyx project itself, you might want to run `npx tsx lib/cli.ts init` to ensure all local template files are correctly set up. Be cautious if you have made local modifications that you don't want overwritten.
 
+## Debug Information
+
+To see debug information during development and testing, set the DEBUG environment variable:
+
+```bash
+# For hasyx projects
+DEBUG="hasyx*" npm run your-command
+DEBUG="hasyx*" npm test
+
+# For child projects using hasyx
+DEBUG="<packagename>*" npm run your-command
+DEBUG="<packagename>*" npm test
+
+# Examples
+DEBUG="hasyx*" npm run ask -- -e "Calculate 2+2"
+DEBUG="hasyx:ai" npm test -- lib/ai.test.ts
+DEBUG="hasyx:exec*" npm run js -- -e "console.log('test')"
+```
+
+Debug output includes:
+- AI iteration steps and code execution
+- Database operations and SQL queries
+- GraphQL query generation and execution
+- Memory management and caching
+- Error handling and stack traces
+- Network requests and responses
+
+**Available debug namespaces:**
+- `hasyx:ai` - AI class operations and code execution
+- `hasyx:exec` - JavaScript execution engine
+- `hasyx:exec-tsx` - TypeScript execution engine
+- `hasyx:openrouter` - OpenRouter API interactions
+- `hasyx:hasyx` - Main Hasyx client operations
+- `hasyx:generator` - GraphQL query generation
+- `hasyx:apollo` - Apollo client operations
+- `hasyx:auth` - Authentication and JWT handling
+- `hasyx:terminal` - Terminal and CLI operations
+
+Use `DEBUG="hasyx*"` to see all debug information, or specific namespaces for focused debugging.
+
 ## Running Tests
 
 -   `npm test`: Runs all Jest tests.

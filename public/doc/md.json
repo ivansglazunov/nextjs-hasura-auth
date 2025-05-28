@@ -1,6 +1,129 @@
 {
   "items": [
     {
+      "title": "AI Class Documentation",
+      "url": "/hasyx/doc/AI",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/AI#features",
+          "level": 2
+        },
+        {
+          "title": "Installation",
+          "url": "/hasyx/doc/AI#installation",
+          "level": 2
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/AI#basic-usage",
+          "level": 2
+        },
+        {
+          "title": "Code Execution",
+          "url": "/hasyx/doc/AI#code-execution",
+          "level": 2
+        },
+        {
+          "title": "Do Operations Format",
+          "url": "/hasyx/doc/AI#do-operations-format",
+          "level": 2
+        },
+        {
+          "title": "API Reference",
+          "url": "/hasyx/doc/AI#api-reference",
+          "level": 2
+        },
+        {
+          "title": "Constructor",
+          "url": "/hasyx/doc/AI#constructor",
+          "level": 3
+        },
+        {
+          "title": "Methods",
+          "url": "/hasyx/doc/AI#methods",
+          "level": 3
+        },
+        {
+          "title": "Properties",
+          "url": "/hasyx/doc/AI#properties",
+          "level": 3
+        },
+        {
+          "title": "Advanced Usage",
+          "url": "/hasyx/doc/AI#advanced-usage",
+          "level": 2
+        },
+        {
+          "title": "Iterative Code Execution",
+          "url": "/hasyx/doc/AI#iterative-code-execution",
+          "level": 3
+        },
+        {
+          "title": "Custom Context",
+          "url": "/hasyx/doc/AI#custom-context",
+          "level": 3
+        },
+        {
+          "title": "Memory Management",
+          "url": "/hasyx/doc/AI#memory-management",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/AI#error-handling",
+          "level": 2
+        },
+        {
+          "title": "Debugging",
+          "url": "/hasyx/doc/AI#debugging",
+          "level": 2
+        },
+        {
+          "title": "Integration Examples",
+          "url": "/hasyx/doc/AI#integration-examples",
+          "level": 2
+        },
+        {
+          "title": "Express.js API",
+          "url": "/hasyx/doc/AI#expressjs-api",
+          "level": 3
+        },
+        {
+          "title": "React Component",
+          "url": "/hasyx/doc/AI#react-component",
+          "level": 3
+        },
+        {
+          "title": "Streaming Responses",
+          "url": "/hasyx/doc/AI#streaming-responses",
+          "level": 3
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/AI#best-practices",
+          "level": 2
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/AI#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/AI#common-issues",
+          "level": 3
+        },
+        {
+          "title": "Debug Information",
+          "url": "/hasyx/doc/AI#debug-information",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "Apollo Client",
       "url": "/hasyx/doc/APOLLO",
       "collapse": true,
@@ -320,6 +443,11 @@
           "level": 2
         },
         {
+          "title": "Debug Information",
+          "url": "/hasyx/doc/CONTRIBUTING#debug-information",
+          "level": 2
+        },
+        {
           "title": "Running Tests",
           "url": "/hasyx/doc/CONTRIBUTING#running-tests",
           "level": 2
@@ -507,162 +635,162 @@
     },
     {
       "title": "TypeScript Execution",
-      "url": "/hasyx/doc/EXEC-TS",
+      "url": "/hasyx/doc/EXEC-TSX",
       "collapse": true,
       "items": [
         {
           "title": "Features",
-          "url": "/hasyx/doc/EXEC-TS#features",
+          "url": "/hasyx/doc/EXEC-TSX#features",
           "level": 2
         },
         {
           "title": "Installation",
-          "url": "/hasyx/doc/EXEC-TS#installation",
+          "url": "/hasyx/doc/EXEC-TSX#installation",
           "level": 2
         },
         {
           "title": "Usage",
-          "url": "/hasyx/doc/EXEC-TS#usage",
+          "url": "/hasyx/doc/EXEC-TSX#usage",
           "level": 2
         },
         {
           "title": "Basic Usage",
-          "url": "/hasyx/doc/EXEC-TS#basic-usage",
+          "url": "/hasyx/doc/EXEC-TSX#basic-usage",
           "level": 3
         },
         {
           "title": "With Context",
-          "url": "/hasyx/doc/EXEC-TS#with-context",
+          "url": "/hasyx/doc/EXEC-TSX#with-context",
           "level": 3
         },
         {
           "title": "Factory Function",
-          "url": "/hasyx/doc/EXEC-TS#factory-function",
+          "url": "/hasyx/doc/EXEC-TSX#factory-function",
           "level": 3
         },
         {
           "title": "Configuration",
-          "url": "/hasyx/doc/EXEC-TS#configuration",
+          "url": "/hasyx/doc/EXEC-TSX#configuration",
           "level": 2
         },
         {
           "title": "Compiler Options",
-          "url": "/hasyx/doc/EXEC-TS#compiler-options",
+          "url": "/hasyx/doc/EXEC-TSX#compiler-options",
           "level": 3
         },
         {
           "title": "Strict Mode",
-          "url": "/hasyx/doc/EXEC-TS#strict-mode",
+          "url": "/hasyx/doc/EXEC-TSX#strict-mode",
           "level": 3
         },
         {
           "title": "TypeScript Features Supported",
-          "url": "/hasyx/doc/EXEC-TS#typescript-features-supported",
+          "url": "/hasyx/doc/EXEC-TSX#typescript-features-supported",
           "level": 2
         },
         {
           "title": "Type Annotations",
-          "url": "/hasyx/doc/EXEC-TS#type-annotations",
+          "url": "/hasyx/doc/EXEC-TSX#type-annotations",
           "level": 3
         },
         {
           "title": "Interfaces",
-          "url": "/hasyx/doc/EXEC-TS#interfaces",
+          "url": "/hasyx/doc/EXEC-TSX#interfaces",
           "level": 3
         },
         {
           "title": "Type Aliases",
-          "url": "/hasyx/doc/EXEC-TS#type-aliases",
+          "url": "/hasyx/doc/EXEC-TSX#type-aliases",
           "level": 3
         },
         {
           "title": "Generics",
-          "url": "/hasyx/doc/EXEC-TS#generics",
+          "url": "/hasyx/doc/EXEC-TSX#generics",
           "level": 3
         },
         {
           "title": "Enums",
-          "url": "/hasyx/doc/EXEC-TS#enums",
+          "url": "/hasyx/doc/EXEC-TSX#enums",
           "level": 3
         },
         {
           "title": "Type Assertions",
-          "url": "/hasyx/doc/EXEC-TS#type-assertions",
+          "url": "/hasyx/doc/EXEC-TSX#type-assertions",
           "level": 3
         },
         {
           "title": "API Reference",
-          "url": "/hasyx/doc/EXEC-TS#api-reference",
+          "url": "/hasyx/doc/EXEC-TSX#api-reference",
           "level": 2
         },
         {
           "title": "Class: ExecTs",
-          "url": "/hasyx/doc/EXEC-TS#class-exects",
+          "url": "/hasyx/doc/EXEC-TSX#class-exects",
           "level": 3
         },
         {
           "title": "Interface: ExecTsOptions",
-          "url": "/hasyx/doc/EXEC-TS#interface-exectsoptions",
+          "url": "/hasyx/doc/EXEC-TSX#interface-exectsoptions",
           "level": 3
         },
         {
           "title": "Configuration Loading",
-          "url": "/hasyx/doc/EXEC-TS#configuration-loading",
+          "url": "/hasyx/doc/EXEC-TSX#configuration-loading",
           "level": 2
         },
         {
           "title": "TypeScript Detection",
-          "url": "/hasyx/doc/EXEC-TS#typescript-detection",
+          "url": "/hasyx/doc/EXEC-TSX#typescript-detection",
           "level": 2
         },
         {
           "title": "Error Handling",
-          "url": "/hasyx/doc/EXEC-TS#error-handling",
+          "url": "/hasyx/doc/EXEC-TSX#error-handling",
           "level": 2
         },
         {
           "title": "Integration with CLI",
-          "url": "/hasyx/doc/EXEC-TS#integration-with-cli",
+          "url": "/hasyx/doc/EXEC-TSX#integration-with-cli",
           "level": 2
         },
         {
           "title": "Best Practices",
-          "url": "/hasyx/doc/EXEC-TS#best-practices",
+          "url": "/hasyx/doc/EXEC-TSX#best-practices",
           "level": 2
         },
         {
           "title": "Examples",
-          "url": "/hasyx/doc/EXEC-TS#examples",
+          "url": "/hasyx/doc/EXEC-TSX#examples",
           "level": 2
         },
         {
           "title": "Working with Hasyx Client",
-          "url": "/hasyx/doc/EXEC-TS#working-with-hasyx-client",
+          "url": "/hasyx/doc/EXEC-TSX#working-with-hasyx-client",
           "level": 3
         },
         {
           "title": "Complex Type Operations",
-          "url": "/hasyx/doc/EXEC-TS#complex-type-operations",
+          "url": "/hasyx/doc/EXEC-TSX#complex-type-operations",
           "level": 3
         },
         {
           "title": "Troubleshooting",
-          "url": "/hasyx/doc/EXEC-TS#troubleshooting",
+          "url": "/hasyx/doc/EXEC-TSX#troubleshooting",
           "level": 2
         },
         {
           "title": "Common Issues",
-          "url": "/hasyx/doc/EXEC-TS#common-issues",
+          "url": "/hasyx/doc/EXEC-TSX#common-issues",
           "level": 3
         },
         {
           "title": "Debug Mode",
-          "url": "/hasyx/doc/EXEC-TS#debug-mode",
+          "url": "/hasyx/doc/EXEC-TSX#debug-mode",
           "level": 3
         },
         {
           "title": "See Also",
-          "url": "/hasyx/doc/EXEC-TS#see-also",
+          "url": "/hasyx/doc/EXEC-TSX#see-also",
           "level": 2
         }
       ],
@@ -3003,5 +3131,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-28T15:16:55.222Z"
+  "lastUpdated": "2025-05-28T20:02:11.858Z"
 }

@@ -45,7 +45,7 @@ Hasyx takes responsibility for:
 *   Interactive `npx hasyx cli js [<filePath>] [-e "<script>" | --eval "<script>"]` for quick scripting, data exploration, or debugging interactions with your Hasura backend, with the `client` object available in the global scope.
 *   **Universal Code Execution Engine:** A secure JavaScript execution environment that works in both Node.js and browser contexts, with isolated VM contexts, timeout protection, async/await support, and built-in dynamic npm package loading via use-m. See [`EXEC.md`](EXEC.md) for details.
 *   **TypeScript Execution Engine:** A TypeScript-aware code execution engine that extends the base Exec class with in-memory TypeScript compilation, automatic tsconfig.lib.json loading, and seamless TypeScript syntax detection. Includes `npx hasyx tsx` command for TypeScript execution. See [`EXEC-TS.md`](EXEC-TS.md) for details.
-*   **OpenRouter AI Integration:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Allows AI to execute JavaScript code and maintain persistent context across conversations. See [`OPENROUTER.md`](OPENROUTER.md) for details.
+*   **OpenRouter AI Integration:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Features real-time progress indicators showing AI thinking, code found, execution status, and results. AI can execute JavaScript/TypeScript code automatically and continue reasoning based on results through iterative processing (up to 3 iterations). Includes both programmatic API and CLI interface with `npx hasyx ask` command. See [`OPENROUTER.md`](OPENROUTER.md) and [`ASK.md`](ASK.md) for details.
 *   Migrations control with `npx hasyx migrate` and `npx hasyx unmigrate` for easy database schema management from `./migrations` directory.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
@@ -285,7 +285,8 @@ When you install Hasyx as a dependency in your project, you can extend the CLI w
        "postinstall": "npm run ws -- -y",
        "migrate": "npx hasyx migrate",
        "unmigrate": "npx hasyx unmigrate",
-       "tsx": "npx hasyx tsx"
+       "tsx": "npx hasyx tsx",
+       "ask": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/ask.ts"
      }
    }
    ```
@@ -343,7 +344,8 @@ During initialization, Hasyx ensures that the following npm scripts are added to
   "postinstall": "npm run ws -- -y",
   "migrate": "npx hasyx migrate",
   "unmigrate": "npx hasyx unmigrate",
-  "tsx": "npx hasyx tsx"
+  "tsx": "npx hasyx tsx",
+  "ask": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/ask.ts"
 }
 ```
 
@@ -515,3 +517,60 @@ Synchronize Hasura event triggers with local definitions
 - Option: `--clean` - Remove security headers from event definitions (they will be added automatically during sync)
 
 The CLI automatically loads environment variables from the `.env` file in your project root. This ensures that commands like `npx hasyx events`
+
+---
+
+### `ask` 🤖
+
+**AI Assistant with Real-time Progress Indicators**
+
+Interactive AI assistant powered by OpenRouter with automatic code execution capabilities. Features real-time progress indicators showing exactly what AI is doing step-by-step.
+
+```bash
+# Direct question mode
+npx hasyx ask -e "Calculate factorial of 5 using JavaScript"
+npm run ask -- -e "What is the capital of France?"
+
+# Interactive chat mode  
+npx hasyx ask
+npm run ask
+```
+
+**🎯 Real-time Progress Features:**
+- **🧠 AI думает...** - When AI is generating responses
+- **💭 AI ответил (N символов)** - Response received with character count
+- **📋 Найден JS/TSX код для выполнения** - Code found for execution
+- **⚡ Выполняется JS/TSX код...** - Code execution in progress
+- **✅ Результат выполнения** - Execution results displayed
+
+**🔄 Automatic Code Execution:**
+- AI can execute JavaScript and TypeScript code automatically
+- Results are fed back to AI for continued reasoning
+- Up to 3 iterations for complex problem solving
+- Supports both Node.js and browser environment APIs
+
+**Example Output:**
+```bash
+$ npm run ask -- -e "Check process.platform"
+
+🧠 AI думает...
+💭 AI ответил (156 символов)
+📋 Найден JS код для выполнения:
+```js
+process.platform
+```
+⚡ Выполняется JS код...
+✅ Результат выполнения:
+darwin
+
+🧠 AI думает...
+💭 AI ответил (298 символов)
+
+You're running on macOS (darwin platform)...
+```
+
+**Requirements:**
+- `OPENROUTER_API_KEY` environment variable
+- Free DeepSeek model via OpenRouter API
+
+See **[ASK.md](ASK.md)** for complete documentation and examples.

@@ -1,6 +1,139 @@
 {
   "files": [
     {
+      "filename": "AI.md",
+      "title": "AI Class Documentation",
+      "headings": [
+        {
+          "level": 1,
+          "text": "AI Class Documentation",
+          "id": "ai-class-documentation"
+        },
+        {
+          "level": 2,
+          "text": "Features",
+          "id": "features"
+        },
+        {
+          "level": 2,
+          "text": "Installation",
+          "id": "installation"
+        },
+        {
+          "level": 2,
+          "text": "Basic Usage",
+          "id": "basic-usage"
+        },
+        {
+          "level": 2,
+          "text": "Code Execution",
+          "id": "code-execution"
+        },
+        {
+          "level": 2,
+          "text": "Do Operations Format",
+          "id": "do-operations-format"
+        },
+        {
+          "level": 2,
+          "text": "API Reference",
+          "id": "api-reference"
+        },
+        {
+          "level": 3,
+          "text": "Constructor",
+          "id": "constructor"
+        },
+        {
+          "level": 3,
+          "text": "Methods",
+          "id": "methods"
+        },
+        {
+          "level": 4,
+          "text": "Memory Management",
+          "id": "memory-management"
+        },
+        {
+          "level": 3,
+          "text": "Properties",
+          "id": "properties"
+        },
+        {
+          "level": 2,
+          "text": "Advanced Usage",
+          "id": "advanced-usage"
+        },
+        {
+          "level": 3,
+          "text": "Iterative Code Execution",
+          "id": "iterative-code-execution"
+        },
+        {
+          "level": 3,
+          "text": "Custom Context",
+          "id": "custom-context"
+        },
+        {
+          "level": 3,
+          "text": "Memory Management",
+          "id": "memory-management"
+        },
+        {
+          "level": 2,
+          "text": "Error Handling",
+          "id": "error-handling"
+        },
+        {
+          "level": 2,
+          "text": "Debugging",
+          "id": "debugging"
+        },
+        {
+          "level": 2,
+          "text": "Integration Examples",
+          "id": "integration-examples"
+        },
+        {
+          "level": 3,
+          "text": "Express.js API",
+          "id": "expressjs-api"
+        },
+        {
+          "level": 3,
+          "text": "React Component",
+          "id": "react-component"
+        },
+        {
+          "level": 3,
+          "text": "Streaming Responses",
+          "id": "streaming-responses"
+        },
+        {
+          "level": 2,
+          "text": "Best Practices",
+          "id": "best-practices"
+        },
+        {
+          "level": 2,
+          "text": "Troubleshooting",
+          "id": "troubleshooting"
+        },
+        {
+          "level": 3,
+          "text": "Common Issues",
+          "id": "common-issues"
+        },
+        {
+          "level": 3,
+          "text": "Debug Information",
+          "id": "debug-information"
+        }
+      ],
+      "content": "",
+      "path": "AI.md"
+    },
+    {
       "filename": "APOLLO.md",
       "title": "Apollo Client",
       "headings": [
@@ -340,6 +473,11 @@
         },
         {
           "level": 2,
+          "text": "Debug Information",
+          "id": "debug-information"
+        },
+        {
+          "level": 2,
           "text": "Running Tests",
           "id": "running-tests"
         },
@@ -576,7 +714,7 @@
       "path": "CYTO.md"
     },
     {
-      "filename": "EXEC-TS.md",
+      "filename": "EXEC-TSX.md",
       "title": "TypeScript Execution",
       "headings": [
         {
@@ -776,7 +914,7 @@
         }
       ],
       "content": "",
-      "path": "EXEC-TS.md"
+      "path": "EXEC-TSX.md"
     },
     {
       "filename": "EXEC.md",
@@ -3618,5 +3756,5 @@
       "path": "testing.experiment.md"
     }
   ],
-  "lastUpdated": "2025-05-28T15:16:55.185Z"
+  "lastUpdated": "2025-05-28T20:02:11.826Z"
 }
