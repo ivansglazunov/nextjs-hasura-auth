@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 import dotenv from 'dotenv';
+import path from 'path';
 import { encode } from 'next-auth/jwt'; // Import encode for creating mock cookies
 import { NextRequest } from 'next/server'; // Import NextRequest
 import { v4 as uuidv4 } from 'uuid';
@@ -14,8 +15,9 @@ import Debug from './debug';
 import { Generator } from './generator';
 import { Hasyx } from './hasyx';
 import { generateJWT } from './jwt'; // Import generateJWT for manual JWT creation
+import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core';
 
-dotenv.config(); // Load .env variables
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const generate = Generator(schema);
 const debug = Debug('test:auth');
@@ -100,7 +102,7 @@ function cleanupHasyx(hasyx: Hasyx, label: string = '') {
   }
 }
 
-describe('testAuthorize Function', () => {
+(!!+(process?.env?.JEST_LOCAL || '') ? describe.skip : describe)('testAuthorize Function', () => {
   it('should return authorized clients for a valid user ID in non-production', async () => {
     if (process.env.NODE_ENV === 'production') {
       console.warn('Skipping testAuthorize test in production environment.');

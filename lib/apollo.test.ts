@@ -6,7 +6,7 @@ import { checkConnection, createApolloClient, getClient, resetClientInstance } f
 // Explicitly load the .env file
 dotenv.config();
 
-describe('Apollo client', () => {
+(!!+(process?.env?.JEST_LOCAL || '') ? describe.skip : describe)('Apollo client', () => {
   let testClients: any[] = [];
 
   beforeAll(() => {

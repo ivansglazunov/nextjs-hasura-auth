@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { ApolloError, gql } from '@apollo/client';
+import { ApolloError, gql } from '@apollo/client/core';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 import { Hasyx } from './hasyx'; 
@@ -81,7 +81,7 @@ function cleanupHasyx(hasyx: Hasyx, label: string = '') {
   }
 }
 
-describe('Hasyx Integration Tests', () => {
+(!!+(process?.env?.JEST_LOCAL || '') ? describe.skip : describe)('Hasyx Integration Tests', () => {
   
   describe('Hasyx Class HTTP Tests', () => {
     it('should perform CRUD operations on users', async () => {

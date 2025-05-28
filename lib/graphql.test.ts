@@ -1,11 +1,12 @@
-import { ApolloClient, InMemoryCache, gql, ApolloError, FetchResult } from '@apollo/client';
+import { beforeAll, describe, expect, test, afterAll } from '@jest/globals';
+import { ApolloClient, NormalizedCacheObject, gql, ApolloError, FetchResult } from '@apollo/client/core';
 import dotenv from 'dotenv';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid'; // For unique emails
 import { Subscription } from 'zen-observable-ts'; // For handling subscription cleanup
 
 // Load environment variables from root .env
-dotenv.config();
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 import { createApolloClient } from './apollo'; // Hasyx creator from lib
 import { hashPassword } from './authDbUtils'; // For user creation
@@ -112,7 +113,7 @@ afterAll(async () => {
 
 
 // --- Test Suite: /api/graphql Proxy --- 
-describe('/api/graphql Proxy Integration Tests (using Hasyx class)', () => {
+(!!+(process?.env?.JEST_LOCAL || '') ? describe.skip : describe)('/api/graphql Proxy Integration Tests (using Hasyx class)', () => {
   let proxyClient: Hasyx; // Use the Hasyx class for proxy interactions
 
   beforeAll(() => {

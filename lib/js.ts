@@ -8,6 +8,7 @@ import * as repl from 'repl';
 import { Hasyx } from './hasyx';
 import { createApolloClient } from './apollo';
 import { Generator } from './generator';
+import { Exec } from './exec';
 import Debug from './debug';
 
 const debug = Debug('hasyx:js');
@@ -75,6 +76,7 @@ async function main() {
 
   // 3. Create Hasyx client instance
   let client: Hasyx;
+  let exec: Exec;
   try {
     const apolloAdminClient = createApolloClient({
       secret: process.env.HASURA_ADMIN_SECRET!,
@@ -82,8 +84,10 @@ async function main() {
     });
     const generator = Generator(schema);
     client = new Hasyx(apolloAdminClient, generator);
+    exec = new Exec();
     console.log('✅ Hasyx client initialized with admin privileges.');
-    debug('Hasyx client created successfully.');
+    console.log('✅ Exec environment initialized with use-m support.');
+    debug('Hasyx client and Exec created successfully.');
   } catch (err) {
     console.error('❌ Failed to initialize Hasyx client:', err);
     process.exit(1);
@@ -91,6 +95,7 @@ async function main() {
 
   const scriptContext = vm.createContext({
     client,
+    exec,
     console,
     process,
     require,
@@ -139,7 +144,7 @@ async function main() {
     }
   } else {
     debug('Starting REPL session.');
-    console.log('🟢 Hasyx REPL started. `client` variable is available.');
+    console.log('🟢 Hasyx REPL started. `client` and `exec` variables are available.');
     console.log('   Type .exit to close.');
     const replServer = repl.start({
       prompt: 'hasyx > ',

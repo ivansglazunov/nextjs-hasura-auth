@@ -21,7 +21,7 @@ const config = {
     '!**/.next/**',
   ],
   transformIgnorePatterns: [
-    '/node_modules/(?!(jose|next-auth|@panva|debug)/)',
+    '/node_modules/(?!(jose|next-auth|@panva|debug|@apollo)/)',
   ],
   transform: {
     '^.+\\.(t|j)sx?$': ['ts-jest', {

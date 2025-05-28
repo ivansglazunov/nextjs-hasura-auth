@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.195",
+  "version": "0.1.196",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -10,7 +10,7 @@
     "url": "https://github.com/ivansglazunov/hasyx.git"
   },
   "scripts": {
-    "dev": "npx -y hasyx dev",
+    "dev": "NODE_OPTIONS=\"--experimental-vm-modules\" npx -y hasyx dev",
     "build": "npm run build:lib && npm run build:css && NODE_ENV=production next build",
     "build:lib": "tsc -p tsconfig.lib.json",
     "build:css": "tailwindcss -i ./app/globals.css -o ./lib/styles.css",
@@ -19,7 +19,7 @@
     "client": "tsx lib/build-client.ts",
     "build:android": "npm run build:client && npm run cli -- assets && npx cap sync android",
     "build:ios": "npm run build:client && npm run cli -- assets && npx cap sync ios",
-    "start": "NODE_ENV=production npx -y hasyx start",
+    "start": "NODE_ENV=production NODE_OPTIONS=\"--experimental-vm-modules\" npx -y hasyx start",
     "lint": "next lint --turbopack",
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest --verbose",
     "test:build": "jest build.test.ts",
@@ -27,14 +27,14 @@
     "ws": "npx --yes next-ws-cli@latest patch -y",
     "migrate": "tsx lib/migrate.ts",
     "unmigrate": "tsx lib/unmigrate.ts",
-    "events": "npx hasyx events",
+    "events": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx events",
     "schema": "npm run hasura:schema && npm run hasura:types",
     "hasura:schema": "tsx ./lib/hasura-schema.ts",
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
     "npm-publish": "npm run build && npm publish",
-    "cli": "tsx ./lib/cli.ts",
-    "assist": "tsx ./lib/assist.ts",
-    "js": "tsx lib/js.ts"
+    "cli": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx ./lib/cli.ts",
+    "assist": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx ./lib/assist.ts",
+    "js": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/js.ts"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -141,6 +141,7 @@
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
     "next-ws": "^2.0.7",
+    "node-pty": "^1.0.0",
     "png-to-ico": "^2.1.8",
     "prettier": "^3.5.3",
     "react": "^19.0.0",

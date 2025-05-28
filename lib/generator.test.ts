@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { gql, ApolloClient, NormalizedCacheObject, FetchResult } from '@apollo/client/core'; // Import gql
+import { gql, ApolloClient, NormalizedCacheObject, FetchResult } from '@apollo/client'; // Import gql
 import { GenerateOptions, GenerateResult } from './generator'; // Import types
 import { Generator } from './generator'; // Import the default export (the ready-to-use function)
 // @ts-ignore
@@ -658,7 +658,7 @@ describe('GraphQL Query Generator Unit Tests', () => {
 // NEW Integration Tests (Skip by default)
 // =============================================
 // Use .skip to prevent running automatically, run with: npm test generator -- -t "Integration"
-describe('Generator Integration Tests', () => {
+(!!+(process?.env?.JEST_LOCAL || '') ? describe.skip : describe)('Generator Integration Tests', () => {
     let adminClient: ApolloClient<NormalizedCacheObject>;
     const testUser1Email = `test-user1-${Date.now()}@integration.test`;
     const testUser2Email = `test-user2-${Date.now()}@integration.test`;

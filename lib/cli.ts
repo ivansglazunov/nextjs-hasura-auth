@@ -232,13 +232,14 @@ program
   .command('init')
   .description('Initialize hasyx authentication and GraphQL proxy in a Next.js project.')
   .option('--reinit', 'Reinitialize all files, replacing even those that would normally only be created if missing')
+  .option('--force', 'Alias for --reinit: force replacement of all files')
   .action(async (options) => {
     debug('Executing "init" command.');
     debug('Options:', options);
-    const forceReinit = options.reinit === true;
+    const forceReinit = options.reinit === true || options.force === true;
     if (forceReinit) {
-      debug('Reinit mode: Will replace all files, even those that would normally only be created if missing');
-      console.log('🔄 Reinit mode: forcing replacement of all files');
+      debug('Reinit/Force mode: Will replace all files, even those that would normally only be created if missing');
+      console.log('🔄 Force mode: forcing replacement of all files');
     }
     console.log('🚀 Initializing hasyx...');
     const projectRoot = findProjectRoot();
@@ -541,18 +542,21 @@ program
         
         // Required npm scripts with their exact values
         const requiredScripts = {
-          "test": "jest --verbose",
+          "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest --verbose",
           "build": "NODE_ENV=production npx -y hasyx build",
           "unbuild": "npx -y hasyx unbuild",
-          "start": "NODE_ENV=production npx -y hasyx start",
-          "dev": "npx -y hasyx dev",
+          "start": "NODE_ENV=production NODE_OPTIONS=\"--experimental-vm-modules\" npx -y hasyx start",
+          "dev": "NODE_OPTIONS=\"--experimental-vm-modules\" npx -y hasyx dev",
           "ws": "npx --yes next-ws-cli@latest patch -y",
           "postinstall": "npm run ws -- -y",
           "migrate": "npx hasyx migrate",
           "unmigrate": "npx hasyx unmigrate",
-          "events": "npx hasyx events",
+          "events": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx events",
           "schema": "npx hasyx schema",
           "npm-publish": "npm run build && npm publish",
+          "cli": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx",
+          "assist": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx assist",
+          "js": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx js"
         };
         
         // Check if scripts need updating
@@ -1712,7 +1716,11 @@ program
     const { spawn } = require('child_process');
     const child = spawn('npx', ['tsx', jsScriptPath, ...args], {
       stdio: 'inherit',
-      cwd: projectRoot
+      cwd: projectRoot,
+      env: {
+        ...process.env,
+        NODE_OPTIONS: '--experimental-vm-modules'
+      }
     });
     
     child.on('exit', (code) => {

@@ -25,7 +25,7 @@ const hasura = new Hasura({
 
 debug('✅ Real Hasura client initialized for testing');
 
-describe('Hasura Class - Real Database Tests', () => {
+(!!+(process?.env?.JEST_LOCAL || '') ? describe.skip : describe)('Hasura Class - Real Database Tests', () => {
   
   describe('Core Operations', () => {
     it('should execute raw SQL queries successfully', async () => {

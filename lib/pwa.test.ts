@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+import { beforeEach, describe, test, expect, jest } from '@jest/globals';
 import { 
   checkPWASupport, 
   isPWA, 

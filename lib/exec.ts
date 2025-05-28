@@ -3,6 +3,7 @@
 // replace 'vm' with 'vm-browserify'
 import vm from 'vm';
 import { createRequire } from 'module';
+import { use } from 'use-m';
 
 export interface ExecOptions {
   timeout?: number;
@@ -36,13 +37,12 @@ const getEnvironmentGlobals = () => {
     
     // Create require function for ESM compatibility
     try {
-      const require = createRequire(import.meta.url);
-      globals.require = require;
-    } catch (error) {
-      // Fallback for environments where createRequire is not available
+      // In Jest environment, just use require if available
       if (typeof require !== 'undefined') {
         globals.require = require;
       }
+    } catch (error) {
+      // Fallback for environments where require is not available
     }
     
     globals.Buffer = Buffer;
@@ -62,22 +62,10 @@ const getEnvironmentGlobals = () => {
   return globals;
 };
 
-// Initialize use-m support
-const initializeUseM = async () => {
-  try {
-    const { use } = await import('use-m');
-    return use;
-  } catch (error) {
-    // use-m not available
-    return null;
-  }
-};
-
 export class Exec {
   private context: vm.Context;
   private options: ExecOptions;
   private initialContext: ExecContext;
-  private useMFunction: any = null;
 
   constructor(initialContext: ExecContext = {}, options: ExecOptions = {}) {
     this.options = {
@@ -96,18 +84,13 @@ export class Exec {
   }
 
   async exec(code: string, contextExtend: ExecContext = {}): Promise<any> {
-    // Initialize use-m if not already initialized
-    if (!this.useMFunction) {
-      this.useMFunction = await initializeUseM();
-    }
-
     // Create a fresh context for this execution
     const executionContext = vm.createContext({
       ...getEnvironmentGlobals(),
       ...this.initialContext,
       ...contextExtend,
-      // Add use-m function if available
-      ...(this.useMFunction ? { use: this.useMFunction } : {})
+      // Add use-m function (now available as static import)
+      use: use
     });
 
     try {
@@ -166,11 +149,7 @@ export class Exec {
   updateContext(updates: ExecContext): void {
     Object.assign(this.initialContext, updates);
     // Update the main context as well
-    const contextUpdates = {
-      ...updates,
-      ...(this.useMFunction ? { use: this.useMFunction } : {})
-    };
-    Object.assign(this.context, contextUpdates);
+    Object.assign(this.context, updates);
   }
 
   clearContext(): void {
@@ -178,8 +157,7 @@ export class Exec {
     
     // Recreate context with only essential globals
     this.context = vm.createContext({
-      ...getEnvironmentGlobals(),
-      ...(this.useMFunction ? { use: this.useMFunction } : {})
+      ...getEnvironmentGlobals()
     });
   }
 
