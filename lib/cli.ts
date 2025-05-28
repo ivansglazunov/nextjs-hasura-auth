@@ -2,7 +2,6 @@
 
 import { Command } from 'commander';
 import { setupCommands } from './cli-hasyx';
-import { buildDocumentation } from './doc-public';
 import Debug from './debug';
 
 // Import and configure dotenv to load environment variables from .env
@@ -49,15 +48,6 @@ debug('Starting CLI script execution.');
 // Create CLI program
 const program = new Command();
 debug('Commander instance created.');
-
-// Add documentation command
-program
-  .command('doc')
-  .description('Build documentation from markdown files')
-  .option('-d, --dir <directory>', 'Root directory to scan for markdown files', process.cwd())
-  .action((options) => {
-    buildDocumentation(options.dir);
-  });
 
 // Setup all commands using the base functionality
 setupCommands(program, pckg.name);
