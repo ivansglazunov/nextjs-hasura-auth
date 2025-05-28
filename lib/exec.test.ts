@@ -118,9 +118,10 @@ describe('Exec', () => {
 
     it('should handle setTimeout with Promise', async () => {
       const result = await exec.exec(`
-        new Promise(resolve => {
+        const promise = new Promise(resolve => {
           setTimeout(() => resolve('timeout result'), 10);
-        })
+        });
+        promise
       `);
       expect(result).toBe('timeout result');
     });
