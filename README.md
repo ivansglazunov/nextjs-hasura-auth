@@ -12,6 +12,7 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![Generated Client Documentation](https://img.shields.io/badge/Generated%20Hasyx%20Docs-MD-cyan)](HASYX.md)
 [![GraphQL Proxy Documentation](https://img.shields.io/badge/GraphQL%20Proxy%20Docs-MD-yellow)](GRAPHQL-PROXY.md)
 [![Code Execution Engine Documentation](https://img.shields.io/badge/Exec%20Engine-MD-darkgreen)](EXEC.md)
+[![OpenRouter AI Integration Documentation](https://img.shields.io/badge/OpenRouter%20AI-MD-brightgreen)](OPENROUTER.md)
 [![Cytoscape Integration Documentation](https://img.shields.io/badge/Cyto%20Docs-MD-red)](CYTO.md)
 [![Hasyx Identifier (HID) Documentation](https://img.shields.io/badge/HID%20Docs-MD-lightgrey)](HID.md)
 [![Notifications System Documentation](https://img.shields.io/badge/Notify%20System-MD-blueviolet)](NOTIFY.md)
@@ -40,6 +41,7 @@ Hasyx takes responsibility for:
 *   Integrating Resend for sending email verification messages (when `RESEND_API_KEY` is set).
 *   Interactive `npx hasyx cli js [<filePath>] [-e "<script>" | --eval "<script>"]` for quick scripting, data exploration, or debugging interactions with your Hasura backend, with the `client` object available in the global scope.
 *   **Universal Code Execution Engine:** A secure JavaScript execution environment that works in both Node.js and browser contexts, with isolated VM contexts, timeout protection, async/await support, and built-in dynamic npm package loading via use-m. See [`EXEC.md`](EXEC.md) for details.
+*   **OpenRouter AI Integration:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Allows AI to execute JavaScript code and maintain persistent context across conversations. See [`OPENROUTER.md`](OPENROUTER.md) for details.
 *   Migrations control with `npx hasyx migrate` and `npx hasyx unmigrate` for easy database schema management from `./migrations` directory.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
@@ -118,6 +120,7 @@ Explore the different modules and functionalities of Hasyx:
 *   **[HASYX.md](HASYX.md):** Documentation for the core `Hasyx` client class and its features.
 *   **[GRAPHQL-PROXY.md](GRAPHQL-PROXY.md):** How the secure GraphQL proxy to Hasura works.
 *   **[EXEC.md](EXEC.md):** Universal JavaScript code execution engine for both Node.js and browser environments.
+*   **[OPENROUTER.md](OPENROUTER.md):** AI integration with OpenRouter API and code execution capabilities.
 *   **[CYTO.md](CYTO.md):** Guide to Cytoscape.js integration for graph visualizations.
 *   **[HID.md](HID.md):** Explanation of Hasyx Identifiers (HID) for resource identification.
 *   **[PWA.md](PWA.md):** Progressive Web App support with offline functionality, installability, and push notifications.
@@ -695,301 +698,11 @@ NEXT_PUBLIC_NOTIFICATION_ICON=/icon-192x192.png
 *   `NEXT_PUBLIC_BASE_URL`: **Required**. The canonical base URL of your application deployment. Used by NextAuth.js for OAuth redirects and email links, and as a default fallback for `NEXT_PUBLIC_MAIN_URL`. Set it to your production domain (e.g., `https://yourdomain.com`) or `http://localhost:3000` for local development.
 *   `NEXT_PUBLIC_BASE_PATH`: *Optional*. If you deploy your application to a subdirectory of a domain (e.g., `https://example.com/my-app`), set this variable to the subdirectory path (e.g., `/my-app`). Next.js will use this to correctly prefix asset paths (`/_next/...` becomes `/my-app/_next/...`) and links. **For GitHub Pages deployments**, the included workflow (`.github/workflows/nextjs.yml`) **automatically detects and sets this** based on your repository name, so you typically don't need to set it manually for GH Pages.
 *   `NEXT_PUBLIC_MAIN_URL`: *Optional*. Specifies the absolute URL of your deployed backend API. This is primarily used by **client-side builds** (`build:client` for Capacitor/static export). When `NEXT_PUBLIC_BUILD_TARGET` is set to `client`, API calls from the client (e.g., via Apollo Client configured in `HasyxProvider`) will be directed to this URL (e.g., `https://yourdomain.com/api/graphql`) instead of relative paths (`/api/graphql`). If not set, it defaults to the value of `NEXT_PUBLIC_BASE_URL`.
-*   `NEXT_PUBLIC_BUILD_TARGET`: *Internal Use*. This variable is set automatically by specific build scripts (like `npm run build:client` which sets it to `client`) to signal the type of build being performed. This allows `next.config.ts` and potentially other parts of the application (like `HasyxProvider`) to adjust their behavior, for example, by enabling `output: 'export'` or changing API endpoints. **Avoid setting this manually** unless you have a specific reason and understand the implications.
-*   `NEXT_PUBLIC_WS`: *Optional*. Controls whether WebSockets are used for GraphQL subscriptions. Defaults to `1` (enabled). Set to `0` to disable WebSockets and use polling-based subscriptions instead. This is particularly useful for serverless environments like Vercel where WebSockets are not supported. When disabled, subscriptions will automatically fall back to a polling implementation with deep equality checks to minimize unnecessary updates.
+*   `NEXT_PUBLIC_BUILD_TARGET`: *Internal Use*. This variable is set automatically by specific build scripts (like `npm run build:client` which sets it to `client').
+*   `NEXT_PUBLIC_WS`: *Optional*. Controls WebSocket support for subscriptions (default: 1 = enabled). Set to 0 to disable WebSockets and use polling-based subscriptions instead. Particularly useful for serverless environments like Vercel where WebSockets are not supported.
 
-#### WebSocket Support
-
-Hasyx uses WebSockets for real-time GraphQL subscriptions. To ensure proper WebSocket functionality:
-
-- The `ws` package is installed automatically during project initialization
-- A patch for Next.js WebSocket support is applied via `next-ws-cli`
-- A `postinstall` script is added to your project to ensure the patch is applied after package installations
-
-If you encounter WebSocket connection issues:
-
-1. Verify the `ws` package is installed in your project's dependencies:
-   ```bash
-   npm install ws@^8.18.1 --save
-   ```
-
-2. Make sure you have the necessary scripts in your package.json:
-   ```json
-   "scripts": {
-     "postinstall": "npm run ws -- -y",
-     "ws": "npx --yes next-ws-cli@latest patch -y"
-   }
-   ```
-
-3. Apply the Next.js WebSocket patch manually:
-   ```bash
-   npx --yes next-ws-cli@latest patch -y
-   ```
-
-4. Ensure `NEXT_PUBLIC_WS=1` is set in your environment (this is the default if not specified)
-
-Common WebSocket error: `TypeError: bufferUtil.mask is not a function` indicates missing or incompatible WebSocket native modules. Running the patch and reinstalling the `ws` package typically resolves this issue.
-
-### OAuth Providers (`GOOGLE_*`, `YANDEX_*`, etc.)
-
-*   OAuth providers are automatically enabled in the NextAuth configuration provided by `hasyx init` if their corresponding `CLIENT_ID` and `CLIENT_SECRET` environment variables are set.
-*   **Google:**
-    1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-    2. Create a project or select an existing one.
-    3. Go to "APIs & Services" > "Credentials".
-    4. Create "OAuth client ID", select "Web application".
-    5. Add Authorized JavaScript origins (e.g., `http://localhost:3000`).
-    6. Add Authorized redirect URIs: `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/google` (e.g., `http://localhost:3000/api/auth/callback/google`).
-    7. Copy the Client ID and Client Secret into your `.env`.
-*   **Yandex:**
-    1. Go to the [Yandex OAuth Console](https://oauth.yandex.com/client/new).
-    2. Register a new application.
-    3. Choose "Web services".
-    4. Add the Redirect URI: `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/yandex` (e.g., `http://localhost:3000/api/auth/callback/yandex`).
-    5. Grant necessary permissions (e.g., access to email, profile info).
-    6. Copy the ID and Password (Client Secret) into your `.env`.
-*   **GitHub:**
-    1. Go to [GitHub Developer settings](https://github.com/settings/developers).
-    2. Click "New OAuth App".
-    3. Set "Application name", "Homepage URL".
-    4. Set "Authorization callback URL" to `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/github` (e.g., `http://localhost:3000/api/auth/callback/github`).
-    5. Click "Register application".
-    6. Copy the Client ID and generate a new Client Secret, then copy it into your `.env`.
-*   **Facebook:**
-    1. Go to [Facebook for Developers](https://developers.facebook.com/apps/).
-    2. Click "Create App". Select an app type (e.g., "Consumer" or "Business").
-    3. Set up "Facebook Login" product.
-    4. In "Settings" > "Basic", find your App ID and App Secret.
-    5. Under "Facebook Login" > "Settings", add `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/facebook` to "Valid OAuth Redirect URIs".
-    6. Copy the App ID (Client ID) and App Secret (Client Secret) into your `.env`.
-*   **VK:**
-    1. Go to [VK for Developers](https://vk.com/apps?act=manage).
-    2. Click "Create application".
-    3. Choose platform "Website". Fill in "Site address" and "Base domain".
-    4. After creation, go to "Settings". You will find "Application ID" (Client ID) and "Secure key" (Client Secret).
-    5. Set "Authorized redirect URI" to `YOUR_NEXT_PUBLIC_BASE_URL/api/auth/callback/vk` (e.g., `http://localhost:3000/api/auth/callback/vk`).
-    6. Copy the Application ID and Secure key into your `.env`.
-
-#### Email Provider (`RESEND_API_KEY`)
-
-*   If you plan to use features requiring email (like passwordless sign-in via the Email provider, or potentially email verification flows), you need to configure an email sending service.
-*   Hasyx example setup might include integration with [Resend](https://resend.com).
-*   If `RESEND_API_KEY` is set, related email functionality might be enabled.
-    1. Sign up for Resend.
-    2. Create an API Key in your Resend dashboard.
-    3. Add the key to your `.env`.
-
-## 📢 Push Notifications
-
-Hasyx includes a flexible system for push notifications, designed to be extensible across various platforms. For detailed information on the notification system's architecture, supported platforms, and setup instructions, please refer to our comprehensive [Push Notifications Guide (NOTIFY.md)](NOTIFY.md).
-
-Key features include:
-- Firebase Cloud Messaging (FCM) for Web Push.
-- Telegram Bot integration for direct user messages and admin correspondence.
-
-## Contributing
-
-Contributions are welcome! Please see [`CONTRIBUTING.md`](CONTRIBUTING.md) for details on how to set up the development environment, run tests, and submit pull requests.
-
-## License
-
-(Add your license info here, e.g., MIT License)
-
-## CLI Usage
-
-```bash
-# Install globally
-npm install -g hasyx
-
-# Or use with npx directly
-npx hasyx <command>
-```
-
-### Available Commands
-
-- `init` - Initialize hasyx in a Next.js project
-  - Option: `--reinit` - Reinitialize all files, including those that normally would only be created if missing
-- `dev` - Start the development server (with WebSocket support)
-- `build` - Build the Next.js application
-- `start` - Start the production server
-- `build:client` - Build for client export (for Capacitor or similar)
-- `migrate` - Run all migration scripts in alphabetical order
-- `unmigrate` - Run all down migration scripts in reverse alphabetical order
-- `schema` - Generate GraphQL schema from Hasura
-- `events` - Synchronize Hasura event triggers with local definitions
-  - Option: `--init` - Create default event trigger definitions
-  - Option: `--clean` - Remove security headers from event definitions (they will be added automatically during sync)
-- `assets` - Generate app icons and splash screens from logo files for web, Capacitor, and mobile apps
-- `unbuild` - Remove compiled files (.js, .d.ts) from lib, components, and hooks directories, and clear build cache
-- `assist` - Interactive assistant to set up hasyx project with GitHub, Hasura, and Vercel
-  - Option: `--skip-auth` - Skip GitHub authentication check
-  - Option: `--skip-repo` - Skip repository setup
-  - Option: `--skip-env` - Skip environment setup
-  - Option: `--skip-package` - Skip package.json setup
-  - Option: `--skip-init` - Skip hasyx initialization
-  - Option: `--skip-hasura` - Skip Hasura configuration
-  - Option: `--skip-secrets` - Skip authentication secrets setup
-  - Option: `--skip-oauth` - Skip OAuth configuration
-  - Option: `--skip-resend` - Skip Resend configuration
-  - Option: `--skip-vercel` - Skip Vercel setup
-  - Option: `--skip-sync` - Skip environment variable sync
-  - Option: `--skip-commit` - Skip commit step
-  - Option: `--skip-migrations` - Skip migrations check
-- `local` - Switch environment URL variables to local development (http://localhost:3000)
-- `vercel` - Switch environment URL variables to Vercel deployment using VERCEL_URL variable
-
-The CLI automatically loads environment variables from the `.env` file in your project root. This ensures that commands like `npx hasyx events` have access to your Hasura URL, admin secret, and other configuration.
-
-# Hasura Integration
-
-## Event Triggers
-
-Hasyx includes support for Hasura Event Triggers, which allow you to automate asynchronous logic when changes are made in the database. This is useful for implementing webhook-based workflows, sending notifications, or syncing data with external systems.
-
-### How Event Triggers Work
-
-1. You define event triggers in JSON files inside the `events/` directory.
-2. Each file represents one event trigger and defines which table it watches and what operations (INSERT, UPDATE, DELETE) it responds to.
-3. When those operations occur in Hasura, it sends a webhook request to your Next.js API route at `/api/events/[name]`.
-4. Your handler in `app/api/events/[name]/route.ts` processes the webhook and performs any necessary actions.
-
-### Using Event Triggers
-
-1. **Initialize Event Triggers**
-   ```bash
-   npx hasyx events --init
-   ```
-   This creates default event trigger definitions for the `users` and `accounts` tables in the `events/` directory.
-
-2. **Clean Event Trigger Definitions**
-   ```bash
-   npx hasyx events --clean
-   ```
-   This removes any security headers from your event trigger definitions, allowing them to be added automatically during synchronization.
-
-3. **Deploy the Event Triggers to Hasura**
-   ```bash
-   npx hasyx events
-   ```
-   This reads the trigger definitions from the `events/` directory and creates or updates them in Hasura. Security headers with `HASURA_EVENT_SECRET` are automatically added to each trigger.
-
-4. **Security**
-   For security, you should set `HASURA_EVENT_SECRET` in your environment variables. This secret will be automatically added as a header to event trigger requests and verified by your handler.
-
-   Important security considerations:
-   
-   - Always set `HASURA_EVENT_SECRET` to a strong, random value in production environments
-   - The secret header is automatically added to all event triggers during synchronization
-   - In production mode, the `events` command will fail if `HASURA_EVENT_SECRET` is not set
-   - In production mode, requests without the correct secret will be denied automatically
-   - Keep your `HASURA_EVENT_SECRET` as secure as your `HASURA_ADMIN_SECRET`
-   - The `hasyxEvent` wrapper handles all security verification automatically
-   - Never expose your event handlers to public access without authentication
-   - For local development, ensure your Hasura instance can reach your local server (use tools like ngrok if needed)
-
-### Example Event Trigger Definition
-
-```json
-{
-  "name": "users",
-  "table": {
-    "schema": "public",
-    "name": "users"
-  },
-  "webhook_path": "/api/events/users",
-  "insert": {
-    "columns": "*"
-  },
-  "update": {
-    "columns": "*"
-  },
-  "delete": {
-    "columns": "*"
-  },
-  "retry_conf": {
-    "num_retries": 3,
-    "interval_sec": 15,
-    "timeout_sec": 60
-  }
-}
-```
-
-The security header with `HASURA_EVENT_SECRET` will be automatically added during synchronization - you don't need to specify it in your event definition files.
-
-For more information on Event Triggers, see the [Hasura Event Triggers documentation](https://hasura.io/docs/latest/event-triggers/index/).
-
-### Creating Custom Event Handlers
-
-To create a custom event handler for a specific trigger:
-
-1. Copy the default handler from `app/api/events/[name]/route.ts` to a new file such as `app/api/events/my-trigger-name/route.ts`
-2. Modify the new file to implement your custom logic in the handler function
-3. Make sure your event trigger definition in the `events/` directory has a matching `webhook_path` that points to your handler (e.g., `/api/events/my-trigger-name`)
-
-Example custom handler:
-
-```typescript
-import { NextResponse } from 'next/server';
-import { hasyxEvent, HasuraEventPayload } from 'hasyx/lib/events';
-
-export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
-  // Your custom logic here
-  const { event, table } = payload;
-  const { op, data } = event;
-  
-  // Example: Log to console and perform different actions based on operation type
-  console.log(`Handling ${op} operation on ${table.schema}.${table.name}`);
-  
-  if (op === 'INSERT') {
-    // Handle insert operation
-    const newRecord = data.new;
-    // Do something with the new record...
-  }
-  
-  return { success: true, message: 'Custom handler processed event' };
-});
-```
-
----
-
-### `js [filePath] [-e "<script>" | --eval "<script>"]`
-
-Runs a JavaScript file or starts an interactive REPL (Read-Eval-Print Loop) with a pre-configured `Hasyx` client instance in the context. This is useful for quick scripting, data exploration, or debugging interactions with your Hasura backend.
-
-The `client` instance is initialized with admin privileges using `HASURA_ADMIN_SECRET` and `NEXT_PUBLIC_HASURA_GRAPHQL_URL` from your `.env` file. It also requires `public/hasura-schema.json` to be present (generated via `npx hasyx schema`).
-
-**Modes:**
-
-1.  **REPL Mode:**
-    ```bash
-    npx hasyx js
-    ```
-    Starts an interactive REPL. The `client` object is available in the global scope.
-    Example in REPL:
-    ```javascript
-    hasyx > await client.select({ table: 'users', returning: ['id', 'name'], limit: 1 })
-    // Output: [ { id: 'some-uuid', name: 'Some User' } ]
-    hasyx > .exit
-    ```
-
-2.  **File Execution Mode:**
-    ```bash
-    npx hasyx js your-script.js
-    ```
-    Executes the specified JavaScript file (`your-script.js`). The `client` object is available as a global in the script's context.
-    Example `your-script.js`:
-    ```javascript
-    async function main() {
-      const users = await client.select({ table: 'users', returning: ['id', 'email'] });
-      console.log(users);
-    }
-    main().catch(console.error);
-    ```
-
-3.  **String Evaluation Mode:**
-    ```bash
-    npx hasyx js -e "console.log(await client.select({table: 'users', limit: 1, returning: ['id']}))"
-    # or
-    npx hasyx js --eval "client.select({table: 'users', limit: 1, returning: ['name']}).then(console.log)"
-    ```
-    Executes the provided JavaScript string. The `client` object is available. `await` can be used directly at the top level of the provided script string.
+* **For client-side builds using different domains (GitHub Pages, Capacitor, etc.):**
+  * When deploying client-side builds (static export) that need to connect to your main backend API with NextAuth, the authentication is handled automatically via the `basePath` configuration in `SessionProvider`.
+  * The client-side build will use the URL from `NEXT_PUBLIC_API_URL` or `NEXT_PUBLIC_MAIN_URL` environment variables as the authentication API base.
+  * The `SessionProvider` automatically detects when the app is running on a different domain and configures the authentication endpoints properly.
+  * This allows authentication to work seamlessly across different environments (development, production) and deployments (client-side or server-side).

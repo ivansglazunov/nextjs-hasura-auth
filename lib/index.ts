@@ -12,6 +12,8 @@ export * from './hid';
 export * from './hasyx-client';
 export * from './pwa';
 export * from './exec';
+export * from './openrouter';
+export * from './terminal';
 
 // Re-export from auth.tsx (now including auth-next.ts indirectly)
 export * from './auth';

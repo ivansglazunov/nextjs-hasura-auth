@@ -3,13 +3,14 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs-extra';
-import * as vm from 'vm';
 import * as repl from 'repl';
 import { Hasyx } from './hasyx';
 import { createApolloClient } from './apollo';
 import { Generator } from './generator';
 import { Exec } from './exec';
 import Debug from './debug';
+// Import all exports from index.ts to provide as context
+import * as hasyxLib from './index';
 
 const debug = Debug('hasyx:js');
 
@@ -66,7 +67,7 @@ async function main() {
       debug('Successfully loaded hasura-schema.json');
     } else {
       console.error(`❌ Hasura schema not found at ${schemaPath}`);
-      console.error('   Please run `npx hasyx schema` first to generate it.');
+      console.error('   Please run \`npx hasyx schema\` first to generate it.');
       process.exit(1);
     }
   } catch (err) {
@@ -74,7 +75,7 @@ async function main() {
     process.exit(1);
   }
 
-  // 3. Create Hasyx client instance
+  // 3. Create Hasyx client instance and Exec environment
   let client: Hasyx;
   let exec: Exec;
   try {
@@ -84,43 +85,52 @@ async function main() {
     });
     const generator = Generator(schema);
     client = new Hasyx(apolloAdminClient, generator);
-    exec = new Exec();
+    
+    // Create execution context with all hasyx exports
+    const fullContext = {
+      // Core instances
+      client,
+      // All hasyx library exports
+      ...hasyxLib,
+      // Node.js globals
+      console,
+      process,
+      require,
+      setTimeout,
+      clearTimeout,
+      setInterval,
+      clearInterval,
+      URL,
+      URLSearchParams,
+      TextEncoder,
+      TextDecoder,
+      Buffer,
+      // File system utilities
+      fs,
+      path,
+    };
+    
+    exec = new Exec(fullContext);
+    
+    // Add exec to its own context after creation
+    exec.updateContext({ exec });
+    
     console.log('✅ Hasyx client initialized with admin privileges.');
-    console.log('✅ Exec environment initialized with use-m support.');
-    debug('Hasyx client and Exec created successfully.');
+    console.log('✅ Exec environment initialized with full hasyx context.');
+    console.log('📦 Available in context: client, exec, all hasyx exports, and Node.js globals.');
+    debug('Hasyx client and Exec created successfully with full context.');
   } catch (err) {
     console.error('❌ Failed to initialize Hasyx client:', err);
     process.exit(1);
   }
 
-  const scriptContext = vm.createContext({
-    client,
-    exec,
-    console,
-    process,
-    require,
-    __filename: filePath ? path.resolve(filePath) : 'eval',
-    __dirname: filePath ? path.dirname(path.resolve(filePath)) : process.cwd(),
-    setTimeout,
-    clearTimeout,
-    setInterval,
-    clearInterval,
-    URL, // Add URL constructor to the context
-    URLSearchParams, // Add URLSearchParams to the context
-    TextEncoder, // Add TextEncoder
-    TextDecoder, // Add TextDecoder
-    Buffer, // Add Buffer
-    // You can add more Node.js globals or custom utilities here
-  });
-
   if (evalScript) {
     debug(`Executing script string: ${evalScript}`);
     try {
-      // Wrap the user's script in an async IIFE to allow top-level await
-      const wrappedScript = `(async () => { ${evalScript} })();`;
-      const script = new vm.Script(wrappedScript, { filename: 'eval' });
-      await script.runInContext(scriptContext);
-      // Exit after executing the script
+      const result = await exec.exec(evalScript);
+      if (result !== undefined) {
+        console.log('📤 Result:', result);
+      }
       process.exit(0);
     } catch (error) {
       console.error('❌ Error executing script string:', error);
@@ -135,8 +145,10 @@ async function main() {
     }
     try {
       const fileContent = await fs.readFile(fullPath, 'utf-8');
-      const script = new vm.Script(fileContent, { filename: fullPath });
-      await script.runInContext(scriptContext);
+      const result = await exec.exec(fileContent);
+      if (result !== undefined) {
+        console.log('📤 Result:', result);
+      }
       process.exit(0);
     } catch (error) {
       console.error(`❌ Error executing script file ${filePath}:`, error);
@@ -144,15 +156,36 @@ async function main() {
     }
   } else {
     debug('Starting REPL session.');
-    console.log('🟢 Hasyx REPL started. `client` and `exec` variables are available.');
+    console.log('🟢 Hasyx REPL started.');
+    console.log('📦 Available: client, exec, and all hasyx library exports');
     console.log('   Type .exit to close.');
+    
     const replServer = repl.start({
       prompt: 'hasyx > ',
-      useGlobal: false, // Important to use the context
+      useGlobal: false,
     });
 
-    // Assign context variables to the REPL context
-    Object.assign(replServer.context, scriptContext);
+    // Add all context to REPL
+    const context = exec.getContext();
+    Object.assign(replServer.context, context);
+    
+    // Override eval to use exec for better async support
+    const originalEval = replServer.eval;
+    (replServer as any).eval = async function(cmd: string, context: any, filename: string, callback: Function) {
+      try {
+        // Clean the command (remove REPL artifacts)
+        const cleanCmd = cmd.replace(/^\(/, '').replace(/\)$/, '').trim();
+        if (!cleanCmd) {
+          callback(null, undefined);
+          return;
+        }
+        
+        const result = await exec.exec(cleanCmd);
+        callback(null, result);
+      } catch (error) {
+        callback(error);
+      }
+    };
 
     replServer.on('exit', () => {
       console.log('👋 Exiting Hasyx REPL.');

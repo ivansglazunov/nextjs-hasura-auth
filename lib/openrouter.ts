@@ -1,6 +1,4 @@
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { generateText, CoreMessage } from 'ai';
-import { Exec, ExecContext } from 'hasyx';
+import { Exec, ExecContext } from './exec';
 
 export interface OpenRouterMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
@@ -72,10 +70,10 @@ export interface OpenRouterResponse {
 }
 
 export class OpenRouter {
-  private client: any;
   private defaultOptions: OpenRouterOptions;
   public context: ExecContext;
   private execInstance: Exec;
+  private token: string;
 
   constructor(
     token: string, 
@@ -86,9 +84,7 @@ export class OpenRouter {
       throw new Error('OpenRouter API token is required');
     }
 
-    this.client = createOpenRouter({
-      apiKey: token
-    });
+    this.token = token;
 
     this.defaultOptions = {
       model: 'deepseek/deepseek-chat-v3-0324:free',
@@ -112,41 +108,53 @@ export class OpenRouter {
     const finalOptions = { ...this.defaultOptions, ...options };
     
     // Normalize messages to array format
-    let normalizedMessages: CoreMessage[];
+    let normalizedMessages: OpenRouterMessage[];
     
     if (typeof messages === 'string') {
       normalizedMessages = [{ role: 'user', content: messages }];
     } else if (Array.isArray(messages)) {
-      normalizedMessages = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content,
-        ...(msg.name && { name: msg.name }),
-        ...(msg.tool_call_id && { toolCallId: msg.tool_call_id })
-      })) as CoreMessage[];
+      normalizedMessages = messages;
     } else {
-      normalizedMessages = [{
-        role: messages.role,
-        content: messages.content,
-        ...(messages.name && { name: messages.name }),
-        ...(messages.tool_call_id && { toolCallId: messages.tool_call_id })
-      }] as CoreMessage[];
+      normalizedMessages = [messages];
     }
 
     try {
-      const model = this.client.chat(finalOptions.model);
-      
-      const response = await generateText({
-        model,
-        messages: normalizedMessages,
-        temperature: finalOptions.temperature,
-        maxTokens: finalOptions.max_tokens,
-        topP: finalOptions.top_p,
-        topK: finalOptions.top_k,
-        frequencyPenalty: finalOptions.frequency_penalty,
-        presencePenalty: finalOptions.presence_penalty
+      // Simple fetch implementation since AI SDK is not available
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://github.com/ivansglazunov/hasyx',
+          'X-Title': 'Hasyx Framework'
+        },
+        body: JSON.stringify({
+          model: finalOptions.model,
+          messages: normalizedMessages,
+          temperature: finalOptions.temperature,
+          max_tokens: finalOptions.max_tokens,
+          top_p: finalOptions.top_p,
+          top_k: finalOptions.top_k,
+          frequency_penalty: finalOptions.frequency_penalty,
+          presence_penalty: finalOptions.presence_penalty,
+          tools: finalOptions.tools,
+          tool_choice: finalOptions.tool_choice,
+          response_format: finalOptions.response_format,
+          user: finalOptions.user
+        })
       });
 
-      return response.text || 'No response generated';
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data: OpenRouterResponse = await response.json();
+      
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error('No response choices returned');
+      }
+
+      return data.choices[0].message?.content || 'No response generated';
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`OpenRouter API error: ${errorMessage}`);
