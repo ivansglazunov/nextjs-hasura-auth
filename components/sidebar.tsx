@@ -25,6 +25,7 @@ export interface SidebarItem {
   url: string;
   items?: SidebarItem[];
   collapse?: boolean;
+  level?: number;
 }
 
 export interface SidebarData {
@@ -244,12 +245,20 @@ export function Sidebar({ data }: { data: SidebarData }) {
                                                         pathname.includes(subSubItem.url) ||
                                                         (typeof window !== 'undefined' && window.location.href.includes(subSubItem.url));
                               
+                              // Use real heading level for visual indentation
+                              const headingLevel = subSubItem.level || 2; // Default to level 2 if not specified
+                              const indentClass = headingLevel === 2 ? 'pl-0' : 
+                                                headingLevel === 3 ? 'pl-4' :
+                                                headingLevel === 4 ? 'pl-8' :
+                                                headingLevel === 5 ? 'pl-12' :
+                                                headingLevel === 6 ? 'pl-16' : 'pl-4';
+                              
                               return (
                                 <SidebarMenuSubItem key={subSubItem.title}>
                                   <SidebarMenuSubButton 
                                     asChild
                                     isActive={isSubSubItemActive}
-                                    className="w-full"
+                                    className={`w-full ${indentClass}`}
                                   >
                                     <a href={subSubItem.url} className="sidebar-subsub-text-truncate w-full max-w-full" title={subSubItem.title}>{subSubItem.title}</a>
                                   </SidebarMenuSubButton>
@@ -280,12 +289,20 @@ export function Sidebar({ data }: { data: SidebarData }) {
                                                         pathname.includes(subSubItem.url) ||
                                                         (typeof window !== 'undefined' && window.location.href.includes(subSubItem.url));
                               
+                              // Use real heading level for visual indentation
+                              const headingLevel = subSubItem.level || 2; // Default to level 2 if not specified
+                              const indentClass = headingLevel === 2 ? 'pl-0' : 
+                                                headingLevel === 3 ? 'pl-4' :
+                                                headingLevel === 4 ? 'pl-8' :
+                                                headingLevel === 5 ? 'pl-12' :
+                                                headingLevel === 6 ? 'pl-16' : 'pl-4';
+                              
                               return (
                                 <SidebarMenuSubItem key={subSubItem.title}>
                                   <SidebarMenuSubButton 
                                     asChild
                                     isActive={isSubSubItemActive}
-                                    className="w-full"
+                                    className={`w-full ${indentClass}`}
                                   >
                                     <a href={subSubItem.url} className="sidebar-subsub-text-truncate w-full max-w-full" title={subSubItem.title}>{subSubItem.title}</a>
                                   </SidebarMenuSubButton>

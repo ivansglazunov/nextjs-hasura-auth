@@ -27,6 +27,7 @@ export interface SidebarItem {
   url: string;
   collapse?: boolean;
   items?: SidebarItem[];
+  level?: number;
 }
 
 export interface DocNavigation {
@@ -172,7 +173,8 @@ export function createDocNavigationStructure(markdownFiles: MarkdownFile[]): Sid
       title: file.title,
       url: `/hasyx/doc/${encodeURIComponent(safeFilename)}`,
       collapse: true, // Make each document collapsible
-      items: []
+      items: [],
+      level: file.headings[0]?.level
     };
     
     // Add sub-headings as nested items (only level 2 and 3 headings)
@@ -181,7 +183,8 @@ export function createDocNavigationStructure(markdownFiles: MarkdownFile[]): Sid
         if (heading.level <= 3) {
           mainItem.items!.push({
             title: heading.text,
-            url: `/hasyx/doc/${encodeURIComponent(safeFilename)}#${heading.id}`
+            url: `/hasyx/doc/${encodeURIComponent(safeFilename)}#${heading.id}`,
+            level: heading.level
           });
         }
       }

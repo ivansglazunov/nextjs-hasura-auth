@@ -103,157 +103,116 @@ export default function DocFilePage() {
       ]}
     >
       <div className="container mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          {/* Main content */}
-          <div className="flex-1 min-w-0">
-            <div className="mb-6">
-              <Link href="/hasyx/doc">
-                <Button variant="ghost" size="sm" className="mb-4">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Documentation
-                </Button>
-              </Link>
-              <div className="text-sm text-muted-foreground mb-2">
-                {markdownFile.path}
-              </div>
+        <div className="max-w-none">
+          <div className="mb-6">
+            <Link href="/hasyx/doc">
+              <Button variant="ghost" size="sm" className="mb-4">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Documentation
+              </Button>
+            </Link>
+            <div className="text-sm text-muted-foreground mb-2">
+              {markdownFile.path}
             </div>
-
-            <article className="prose prose-neutral dark:prose-invert max-w-none">
-              <Markdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[
-                  rehypeSlug,
-                  [rehypeAutolinkHeadings, { behavior: 'wrap' }]
-                ]}
-                components={{
-                  h1: ({ children, id }) => (
-                    <h1 id={id} className="group relative">
-                      {children}
-                      {id && (
-                        <a
-                          href={`#${id}`}
-                          className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          aria-label="Link to this heading"
-                        >
-                          <Hash className="h-5 w-5" />
-                        </a>
-                      )}
-                    </h1>
-                  ),
-                  h2: ({ children, id }) => (
-                    <h2 id={id} className="group relative">
-                      {children}
-                      {id && (
-                        <a
-                          href={`#${id}`}
-                          className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          aria-label="Link to this heading"
-                        >
-                          <Hash className="h-5 w-5" />
-                        </a>
-                      )}
-                    </h2>
-                  ),
-                  h3: ({ children, id }) => (
-                    <h3 id={id} className="group relative">
-                      {children}
-                      {id && (
-                        <a
-                          href={`#${id}`}
-                          className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          aria-label="Link to this heading"
-                        >
-                          <Hash className="h-5 w-5" />
-                        </a>
-                      )}
-                    </h3>
-                  ),
-                  h4: ({ children, id }) => (
-                    <h4 id={id} className="group relative">
-                      {children}
-                      {id && (
-                        <a
-                          href={`#${id}`}
-                          className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          aria-label="Link to this heading"
-                        >
-                          <Hash className="h-5 w-5" />
-                        </a>
-                      )}
-                    </h4>
-                  ),
-                  h5: ({ children, id }) => (
-                    <h5 id={id} className="group relative">
-                      {children}
-                      {id && (
-                        <a
-                          href={`#${id}`}
-                          className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          aria-label="Link to this heading"
-                        >
-                          <Hash className="h-5 w-5" />
-                        </a>
-                      )}
-                    </h5>
-                  ),
-                  h6: ({ children, id }) => (
-                    <h6 id={id} className="group relative">
-                      {children}
-                      {id && (
-                        <a
-                          href={`#${id}`}
-                          className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          aria-label="Link to this heading"
-                        >
-                          <Hash className="h-5 w-5" />
-                        </a>
-                      )}
-                    </h6>
-                  ),
-                }}
-              >
-                {markdownFile.content}
-              </Markdown>
-            </article>
           </div>
 
-          {/* Table of contents */}
-          {markdownFile?.headings && markdownFile.headings.length > 1 && (
-            <div className="hidden lg:block w-64 flex-shrink-0">
-              <div className="sticky top-8">
-                <h3 className="font-semibold mb-4">Table of Contents</h3>
-                <ScrollArea className="h-[calc(100vh-12rem)]">
-                  <nav className="space-y-1">
-                    {markdownFile.headings.map((heading) => (
+          <article className="prose prose-neutral dark:prose-invert max-w-none">
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[
+                rehypeSlug,
+                [rehypeAutolinkHeadings, { behavior: 'wrap' }]
+              ]}
+              components={{
+                h1: ({ children, id }) => (
+                  <h1 id={id} className="group relative">
+                    {children}
+                    {id && (
                       <a
-                        key={heading.id}
-                        href={`#${heading.id}`}
-                        className={`block text-sm hover:text-foreground transition-colors ${
-                          heading.level === 1
-                            ? 'font-medium text-foreground'
-                            : heading.level === 2
-                            ? 'pl-4 text-muted-foreground'
-                            : heading.level === 3
-                            ? 'pl-8 text-muted-foreground'
-                            : 'pl-12 text-muted-foreground'
-                        }`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const element = document.getElementById(heading.id);
-                          if (element) {
-                            element.scrollIntoView({ behavior: 'smooth' });
-                            window.history.pushState(null, '', `#${heading.id}`);
-                          }
-                        }}
+                        href={`#${id}`}
+                        className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Link to this heading"
                       >
-                        {heading.text}
+                        <Hash className="h-5 w-5" />
                       </a>
-                    ))}
-                  </nav>
-                </ScrollArea>
-              </div>
-            </div>
-          )}
+                    )}
+                  </h1>
+                ),
+                h2: ({ children, id }) => (
+                  <h2 id={id} className="group relative">
+                    {children}
+                    {id && (
+                      <a
+                        href={`#${id}`}
+                        className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Link to this heading"
+                      >
+                        <Hash className="h-5 w-5" />
+                      </a>
+                    )}
+                  </h2>
+                ),
+                h3: ({ children, id }) => (
+                  <h3 id={id} className="group relative">
+                    {children}
+                    {id && (
+                      <a
+                        href={`#${id}`}
+                        className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Link to this heading"
+                      >
+                        <Hash className="h-5 w-5" />
+                      </a>
+                    )}
+                  </h3>
+                ),
+                h4: ({ children, id }) => (
+                  <h4 id={id} className="group relative">
+                    {children}
+                    {id && (
+                      <a
+                        href={`#${id}`}
+                        className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Link to this heading"
+                      >
+                        <Hash className="h-5 w-5" />
+                      </a>
+                    )}
+                  </h4>
+                ),
+                h5: ({ children, id }) => (
+                  <h5 id={id} className="group relative">
+                    {children}
+                    {id && (
+                      <a
+                        href={`#${id}`}
+                        className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Link to this heading"
+                      >
+                        <Hash className="h-5 w-5" />
+                      </a>
+                    )}
+                  </h5>
+                ),
+                h6: ({ children, id }) => (
+                  <h6 id={id} className="group relative">
+                    {children}
+                    {id && (
+                      <a
+                        href={`#${id}`}
+                        className="absolute -left-6 top-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Link to this heading"
+                      >
+                        <Hash className="h-5 w-5" />
+                      </a>
+                    )}
+                  </h6>
+                ),
+              }}
+            >
+              {markdownFile.content}
+            </Markdown>
+          </article>
         </div>
       </div>
     </SidebarLayout>
