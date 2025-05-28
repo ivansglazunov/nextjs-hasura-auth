@@ -11,6 +11,7 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![Authentication Helpers Documentation](https://img.shields.io/badge/Auth%20Helpers%20Docs-MD-green)](AUTH.md) [![Hasura Admin Client Documentation](https://img.shields.io/badge/Hasura%20Client%20Docs-MD-purple)](HASURA.md)
 [![Generated Client Documentation](https://img.shields.io/badge/Generated%20Hasyx%20Docs-MD-cyan)](HASYX.md)
 [![GraphQL Proxy Documentation](https://img.shields.io/badge/GraphQL%20Proxy%20Docs-MD-yellow)](GRAPHQL-PROXY.md)
+[![Code Execution Engine Documentation](https://img.shields.io/badge/Exec%20Engine-MD-darkgreen)](EXEC.md)
 [![Cytoscape Integration Documentation](https://img.shields.io/badge/Cyto%20Docs-MD-red)](CYTO.md)
 [![Hasyx Identifier (HID) Documentation](https://img.shields.io/badge/HID%20Docs-MD-lightgrey)](HID.md)
 [![Notifications System Documentation](https://img.shields.io/badge/Notify%20System-MD-blueviolet)](NOTIFY.md)
@@ -38,6 +39,7 @@ Hasyx takes responsibility for:
 *   Pre-configuring Jest for TypeScript testing of files within the `./lib` directory.
 *   Integrating Resend for sending email verification messages (when `RESEND_API_KEY` is set).
 *   Interactive `npx hasyx cli js [<filePath>] [-e "<script>" | --eval "<script>"]` for quick scripting, data exploration, or debugging interactions with your Hasura backend, with the `client` object available in the global scope.
+*   **Universal Code Execution Engine:** A secure JavaScript execution environment that works in both Node.js and browser contexts, with isolated VM contexts, timeout protection, and async/await support. See [`EXEC.md`](EXEC.md) for details.
 *   Migrations control with `npx hasyx migrate` and `npx hasyx unmigrate` for easy database schema management from `./migrations` directory.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
@@ -115,6 +117,7 @@ Explore the different modules and functionalities of Hasyx:
 *   **[HASURA.md](HASURA.md):** Information about the Hasura admin client and its usage.
 *   **[HASYX.md](HASYX.md):** Documentation for the core `Hasyx` client class and its features.
 *   **[GRAPHQL-PROXY.md](GRAPHQL-PROXY.md):** How the secure GraphQL proxy to Hasura works.
+*   **[EXEC.md](EXEC.md):** Universal JavaScript code execution engine for both Node.js and browser environments.
 *   **[CYTO.md](CYTO.md):** Guide to Cytoscape.js integration for graph visualizations.
 *   **[HID.md](HID.md):** Explanation of Hasyx Identifiers (HID) for resource identification.
 *   **[PWA.md](PWA.md):** Progressive Web App support with offline functionality, installability, and push notifications.
