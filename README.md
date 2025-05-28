@@ -527,14 +527,28 @@ The CLI automatically loads environment variables from the `.env` file in your p
 Interactive AI assistant powered by OpenRouter with automatic code execution capabilities. Features real-time progress indicators showing exactly what AI is doing step-by-step.
 
 ```bash
-# Direct question mode
+# For external projects using hasyx:
 npx hasyx ask -e "Calculate factorial of 5 using JavaScript"
+npx hasyx ask -y -m "anthropic/claude-3-sonnet" -e "Question"
+
+# For development inside hasyx project:
+npm run cli -- ask -e "Calculate factorial of 5 using JavaScript"
+npm run cli -- ask -y -m "anthropic/claude-3-sonnet" -e "Question"
+
+# Or using npm script (recommended for projects):
 npm run ask -- -e "What is the capital of France?"
 
-# Interactive chat mode  
-npx hasyx ask
-npm run ask
+# Interactive chat mode
+npx hasyx ask                    # External projects
+npm run cli -- ask               # Inside hasyx project
+npm run ask                      # Using npm script
 ```
+
+**🎯 Command Options:**
+- `-e, --eval <question>` - Ask a direct question and get a response
+- `-y, --yes` - Auto-approve code execution (no confirmation)
+- `-m, --model <model>` - Specify OpenRouter model
+- `-h, --help` - Show help information
 
 **🎯 Real-time Progress Features:**
 - **🧠 AI думает...** - When AI is generating responses

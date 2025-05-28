@@ -125,11 +125,15 @@ OPENROUTER_API_KEY=sk-or-v1-your_openrouter_api_key_here
 Ask a single question and get an immediate response:
 
 ```bash
-# Using npx hasyx
+# For external projects using hasyx
 npx hasyx ask -e "What is the capital of France?"
 npx hasyx ask --eval "Write a JavaScript function to add two numbers"
 
-# Using npm script (recommended for projects)
+# For development inside hasyx project
+npm run cli -- ask -e "What is the capital of France?"
+npm run cli -- ask --eval "Write a JavaScript function to add two numbers"
+
+# Using npm script (recommended for projects with hasyx integration)
 npm run ask -- -e "What is the capital of France?"
 npm run ask -- --eval "Write a JavaScript function to add two numbers"
 ```
@@ -139,8 +143,11 @@ npm run ask -- --eval "Write a JavaScript function to add two numbers"
 Start an interactive conversation session:
 
 ```bash
-# Using npx hasyx
+# For external projects using hasyx
 npx hasyx ask
+
+# For development inside hasyx project
+npm run cli -- ask
 
 # Using npm script (recommended for projects)
 npm run ask
@@ -319,17 +326,27 @@ The command automatically loads environment variables from:
 
 ### CLI Integration
 
-The Ask command is fully integrated with the Hasyx CLI system:
+The Ask command is fully integrated with the Hasyx CLI system and supports different usage patterns depending on your context:
 
+**For External Projects (using hasyx as dependency):**
 ```bash
 # Available as hasyx command
 npx hasyx ask -e "question"
-
-# Available as npm script
-npm run ask -- -e "question"
-
-# Help information
 npx hasyx ask --help
+```
+
+**For Development Inside Hasyx Project:**
+```bash
+# Use CLI script directly
+npm run cli -- ask -e "question"
+npm run cli -- ask --help
+```
+
+**For Projects with Hasyx Integration (npm scripts):**
+```bash
+# Available as npm script (recommended)
+npm run ask -- -e "question"
+npm run ask -- --help
 ```
 
 ## Advanced Usage
@@ -503,4 +520,35 @@ To contribute to the Ask command functionality:
 4. Update this documentation
 5. Submit a pull request
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines. 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
+
+## Command Options
+
+The Ask command supports the following options:
+
+```bash
+-e, --eval <question>    Ask a direct question and get a response
+-y, --yes               Auto-approve code execution (no confirmation) 
+-m, --model <model>     Specify OpenRouter model (e.g., 'anthropic/claude-3-sonnet')
+-h, --help              Show help information
+```
+
+### Usage Examples with Options
+
+```bash
+# Direct question with auto-execution
+npm run ask -- -y -e "Calculate 10 factorial using JavaScript"
+npm run cli -- ask -y -e "Calculate 10 factorial using JavaScript"
+
+# Use specific AI model  
+npm run ask -- -m "anthropic/claude-3-sonnet" -e "Explain async/await"
+npm run cli -- ask -m "anthropic/claude-3-sonnet" -e "Explain async/await"
+
+# Combine all options
+npm run ask -- -y -m "openai/gpt-4" -e "Write a React component"
+npm run cli -- ask -y -m "openai/gpt-4" -e "Write a React component"
+
+# Show help
+npm run ask -- -h
+npm run cli -- ask -h
+``` 

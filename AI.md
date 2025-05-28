@@ -22,7 +22,7 @@ npm install hasyx
 ```typescript
 import { AI } from 'hasyx/lib/ai';
 
-// Create AI instance
+// Create AI instance with system prompt
 const ai = new AI(
   'your-openrouter-api-key',
   {},
@@ -30,7 +30,8 @@ const ai = new AI(
     model: 'deepseek/deepseek-chat-v3-0324:free',
     temperature: 0.7,
     max_tokens: 4096
-  }
+  },
+  'You are a helpful AI assistant with code execution capabilities.'
 );
 
 // Ask a question
@@ -85,6 +86,17 @@ const result = await ai.ask('Calculate 2 + 2 using JavaScript');
 
 The `hasyx ask` command now includes real-time progress indicators by default:
 
+**For external projects:**
+```bash
+npx hasyx ask -e "Calculate factorial of 5"
+```
+
+**For development inside hasyx project:**
+```bash
+npm run cli -- ask -e "Calculate factorial of 5"
+```
+
+**For projects with npm script integration:**
 ```bash
 npm run ask -- -e "Calculate factorial of 5"
 ```
@@ -158,12 +170,13 @@ These operations are:
 ### Constructor
 
 ```typescript
-new AI(token: string, context?: any, options?: OpenRouterOptions)
+new AI(token: string, context?: any, options?: OpenRouterOptions, systemPrompt?: string)
 ```
 
 - `token`: OpenRouter API key
 - `context`: Optional context object passed to execution engines
 - `options`: OpenRouter configuration options
+- `systemPrompt`: Optional system prompt for AI behavior (can also be set via setSystemPrompt method)
 
 ### Methods
 

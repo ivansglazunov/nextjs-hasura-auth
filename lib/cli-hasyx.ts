@@ -255,8 +255,8 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     '.vscode/extensions.json': '.vscode/extensions.json',
     'migrations/1746660891582-hasyx-users/up.ts': 'migrations/1746660891582-hasyx-users/up.ts',
     'migrations/1746660891582-hasyx-users/down.ts': 'migrations/1746660891582-hasyx-users/down.ts',
-    'migrations/1746670608552-hasyx-notify/up.ts': 'migrations/1746670608552-hasyx-notify/up.ts',
-    'migrations/1746670608552-hasyx-notify/down.ts': 'migrations/1746670608552-hasyx-notify/down.ts',
+    'migrations/174670608552-hasyx-notify/up.ts': 'migrations/174670608552-hasyx-notify/up.ts',
+    'migrations/174670608552-hasyx-notify/down.ts': 'migrations/174670608552-hasyx-notify/down.ts',
     'migrations/1746837333136-hasyx-debug/up.ts': 'migrations/1746837333136-hasyx-debug/up.ts',
     'migrations/1746837333136-hasyx-debug/down.ts': 'migrations/1746837333136-hasyx-debug/down.ts',
     'migrations/20240801120000-hasyx-payments/up.ts': 'migrations/20240801120000-hasyx-payments/up.ts',
@@ -995,6 +995,9 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
     .command('ask')
     .description('Ask AI questions using OpenRouter with free DeepSeek model')
     .option('-e, --eval <question>', 'Ask a direct question and get a response')
+    .option('-y, --yes', 'Auto-approve code execution (no confirmation)')
+    .option('-m, --model <model>', 'Specify OpenRouter model')
+    .option('-h, --help', 'Show help information')
     .action(async (options) => {
       debug('Executing "ask" command with options:', options);
       
@@ -1004,6 +1007,15 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
       const args: string[] = [];
       if (options.eval) {
         args.push('-e', options.eval);
+      }
+      if (options.yes) {
+        args.push('-y');
+      }
+      if (options.model) {
+        args.push('-m', options.model);
+      }
+      if (options.help) {
+        args.push('-h');
       }
       
       const { spawn } = require('child_process');

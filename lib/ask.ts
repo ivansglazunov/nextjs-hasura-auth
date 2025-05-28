@@ -248,10 +248,12 @@ async function main() {
 🤖 Hasyx Ask - AI Assistant with Code Execution
 
 Usage:
-  npm run ask                        # Interactive mode
-  npm run ask -- -e "question"      # Direct question
-  npx hasyx ask                      # Via npx
-  npx hasyx ask -e "question"        # Via npx with question
+  npm run ask                        # Interactive mode (npm script)
+  npm run ask -- -e "question"      # Direct question (npm script)
+  npm run cli -- ask                 # Interactive mode (inside hasyx project)
+  npm run cli -- ask -e "question"   # Direct question (inside hasyx project)
+  npx hasyx ask                      # Via npx (external projects)
+  npx hasyx ask -e "question"        # Via npx with question (external projects)
 
 Options:
   -e, --eval <question>             Execute a direct question
@@ -272,6 +274,10 @@ Examples:
   npm run ask -- -e "What is 2 + 2?"
   npm run ask -- -y -e "Calculate factorial of 5"
   npm run ask -- -m "anthropic/claude-3-sonnet" -e "Analyze this data"
+  
+  # Inside hasyx project development:
+  npm run cli -- ask -e "What is 2 + 2?"
+  npm run cli -- ask -y -e "Calculate factorial of 5"
   
   # Interactive mode with auto-execution
   npm run ask -- -y
