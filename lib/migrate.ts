@@ -32,14 +32,17 @@ const findProjectRoot = (startDir: string = process.cwd()): string => {
 };
 
 // Find migration scripts for the specified direction
-const findMigrationScripts = async (direction: 'up' | 'down'): Promise<MigrationScript[]> => {
-  debug(`Finding migration scripts for direction: ${direction}`);
+const findMigrationScripts = async (direction: 'up' | 'down', filter?: string): Promise<MigrationScript[]> => {
+  debug(`Finding migration scripts for direction: ${direction}, filter: ${filter || 'none'}`);
   const projectRoot = findProjectRoot();
   const migrationsDir = path.join(projectRoot, 'migrations');
   const scriptFileName = `${direction}.ts`;
   const scripts: MigrationScript[] = [];
 
   console.log(`🔍 Searching for ${scriptFileName} scripts in ${migrationsDir}...`);
+  if (filter) {
+    console.log(`🎯 Filter applied: only migrations containing "${filter}" in directory name`);
+  }
   debug(`Full migrations directory path: ${migrationsDir}`);
 
   if (!await fs.pathExists(migrationsDir)) {
@@ -55,6 +58,13 @@ const findMigrationScripts = async (direction: 'up' | 'down'): Promise<Migration
     for (const entry of entries) {
       if (entry.isDirectory()) {
         const dirName = entry.name;
+        
+        // Apply filter if provided
+        if (filter && !dirName.toLowerCase().includes(filter.toLowerCase())) {
+          debug(`Skipping directory ${dirName} - does not match filter "${filter}"`);
+          continue;
+        }
+        
         const potentialScriptPath = path.join(migrationsDir, dirName, scriptFileName);
         debug(`Checking directory entry: ${dirName}. Potential script path: ${potentialScriptPath}`);
         if (await fs.pathExists(potentialScriptPath)) {
@@ -134,13 +144,17 @@ const executeScript = (scriptPath: string): boolean => {
 };
 
 // Main migration function
-export async function migrate() {
-  debug('Starting UP migrations...');
+export async function migrate(filter?: string) {
+  debug('Starting UP migrations...', filter ? `with filter: ${filter}` : '');
   console.log('🚀 Starting UP migrations...');
-  const scriptsToRun = await findMigrationScripts('up');
+  if (filter) {
+    console.log(`🎯 Filter: "${filter}"`);
+  }
+  const scriptsToRun = await findMigrationScripts('up', filter);
 
   if (scriptsToRun.length === 0) {
-    console.log('🤷 No UP migration scripts found to execute.');
+    const filterMsg = filter ? ` matching filter "${filter}"` : '';
+    console.log(`🤷 No UP migration scripts${filterMsg} found to execute.`);
     debug('No UP migration scripts found.');
     return;
   }
@@ -161,7 +175,9 @@ export async function migrate() {
 
 // Run migration if this file is executed directly
 if (require.main === module) {
-  migrate().catch(err => {
+  // Get filter from command line arguments
+  const filter = process.argv[2]; // First argument after script name
+  migrate(filter).catch(err => {
     console.error('❌ Migration failed:', err);
     process.exit(1);
   });

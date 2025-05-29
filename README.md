@@ -50,7 +50,7 @@ Hasyx takes responsibility for:
 *   **TypeScript Execution Engine:** A TypeScript-aware code execution engine that extends the base Exec class with in-memory TypeScript compilation, automatic tsconfig.lib.json loading, and seamless TypeScript syntax detection. Includes `npx hasyx tsx` command for TypeScript execution. See [`EXEC-TS.md`](EXEC-TS.md) for details.
 *   **Terminal Emulation Library:** A comprehensive terminal emulation library for Node.js applications with support for spawning shell processes, executing commands with timeout protection, session management, event handling, and factory functions for different terminal types (bash, zsh, node, python, docker, ssh). Features complete test coverage and graceful handling of environments without node-pty. See [`TERMINAL.md`](TERMINAL.md) for details.
 *   **OpenRouter AI Integration:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Features real-time progress indicators showing AI thinking, code found, execution status, and results. AI can execute JavaScript/TypeScript code automatically and continue reasoning based on results through iterative processing (up to 3 iterations). Includes both programmatic API and CLI interface with `npx hasyx ask` command. See [`OPENROUTER.md`](OPENROUTER.md) and [`ASK.md`](ASK.md) for details.
-*   Migrations control with `npx hasyx migrate` and `npx hasyx unmigrate` for easy database schema management from `./migrations` directory.
+*   Migrations control with `npx hasyx migrate [filter]` and `npx hasyx unmigrate [filter]` for easy database schema management from `./migrations` directory, with optional filtering to run only specific migrations.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
@@ -461,6 +461,22 @@ Finds and executes `up.ts` migration scripts located in subdirectories of `./mig
 npx hasyx migrate
 ```
 
+**Filter Migrations:**
+You can optionally provide a filter to run only migrations containing a specific substring in their directory name:
+
+```bash
+# Run only migrations with "users" in directory name
+npx hasyx migrate users
+
+# Run only migrations with "auth" in directory name  
+npx hasyx migrate auth
+
+# Examples:
+# migrations/1746660891582-hasyx-users/ ✅ matches "users"
+# migrations/1746670608552-hasyx-notify/ ❌ doesn't match "users"
+# migrations/1748511896530-hasyx-payments/ ❌ doesn't match "users"
+```
+
 **Important for Writing Migrations:**
 When writing migration scripts, use the Hasura class from `hasyx/lib/hasura` for consistent and reliable schema management. Always prefer `define*` methods over `create*` methods to ensure idempotency - migrations can be run multiple times without causing errors.
 
@@ -498,6 +514,23 @@ Finds and executes `down.ts` migration scripts located in subdirectories of `./m
 ```bash
 npx hasyx unmigrate
 ```
+
+**Filter Migrations:**
+You can optionally provide a filter to rollback only specific migrations containing a substring in their directory name:
+
+```bash
+# Rollback only migrations with "users" in directory name
+npx hasyx unmigrate users
+
+# Rollback only migrations with "auth" in directory name
+npx hasyx unmigrate auth
+
+# Examples:
+# migrations/1746660891582-hasyx-users/ ✅ matches "users" 
+# migrations/1746670608552-hasyx-notify/ ❌ doesn't match "users"
+# migrations/1748511896530-hasyx-payments/ ❌ doesn't match "users"
+```
+
 It uses `npx tsx` to run the scripts. See [`migrations`](./migrations) for an example.
 
 ---

@@ -59,8 +59,12 @@ devCommandDescribe(program.command('dev')).action(devCommand);
 buildCommandDescribe(program.command('build')).action(buildCommand);
 startCommandDescribe(program.command('start')).action(startCommand);
 buildClientCommandDescribe(program.command('build:client')).action(buildClientCommand);
-migrateCommandDescribe(program.command('migrate')).action(migrateCommand);
-unmigrateCommandDescribe(program.command('unmigrate')).action(unmigrateCommand);
+migrateCommandDescribe(program.command('migrate')).action(async (filter) => {
+  await migrateCommand(filter);
+});
+unmigrateCommandDescribe(program.command('unmigrate')).action(async (filter) => {
+  await unmigrateCommand(filter);
+});
 schemaCommandDescribe(program.command('schema')).action(schemaCommand);
 docCommandDescribe(program.command('doc')).action(docCommand);
 

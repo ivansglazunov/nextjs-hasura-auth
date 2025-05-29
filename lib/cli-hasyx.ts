@@ -655,14 +655,14 @@ export const buildClientCommand = () => {
   debug('Finished executing "build:client" command via CLI.');
 };
 
-export const migrateCommand = async () => {
+export const migrateCommand = async (filter?: string) => {
   dotenv.config({ path: path.join(process.cwd(), '.env') });
-  debug('Executing "migrate" command.');
+  debug('Executing "migrate" command with filter:', filter);
   
   const { migrate } = await import('./migrate');
   
   try {
-    await migrate();
+    await migrate(filter);
     debug('Finished "migrate" command successfully.');
   } catch (error) {
     console.error('❌ Migration failed:', error);
@@ -671,14 +671,14 @@ export const migrateCommand = async () => {
   }
 };
 
-export const unmigrateCommand = async () => {
+export const unmigrateCommand = async (filter?: string) => {
   dotenv.config({ path: path.join(process.cwd(), '.env') });
-  debug('Executing "unmigrate" command.');
+  debug('Executing "unmigrate" command with filter:', filter);
   
   const { unmigrate } = await import('./unmigrate');
   
   try {
-    await unmigrate();
+    await unmigrate(filter);
     debug('Finished "unmigrate" command successfully.');
   } catch (error) {
     console.error('❌ Unmigration failed:', error);
@@ -911,11 +911,15 @@ export const buildClientCommandDescribe = (cmd: Command) => {
 };
 
 export const migrateCommandDescribe = (cmd: Command) => {
-  return cmd.description('Run UP migration scripts located in subdirectories of ./migrations in alphabetical order.');
+  return cmd
+    .description('Run UP migration scripts located in subdirectories of ./migrations in alphabetical order.')
+    .argument('[filter]', 'Optional filter to only run migrations containing this substring in their directory name');
 };
 
 export const unmigrateCommandDescribe = (cmd: Command) => {
-  return cmd.description('Run DOWN migration scripts located in subdirectories of ./migrations in reverse alphabetical order.');
+  return cmd
+    .description('Run DOWN migration scripts located in subdirectories of ./migrations in reverse alphabetical order.')
+    .argument('[filter]', 'Optional filter to only run migrations containing this substring in their directory name');
 };
 
 export const schemaCommandDescribe = (cmd: Command) => {
@@ -1018,10 +1022,14 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
   buildClientCommandDescribe(program.command('build:client')).action(buildClientCommand);
 
   // Migrate command
-  migrateCommandDescribe(program.command('migrate')).action(migrateCommand);
+  migrateCommandDescribe(program.command('migrate')).action(async (filter) => {
+    await migrateCommand(filter);
+  });
 
   // Unmigrate command
-  unmigrateCommandDescribe(program.command('unmigrate')).action(unmigrateCommand);
+  unmigrateCommandDescribe(program.command('unmigrate')).action(async (filter) => {
+    await unmigrateCommand(filter);
+  });
 
   // Schema command
   schemaCommandDescribe(program.command('schema')).action(schemaCommand);
