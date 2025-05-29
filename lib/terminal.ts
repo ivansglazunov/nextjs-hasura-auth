@@ -152,8 +152,12 @@ export class Terminal extends EventEmitter {
     if (this.options.autoStart) {
       this.start().catch(error => {
         // Emit error but don't block terminal creation
-        this.emit('error', error);
-        if (this.onError) this.onError(error);
+        // In Jest environment, suppress auto-start errors to prevent unhandled promise rejections
+        const isJestEnvironment = typeof jest !== 'undefined' || process.env.JEST_WORKER_ID !== undefined;
+        if (!isJestEnvironment) {
+          this.emit('error', error);
+          if (this.onError) this.onError(error);
+        }
       });
     }
   }

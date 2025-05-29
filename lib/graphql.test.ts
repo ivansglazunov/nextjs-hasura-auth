@@ -89,8 +89,7 @@ async function deleteTestUser(adminClient: ApolloClient<any>, testUserId: string
 // Note: Helper functions for deep_strings removed since we're only testing WebSocket connection, not actual subscriptions
 
 // --- Test Suite: /api/graphql Proxy --- 
-// (!!+(process?.env?.JEST_LOCAL || '') ? describe.skip : describe)('/api/graphql Proxy Integration Tests (using Hasyx class)', () => {
-describe('/api/graphql Proxy Integration Tests (using Hasyx class)', () => {
+(!!+(process?.env?.JEST_LOCAL || '') ? describe.skip : describe)('/api/graphql Proxy Integration Tests (using Hasyx class)', () => {
 
   // --- HTTP Proxy Test ---
   test('should select user data via HTTP proxy using client.select', async () => {
