@@ -4,7 +4,7 @@ import { Command } from 'commander';
 import Debug from './debug';
 import dotenv from 'dotenv';
 import path from 'path';
-import pckg from '@/package.json';
+import pckg from '../package.json';
 
 // Import command descriptors and implementations from hasyx
 import {
