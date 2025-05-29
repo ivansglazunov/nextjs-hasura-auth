@@ -6,7 +6,9 @@ marked.setOptions({
   renderer: new TerminalRenderer({
     // Code blocks
     code: (code: string, lang?: string) => {
-      return `\n\x1b[90m\x1b[47m ${lang || 'code'} \x1b[0m\n\x1b[100m\x1b[37m${code}\x1b[0m\n`;
+      // Map terminal language to bash for better display
+      const displayLang = lang === 'terminal' ? 'bash' : (lang || 'code');
+      return `\n\x1b[90m\x1b[47m ${displayLang} \x1b[0m\n\x1b[100m\x1b[37m${code}\x1b[0m\n`;
     },
     
     // Block quotes

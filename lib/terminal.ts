@@ -162,7 +162,11 @@ export class Terminal extends EventEmitter {
     try {
       this.nodePty = require('node-pty');
     } catch (error) {
-      console.warn('node-pty not available. Some terminal features may be limited.');
+      // Suppress warning in Jest test environment to keep test output clean
+      const isJestEnvironment = typeof jest !== 'undefined' || process.env.JEST_WORKER_ID !== undefined;
+      if (!isJestEnvironment) {
+        console.warn('node-pty not available. Some terminal features may be limited.');
+      }
       this.nodePty = null;
     }
   }
@@ -695,4 +699,158 @@ export function createSSHTerminal(host: string, options: Partial<TerminalOptions
     args: [host],
     ...options
   });
-} 
+}
+
+export interface TerminalDo {
+  exec: (command: string, shell?: string) => Promise<string>;
+  createTerminal: (options?: Partial<TerminalOptions>) => Terminal;
+  bash: (command: string) => Promise<string>;
+  zsh: (command: string) => Promise<string>;
+  node: (command: string) => Promise<string>;
+  python: (command: string) => Promise<string>;
+}
+
+export interface TerminalDoCallbacks {
+  onCommandExecuting?: (command: string, shell?: string) => void;
+  onCommandResult?: (result: string) => void;
+  onError?: (error: Error) => void;
+}
+
+/**
+ * Create terminalDo object for AI integration
+ */
+export function createTerminalDo(callbacks: TerminalDoCallbacks = {}): TerminalDo {
+  return {
+    exec: async (command: string, shell?: string) => {
+      try {
+        if (callbacks.onCommandExecuting) {
+          callbacks.onCommandExecuting(command, shell);
+        }
+        
+        const terminal = new Terminal({ 
+          shell: shell || undefined,
+          autoStart: false 
+        });
+        
+        try {
+          await terminal.start();
+          const result = await terminal.execute(command);
+          
+          if (callbacks.onCommandResult) {
+            callbacks.onCommandResult(result);
+          }
+          
+          return result;
+        } finally {
+          terminal.destroy();
+        }
+      } catch (error) {
+        if (callbacks.onError) {
+          callbacks.onError(error as Error);
+        }
+        throw error;
+      }
+    },
+    
+    createTerminal: (options?: Partial<TerminalOptions>) => {
+      return new Terminal(options);
+    },
+    
+    bash: async (command: string) => {
+      const terminal = createBashTerminal({ autoStart: false });
+      try {
+        await terminal.start();
+        return await terminal.execute(command);
+      } finally {
+        terminal.destroy();
+      }
+    },
+    
+    zsh: async (command: string) => {
+      const terminal = createZshTerminal({ autoStart: false });
+      try {
+        await terminal.start();
+        return await terminal.execute(command);
+      } finally {
+        terminal.destroy();
+      }
+    },
+    
+    node: async (command: string) => {
+      const terminal = createNodeTerminal({ autoStart: false });
+      try {
+        await terminal.start();
+        return await terminal.execute(command);
+      } finally {
+        terminal.destroy();
+      }
+    },
+    
+    python: async (command: string) => {
+      const terminal = createPythonTerminal({ autoStart: false });
+      try {
+        await terminal.start();
+        return await terminal.execute(command);
+      } finally {
+        terminal.destroy();
+      }
+    }
+  };
+}
+
+/**
+ * Default terminal context for AI
+ */
+export const terminalContext = `
+🖥️  **Terminal Execution Environment**
+
+You can execute terminal commands using various shells with node-pty support.
+
+**Available Shells:**
+- bash - Default Linux/macOS shell
+- zsh - Enhanced shell with better features
+- node - Node.js REPL environment
+- python - Python interactive interpreter
+- docker - Docker container commands
+- ssh - Remote shell access
+
+**Execution Format:**
+> 🪬<uuid>/do/terminal/bash
+\`\`\`bash
+your terminal command here
+\`\`\`
+
+**Examples:**
+> 🪬ls1/do/terminal/bash
+\`\`\`bash
+ls -la
+\`\`\`
+
+> 🪬info1/do/terminal/bash
+\`\`\`bash
+uname -a && pwd
+\`\`\`
+
+> 🪬node1/do/terminal/bash
+\`\`\`bash
+node --version
+\`\`\`
+
+> 🪬python1/do/terminal/bash
+\`\`\`bash
+python3 --version
+\`\`\`
+
+**Features:**
+- Real terminal process spawning
+- Command timeout protection (5 seconds)
+- Session management
+- Event handling
+- Cross-platform support
+- Graceful error handling
+`;
+
+/**
+ * Default terminalDo object
+ */
+export const terminalDo = createTerminalDo(); 

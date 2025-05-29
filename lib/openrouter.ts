@@ -70,7 +70,16 @@ export interface OpenRouterResponse {
 }
 
 export class OpenRouter {
-  private defaultOptions: OpenRouterOptions;
+  private defaultOptions: OpenRouterOptions = {
+    model: 'google/gemini-2.5-flash-preview',
+    temperature: 0.7,
+    max_tokens: 4096,
+    top_p: 1,
+    top_k: 0,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+    stream: false
+  };
   public context: ExecContext;
   private execInstance: Exec;
   private token: string;
@@ -85,14 +94,6 @@ export class OpenRouter {
     }
 
     this.token = token;
-
-    this.defaultOptions = {
-      model: 'deepseek/deepseek-chat-v3-0324:free',
-      temperature: 0.7,
-      max_tokens: 4096,
-      timeout: 30000,
-      ...options
-    };
 
     this.context = { ...context };
     this.execInstance = new Exec(this.context);

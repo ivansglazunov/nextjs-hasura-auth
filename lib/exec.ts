@@ -112,7 +112,7 @@ export class Exec {
     // Initialize use-m function if not already done
     const use = await initializeUse();
     
-    // Create a fresh context for this execution
+    // Create execution context with all globals
     const executionContext = vm.createContext({
       ...getEnvironmentGlobals(),
       ...this.initialContext,
@@ -122,56 +122,129 @@ export class Exec {
     });
 
     try {
-      // Wrap the code to capture the result
-      const wrappedCode = `
-        (async () => {
-          let __result;
-          const trimmedCode = \`${code.replace(/`/g, '\\`')}\`.trim();
+      const trimmedCode = code.trim();
+      
+      // Check if code contains await or async patterns
+      const hasAwait = /\bawait\b/.test(trimmedCode);
+      
+      // Check if await is at top level (not inside async function)
+      let hasTopLevelAwait = false;
+      if (hasAwait) {
+        // Remove all async function blocks and check if await still exists
+        const codeWithoutAsyncFunctions = trimmedCode
+          .replace(/async\s+function[^{]*\{[\s\S]*?\}/g, '') // Remove async functions
+          .replace(/async\s*\([^)]*\)\s*=>\s*\{[\s\S]*?\}/g, '') // Remove async arrow functions
+          .replace(/async\s*\([^)]*\)\s*=>[^,;\n}]*/g, ''); // Remove simple async arrows
+        
+        hasTopLevelAwait = /\bawait\b/.test(codeWithoutAsyncFunctions);
+      }
+
+      // For simple expressions, wrap in return statement
+      const isSimpleExpression = (
+        !trimmedCode.includes('\n') && 
+        !trimmedCode.includes(';') &&
+        !trimmedCode.includes('const ') &&
+        !trimmedCode.includes('let ') &&
+        !trimmedCode.includes('var ') &&
+        !trimmedCode.includes('function ') &&
+        !trimmedCode.includes('class ') &&
+        !trimmedCode.includes('if ') &&
+        !trimmedCode.includes('for ') &&
+        !trimmedCode.includes('while ') &&
+        !trimmedCode.includes('throw ') &&
+        !trimmedCode.includes('return ') &&
+        !trimmedCode.includes('break ') &&
+        !trimmedCode.includes('continue ') &&
+        !trimmedCode.includes('=') &&
+        !hasAwait &&
+        trimmedCode.length > 0
+      );
+
+      let wrappedCode: string;
+      
+      if (isSimpleExpression) {
+        // Simple expression - just return it
+        wrappedCode = `(${trimmedCode})`;
+      } else if (hasTopLevelAwait) {
+        // Wrap in async IIFE for top-level await
+        const lines = trimmedCode.split('\n').map(line => line.trim()).filter(line => line);
+        const lastLine = lines[lines.length - 1];
+        
+        // If last line looks like an expression, return it
+        if (lastLine && 
+            !lastLine.includes('=') && 
+            !lastLine.endsWith(';') &&
+            !lastLine.startsWith('const ') &&
+            !lastLine.startsWith('let ') &&
+            !lastLine.startsWith('var ') &&
+            !lastLine.startsWith('throw ') &&
+            !lastLine.includes('function ') &&
+            !lastLine.includes('class ') &&
+            // Check if it's a valid expression (variable, comparison, logical operations, etc.)
+            (
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*$/.test(lastLine) || // Simple variable access
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*(===|!==|==|!=|>|<|>=|<=)\s*/.test(lastLine) || // Comparisons
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*(&&|\|\|)\s*/.test(lastLine) || // Logical operations
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*[+\-*/]\s*/.test(lastLine) || // Arithmetic operations
+              /^\(.+\)$/.test(lastLine) || // Parenthesized expressions
+              /^typeof\s+/.test(lastLine) || // typeof operator
+              /^await\s+/.test(lastLine) || // await expressions
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\([^)]*\)$/.test(lastLine) || // Method calls like _.add(1,2)
+              lastLine.includes(' === ') || lastLine.includes(' !== ') || // Explicit equality checks
+              lastLine.includes(' == ') || lastLine.includes(' != ') ||
+              lastLine.includes(' && ') || lastLine.includes(' || ') // Explicit logical operators
+            )) {
           
-          try {
-            // Check if the code is a single expression or variable
-            if (!trimmedCode.includes(';') && !trimmedCode.includes('\\n') && 
-                !trimmedCode.startsWith('const ') && !trimmedCode.startsWith('let ') && 
-                !trimmedCode.startsWith('var ') && !trimmedCode.startsWith('function ')) {
-              // Single expression
-              __result = await eval(\`(async () => { return \${trimmedCode}; })()\`);
+          const codeWithoutLastLine = lines.slice(0, -1).join('\n');
+          wrappedCode = `(async function() {
+            ${codeWithoutLastLine}
+            return ${lastLine};
+          })()`;
+        } else {
+          // Just execute as-is in async IIFE
+          wrappedCode = `(async function() {
+            ${trimmedCode}
+          })()`;
+        }
             } else {
-              // Execute the code as statements
-              ${code}
-              
-              // Try to extract last line as expression
-              const lines = trimmedCode.split('\\n').map(line => line.trim()).filter(line => line && !line.startsWith('//'));
+        // Multi-line code or statements
+        const lines = trimmedCode.split('\n').map(line => line.trim()).filter(line => line);
               const lastLine = lines[lines.length - 1];
               
-              if (lastLine && !lastLine.endsWith(';') && !lastLine.startsWith('/*')) {
-                try {
-                  // Check if last line is a variable name, expression, or assignment
-                  if (/^[a-zA-Z_$][a-zA-Z0-9_$.\\[\\]]*$/.test(lastLine)) {
-                    // It's a variable name or property access
-                    __result = eval(lastLine);
-                  } else if (lastLine.includes('await')) {
-                    __result = await eval(\`(async () => { return \${lastLine}; })()\`);
+        // If last line looks like an expression (no keywords, no assignment), return it
+        if (lastLine && 
+            !lastLine.includes('=') && 
+            !lastLine.endsWith(';') &&
+            !lastLine.startsWith('const ') &&
+            !lastLine.startsWith('let ') &&
+            !lastLine.startsWith('var ') &&
+            !lastLine.startsWith('throw ') &&
+            // Check if it's a valid expression (variable, comparison, logical operations, etc.)
+            (
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*$/.test(lastLine) || // Simple variable access
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*(===|!==|==|!=|>|<|>=|<=)\s*/.test(lastLine) || // Comparisons
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*(&&|\|\|)\s*/.test(lastLine) || // Logical operations
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*[+\-*/]\s*/.test(lastLine) || // Arithmetic operations
+              /^\(.+\)$/.test(lastLine) || // Parenthesized expressions
+              /^typeof\s+/.test(lastLine) || // typeof operator
+              /^await\s+/.test(lastLine) || // await expressions
+              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\([^)]*\)$/.test(lastLine) || // Method calls like _.add(1,2)
+              lastLine.includes(' === ') || lastLine.includes(' !== ') || // Explicit equality checks
+              lastLine.includes(' == ') || lastLine.includes(' != ') ||
+              lastLine.includes(' && ') || lastLine.includes(' || ') // Explicit logical operators
+            )) {
+          
+          // Execute all but last line, then return last line
+          const codeWithoutLastLine = lines.slice(0, -1).join('\n');
+          wrappedCode = `
+            ${codeWithoutLastLine}
+            ${lastLine}
+          `;
                   } else {
-                    __result = eval(lastLine);
-                  }
-                } catch (e2) {
-                  // Last line is not an expression, return undefined
-                  __result = undefined;
-                }
-              }
-            }
-          } catch (e) {
-            // If all else fails, just execute as statements
-            try {
-              ${code}
-              __result = undefined;
-            } catch (e2) {
-              throw e2;
-            }
-          }
-          return __result;
-        })()
-      `;
+          // Just execute the code as-is
+          wrappedCode = trimmedCode;
+        }
+      }
 
       const result = vm.runInContext(wrappedCode, executionContext, {
         timeout: this.options.timeout,
@@ -225,3 +298,94 @@ export class Exec {
 export function createExec(context: ExecContext = {}, options: ExecOptions = {}): Exec {
   return new Exec(context, options);
 } 
+
+export interface ExecDo {
+  exec: (code: string) => Promise<any>;
+  context: any;
+  updateContext: (newContext: any) => void;
+  getContext: () => any;
+  clearContext: () => void;
+}
+
+export interface ExecDoCallbacks {
+  onCodeExecuting?: (code: string) => void;
+  onCodeResult?: (result: any) => void;
+  onError?: (error: Error) => void;
+}
+
+/**
+ * Create execDo object for AI integration
+ */
+export function createExecDo(context: any = {}, callbacks: ExecDoCallbacks = {}): ExecDo {
+  const exec = new Exec(context);
+  
+  return {
+    exec: async (code: string) => {
+      try {
+        if (callbacks.onCodeExecuting) {
+          callbacks.onCodeExecuting(code);
+        }
+        
+        const result = await exec.exec(code);
+        
+        if (callbacks.onCodeResult) {
+          callbacks.onCodeResult(result);
+        }
+        
+        return result;
+      } catch (error) {
+        if (callbacks.onError) {
+          callbacks.onError(error as Error);
+        }
+        throw error;
+      }
+    },
+    context: exec.getContext(),
+    updateContext: (newContext: any) => exec.updateContext(newContext),
+    getContext: () => exec.getContext(),
+    clearContext: () => exec.clearContext()
+  };
+}
+
+/**
+ * Default exec context for AI
+ */
+export const execContext = `
+📦 **JavaScript Execution Environment**
+
+You can execute JavaScript code using Node.js VM with full async/await support.
+
+**Available Context:**
+- Node.js built-ins (fs, path, crypto, etc.)
+- Process information (process.env, process.platform, etc.) 
+- Network capabilities (fetch, HTTP client)
+- File system access
+- Dynamic imports and module resolution
+
+**Execution Format:**
+> 🪬<uuid>/do/exec/js
+\`\`\`js
+your javascript code here
+\`\`\`
+
+**Examples:**
+> 🪬calc1/do/exec/js
+\`\`\`js
+2 + 2
+\`\`\`
+
+> 🪬info1/do/exec/js
+\`\`\`js
+process.platform
+\`\`\`
+
+> 🪬async1/do/exec/js
+\`\`\`js
+await fetch('https://api.github.com/users/octocat').then(r => r.json())
+\`\`\`
+`;
+
+/**
+ * Default execDo object
+ */
+export const execDo = createExecDo(); 

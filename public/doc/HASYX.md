@@ -102,9 +102,9 @@ Ideal for server-side logic (API routes, server components, scripts) where you m
 
 ```typescript
 import { ApolloClient } from '@apollo/client';
-import { Hasyx } from './hasyx'; // Adjust path
-import { createApolloClient } from './apollo'; // Your Apollo client setup
-import schema from './public/hasura-schema.json'; // From root of project, generated with `npx hasyx schema`
+import { Hasyx } from 'hasyx/lib/hasyx'; // Correct import path
+import { createApolloClient } from 'hasyx/lib/apollo'; // Correct import path
+import schema from '@/public/hasura-schema.json'; // Generated locally by npx hasyx schema
 
 // Example: Instantiate with an admin client
 // Note: For simplicity, assuming TData and TOptions types are broadly compatible or generics are handled correctly.

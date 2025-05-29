@@ -81,7 +81,7 @@ This example demonstrates creating a simple graph with two types of nodes (users
 "use client"
 
 import React, { useEffect, useState } from 'react';
-import { Cyto, CytoNode, CytoEdge, CytoStyle, useGraph } from '@/lib/cyto'; // Path to your module
+import { Cyto, CytoNode, CytoEdge, CytoStyle, useGraph } from 'hasyx/lib/cyto'; // Import from hasyx package
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Example UI component
 import { Button } from '@/components/ui/button';
 

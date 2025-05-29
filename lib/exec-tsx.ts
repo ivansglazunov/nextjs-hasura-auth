@@ -98,11 +98,28 @@ export class ExecTs extends Exec {
       const compiledJs = this.compileTypeScript(code);
       debug('Compiled JavaScript:', compiledJs);
       
-      // Execute compiled JavaScript using parent exec method
-      return await this.exec(compiledJs, contextExtend);
+      // Execute compiled JavaScript using custom logic for TypeScript
+      return await this.execCompiledTs(compiledJs, contextExtend);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`TypeScript execution error: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Execute compiled TypeScript/JavaScript code with special handling for return statements
+   */
+  private async execCompiledTs(compiledJs: string, contextExtend: ExecContext = {}): Promise<any> {
+    // Check if code has top-level return statements
+    const hasTopLevelReturn = /^\s*return\s/m.test(compiledJs);
+    
+    if (hasTopLevelReturn) {
+      // Wrap in function to handle top-level returns
+      const wrappedCode = `(function() {\n${compiledJs}\n})()`;
+      return await super.exec(wrappedCode, contextExtend);
+    } else {
+      // Use parent exec method normally
+      return await super.exec(compiledJs, contextExtend);
     }
   }
 
@@ -168,4 +185,107 @@ export class ExecTs extends Exec {
 // Factory function for easier usage
 export function createExecTs(context: ExecContext = {}, options: ExecTsOptions = {}): ExecTs {
   return new ExecTs(context, options);
-} 
+}
+
+export interface ExecTsDo {
+  exec: (code: string) => Promise<any>;
+  context: any;
+  updateContext: (newContext: any) => void;
+  getContext: () => any;
+  clearContext: () => void;
+}
+
+export interface ExecTsDoCallbacks {
+  onCodeExecuting?: (code: string) => void;
+  onCodeResult?: (result: any) => void;
+  onError?: (error: Error) => void;
+}
+
+/**
+ * Create execTsDo object for AI integration
+ */
+export function createExecTsDo(context: any = {}, callbacks: ExecTsDoCallbacks = {}): ExecTsDo {
+  const execTs = new ExecTs(context);
+  
+  return {
+    exec: async (code: string) => {
+      try {
+        if (callbacks.onCodeExecuting) {
+          callbacks.onCodeExecuting(code);
+        }
+        
+        const result = await execTs.exec(code);
+        
+        if (callbacks.onCodeResult) {
+          callbacks.onCodeResult(result);
+        }
+        
+        return result;
+      } catch (error) {
+        if (callbacks.onError) {
+          callbacks.onError(error as Error);
+        }
+        throw error;
+      }
+    },
+    context: execTs.getContext(),
+    updateContext: (newContext: any) => execTs.updateContext(newContext),
+    getContext: () => execTs.getContext(),
+    clearContext: () => execTs.clearContext()
+  };
+}
+
+/**
+ * Default execTs context for AI
+ */
+export const execTsContext = `
+📦 **TypeScript/TSX Execution Environment**
+
+You can execute TypeScript and TSX code with full type support and in-memory compilation.
+
+**Available Features:**
+- Full TypeScript syntax support
+- JSX/TSX support  
+- Automatic type checking
+- In-memory compilation
+- All Node.js built-ins
+- Dynamic imports and module resolution
+
+**Execution Format:**
+> 🪬<uuid>/do/exec/tsx
+\`\`\`tsx
+your typescript code here
+\`\`\`
+
+**Examples:**
+> 🪬types1/do/exec/tsx
+\`\`\`tsx
+interface User {
+  id: number;
+  name: string;
+}
+
+const user: User = { id: 1, name: "John" };
+user
+\`\`\`
+
+> 🪬jsx1/do/exec/tsx
+\`\`\`tsx
+const element = <div>Hello World</div>;
+typeof element
+\`\`\`
+
+> 🪬async1/do/exec/tsx
+\`\`\`tsx
+async function fetchData(): Promise<any> {
+  return { message: "Hello from TypeScript!" };
+}
+
+await fetchData()
+\`\`\`
+`;
+
+/**
+ * Default execTsDo object
+ */
+export const execTsDo = createExecTsDo(); 

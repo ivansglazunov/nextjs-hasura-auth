@@ -133,7 +133,7 @@ interface OpenRouterOptions {
 
 ```typescript
 {
-  model: 'deepseek/deepseek-chat-v3-0324:free',
+  model: 'google/gemini-2.5-flash-preview',
   temperature: 0.7,
   max_tokens: 4096,
   timeout: 30000
@@ -248,14 +248,14 @@ try {
 
 OpenRouter provides access to many AI models. Some popular options:
 
-- `deepseek/deepseek-chat-v3-0324:free` (default, free)
+- `google/gemini-2.5-flash-preview` (default, low cost)
+- `google/gemini-2.5-pro-preview` (premium, high capability)
 - `anthropic/claude-3-opus`
 - `anthropic/claude-3-sonnet`
 - `anthropic/claude-3-haiku`
 - `openai/gpt-4`
 - `openai/gpt-3.5-turbo`
 - `meta-llama/llama-3.1-8b-instruct:free`
-- `google/gemini-pro`
 
 Check the [OpenRouter documentation](https://openrouter.ai/docs) for the complete list of available models and their capabilities.
 

@@ -6,6 +6,7 @@ import Debug from './debug';
 import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './events';
 import { buildDocumentation } from './doc-public';
 import assist from './assist';
+import { printMarkdown } from './markdown-terminal';
 
 // Create a debugger instance for the CLI
 const debug = Debug('cli');
@@ -238,6 +239,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'lib/payments.tsx': 'lib/payments.tsx',
     'lib/doc.ts': 'lib/doc.ts',
     'lib/doc-public.ts': 'lib/doc-public.ts',
+    'lib/ask.ts': 'lib/ask.template',
     'public/favicon.ico': 'public/favicon.ico',
     'public/logo.svg': 'public/logo.svg',
     '.gitignore': '.gitignore.template',
@@ -993,49 +995,53 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
   // Ask command
   program
     .command('ask')
-    .description('Ask AI questions using OpenRouter with free DeepSeek model')
-    .option('-e, --eval <question>', 'Ask a direct question and get a response')
+    .description('AI assistant with code execution capabilities')
+    .option('-e, --eval <question>', 'Execute a direct question')
     .option('-y, --yes', 'Auto-approve code execution (no confirmation)')
     .option('-m, --model <model>', 'Specify OpenRouter model')
-    .option('-h, --help', 'Show help information')
     .action(async (options) => {
       debug('Executing "ask" command with options:', options);
       
-      const projectRoot = findProjectRoot();
-      const askScriptPath = path.join(projectRoot, 'lib', 'ask.ts');
-      
-      const args: string[] = [];
-      if (options.eval) {
-        args.push('-e', options.eval);
-      }
-      if (options.yes) {
-        args.push('-y');
-      }
-      if (options.model) {
-        args.push('-m', options.model);
-      }
-      if (options.help) {
-        args.push('-h');
-      }
-      
-      const { spawn } = require('child_process');
-      const child = spawn('npx', ['tsx', askScriptPath, ...args], {
-        stdio: 'inherit',
-        cwd: projectRoot,
-        env: {
-          ...process.env,
-          NODE_OPTIONS: '--experimental-vm-modules'
-        }
-      });
-      
-      child.on('exit', (code: number) => {
-        process.exit(code || 0);
-      });
-      
-      child.on('error', (error: Error) => {
-        console.error('❌ Error executing ask command:', error);
+      // Check for OPENROUTER_API_KEY
+      if (!process.env.OPENROUTER_API_KEY) {
+        console.error('❌ OPENROUTER_API_KEY environment variable is required');
+        console.error('   Please set it in your .env file or environment');
         process.exit(1);
-      });
+      }
+
+      const projectRoot = findProjectRoot();
+      
+      // Check for project-specific ask.ts
+      const projectAskPath = path.join(projectRoot, 'lib', 'ask.ts');
+      
+      try {
+        let askModule;
+        
+        if (fs.existsSync(projectAskPath)) {
+          // Use project's own ask.ts
+          debug('Using project-specific ask.ts');
+          askModule = await import(projectAskPath);
+        } else {
+          // Use Hasyx's default ask
+          debug('Using default Hasyx ask.ts');
+          askModule = await import('./ask');
+        }
+        
+        const ask = askModule.default || askModule.ask;
+        
+        if (options.eval) {
+          // Direct question mode
+          const response = await ask.ask(options.eval);
+          await printMarkdown(response);
+        } else {
+          // Interactive REPL mode
+          await ask.repl();
+        }
+      } catch (error) {
+        console.error('❌ Error in ask command:', error);
+        debug('Ask command error:', error);
+        process.exit(1);
+      }
     });
 
   // TSX command

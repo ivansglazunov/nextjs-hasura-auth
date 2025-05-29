@@ -1,6 +1,10 @@
 import { Observable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
+import * as readline from 'readline';
+import * as fs from 'fs';
+import * as path from 'path';
 import { OpenRouter, OpenRouterMessage, OpenRouterOptions } from './openrouter';
+import { printMarkdown } from './markdown-terminal';
 import Debug from './debug';
 
 const debug = Debug('hasyx:ai');
@@ -8,11 +12,18 @@ const debug = Debug('hasyx:ai');
 export interface Do extends OpenRouterMessage {
   id: string;
   operation: string;
-  format: 'js' | 'tsx';
+  format: 'js' | 'tsx' | 'terminal';
   request: string;
   response?: string;
   startLine: number;
   endLine: number;
+}
+
+export interface ProjectInfo {
+  name: string;
+  version?: string;
+  description?: string;
+  features?: string[];
 }
 
 export class AI {
@@ -26,9 +37,9 @@ export class AI {
   public _onMemory?: (message: OpenRouterMessage | Do) => void;
   public _do?: (doItem: Do) => Promise<Do>;
   public _onThinking?: () => void;
-  public _onCodeFound?: (code: string, format: 'js' | 'tsx') => void;
-  public _onCodeExecuting?: (code: string, format: 'js' | 'tsx') => void;
-  public _onCodeResult?: (result: string) => void;
+  public _onCodeFound?: (code: string, format: 'js' | 'tsx' | 'terminal') => void | Promise<void>;
+  public _onCodeExecuting?: (code: string, format: 'js' | 'tsx' | 'terminal') => void;
+  public _onCodeResult?: (result: string) => void | Promise<void>;
   public _onResponse?: (response: string) => void;
 
   constructor(
@@ -41,6 +52,79 @@ export class AI {
     this.systemPrompt = systemPrompt;
     
     debug('AI instance created');
+  }
+
+  /**
+   * Interactive REPL mode for terminal interaction
+   */
+  async repl(): Promise<void> {
+    console.log('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
+    console.log('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
+    if (this._do) {
+      console.log('🪬 AI can execute code automatically!');
+    }
+    
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      prompt: '> '
+    });
+
+    rl.prompt();
+
+    rl.on('line', async (input) => {
+      const question = input.trim();
+      
+      if (!question) {
+        rl.prompt();
+        return;
+      }
+
+      debug('Processing REPL question:', question);
+      try {
+        const response = await this.ask(question);
+        
+        // Always use markdown formatting for beautiful output
+        await printMarkdown(response);
+      } catch (error) {
+        debug('Error in REPL:', error);
+        console.error('❌ Error:', error instanceof Error ? error.message : String(error));
+      }
+      
+      rl.prompt();
+    });
+
+    rl.on('close', () => {
+      debug('REPL closed');
+      console.log('\n👋 Goodbye!');
+      process.exit(0);
+    });
+
+    rl.on('SIGINT', () => {
+      debug('SIGINT received in REPL');
+      console.log('\n👋 Goodbye!');
+      process.exit(0);
+    });
+  }
+
+  /**
+   * Check if text contains markdown formatting
+   */
+  private hasMarkdownFormatting(text: string): boolean {
+    const markdownPatterns = [
+      /```[\s\S]*?```/,           // Code blocks
+      /`[^`]+`/,                  // Inline code
+      /^#{1,6}\s/m,               // Headers
+      /\*\*[^*]+\*\*/,            // Bold
+      /\*[^*]+\*/,                // Italic
+      /\[[^\]]+\]\([^)]+\)/,      // Links
+      /^\s*[-*+]\s/m,             // Lists
+      /^\s*\d+\.\s/m,             // Numbered lists
+      /^>\s/m,                    // Blockquotes
+      /^\s*\|.*\|/m               // Tables
+    ];
+    
+    return markdownPatterns.some(pattern => pattern.test(text));
   }
 
   /**
@@ -105,14 +189,39 @@ export class AI {
             
             // Format execution result for display
             if (executedDo.response) {
+              // Determine the best language for the result display
+              let resultLanguage = 'text';
+              let codeLanguage: string = doItem.format;
+              
+              // Use 'bash' instead of 'terminal' for better display
+              if (doItem.format === 'terminal') {
+                codeLanguage = 'bash';
+                resultLanguage = 'text'; // Terminal output is usually plain text
+              } else if (doItem.format === 'js' || doItem.format === 'tsx') {
+                // For JS/TS, try to detect if result looks like JSON
+                try {
+                  JSON.parse(executedDo.response);
+                  resultLanguage = 'json';
+                } catch {
+                  // Check if it's a simple number, boolean, or text
+                  if (/^\d+(\.\d+)?$/.test(executedDo.response.trim())) {
+                    resultLanguage = 'javascript';
+                  } else if (/^(true|false)$/.test(executedDo.response.trim())) {
+                    resultLanguage = 'javascript';
+                  } else {
+                    resultLanguage = 'text';
+                  }
+                }
+              }
+
               const resultDisplay = `
 **Code Executed:**
-\`\`\`${doItem.format}
+\`\`\`${codeLanguage}
 ${doItem.request}
 \`\`\`
 
 **Result:**
-\`\`\`
+\`\`\`${resultLanguage}
 ${executedDo.response}
 \`\`\``;
               executionResults.push(resultDisplay);
@@ -216,16 +325,35 @@ ${executedDo.response}
     const lines = messagePart.split('\n');
     const firstLine = lines[0];
     
+    debug('Parsing Do operation from message part:', messagePart);
+    
     // Extract operation and ID from first line
-    // Format: > 🪬<uuid>/do/exec/js or > 🪬<uuid>/do/exec/tsx
-    const match = firstLine.match(/> 🪬([^/]+)\/do\/exec\/(js|tsx)/);
-    if (!match) {
-      throw new Error('Invalid Do format');
+    // Format: > 🪬<uuid>/do/exec/js or > 🪬<uuid>/do/exec/tsx or > 🪬<uuid>/do/terminal/cmd
+    const execMatch = firstLine.match(/> 🪬([^/]+)\/do\/exec\/(js|tsx)/);
+    const terminalMatch = firstLine.match(/> 🪬([^/]+)\/do\/terminal\/(cmd|bash|zsh|sh)/);
+    
+    let id: string, format: 'js' | 'tsx' | 'terminal', operation: string;
+    
+    if (execMatch) {
+      id = execMatch[1];
+      format = execMatch[2] as 'js' | 'tsx';
+      operation = `do/exec/${format}`;
+    } else if (terminalMatch) {
+      id = terminalMatch[1];
+      format = 'terminal';
+      operation = `do/terminal/${terminalMatch[2]}`;
+    } else {
+      debug('No standard Do format found, checking for terminal code block...');
+      // Check if this is a terminal code block without proper header
+      if (messagePart.includes('```terminal\n') || messagePart.includes('```bash\n') || messagePart.includes('```sh\n')) {
+        id = `terminal_${Date.now()}`;
+        format = 'terminal';
+        operation = 'do/terminal/bash';
+        debug('Found terminal code block without proper header, treating as terminal command');
+      } else {
+        throw new Error('Invalid Do format');
+      }
     }
-
-    const id = match[1];
-    const format = match[2] as 'js' | 'tsx';
-    const operation = `do/exec/${format}`;
 
     // Extract code from code block
     const codeBlockStart = messagePart.indexOf('```');
@@ -238,6 +366,8 @@ ${executedDo.response}
     const codeBlock = messagePart.substring(codeBlockStart, codeBlockEnd + 3);
     const codeLines = codeBlock.split('\n');
     const code = codeLines.slice(1, -1).join('\n'); // Remove ``` lines
+
+    debug('Extracted code:', code);
 
     return {
       role: 'tool',
@@ -258,9 +388,12 @@ ${executedDo.response}
     const dos: Do[] = [];
     const lines = message.split('\n');
     
+    debug('Finding Do operations in message:', message);
+    
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
+      // Check for standard Do format
       if (line.startsWith(this.doSpecialSubstring)) {
         // Find the end of this Do operation (next ``` after the opening ```)
         let startLine = i;
@@ -301,9 +434,41 @@ ${executedDo.response}
             debug('Error parsing Do operation:', error);
           }
         }
+      } 
+      // Also check for standalone terminal code blocks
+      else if (line.startsWith('```terminal') || line.startsWith('```bash') || line.startsWith('```sh')) {
+        let startLine = i;
+        let codeBlockEnd = -1;
+        
+        // Find closing ```
+        for (let j = i + 1; j < lines.length; j++) {
+          if (lines[j] === '```') {
+            codeBlockEnd = j;
+            break;
+          }
+        }
+        
+        if (codeBlockEnd !== -1) {
+          const endLine = codeBlockEnd;
+          const messagePart = lines.slice(startLine, endLine + 1).join('\n');
+          
+          try {
+            const doItem = this.generateDo(messagePart);
+            doItem.startLine = startLine;
+            doItem.endLine = endLine;
+            dos.push(doItem);
+            debug('Found standalone terminal code block:', doItem);
+            
+            // Skip processed lines
+            i = endLine;
+          } catch (error) {
+            debug('Error parsing terminal code block:', error);
+          }
+        }
       }
     }
     
+    debug(`Found ${dos.length} Do operations total`);
     return dos;
   }
 
@@ -334,7 +499,7 @@ ${executedDo.response}
     
     // Notify that code was found
     if (this._onCodeFound) {
-      this._onCodeFound(doItem.request, doItem.format);
+      await this._onCodeFound(doItem.request, doItem.format);
     }
     
     if (this._do) {
@@ -379,10 +544,20 @@ ${executedDo.response}
     const recentMemory = this.memory.slice(-10); // Last 10 messages
     recentMemory.forEach(item => {
       if ('role' in item) {
-        allMessages.push({
-          role: item.role,
-          content: item.content || ''
-        });
+        // Handle Do objects specially to include execution results
+        if ('operation' in item && 'response' in item && item.response) {
+          // This is a Do object with execution results - send as user message
+          allMessages.push({
+            role: 'user',
+            content: `Execution result from previous code:\nCode: ${item.request}\nResult: ${item.response}\n\nPlease continue your response based on this result.`
+          });
+        } else {
+          // Regular message
+          allMessages.push({
+            role: item.role,
+            content: item.content || ''
+          });
+        }
       }
     });
     
@@ -413,5 +588,65 @@ ${executedDo.response}
   setSystemPrompt(prompt: string): void {
     this.systemPrompt = prompt;
     debug('System prompt updated');
+  }
+
+  /**
+   * Get project information from package.json
+   */
+  getProjectInfo(): ProjectInfo {
+    try {
+      const packageJsonPath = path.join(process.cwd(), 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+        return {
+          name: packageJson.name || 'Unknown Project',
+          version: packageJson.version,
+          description: packageJson.description,
+          features: []
+        };
+      }
+    } catch (error) {
+      debug('Error reading package.json:', error);
+    }
+    
+    return {
+      name: 'Unknown Project',
+      features: []
+    };
+  }
+
+  /**
+   * Get recommended context for code execution
+   */
+  getRecommendedContext(): any {
+    const project = this.getProjectInfo();
+    
+    return {
+      // Project information
+      PROJECT_NAME: project.name,
+      PROJECT_VERSION: project.version,
+      PROJECT_DESCRIPTION: project.description,
+      
+      // Environment information
+      NODE_ENV: process.env.NODE_ENV || 'development',
+      PLATFORM: process.platform,
+      ARCH: process.arch,
+      
+      // Utility functions
+      log: (...args: any[]) => console.log(...args),
+      debug: (...args: any[]) => debug(...args),
+      
+      // Common utilities
+      sleep: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
+      timestamp: () => new Date().toISOString(),
+      uuid: () => {
+        // Simple UUID v4 generator
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0;
+          const v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      }
+    };
   }
 } 

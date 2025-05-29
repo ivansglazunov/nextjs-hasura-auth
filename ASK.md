@@ -2,19 +2,56 @@
 
 Ask Command - AI Assistant CLI
 
-The Ask command provides a powerful AI assistant interface for Hasyx projects, allowing you to ask questions and get intelligent responses directly from your command line. It uses OpenRouter's free DeepSeek model to provide high-quality AI assistance for coding, problem-solving, and general questions.
+The Ask command provides a powerful AI assistant interface for Hasyx projects, allowing you to ask questions and get intelligent responses directly from your command line. It uses OpenRouter's Google Gemini 2.5 Flash Preview model to provide high-quality AI assistance for coding, problem-solving, and general questions.
 
 ## Features
 
 - **Direct Question Mode**: Ask single questions with immediate responses
 - **Interactive Chat Mode**: Start a conversation session with the AI
-- **Free AI Model**: Uses DeepSeek's free model via OpenRouter API
+- **Advanced AI Model**: Uses Google Gemini 2.5 Flash Preview via OpenRouter API
 - **Multiple Question Types**: Supports coding, math, general knowledge, and more
-- **Clean Output**: Shows only AI responses without additional console messages
+- **🆕 Beautiful Terminal Output**: All responses formatted with markdown and syntax highlighting
 - **Environment Integration**: Automatically loads configuration from `.env` file
 - **🆕 Real-time Progress Indicators**: See exactly what AI is doing step-by-step
-- **🆕 Automatic Code Execution**: AI can execute JavaScript and TypeScript code automatically
+- **🆕 Automatic Code Execution**: AI can execute JavaScript, TypeScript, and terminal commands automatically
 - **🆕 Iterative Responses**: AI can execute multiple code blocks and continue reasoning
+
+## 🎨 Beautiful Terminal Output
+
+The Ask command now displays all responses with beautiful markdown formatting and syntax highlighting:
+
+### Formatted Output Features
+
+- **📝 Headers and Text**: Proper markdown rendering with colors
+- **💻 Code Blocks**: Syntax highlighting for JavaScript, TypeScript, Bash, JSON, and more
+- **📋 Lists and Bullets**: Clean bullet points and numbered lists
+- **🔗 Links**: Formatted links with proper highlighting
+- **⭐ Bold and Italic**: Rich text formatting support
+- **📊 Tables**: Clean table rendering in terminal
+
+### Example Formatted Output
+
+```bash
+$ npx hasyx ask -e "Show me a JavaScript function example"
+
+# JavaScript Function Example
+
+Here's a **simple function** that adds two numbers:
+
+```js
+function addNumbers(a, b) {
+  return a + b;
+}
+
+const result = addNumbers(5, 3);
+console.log(result); // Output: 8
+```
+
+This function:
+• Takes two parameters
+• Returns their sum  
+• Can be used with any numbers
+```
 
 ## 🎯 Real-time Progress Indicators
 
@@ -24,11 +61,11 @@ The Ask command now shows you exactly what's happening during AI processing:
 
 - **🧠 AI думает...** - When AI is generating a response
 - **💭 AI ответил (N символов)** - When AI response is received with character count  
-- **📋 Найден JS/TSX код для выполнения** - When executable code is found in AI response
-- **⚡ Выполняется JS/TSX код...** - When code execution starts
-- **✅ Результат выполнения** - When code execution completes with results
+- **📋 Найден JS/TSX/TERMINAL код для выполнения** - When executable code is found with syntax highlighting
+- **⚡ Выполняется JS/TSX/TERMINAL код...** - When code execution starts
+- **✅ Результат выполнения** - When code execution completes with formatted results
 
-### Example Output
+### Example Output with Syntax Highlighting
 
 ```bash
 $ npx hasyx ask -e "Calculate 5 factorial using JavaScript"
@@ -36,17 +73,18 @@ $ npx hasyx ask -e "Calculate 5 factorial using JavaScript"
 🧠 AI думает...
 💭 AI ответил (245 символов)
 📋 Найден JS код для выполнения:
-```js
-function factorial(n) {
-  return n <= 1 ? 1 : n * factorial(n - 1);
-}
-factorial(5);
-```
+    function factorial(n) {
+      return n <= 1 ? 1 : n * factorial(n - 1);
+    }
+    factorial(5);
+
 ⚡ Выполняется JS код...
 ✅ Результат выполнения:
-120
+    120
 
-The factorial of 5 is 120. This recursive function calculates...
+# Calculation Result
+
+The factorial of 5 is **120**. This recursive function calculates...
 ```
 
 ### Automatic Code Execution
@@ -242,21 +280,21 @@ The Ask command uses these default configuration settings:
 
 ```javascript
 {
-  model: 'deepseek/deepseek-chat-v3-0324:free',  // Free DeepSeek model
-  temperature: 0.7,                              // Balanced creativity
-  max_tokens: 4096,                             // Long responses
-  timeout: 30000                                // 30 second timeout
+  model: 'google/gemini-2.5-flash-preview',  // Free Google Gemini Flash model
+  temperature: 0.1,
+  max_tokens: 2048
 }
 ```
 
 ### Model Information
 
-**DeepSeek Chat v3 (Free)**
-- **Model ID**: `deepseek/deepseek-chat-v3-0324:free`
-- **Cost**: Free tier available
-- **Strengths**: Code generation, mathematical reasoning, general knowledge
-- **Context Length**: Large context window for complex questions
-- **Response Quality**: High-quality responses comparable to premium models
+**Google Gemini 2.5 Flash Preview**
+- **Model ID**: `google/gemini-2.5-flash-preview`
+- **Cost**: Very affordable ($0.15/M input, $0.60/M output tokens)
+- **Strengths**: Fast responses, excellent code generation, mathematical reasoning, general knowledge, and multilingual support
+- **Context Length**: Large context window (1M tokens) for complex questions and long conversations
+- **Response Quality**: High-quality responses optimized for speed, accuracy, and code execution
+- **Special Features**: Advanced reasoning capabilities, code execution understanding, and iterative problem solving
 
 ## Error Handling
 

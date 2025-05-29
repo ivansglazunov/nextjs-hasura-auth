@@ -15,8 +15,8 @@ This document describes the `Generator` function located in `lib/generator.ts`. 
 ```typescript
 // Assuming 'hasyx' is your published package name
 import { Generator, GenerateOptions, GenerateResult } from 'hasyx'; 
-// Assuming schema is correctly loaded (you might need to handle schema loading differently when using the package)
-import schema from './public/hasura-schema.json'; 
+// Schema is generated locally in your project using npx hasyx schema
+import schema from '@/public/hasura-schema.json';
 
 // Initialize the generator (Schema needs to be passed)
 const generate = Generator(schema); 
@@ -687,7 +687,7 @@ subscription SubscriptionUsers($v1: users_bool_exp) {
 ### 14. Query with `distinct_on`
 
 ```typescript
-import type { users_select_column } from '../types/hasura-types'; // Import enum if using strict types
+import type { users_select_column } from 'hasyx/types/hasura-types'; // Import enum if using strict types
 
 const options: GenerateOptions = {
   operation: 'query',

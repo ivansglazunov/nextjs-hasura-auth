@@ -131,7 +131,7 @@ Use this in API Routes, Server Components, or WebSocket connection handlers to g
 ```typescript
 // app/api/my-route/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth'; // Adjust path
+import { getTokenFromRequest } from 'hasyx/lib/auth'; // Use hasyx import
 
 export async function GET(request: NextRequest) {
   // This will check Bearer token first, then cookie
@@ -185,7 +185,7 @@ The `testAuthorize` function allows developers to:
 **Usage Example:**
 
 ```typescript
-import { testAuthorize } from '@/lib/auth';
+import { testAuthorize } from 'hasyx/lib/auth';
 
 // In a test or development script:
 async function testProtectedFeature() {

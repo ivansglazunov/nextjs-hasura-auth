@@ -27,7 +27,7 @@ npm install node-pty
 ## Basic Usage
 
 ```typescript
-import { Terminal } from './lib/terminal';
+import { Terminal } from 'hasyx/lib/terminal';
 
 // Create a new terminal instance
 const terminal = new Terminal({
@@ -276,7 +276,7 @@ import {
   createBashTerminal,
   createZshTerminal,
   createFishTerminal 
-} from './lib/terminal';
+} from 'hasyx/lib/terminal';
 
 const bashTerminal = createBashTerminal({ cols: 120 });
 const zshTerminal = createZshTerminal({ rows: 40 });
@@ -289,7 +289,7 @@ const fishTerminal = createFishTerminal();
 import { 
   createNodeTerminal,
   createPythonTerminal 
-} from './lib/terminal';
+} from 'hasyx/lib/terminal';
 
 const nodeRepl = createNodeTerminal();
 const pythonRepl = createPythonTerminal();
@@ -304,7 +304,7 @@ const result = await nodeRepl.execute('console.log("Hello from Node!")');
 import { 
   createPowerShellTerminal,
   createCmdTerminal 
-} from './lib/terminal';
+} from 'hasyx/lib/terminal';
 
 // Windows terminals
 const powershell = createPowerShellTerminal();
@@ -317,7 +317,7 @@ const cmd = createCmdTerminal();
 import { 
   createDockerTerminal,
   createSSHTerminal 
-} from './lib/terminal';
+} from 'hasyx/lib/terminal';
 
 const dockerTerm = createDockerTerminal('my-container');
 const sshTerm = createSSHTerminal('user@server.com');
@@ -439,7 +439,7 @@ try {
 ### Global Cleanup
 
 ```typescript
-import { destroyAllTerminals } from './lib/terminal';
+import { destroyAllTerminals } from 'hasyx/lib/terminal';
 
 // Clean up all terminal instances
 process.on('exit', () => {
@@ -471,7 +471,7 @@ try {
 2. **Use the global cleanup function** for application-wide cleanup:
 
 ```typescript
-import { destroyAllTerminals } from './lib/terminal';
+import { destroyAllTerminals } from 'hasyx/lib/terminal';
 
 process.on('exit', destroyAllTerminals);
 ```
@@ -528,7 +528,7 @@ const fullTerminal = new Terminal({ cols: 120, rows: 40 });
 ### Basic Command Execution
 
 ```typescript
-import { Terminal } from './lib/terminal';
+import { Terminal } from 'hasyx/lib/terminal';
 
 async function runCommands() {
   const terminal = new Terminal();
@@ -556,7 +556,7 @@ async function runCommands() {
 ### Interactive Shell Session
 
 ```typescript
-import { createBashTerminal } from './lib/terminal';
+import { createBashTerminal } from 'hasyx/lib/terminal';
 
 async function interactiveSession() {
   const terminal = createBashTerminal();
@@ -587,7 +587,7 @@ async function interactiveSession() {
 ### Development Environment Setup
 
 ```typescript
-import { createNodeTerminal, createPythonTerminal } from './lib/terminal';
+import { createNodeTerminal, createPythonTerminal } from 'hasyx/lib/terminal';
 
 async function setupDevEnvironment() {
   const nodeRepl = createNodeTerminal();
@@ -616,7 +616,7 @@ async function setupDevEnvironment() {
 ### File Operations
 
 ```typescript
-import { Terminal } from './lib/terminal';
+import { Terminal } from 'hasyx/lib/terminal';
 
 async function fileOperations() {
   const terminal = new Terminal();
@@ -643,7 +643,7 @@ async function fileOperations() {
 ### Process Management
 
 ```typescript
-import { Terminal } from './lib/terminal';
+import { Terminal } from 'hasyx/lib/terminal';
 
 async function processManagement() {
   const terminal = new Terminal();

@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.213",
+  "version": "0.1.214",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -155,7 +155,6 @@
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
     "next-ws": "^2.0.7",
-    "node-pty": "^1.0.0",
     "png-to-ico": "^2.1.8",
     "prettier": "^3.5.3",
     "react": "^19.0.0",
@@ -199,6 +198,7 @@
     "cross-env": "^7.0.3",
     "glob": "^11.0.2",
     "ignore-loader": "^0.1.2",
+    "node-pty": "^1.0.0",
     "tsx": "^4.19.4",
     "uuid": "^11.1.0"
   }
