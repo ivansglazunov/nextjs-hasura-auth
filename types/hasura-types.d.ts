@@ -1101,10 +1101,6 @@ export type Mutation_Root = {
   delete_payments_user_payment_provider_mappings?: Maybe<Payments_User_Payment_Provider_Mappings_Mutation_Response>;
   /** delete single row from the table: "payments.user_payment_provider_mappings" */
   delete_payments_user_payment_provider_mappings_by_pk?: Maybe<Payments_User_Payment_Provider_Mappings>;
-  /** delete data from the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  delete_test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Mutation_Response>;
-  /** delete single row from the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  delete_test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_by_pk?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
   /** delete data from the table: "users" */
   delete_users?: Maybe<Users_Mutation_Response>;
   /** delete single row from the table: "users" */
@@ -1153,10 +1149,6 @@ export type Mutation_Root = {
   insert_payments_user_payment_provider_mappings?: Maybe<Payments_User_Payment_Provider_Mappings_Mutation_Response>;
   /** insert a single row into the table: "payments.user_payment_provider_mappings" */
   insert_payments_user_payment_provider_mappings_one?: Maybe<Payments_User_Payment_Provider_Mappings>;
-  /** insert data into the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  insert_test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Mutation_Response>;
-  /** insert a single row into the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  insert_test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_one?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
   /** insert data into the table: "users" */
   insert_users?: Maybe<Users_Mutation_Response>;
   /** insert a single row into the table: "users" */
@@ -1244,16 +1236,6 @@ export type Mutation_Root = {
   /** update multiples rows of table: "payments.user_payment_provider_mappings" */
   update_payments_user_payment_provider_mappings_many?: Maybe<
     Array<Maybe<Payments_User_Payment_Provider_Mappings_Mutation_Response>>
-  >;
-  /** update data of the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  update_test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Mutation_Response>;
-  /** update single row of the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  update_test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_by_pk?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
-  /** update multiples rows of table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  update_test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_many?: Maybe<
-    Array<
-      Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Mutation_Response>
-    >
   >;
   /** update data of the table: "users" */
   update_users?: Maybe<Users_Mutation_Response>;
@@ -1370,18 +1352,6 @@ export type Mutation_RootDelete_Payments_User_Payment_Provider_MappingsArgs = {
 
 /** mutation root */
 export type Mutation_RootDelete_Payments_User_Payment_Provider_Mappings_By_PkArgs =
-  {
-    id: Scalars["uuid"]["input"];
-  };
-
-/** mutation root */
-export type Mutation_RootDelete_Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_PostsArgs =
-  {
-    where: Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp;
-  };
-
-/** mutation root */
-export type Mutation_RootDelete_Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_By_PkArgs =
   {
     id: Scalars["uuid"]["input"];
   };
@@ -1527,20 +1497,6 @@ export type Mutation_RootInsert_Payments_User_Payment_Provider_Mappings_OneArgs 
   {
     object: Payments_User_Payment_Provider_Mappings_Insert_Input;
     on_conflict?: InputMaybe<Payments_User_Payment_Provider_Mappings_On_Conflict>;
-  };
-
-/** mutation root */
-export type Mutation_RootInsert_Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_PostsArgs =
-  {
-    objects: Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Insert_Input>;
-    on_conflict?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_On_Conflict>;
-  };
-
-/** mutation root */
-export type Mutation_RootInsert_Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_OneArgs =
-  {
-    object: Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Insert_Input;
-    on_conflict?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_On_Conflict>;
   };
 
 /** mutation root */
@@ -1864,28 +1820,6 @@ export type Mutation_RootUpdate_Payments_User_Payment_Provider_Mappings_By_PkArg
 export type Mutation_RootUpdate_Payments_User_Payment_Provider_Mappings_ManyArgs =
   {
     updates: Array<Payments_User_Payment_Provider_Mappings_Updates>;
-  };
-
-/** mutation root */
-export type Mutation_RootUpdate_Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_PostsArgs =
-  {
-    _inc?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Inc_Input>;
-    _set?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Set_Input>;
-    where: Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp;
-  };
-
-/** mutation root */
-export type Mutation_RootUpdate_Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_By_PkArgs =
-  {
-    _inc?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Inc_Input>;
-    _set?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Set_Input>;
-    pk_columns: Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Pk_Columns_Input;
-  };
-
-/** mutation root */
-export type Mutation_RootUpdate_Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_ManyArgs =
-  {
-    updates: Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Updates>;
   };
 
 /** mutation root */
@@ -7683,12 +7617,6 @@ export type Query_Root = {
   payments_user_payment_provider_mappings_aggregate: Payments_User_Payment_Provider_Mappings_Aggregate;
   /** fetch data from the table: "payments.user_payment_provider_mappings" using primary key columns */
   payments_user_payment_provider_mappings_by_pk?: Maybe<Payments_User_Payment_Provider_Mappings>;
-  /** fetch data from the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts: Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
-  /** fetch aggregated fields from the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_aggregate: Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Aggregate;
-  /** fetch data from the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" using primary key columns */
-  test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_by_pk?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
   /** fetch data from the table: "users" */
   users: Array<Users>;
   /** fetch aggregated fields from the table: "users" */
@@ -7925,37 +7853,6 @@ export type Query_RootPayments_User_Payment_Provider_Mappings_By_PkArgs = {
   id: Scalars["uuid"]["input"];
 };
 
-export type Query_RootTest_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_PostsArgs =
-  {
-    distinct_on?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Select_Column>
-    >;
-    limit?: InputMaybe<Scalars["Int"]["input"]>;
-    offset?: InputMaybe<Scalars["Int"]["input"]>;
-    order_by?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Order_By>
-    >;
-    where?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp>;
-  };
-
-export type Query_RootTest_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_AggregateArgs =
-  {
-    distinct_on?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Select_Column>
-    >;
-    limit?: InputMaybe<Scalars["Int"]["input"]>;
-    offset?: InputMaybe<Scalars["Int"]["input"]>;
-    order_by?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Order_By>
-    >;
-    where?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp>;
-  };
-
-export type Query_RootTest_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_By_PkArgs =
-  {
-    id: Scalars["uuid"]["input"];
-  };
-
 export type Query_RootUsersArgs = {
   distinct_on?: InputMaybe<Array<Users_Select_Column>>;
   limit?: InputMaybe<Scalars["Int"]["input"]>;
@@ -8066,14 +7963,6 @@ export type Subscription_Root = {
   payments_user_payment_provider_mappings_by_pk?: Maybe<Payments_User_Payment_Provider_Mappings>;
   /** fetch data from the table in a streaming manner: "payments.user_payment_provider_mappings" */
   payments_user_payment_provider_mappings_stream: Array<Payments_User_Payment_Provider_Mappings>;
-  /** fetch data from the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts: Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
-  /** fetch aggregated fields from the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_aggregate: Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Aggregate;
-  /** fetch data from the table: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" using primary key columns */
-  test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_by_pk?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
-  /** fetch data from the table in a streaming manner: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-  test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_stream: Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
   /** fetch data from the table: "users" */
   users: Array<Users>;
   /** fetch aggregated fields from the table: "users" */
@@ -8383,46 +8272,6 @@ export type Subscription_RootPayments_User_Payment_Provider_Mappings_StreamArgs 
     where?: InputMaybe<Payments_User_Payment_Provider_Mappings_Bool_Exp>;
   };
 
-export type Subscription_RootTest_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_PostsArgs =
-  {
-    distinct_on?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Select_Column>
-    >;
-    limit?: InputMaybe<Scalars["Int"]["input"]>;
-    offset?: InputMaybe<Scalars["Int"]["input"]>;
-    order_by?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Order_By>
-    >;
-    where?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp>;
-  };
-
-export type Subscription_RootTest_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_AggregateArgs =
-  {
-    distinct_on?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Select_Column>
-    >;
-    limit?: InputMaybe<Scalars["Int"]["input"]>;
-    offset?: InputMaybe<Scalars["Int"]["input"]>;
-    order_by?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Order_By>
-    >;
-    where?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp>;
-  };
-
-export type Subscription_RootTest_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_By_PkArgs =
-  {
-    id: Scalars["uuid"]["input"];
-  };
-
-export type Subscription_RootTest_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_StreamArgs =
-  {
-    batch_size: Scalars["Int"]["input"];
-    cursor: Array<
-      InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stream_Cursor_Input>
-    >;
-    where?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp>;
-  };
-
 export type Subscription_RootUsersArgs = {
   distinct_on?: InputMaybe<Array<Users_Select_Column>>;
   limit?: InputMaybe<Scalars["Int"]["input"]>;
@@ -8448,253 +8297,6 @@ export type Subscription_RootUsers_StreamArgs = {
   cursor: Array<InputMaybe<Users_Stream_Cursor_Input>>;
   where?: InputMaybe<Users_Bool_Exp>;
 };
-
-/** columns and relationships of "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts = {
-  __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts";
-  created_at: Scalars["bigint"]["output"];
-  id: Scalars["uuid"]["output"];
-  updated_at: Scalars["bigint"]["output"];
-};
-
-/** aggregated selection of "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Aggregate =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_aggregate";
-    aggregate?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Aggregate_Fields>;
-    nodes: Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
-  };
-
-/** aggregate fields of "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Aggregate_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_aggregate_fields";
-    avg?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Avg_Fields>;
-    count: Scalars["Int"]["output"];
-    max?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Max_Fields>;
-    min?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Min_Fields>;
-    stddev?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stddev_Fields>;
-    stddev_pop?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stddev_Pop_Fields>;
-    stddev_samp?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stddev_Samp_Fields>;
-    sum?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Sum_Fields>;
-    var_pop?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Var_Pop_Fields>;
-    var_samp?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Var_Samp_Fields>;
-    variance?: Maybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Variance_Fields>;
-  };
-
-/** aggregate fields of "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Aggregate_FieldsCountArgs =
-  {
-    columns?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Select_Column>
-    >;
-    distinct?: InputMaybe<Scalars["Boolean"]["input"]>;
-  };
-
-/** aggregate avg on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Avg_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_avg_fields";
-    created_at?: Maybe<Scalars["Float"]["output"]>;
-    updated_at?: Maybe<Scalars["Float"]["output"]>;
-  };
-
-/** Boolean expression to filter rows from the table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts". All fields are combined with a logical 'AND'. */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp =
-  {
-    _and?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp>
-    >;
-    _not?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp>;
-    _or?: InputMaybe<
-      Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp>
-    >;
-    created_at?: InputMaybe<Bigint_Comparison_Exp>;
-    id?: InputMaybe<Uuid_Comparison_Exp>;
-    updated_at?: InputMaybe<Bigint_Comparison_Exp>;
-  };
-
-/** unique or primary key constraints on table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export enum Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Constraint {
-  /** unique or primary key constraint on columns "id" */
-  PostsPkey = "posts_pkey",
-}
-
-/** input type for incrementing numeric columns in table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Inc_Input =
-  {
-    created_at?: InputMaybe<Scalars["bigint"]["input"]>;
-    updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
-  };
-
-/** input type for inserting data into table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Insert_Input =
-  {
-    created_at?: InputMaybe<Scalars["bigint"]["input"]>;
-    id?: InputMaybe<Scalars["uuid"]["input"]>;
-    updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
-  };
-
-/** aggregate max on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Max_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_max_fields";
-    created_at?: Maybe<Scalars["bigint"]["output"]>;
-    id?: Maybe<Scalars["uuid"]["output"]>;
-    updated_at?: Maybe<Scalars["bigint"]["output"]>;
-  };
-
-/** aggregate min on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Min_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_min_fields";
-    created_at?: Maybe<Scalars["bigint"]["output"]>;
-    id?: Maybe<Scalars["uuid"]["output"]>;
-    updated_at?: Maybe<Scalars["bigint"]["output"]>;
-  };
-
-/** response of any mutation on the table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Mutation_Response =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_mutation_response";
-    /** number of rows affected by the mutation */
-    affected_rows: Scalars["Int"]["output"];
-    /** data from the rows affected by the mutation */
-    returning: Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts>;
-  };
-
-/** on_conflict condition type for table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_On_Conflict =
-  {
-    constraint: Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Constraint;
-    update_columns?: Array<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Update_Column>;
-    where?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp>;
-  };
-
-/** Ordering options when selecting data from "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts". */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Order_By =
-  {
-    created_at?: InputMaybe<Order_By>;
-    id?: InputMaybe<Order_By>;
-    updated_at?: InputMaybe<Order_By>;
-  };
-
-/** primary key columns input for table: test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Pk_Columns_Input =
-  {
-    id: Scalars["uuid"]["input"];
-  };
-
-/** select columns of table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export enum Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Select_Column {
-  /** column name */
-  CreatedAt = "created_at",
-  /** column name */
-  Id = "id",
-  /** column name */
-  UpdatedAt = "updated_at",
-}
-
-/** input type for updating data in table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Set_Input =
-  {
-    created_at?: InputMaybe<Scalars["bigint"]["input"]>;
-    id?: InputMaybe<Scalars["uuid"]["input"]>;
-    updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
-  };
-
-/** aggregate stddev on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stddev_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_stddev_fields";
-    created_at?: Maybe<Scalars["Float"]["output"]>;
-    updated_at?: Maybe<Scalars["Float"]["output"]>;
-  };
-
-/** aggregate stddev_pop on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stddev_Pop_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_stddev_pop_fields";
-    created_at?: Maybe<Scalars["Float"]["output"]>;
-    updated_at?: Maybe<Scalars["Float"]["output"]>;
-  };
-
-/** aggregate stddev_samp on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stddev_Samp_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_stddev_samp_fields";
-    created_at?: Maybe<Scalars["Float"]["output"]>;
-    updated_at?: Maybe<Scalars["Float"]["output"]>;
-  };
-
-/** Streaming cursor of the table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts" */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stream_Cursor_Input =
-  {
-    /** Stream column input with initial value */
-    initial_value: Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stream_Cursor_Value_Input;
-    /** cursor ordering */
-    ordering?: InputMaybe<Cursor_Ordering>;
-  };
-
-/** Initial value of the column from where the streaming should start */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Stream_Cursor_Value_Input =
-  {
-    created_at?: InputMaybe<Scalars["bigint"]["input"]>;
-    id?: InputMaybe<Scalars["uuid"]["input"]>;
-    updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
-  };
-
-/** aggregate sum on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Sum_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_sum_fields";
-    created_at?: Maybe<Scalars["bigint"]["output"]>;
-    updated_at?: Maybe<Scalars["bigint"]["output"]>;
-  };
-
-/** update columns of table "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8.posts" */
-export enum Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Update_Column {
-  /** column name */
-  CreatedAt = "created_at",
-  /** column name */
-  Id = "id",
-  /** column name */
-  UpdatedAt = "updated_at",
-}
-
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Updates =
-  {
-    /** increments the numeric columns with given value of the filtered values */
-    _inc?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Inc_Input>;
-    /** sets the columns of the filtered rows to the given values */
-    _set?: InputMaybe<Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Set_Input>;
-    /** filter the rows which have to be updated */
-    where: Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Bool_Exp;
-  };
-
-/** aggregate var_pop on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Var_Pop_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_var_pop_fields";
-    created_at?: Maybe<Scalars["Float"]["output"]>;
-    updated_at?: Maybe<Scalars["Float"]["output"]>;
-  };
-
-/** aggregate var_samp on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Var_Samp_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_var_samp_fields";
-    created_at?: Maybe<Scalars["Float"]["output"]>;
-    updated_at?: Maybe<Scalars["Float"]["output"]>;
-  };
-
-/** aggregate variance on columns */
-export type Test_Perm_Delete_8a664999_7898_4133_94ac_0fb455f9acd8_Posts_Variance_Fields =
-  {
-    __typename?: "test_perm_delete_8a664999_7898_4133_94ac_0fb455f9acd8_posts_variance_fields";
-    created_at?: Maybe<Scalars["Float"]["output"]>;
-    updated_at?: Maybe<Scalars["Float"]["output"]>;
-  };
 
 /** columns and relationships of "users" */
 export type Users = {

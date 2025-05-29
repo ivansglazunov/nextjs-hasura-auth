@@ -161,6 +161,32 @@ interface CronTriggerOptions {
   replace?: boolean;
 }
 
+interface DataSourceOptions {
+  name: string;
+  kind?: 'postgres' | 'mssql' | 'mysql' | 'bigquery';
+  configuration: {
+    connection_info: {
+      database_url: string;
+      isolation_level?: 'read-committed' | 'read-uncommitted' | 'repeatable-read' | 'serializable';
+      use_prepared_statements?: boolean;
+      pool_settings?: {
+        max_connections?: number;
+        idle_timeout?: number;
+        retries?: number;
+        pool_timeout?: number;
+        connection_lifetime?: number;
+      };
+    };
+  };
+}
+
+interface DataSourceInfo {
+  name: string;
+  kind: string;
+  tables: any[];
+  configuration: any;
+}
+
 export class Hasura {
   private readonly clientInstance: AxiosInstance;
 
@@ -378,7 +404,7 @@ export class Hasura {
       );
     `);
     
-    if (tableExists.result[1][0] === 't') {
+    if (tableExists.result?.[1]?.[0] === 't') {
       throw new Error(`❌ Table ${schema}.${table} already exists`);
     }
     
@@ -416,7 +442,7 @@ export class Hasura {
       );
     `);
     
-    if (tableExists.result[1][0] === 't') {
+    if (tableExists.result?.[1]?.[0] === 't') {
       debug(`📋 Table ${schema}.${table} already exists, checking id column`);
       
       // Check id column
@@ -428,9 +454,9 @@ export class Hasura {
         AND column_name = '${id}';
       `);
       
-      if (idColumnInfo.result.length > 1) {
+      if (idColumnInfo.result && idColumnInfo.result.length > 1) {
         const columnData = idColumnInfo.result[1];
-        const actualType = columnData[1];
+        const actualType = columnData?.[1];
         
         if (actualType !== type) {
           debug(`⚠️ Table ${schema}.${table} exists but id column ${id} has type ${actualType}, expected ${type}. Continuing anyway.`);
@@ -479,9 +505,9 @@ export class Hasura {
     const uniqueConstraint = unique ? 'UNIQUE' : '';
     const commentSql = comment ? `COMMENT ON COLUMN "${schema}"."${table}"."${name}" IS '${comment.replace(/'/g, "''")}';` : '';
     
-    if (columnExists.result.length > 1) {
+    if (columnExists.result && columnExists.result.length > 1) {
       debug(`📝 Column ${name} exists, checking if modification needed`);
-      const currentType = columnExists.result[1][1];
+      const currentType = columnExists.result?.[1]?.[1];
       
       if (currentType !== type) {
         // Try to alter column type
@@ -531,7 +557,7 @@ export class Hasura {
       AND column_name = '${name}';
     `);
     
-    if (columnExists.result.length > 1) {
+    if (columnExists.result && columnExists.result.length > 1) {
       await this.sql(`ALTER TABLE "${schema}"."${table}" DROP COLUMN "${name}";`);
       debug(`✅ Deleted column ${name}`);
     } else {
@@ -710,7 +736,7 @@ export class Hasura {
       ORDER BY schema_name;
     `);
     
-    return result.result.slice(1).map((row: any[]) => row[0]);
+    return result.result ? result.result.slice(1).map((row: any[]) => row[0]) : [];
   }
 
   async tables(options: { schema: string }): Promise<string[]> {
@@ -725,7 +751,7 @@ export class Hasura {
       ORDER BY table_name;
     `);
     
-    return result.result.slice(1).map((row: any[]) => row[0]);
+    return result.result ? result.result.slice(1).map((row: any[]) => row[0]) : [];
   }
 
   async columns(options: { schema: string; table: string }): Promise<Record<string, ColumnInfo>> {
@@ -741,12 +767,17 @@ export class Hasura {
     `);
     
     const columns: Record<string, ColumnInfo> = {};
-    for (let i = 1; i < result.result.length; i++) {
-      const [columnName, dataType, udtName] = result.result[i];
-      columns[columnName] = {
-        type: dataType,
-        _type: udtName
-      };
+    if (result.result && result.result.length > 1) {
+      for (let i = 1; i < result.result.length; i++) {
+        const row = result.result[i];
+        if (row && row.length >= 3) {
+          const [columnName, dataType, udtName] = row;
+          columns[columnName] = {
+            type: dataType,
+            _type: udtName
+          };
+        }
+      }
     }
     
     return columns;
@@ -782,7 +813,7 @@ export class Hasura {
       );
     `);
     
-    if (functionExists.result[1][0] === 't') {
+    if (functionExists.result?.[1]?.[0] === 't') {
       throw new Error(`❌ Function ${schema}.${name} already exists`);
     }
     
@@ -837,7 +868,7 @@ export class Hasura {
       );
     `);
     
-    if (triggerExists.result[1][0] === 't') {
+    if (triggerExists.result?.[1]?.[0] === 't') {
       throw new Error(`❌ Trigger ${name} already exists on ${schema}.${table}`);
     }
     
@@ -905,7 +936,7 @@ export class Hasura {
       );
     `);
     
-    if (constraintExists.result[1][0] === 't') {
+    if (constraintExists.result?.[1]?.[0] === 't') {
       throw new Error(`❌ Foreign key constraint ${constraintName} already exists`);
     }
     
@@ -965,7 +996,7 @@ export class Hasura {
       );
     `);
     
-    if (viewExists.result[1][0] === 't') {
+    if (viewExists.result?.[1]?.[0] === 't') {
       throw new Error(`❌ View ${schema}.${name} already exists`);
     }
     
@@ -1359,7 +1390,7 @@ export class Hasura {
       );
     `);
     
-    if (schemaExists.result[1][0] === 't') {
+    if (schemaExists.result?.[1]?.[0] === 't') {
       throw new Error(`❌ Schema ${schema} already exists`);
     }
     
@@ -1396,6 +1427,122 @@ export class Hasura {
     // Drop schema
     const cascadeClause = cascade ? 'CASCADE' : 'RESTRICT';
     await this.sql(`DROP SCHEMA IF EXISTS "${schema}" ${cascadeClause};`);
+    
+    return { success: true };
+  }
+
+  // Data Source Operations
+  async listSources(): Promise<DataSourceInfo[]> {
+    debug('📋 Getting list of data sources');
+    
+    const metadata = await this.exportMetadata();
+    return metadata.sources || [];
+  }
+
+  async checkSourceExists(sourceName: string): Promise<boolean> {
+    debug(`🔍 Checking if source ${sourceName} exists`);
+    
+    try {
+      const sources = await this.listSources();
+      return sources.some(source => source.name === sourceName);
+    } catch (error) {
+      debug(`❌ Error checking source existence: ${error}`);
+      return false;
+    }
+  }
+
+  async createSource(options: DataSourceOptions): Promise<any> {
+    const { name, kind = 'postgres', configuration } = options;
+    
+    debug(`🏗️ Creating data source ${name}`);
+    
+    // Check if source already exists
+    const exists = await this.checkSourceExists(name);
+    if (exists) {
+      throw new Error(`❌ Data source ${name} already exists`);
+    }
+    
+    return await this.v1({
+      type: 'pg_add_source',
+      args: {
+        name,
+        configuration
+      }
+    });
+  }
+
+  async defineSource(options: DataSourceOptions): Promise<any> {
+    const { name, kind = 'postgres', configuration } = options;
+    
+    debug(`🔧 Defining data source ${name}`);
+    
+    // Check if source already exists
+    const exists = await this.checkSourceExists(name);
+    if (exists) {
+      debug(`📝 Data source ${name} already exists, updating configuration if needed`);
+      
+      // For now, we'll remove and recreate to update configuration
+      // In production, you might want to use pg_update_source if available
+      try {
+        await this.deleteSource({ name });
+      } catch (error) {
+        debug(`Warning: Could not delete existing source ${name}: ${error}`);
+      }
+    }
+    
+    return await this.v1({
+      type: 'pg_add_source',
+      args: {
+        name,
+        configuration
+      }
+    });
+  }
+
+  async deleteSource(options: { name: string }): Promise<any> {
+    const { name } = options;
+    
+    debug(`🗑️ Deleting data source ${name}`);
+    
+    return await this.v1({
+      type: 'pg_drop_source',
+      args: {
+        name,
+        cascade: true
+      }
+    });
+  }
+
+  async ensureDefaultSource(databaseUrl?: string): Promise<any> {
+    debug('🔍 Ensuring default data source exists');
+    
+    const defaultExists = await this.checkSourceExists('default');
+    
+    if (!defaultExists) {
+      debug('📝 Default source does not exist, creating it...');
+      
+      // Use provided database URL or try to get from environment
+      const dbUrl = databaseUrl || 
+                   process.env.DATABASE_URL || 
+                   process.env.POSTGRES_URL ||
+                   'postgres://postgres:postgrespassword@postgres:5432/postgres';
+      
+      await this.defineSource({
+        name: 'default',
+        kind: 'postgres',
+        configuration: {
+          connection_info: {
+            database_url: dbUrl,
+            isolation_level: 'read-committed',
+            use_prepared_statements: false
+          }
+        }
+      });
+      
+      debug('✅ Default data source created successfully');
+    } else {
+      debug('✅ Default data source already exists');
+    }
     
     return { success: true };
   }
