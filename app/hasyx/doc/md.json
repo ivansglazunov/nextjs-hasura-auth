@@ -736,23 +736,13 @@
           "level": 3
         },
         {
+          "title": "Running Migrations with Filters",
+          "url": "/hasyx/doc/CONTRIBUTING#running-migrations-with-filters",
+          "level": 3
+        },
+        {
           "title": "Core Migration Principles",
           "url": "/hasyx/doc/CONTRIBUTING#core-migration-principles",
-          "level": 3
-        },
-        {
-          "title": "Advanced Migration Patterns",
-          "url": "/hasyx/doc/CONTRIBUTING#advanced-migration-patterns",
-          "level": 3
-        },
-        {
-          "title": "Migration Testing and Validation",
-          "url": "/hasyx/doc/CONTRIBUTING#migration-testing-and-validation",
-          "level": 3
-        },
-        {
-          "title": "Migration Best Practices Summary",
-          "url": "/hasyx/doc/CONTRIBUTING#migration-best-practices-summary",
           "level": 3
         },
         {
@@ -8170,5 +8160,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-29T17:59:20.167Z"
+  "lastUpdated": "2025-05-29T18:26:12.583Z"
 }

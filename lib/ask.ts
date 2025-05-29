@@ -180,8 +180,6 @@ export const ask = new Ask(
   process?.env?.npm_package_name || 'Unknown Project'
 );
 
-export default ask;
-
 // Run REPL if this file is executed directly
 if (typeof require !== 'undefined' && require.main === module) {
   if (!process?.env?.OPENROUTER_API_KEY) {

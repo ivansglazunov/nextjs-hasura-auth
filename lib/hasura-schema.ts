@@ -227,4 +227,9 @@ async function fetchSchema() {
   }
 }
 
-fetchSchema(); 
+export { fetchSchema as generateHasuraSchema };
+
+// Run schema generation if this file is executed directly
+if (require.main === module) {
+  fetchSchema();
+} 

@@ -102,7 +102,7 @@ async function runCommand(command: string) {
 }
 
 // Main function
-async function buildClient() {
+export async function buildClient() {
   console.log('📦 Starting client build process...');
   let buildSuccess = false;
   let apiWasMoved = false; // Flag to track if we moved the directory
@@ -214,15 +214,17 @@ async function buildClient() {
   // Finish
   if (buildSuccess && process.exitCode !== 1) {
     console.log('✅ Client build completed successfully!');
-    process.exit(0);
+    return true;
   } else {
     console.error('❌ Client build failed.');
-    process.exit(1); // Exit with error code if build failed
+    throw new Error('Client build failed');
   }
 }
 
-// Run the build process
-buildClient().catch(err => {
-  console.error('❌ Unhandled error during build script execution:', err);
-  process.exit(1);
-}); 
+// Run the build process if this file is executed directly
+if (require.main === module) {
+  buildClient().catch(err => {
+    console.error('❌ Unhandled error during build script execution:', err);
+    process.exit(1);
+  });
+} 

@@ -194,8 +194,30 @@ async function main() {
   }
 }
 
-// Run the main function
-main().catch((error) => {
-  console.error('❌ Error in JS environment:', error);
-  process.exit(1);
-}); 
+export async function runJsEnvironment(filePath?: string, evalScript?: string) {
+  // Store original argv to restore later
+  const originalArgv = process.argv;
+  
+  try {
+    // Temporarily modify process.argv to simulate command line arguments
+    process.argv = ['node', 'js.ts'];
+    if (evalScript) {
+      process.argv.push('-e', evalScript);
+    } else if (filePath) {
+      process.argv.push(filePath);
+    }
+    
+    await main();
+  } finally {
+    // Restore original argv
+    process.argv = originalArgv;
+  }
+}
+
+// Run the main function if this file is executed directly
+if (require.main === module) {
+  main().catch((error) => {
+    console.error('❌ Error in JS environment:', error);
+    process.exit(1);
+  });
+} 
