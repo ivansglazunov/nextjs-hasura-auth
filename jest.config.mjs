@@ -7,6 +7,7 @@ const config = {
   testMatch: ['**/*.test.ts'],
   setupFilesAfterEnv: ['./jest.setup.js'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  testTimeout: 10000, // 10 seconds timeout for all tests
   moduleNameMapper: {
     '^jose$': 'jose',
     '^@/(.*)$': '<rootDir>/$1',
