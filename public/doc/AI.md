@@ -27,7 +27,7 @@ const ai = new AI(
   'your-openrouter-api-key',
   {},
   {
-    model: 'deepseek/deepseek-chat-v3-0324:free',
+    model: 'google/gemini-2.5-flash-preview',
     temperature: 0.7,
     max_tokens: 4096
   }
@@ -45,7 +45,7 @@ The AI class provides callbacks to monitor execution progress in real-time:
 ```typescript
 import { AI } from 'hasyx/lib/ai';
 
-const ai = new AI('your-api-key', {}, { model: 'deepseek/deepseek-chat-v3-0324:free' });
+const ai = new AI('your-api-key', {}, { model: 'google/gemini-2.5-flash-preview' });
 
 // Set up progress callbacks
 ai._onThinking = () => {

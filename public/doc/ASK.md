@@ -235,7 +235,7 @@ The Ask command uses these default configuration settings:
 
 ```javascript
 {
-  model: 'deepseek/deepseek-chat-v3-0324:free',  // Free DeepSeek model
+  model: 'google/gemini-2.5-flash-preview',  // Free DeepSeek model
   temperature: 0.7,                              // Balanced creativity
   max_tokens: 4096,                             // Long responses
   timeout: 30000                                // 30 second timeout
@@ -245,7 +245,7 @@ The Ask command uses these default configuration settings:
 ### Model Information
 
 **DeepSeek Chat v3 (Free)**
-- **Model ID**: `deepseek/deepseek-chat-v3-0324:free`
+- **Model ID**: `google/gemini-2.5-flash-preview`
 - **Cost**: Free tier available
 - **Strengths**: Code generation, mathematical reasoning, general knowledge
 - **Context Length**: Large context window for complex questions
