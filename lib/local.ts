@@ -1,15 +1,16 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Debug from './debug';
-import { findProjectRoot } from './cli-hasyx';
+import dotenv from 'dotenv';
 
 const debug = Debug('local');
 
 export const localCommand = () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "local" command.');
   console.log('🏠 Switching environment URL variables to local development...');
   
-  const projectRoot = findProjectRoot();
+  const projectRoot = process.cwd();
   const envPath = path.join(projectRoot, '.env');
   
   if (!fs.existsSync(envPath)) {

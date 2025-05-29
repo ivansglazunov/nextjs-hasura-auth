@@ -1,16 +1,17 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Debug from './debug';
-import { findProjectRoot } from './cli-hasyx';
+import dotenv from 'dotenv';
 import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './events';
 
 const debug = Debug('events-cli');
 
 export const eventsCommand = async (options: any) => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "events" command with options:', options);
   console.log('🔄 Synchronizing Hasura event triggers...');
   
-  const projectRoot = findProjectRoot();
+  const projectRoot = process.cwd();
   const eventsDir = path.join(projectRoot, 'events');
   
   // Initialize default event triggers if --init flag is provided

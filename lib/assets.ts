@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import spawn from 'cross-spawn';
 import Debug from './debug';
-import { findProjectRoot } from './cli-hasyx';
+import dotenv from 'dotenv';
 
 const debug = Debug('assets');
 
@@ -42,7 +42,7 @@ export const assetsCommand = async () => {
   debug('Executing "assets" command.');
   console.log('🎨 Generating app icons and splash screens from logo file...');
   
-  const projectRoot = findProjectRoot();
+  const projectRoot = process.cwd();
   
   // Find logo file by priority
   const logoInfo = findLogoFile(projectRoot);

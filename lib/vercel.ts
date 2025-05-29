@@ -1,15 +1,16 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Debug from './debug';
-import { findProjectRoot } from './cli-hasyx';
+import dotenv from 'dotenv';
 
 const debug = Debug('vercel');
 
 export const vercelCommand = () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "vercel" command.');
   console.log('☁️ Switching environment URL variables to Vercel deployment...');
   
-  const projectRoot = findProjectRoot();
+  const projectRoot = process.cwd();
   const envPath = path.join(projectRoot, '.env');
   
   if (!fs.existsSync(envPath)) {

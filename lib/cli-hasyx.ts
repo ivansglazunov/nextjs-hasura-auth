@@ -7,26 +7,10 @@ import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './ev
 import { buildDocumentation } from './doc-public';
 import assist from './assist';
 import { printMarkdown } from './markdown-terminal';
+import dotenv from 'dotenv';
 
 // Create a debugger instance for the CLI
 const debug = Debug('cli');
-
-// Function to find project root (where package.json is)
-export const findProjectRoot = (startDir: string = process.cwd()): string => {
-  debug(`Finding project root starting from: ${startDir}`);
-  let dir = startDir;
-  while (dir !== path.parse(dir).root) {
-    const pkgPath = path.join(dir, 'package.json');
-    debug(`Checking for package.json at: ${pkgPath}`);
-    if (fs.existsSync(pkgPath)) {
-      debug(`Found project root at: ${dir}`);
-      return dir;
-    }
-    dir = path.dirname(dir);
-  }
-  debug('Could not find project root.');
-  throw new Error("Could not find project root (package.json). Are you inside a Node.js project?");
-};
 
 // Helper function to get template content
 export const getTemplateContent = (fileName: string, templatesDir?: string): string => {
@@ -166,6 +150,7 @@ export const ensureWebSocketSupport = (projectRoot: string): void => {
 
 // Command implementations
 export const initCommand = async (options: any, packageName: string = 'hasyx') => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "init" command.');
   debug('Options:', options);
   const forceReinit = options.reinit === true || options.force === true;
@@ -174,7 +159,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     console.log('🔄 Force mode: forcing replacement of all files');
   }
   console.log(`🚀 Initializing ${packageName}...`);
-  const projectRoot = findProjectRoot();
+  const projectRoot = process.cwd();
   const targetDir = projectRoot;
   debug(`Target directory for init: ${targetDir}`);
 
@@ -252,8 +237,8 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     '.vscode/extensions.json': '.vscode/extensions.json',
     'migrations/1746660891582-hasyx-users/up.ts': 'migrations/1746660891582-hasyx-users/up.ts',
     'migrations/1746660891582-hasyx-users/down.ts': 'migrations/1746660891582-hasyx-users/down.ts',
-    'migrations/1746670608552-hasyx-notify/up.ts': 'migrations/1746670608552-hasyx-notify/up.ts',
-    'migrations/1746670608552-hasyx-notify/down.ts': 'migrations/1746670608552-hasyx-notify/down.ts',
+    'migrations/174670608552-hasyx-notify/up.ts': 'migrations/174670608552-hasyx-notify/up.ts',
+    'migrations/174670608552-hasyx-notify/down.ts': 'migrations/174670608552-hasyx-notify/down.ts',
     'migrations/1746837333136-hasyx-debug/up.ts': 'migrations/1746837333136-hasyx-debug/up.ts',
     'migrations/1746837333136-hasyx-debug/down.ts': 'migrations/1746837333136-hasyx-debug/down.ts',
     'migrations/1748511896530-hasyx-payments/up.ts': 'migrations/1748511896530-hasyx-payments/up.ts',
@@ -540,8 +525,9 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
 };
 
 export const devCommand = () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "dev" command.');
-  const cwd = findProjectRoot();
+  const cwd = process.cwd();
   
   // Build documentation before starting dev server
   console.log('📚 Building documentation...');
@@ -573,8 +559,9 @@ export const devCommand = () => {
 };
 
 export const buildCommand = () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "build" command.');
-  const cwd = findProjectRoot();
+  const cwd = process.cwd();
   
   ensureWebSocketSupport(cwd);
   
@@ -609,8 +596,9 @@ export const buildCommand = () => {
 };
 
 export const startCommand = () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "start" command.');
-  const cwd = findProjectRoot();
+  const cwd = process.cwd();
   
   console.log('🛰️ Starting production server (using next start)...');
   debug(`Running command: npx next start --turbopack in ${cwd}`);
@@ -633,16 +621,18 @@ export const startCommand = () => {
 };
 
 export const buildClientCommand = () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "build:client" command via CLI.');
-  const cwd = findProjectRoot();
+  const cwd = process.cwd();
+  const hasyxRoot = path.resolve(__dirname, '../');
   
   console.log('📦 Building Next.js application for client export...');
-  const scriptPath = path.join('lib', 'build-client.ts');
+  const scriptPath = path.join(hasyxRoot, 'lib', 'build-client.ts');
   debug(`Running command: npx tsx ${scriptPath} in ${cwd}`);
   
-  if (!fs.existsSync(path.join(cwd, scriptPath))) {
-    console.error(`❌ Build script not found at ${scriptPath}. Please ensure it exists.`);
-    debug(`Build script not found at ${path.join(cwd, scriptPath)}`);
+  if (!fs.existsSync(scriptPath)) {
+    console.error(`❌ Build script not found at ${scriptPath}. Please ensure hasyx package is properly installed.`);
+    debug(`Build script not found at ${scriptPath}`);
     process.exit(1);
   }
 
@@ -666,6 +656,7 @@ export const buildClientCommand = () => {
 };
 
 export const migrateCommand = async () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "migrate" command.');
   
   const { migrate } = await import('./migrate');
@@ -681,6 +672,7 @@ export const migrateCommand = async () => {
 };
 
 export const unmigrateCommand = async () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "unmigrate" command.');
   
   const { unmigrate } = await import('./unmigrate');
@@ -696,9 +688,11 @@ export const unmigrateCommand = async () => {
 };
 
 export const schemaCommand = async () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "schema" command.');
   console.log('🧬 Generating Hasura schema and types...');
-  const projectRoot = findProjectRoot();
+  const projectRoot = process.cwd();
+  const hasyxRoot = path.resolve(__dirname, '../');
   let success = true;
 
   const publicDir = path.join(projectRoot, 'public');
@@ -717,8 +711,8 @@ export const schemaCommand = async () => {
   }
 
   console.log('\n📄 Running hasura-schema script...');
-  const schemaScriptPath = path.join('node_modules', 'hasyx', 'lib', 'hasura-schema.js');
-  debug(`Schema script path (relative to node_modules): ${schemaScriptPath}`);
+  const schemaScriptPath = path.join(hasyxRoot, 'lib', 'hasura-schema.js');
+  debug(`Schema script path: ${schemaScriptPath}`);
   debug(`Running command: npx tsx ${schemaScriptPath} in cwd: ${projectRoot}`);
   const schemaResult = spawn.sync('npx', ['tsx', schemaScriptPath], {
     stdio: 'inherit',
@@ -741,8 +735,8 @@ export const schemaCommand = async () => {
 
   if (success) {
     console.log('\n⌨️ Running GraphQL codegen...');
-    const codegenConfigPath = path.join('node_modules', 'hasyx', 'lib', 'hasura-types.js');
-    debug(`Codegen config path (relative to node_modules): ${codegenConfigPath}`);
+    const codegenConfigPath = path.join(hasyxRoot, 'lib', 'hasura-types.js');
+    debug(`Codegen config path: ${codegenConfigPath}`);
     debug(`Running command: npx graphql-codegen --config ${codegenConfigPath} in cwd: ${projectRoot}`);
     const codegenResult = spawn.sync('npx', ['graphql-codegen', '--config', codegenConfigPath], {
       stdio: 'inherit',
@@ -774,8 +768,114 @@ export const schemaCommand = async () => {
   }
 };
 
+// JS command
+export const jsCommand = async (filePath: string | undefined, options: any) => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
+  debug('Executing "js" command with filePath:', filePath, 'and options:', options);
+  
+  const cwd = process.cwd();
+  const hasyxRoot = path.resolve(__dirname, '../');
+  const jsScriptPath = path.join(hasyxRoot, 'lib', 'js.ts');
+  
+  const args: string[] = [];
+  if (options.eval) {
+    args.push('-e', options.eval);
+  } else if (filePath) {
+    args.push(filePath);
+  }
+  
+  const { spawn } = require('child_process');
+  const child = spawn('npx', ['tsx', jsScriptPath, ...args], {
+    stdio: 'inherit',
+    cwd: cwd,
+    env: {
+      ...process.env,
+      NODE_OPTIONS: '--experimental-vm-modules'
+    }
+  });
+  
+  child.on('exit', (code: number) => {
+    process.exit(code || 0);
+  });
+  
+  child.on('error', (error: Error) => {
+    console.error('❌ Error executing JS environment:', error);
+    process.exit(1);
+  });
+};
+
+// Ask command
+export const askCommand = async (options: any) => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
+  debug('Executing "ask" command with options:', options);
+  
+  // Check for OPENROUTER_API_KEY
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.error('❌ OPENROUTER_API_KEY environment variable is required');
+    console.error('   Please set it in your .env file or environment');
+    process.exit(1);
+  }
+
+  try {
+    // Always use Hasyx's ask module
+    debug('Using default Hasyx ask.ts');
+    const askModule = await import('./ask');
+    const askInstance = askModule.default || askModule.ask;
+    
+    if (options.eval) {
+      // Direct question mode
+      const response = await askInstance.ask(options.eval);
+      await printMarkdown(response);
+    } else {
+      // Interactive REPL mode
+      await askInstance.repl();
+    }
+  } catch (error) {
+    console.error('❌ Error in ask command:', error);
+    debug('Ask command error:', error);
+    process.exit(1);
+  }
+};
+
+// TSX command
+export const tsxCommand = async (filePath: string | undefined, options: any) => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
+  debug('Executing "tsx" command with filePath:', filePath, 'and options:', options);
+  
+  const cwd = process.cwd();
+  const hasyxRoot = path.resolve(__dirname, '../');
+  const tsxScriptPath = path.join(hasyxRoot, 'lib', 'tsx.ts');
+  
+  const args: string[] = [];
+  if (options.eval) {
+    args.push('-e', options.eval);
+  } else if (filePath) {
+    args.push(filePath);
+  }
+  
+  const { spawn } = require('child_process');
+  const child = spawn('npx', ['tsx', tsxScriptPath, ...args], {
+    stdio: 'inherit',
+    cwd: cwd,
+    env: {
+      ...process.env,
+      NODE_OPTIONS: '--experimental-vm-modules'
+    }
+  });
+  
+  child.on('exit', (code: number) => {
+    process.exit(code || 0);
+  });
+  
+  child.on('error', (error: Error) => {
+    console.error('❌ Error executing TSX environment:', error);
+    process.exit(1);
+  });
+};
+
 // Doc command
 export const docCommand = (options: any) => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "doc" command with options:', options);
   try {
     buildDocumentation(options.dir);
@@ -786,112 +886,66 @@ export const docCommand = (options: any) => {
   }
 };
 
-// Export all command functions and utilities
-export const setupCommands = (program: Command, packageName: string = 'hasyx') => {
-  // Init command
-  program
-    .command('init')
-    .description(`Initialize ${packageName} authentication and GraphQL proxy in a Next.js project.`)
+// Command descriptor functions
+export const initCommandDescribe = (cmd: Command) => {
+  return cmd
+    .description('Initialize hasyx authentication and GraphQL proxy in a Next.js project.')
     .option('--reinit', 'Reinitialize all files, replacing even those that would normally only be created if missing')
-    .option('--force', 'Alias for --reinit: force replacement of all files')
-    .action(async (options) => {
-      await initCommand(options, packageName);
-    });
+    .option('--force', 'Alias for --reinit: force replacement of all files');
+};
 
-  // Dev command
-  program
-    .command('dev')
-    .description('Starts the Next.js development server with WebSocket support.')
-    .action(devCommand);
+export const devCommandDescribe = (cmd: Command) => {
+  return cmd.description('Starts the Next.js development server with WebSocket support.');
+};
 
-  // Build command
-  program
-    .command('build')
-    .description('Builds the Next.js application for production.')
-    .action(buildCommand);
+export const buildCommandDescribe = (cmd: Command) => {
+  return cmd.description('Builds the Next.js application for production.');
+};
 
-  // Start command
-  program
-    .command('start')
-    .description('Starts the Next.js production server.')
-    .action(startCommand);
+export const startCommandDescribe = (cmd: Command) => {
+  return cmd.description('Starts the Next.js production server.');
+};
 
-  // Build client command
-  program
-    .command('build:client')
-    .description('Builds the Next.js application for static client export (e.g., for Capacitor).')
-    .action(buildClientCommand);
+export const buildClientCommandDescribe = (cmd: Command) => {
+  return cmd.description('Builds the Next.js application for static client export (e.g., for Capacitor).');
+};
 
-  // Migrate command
-  program
-    .command('migrate')
-    .description('Run UP migration scripts located in subdirectories of ./migrations in alphabetical order.')
-    .action(migrateCommand);
+export const migrateCommandDescribe = (cmd: Command) => {
+  return cmd.description('Run UP migration scripts located in subdirectories of ./migrations in alphabetical order.');
+};
 
-  // Unmigrate command
-  program
-    .command('unmigrate')
-    .description('Run DOWN migration scripts located in subdirectories of ./migrations in reverse alphabetical order.')
-    .action(unmigrateCommand);
+export const unmigrateCommandDescribe = (cmd: Command) => {
+  return cmd.description('Run DOWN migration scripts located in subdirectories of ./migrations in reverse alphabetical order.');
+};
 
-  // Schema command
-  program
-    .command('schema')
-    .description('Generate Hasura schema files and GraphQL types.')
-    .action(schemaCommand);
+export const schemaCommandDescribe = (cmd: Command) => {
+  return cmd.description('Generate Hasura schema files and GraphQL types.');
+};
 
-  // Doc command
-  program
-    .command('doc')
+export const docCommandDescribe = (cmd: Command) => {
+  return cmd
     .description('Build documentation from markdown files')
-    .option('-d, --dir <directory>', 'Root directory to scan for markdown files', process.cwd())
-    .action((options) => {
-      debug('Executing "doc" command with options:', options);
-      try {
-        buildDocumentation(options.dir);
-      } catch (error) {
-        console.error('❌ Failed to build documentation:', error);
-        debug(`Documentation build failed: ${error}`);
-        process.exit(1);
-      }
-    });
+    .option('-d, --dir <directory>', 'Root directory to scan for markdown files', process.cwd());
+};
 
-  // Assets command
-  program
-    .command('assets')
-    .description('Generate app icons and splash screens from logo.svg for web, Capacitor, and Electron apps.')
-    .action(async () => {
-      // Import the assets command implementation
-      const { assetsCommand } = await import('./assets');
-      await assetsCommand();
-    });
+export const assetsCommandDescribe = (cmd: Command) => {
+  return cmd.description('Generate app icons and splash screens from logo.svg for web, Capacitor, and Electron apps.');
+};
 
-  // Events command
-  program
-    .command('events')
+export const eventsCommandDescribe = (cmd: Command) => {
+  return cmd
     .description('Synchronize Hasura event triggers with local definitions')
     .option('--init', 'Create default event trigger definitions in the events directory')
-    .option('--clean', 'Remove security headers from event definitions - they will be added automatically during sync')
-    .action(async (options) => {
-      // Import the events command implementation
-      const { eventsCommand } = await import('./events-cli');
-      await eventsCommand(options);
-    });
+    .option('--clean', 'Remove security headers from event definitions - they will be added automatically during sync');
+};
 
-  // Unbuild command
-  program
-    .command('unbuild')
-    .description('Remove compiled files (.js, .d.ts) from lib, components, and hooks directories only (preserves types directory), and delete tsconfig.lib.tsbuildinfo.')
-    .action(async () => {
-      // Import the unbuild command implementation
-      const { unbuildCommand } = await import('./unbuild');
-      await unbuildCommand();
-    });
+export const unbuildCommandDescribe = (cmd: Command) => {
+  return cmd.description('Remove compiled files (.js, .d.ts) from lib, components, and hooks directories only (preserves types directory), and delete tsconfig.lib.tsbuildinfo.');
+};
 
-  // Assist command
-  program
-    .command('assist')
-    .description(`Interactive assistant to set up ${packageName} project with GitHub, Hasura, and Vercel`)
+export const assistCommandDescribe = (cmd: Command) => {
+  return cmd
+    .description('Interactive assistant to set up hasyx project with GitHub, Hasura, and Vercel')
     .option('--skip-auth', 'Skip GitHub authentication check')
     .option('--skip-repo', 'Skip repository setup')
     .option('--skip-env', 'Skip environment setup')
@@ -904,178 +958,130 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
     .option('--skip-vercel', 'Skip Vercel setup')
     .option('--skip-sync', 'Skip environment variable sync')
     .option('--skip-commit', 'Skip commit step')
-    .option('--skip-migrations', 'Skip migrations check')
-    .action((options) => {
-      debug('Executing "assist" command with options:', options);
-      assist(options);
-    });
+    .option('--skip-migrations', 'Skip migrations check');
+};
 
-  // Telegram command
-  program
-    .command('telegram')
+export const telegramCommandDescribe = (cmd: Command) => {
+  return cmd
     .description('Setup and calibrate Telegram Bot, Admin Group, and Announcement Channel.')
     .option('--skip-bot', 'Skip interactive Telegram Bot setup (token, name, webhook, etc.)')
     .option('--skip-admin-group', 'Skip Telegram Admin Group setup (chat_id for correspondence)')
     .option('--skip-channel', 'Skip Telegram Announcement Channel setup (channel_id, project user link)')
-    .option('--skip-calibration', 'Skip Telegram bot calibration process')
-    .action(async (options) => {
-      debug('Executing "telegram" command with options:', options);
-      const assistModule = await import('./assist'); 
-      if (!assistModule.runTelegramSetupAndCalibration) {
-          console.error('FATAL: runTelegramSetupAndCalibration function not found in assist module. Build might be corrupted or export is missing.');
-          debug('runTelegramSetupAndCalibration not found on assistModule:', assistModule);
-          process.exit(1);
-      }
-      assistModule.runTelegramSetupAndCalibration(options);
-    });
+    .option('--skip-calibration', 'Skip Telegram bot calibration process');
+};
 
-  // Local command
-  program
-    .command('local')
-    .description('Switch environment URL variables to local development (http://localhost:3000)')
-    .action(async () => {
-      // Import the local command implementation
-      const { localCommand } = await import('./local');
-      localCommand();
-    });
+export const localCommandDescribe = (cmd: Command) => {
+  return cmd.description('Switch environment URL variables to local development (http://localhost:3000)');
+};
 
-  // Vercel command
-  program
-    .command('vercel')
-    .description('Switch environment URL variables to Vercel deployment')
-    .action(async () => {
-      // Import the vercel command implementation
-      const { vercelCommand } = await import('./vercel');
-      vercelCommand();
-    });
+export const vercelCommandDescribe = (cmd: Command) => {
+  return cmd.description('Switch environment URL variables to Vercel deployment');
+};
 
-  // JS command
-  program
-    .command('js [filePath]')
-    .description(`Run a JavaScript file or start a REPL with ${packageName} client in context.`)
-    .option('-e, --eval <script>', 'Evaluate a string of JavaScript code')
-    .action(async (filePath, options) => {
-      debug('Executing "js" command with filePath:', filePath, 'and options:', options);
-      
-      const projectRoot = findProjectRoot();
-      const jsScriptPath = path.join(projectRoot, 'lib', 'js.ts');
-      
-      const args: string[] = [];
-      if (options.eval) {
-        args.push('-e', options.eval);
-      } else if (filePath) {
-        args.push(filePath);
-      }
-      
-      const { spawn } = require('child_process');
-      const child = spawn('npx', ['tsx', jsScriptPath, ...args], {
-        stdio: 'inherit',
-        cwd: projectRoot,
-        env: {
-          ...process.env,
-          NODE_OPTIONS: '--experimental-vm-modules'
-        }
-      });
-      
-      child.on('exit', (code: number) => {
-        process.exit(code || 0);
-      });
-      
-      child.on('error', (error: Error) => {
-        console.error('❌ Error executing JS environment:', error);
-        process.exit(1);
-      });
-    });
+export const jsCommandDescribe = (cmd: Command) => {
+  return cmd
+    .description('Run a JavaScript file or start a REPL with hasyx client in context.')
+    .option('-e, --eval <script>', 'Evaluate a string of JavaScript code');
+};
 
-  // Ask command
-  program
-    .command('ask')
+export const askCommandDescribe = (cmd: Command) => {
+  return cmd
     .description('AI assistant with code execution capabilities')
     .option('-e, --eval <question>', 'Execute a direct question')
     .option('-y, --yes', 'Auto-approve code execution (no confirmation)')
-    .option('-m, --model <model>', 'Specify OpenRouter model')
-    .action(async (options) => {
-      debug('Executing "ask" command with options:', options);
-      
-      // Check for OPENROUTER_API_KEY
-      if (!process.env.OPENROUTER_API_KEY) {
-        console.error('❌ OPENROUTER_API_KEY environment variable is required');
-        console.error('   Please set it in your .env file or environment');
-        process.exit(1);
-      }
+    .option('-m, --model <model>', 'Specify OpenRouter model');
+};
 
-      const projectRoot = findProjectRoot();
-      
-      // Check for project-specific ask.ts
-      const projectAskPath = path.join(projectRoot, 'lib', 'ask.ts');
-      
-      try {
-        let askModule;
-        
-        if (fs.existsSync(projectAskPath)) {
-          // Use project's own ask.ts
-          debug('Using project-specific ask.ts');
-          askModule = await import(projectAskPath);
-        } else {
-          // Use Hasyx's default ask
-          debug('Using default Hasyx ask.ts');
-          askModule = await import('./ask');
-        }
-        
-        const ask = askModule.default || askModule.ask;
-        
-        if (options.eval) {
-          // Direct question mode
-          const response = await ask.ask(options.eval);
-          await printMarkdown(response);
-        } else {
-          // Interactive REPL mode
-          await ask.repl();
-        }
-      } catch (error) {
-        console.error('❌ Error in ask command:', error);
-        debug('Ask command error:', error);
+export const tsxCommandDescribe = (cmd: Command) => {
+  return cmd
+    .description('Run a TypeScript file or start a TypeScript REPL with hasyx client in context.')
+    .option('-e, --eval <script>', 'Evaluate a string of TypeScript code');
+};
+
+// Export all command functions and utilities
+export const setupCommands = (program: Command, packageName: string = 'hasyx') => {
+  // Init command
+  initCommandDescribe(program.command('init')).action(async (options) => {
+    await initCommand(options, packageName);
+  });
+
+  // Dev command
+  devCommandDescribe(program.command('dev')).action(devCommand);
+
+  // Build command
+  buildCommandDescribe(program.command('build')).action(buildCommand);
+
+  // Start command
+  startCommandDescribe(program.command('start')).action(startCommand);
+
+  // Build client command
+  buildClientCommandDescribe(program.command('build:client')).action(buildClientCommand);
+
+  // Migrate command
+  migrateCommandDescribe(program.command('migrate')).action(migrateCommand);
+
+  // Unmigrate command
+  unmigrateCommandDescribe(program.command('unmigrate')).action(unmigrateCommand);
+
+  // Schema command
+  schemaCommandDescribe(program.command('schema')).action(schemaCommand);
+
+  // Doc command
+  docCommandDescribe(program.command('doc')).action(docCommand);
+
+  // Assets command
+  assetsCommandDescribe(program.command('assets')).action(async () => {
+    const { assetsCommand } = await import('./assets');
+    await assetsCommand();
+  });
+
+  // Events command
+  eventsCommandDescribe(program.command('events')).action(async (options) => {
+    const { eventsCommand } = await import('./events-cli');
+    await eventsCommand(options);
+  });
+
+  // Unbuild command
+  unbuildCommandDescribe(program.command('unbuild')).action(async () => {
+    const { unbuildCommand } = await import('./unbuild');
+    await unbuildCommand();
+  });
+
+  // Assist command
+  assistCommandDescribe(program.command('assist')).action((options) => {
+    assist(options);
+  });
+
+  // Telegram command
+  telegramCommandDescribe(program.command('telegram')).action(async (options) => {
+    const assistModule = await import('./assist'); 
+    if (!assistModule.runTelegramSetupAndCalibration) {
+        console.error('FATAL: runTelegramSetupAndCalibration function not found in assist module. Build might be corrupted or export is missing.');
         process.exit(1);
-      }
-    });
+    }
+    assistModule.runTelegramSetupAndCalibration(options);
+  });
+
+  // Local command
+  localCommandDescribe(program.command('local')).action(async () => {
+    const { localCommand } = await import('./local');
+    localCommand();
+  });
+
+  // Vercel command
+  vercelCommandDescribe(program.command('vercel')).action(async () => {
+    const { vercelCommand } = await import('./vercel');
+    vercelCommand();
+  });
+
+  // JS command
+  jsCommandDescribe(program.command('js [filePath]')).action(jsCommand);
+
+  // Ask command
+  askCommandDescribe(program.command('ask')).action(askCommand);
 
   // TSX command
-  program
-    .command('tsx [filePath]')
-    .description(`Run a TypeScript file or start a TypeScript REPL with ${packageName} client in context.`)
-    .option('-e, --eval <script>', 'Evaluate a string of TypeScript code')
-    .action(async (filePath, options) => {
-      debug('Executing "tsx" command with filePath:', filePath, 'and options:', options);
-      
-      const projectRoot = findProjectRoot();
-      const tsxScriptPath = path.join(projectRoot, 'lib', 'tsx.ts');
-      
-      const args: string[] = [];
-      if (options.eval) {
-        args.push('-e', options.eval);
-      } else if (filePath) {
-        args.push(filePath);
-      }
-      
-      const { spawn } = require('child_process');
-      const child = spawn('npx', ['tsx', tsxScriptPath, ...args], {
-        stdio: 'inherit',
-        cwd: projectRoot,
-        env: {
-          ...process.env,
-          NODE_OPTIONS: '--experimental-vm-modules'
-        }
-      });
-      
-      child.on('exit', (code: number) => {
-        process.exit(code || 0);
-      });
-      
-      child.on('error', (error: Error) => {
-        console.error('❌ Error executing TSX environment:', error);
-        process.exit(1);
-      });
-    });
+  tsxCommandDescribe(program.command('tsx [filePath]')).action(tsxCommand);
 
   return program;
 }; 

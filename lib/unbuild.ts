@@ -2,15 +2,16 @@ import fs from 'fs-extra';
 import path from 'path';
 import { glob } from 'glob';
 import Debug from './debug';
-import { findProjectRoot } from './cli-hasyx';
+import dotenv from 'dotenv';
 
 const debug = Debug('unbuild');
 
 export const unbuildCommand = async () => {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "unbuild" command.');
   console.log('🧹 Removing compiled files (.js, .d.ts) from lib, components, and hooks directories...');
   
-  const projectRoot = findProjectRoot();
+  const projectRoot = process.cwd();
   debug(`Project root: ${projectRoot}`);
   
   // Directories to clean

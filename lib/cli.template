@@ -1,56 +1,44 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { setupCommands } from 'hasyx/lib/cli-hasyx';
 import Debug from './debug';
-
-// Import and configure dotenv to load environment variables from .env
 import dotenv from 'dotenv';
 import path from 'path';
-import fs from 'fs-extra';
+import pckg from '@/package.json';
 
-// Get package info
-let pckg: any;
-try {
-  const packageJsonPath = path.join(__dirname, '../package.json');
-  if (fs.existsSync(packageJsonPath)) {
-    pckg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-  } else {
-    // Fallback if package.json not found
-    pckg = { name: 'hasyx-project', version: '1.0.0' };
-  }
-} catch (error) {
-  console.warn('⚠️ Could not read package.json, using defaults');
-  pckg = { name: 'hasyx-project', version: '1.0.0' };
-}
+// Import command descriptors and implementations from hasyx
+import {
+  initCommandDescribe, initCommand,
+  devCommandDescribe, devCommand,
+  buildCommandDescribe, buildCommand,
+  startCommandDescribe, startCommand,
+  buildClientCommandDescribe, buildClientCommand,
+  migrateCommandDescribe, migrateCommand,
+  unmigrateCommandDescribe, unmigrateCommand,
+  schemaCommandDescribe, schemaCommand,
+  docCommandDescribe, docCommand,
+  assetsCommandDescribe,
+  eventsCommandDescribe,
+  unbuildCommandDescribe,
+  assistCommandDescribe,
+  telegramCommandDescribe,
+  localCommandDescribe,
+  vercelCommandDescribe,
+  jsCommandDescribe, jsCommand,
+  askCommandDescribe, askCommand,
+  tsxCommandDescribe, tsxCommand
+} from './cli-hasyx';
 
 console.log(`${pckg.name}@${pckg.version}`);
 
-// Attempt to load environment variables from .env file
-try {
-  // Determine project root to locate .env file
-  let projectRoot = process.cwd();
-  let pkgPath = path.join(projectRoot, 'package.json');
-  let maxDepth = 5;  // Limit the number of parent directories to check
-  
-  // Move up the directory tree to find package.json (limit to 5 levels)
-  while (!fs.existsSync(pkgPath) && maxDepth > 0) {
-    projectRoot = path.dirname(projectRoot);
-    pkgPath = path.join(projectRoot, 'package.json');
-    maxDepth--;
-  }
-  
-  // Load .env file from the project root
-  const envResult = dotenv.config({ path: path.join(projectRoot, '.env') });
-  
-  if (envResult.error) {
-    // Only log in debug mode to avoid cluttering output for users without .env files
-    console.debug('Failed to load .env file:', envResult.error);
-  } else {
-    console.debug('.env file loaded successfully');
-  }
-} catch (error) {
-  console.debug('Error loading .env file:', error);
+// Load .env file from current working directory
+const envResult = dotenv.config({ path: path.join(process.cwd(), '.env') });
+
+if (envResult.error) {
+  // Only log in debug mode to avoid cluttering output for users without .env files
+  console.debug('Failed to load .env file:', envResult.error);
+} else {
+  console.debug('.env file loaded successfully');
 }
 
 // Create a debugger instance for the CLI
@@ -62,8 +50,63 @@ debug('Starting CLI script execution.');
 const program = new Command();
 debug('Commander instance created.');
 
-// Setup all commands using the base functionality from hasyx
-setupCommands(program, pckg.name);
+// Setup all commands individually (can be customized here)
+initCommandDescribe(program.command('init')).action(async (options) => {
+  await initCommand(options, pckg.name);
+});
+
+devCommandDescribe(program.command('dev')).action(devCommand);
+buildCommandDescribe(program.command('build')).action(buildCommand);
+startCommandDescribe(program.command('start')).action(startCommand);
+buildClientCommandDescribe(program.command('build:client')).action(buildClientCommand);
+migrateCommandDescribe(program.command('migrate')).action(migrateCommand);
+unmigrateCommandDescribe(program.command('unmigrate')).action(unmigrateCommand);
+schemaCommandDescribe(program.command('schema')).action(schemaCommand);
+docCommandDescribe(program.command('doc')).action(docCommand);
+
+// Commands that use dynamic imports
+assetsCommandDescribe(program.command('assets')).action(async () => {
+  const { assetsCommand } = await import('./assets');
+  await assetsCommand();
+});
+
+eventsCommandDescribe(program.command('events')).action(async (options) => {
+  const { eventsCommand } = await import('./events-cli');
+  await eventsCommand(options);
+});
+
+unbuildCommandDescribe(program.command('unbuild')).action(async () => {
+  const { unbuildCommand } = await import('./unbuild');
+  await unbuildCommand();
+});
+
+assistCommandDescribe(program.command('assist')).action(async (options) => {
+  const assist = (await import('./assist')).default;
+  assist(options);
+});
+
+telegramCommandDescribe(program.command('telegram')).action(async (options) => {
+  const assistModule = await import('./assist'); 
+  if (!assistModule.runTelegramSetupAndCalibration) {
+      console.error('FATAL: runTelegramSetupAndCalibration function not found in assist module. Build might be corrupted or export is missing.');
+      process.exit(1);
+  }
+  assistModule.runTelegramSetupAndCalibration(options);
+});
+
+localCommandDescribe(program.command('local')).action(async () => {
+  const { localCommand } = await import('./local');
+  localCommand();
+});
+
+vercelCommandDescribe(program.command('vercel')).action(async () => {
+  const { vercelCommand } = await import('./vercel');
+  vercelCommand();
+});
+
+jsCommandDescribe(program.command('js [filePath]')).action(jsCommand);
+askCommandDescribe(program.command('ask')).action(askCommand);
+tsxCommandDescribe(program.command('tsx [filePath]')).action(tsxCommand);
 
 debug('Parsing CLI arguments...');
 program.parse(process.argv);

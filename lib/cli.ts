@@ -1,31 +1,44 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { setupCommands } from './cli-hasyx';
 import Debug from './debug';
-
-// Import and configure dotenv to load environment variables from .env
 import dotenv from 'dotenv';
 import path from 'path';
+import pckg from '@/package.json';
 
-import pckg from '../package.json';
+// Import command descriptors and implementations from hasyx
+import {
+  initCommandDescribe, initCommand,
+  devCommandDescribe, devCommand,
+  buildCommandDescribe, buildCommand,
+  startCommandDescribe, startCommand,
+  buildClientCommandDescribe, buildClientCommand,
+  migrateCommandDescribe, migrateCommand,
+  unmigrateCommandDescribe, unmigrateCommand,
+  schemaCommandDescribe, schemaCommand,
+  docCommandDescribe, docCommand,
+  assetsCommandDescribe,
+  eventsCommandDescribe,
+  unbuildCommandDescribe,
+  assistCommandDescribe,
+  telegramCommandDescribe,
+  localCommandDescribe,
+  vercelCommandDescribe,
+  jsCommandDescribe, jsCommand,
+  askCommandDescribe, askCommand,
+  tsxCommandDescribe, tsxCommand
+} from './cli-hasyx';
 
 console.log(`${pckg.name}@${pckg.version}`);
 
-// Load environment variables from .env file in current working directory
-// This ensures that when using npx hasyx from a child project,
-// the .env is loaded from the user's current directory, not from hasyx package directory
-try {
-  const envResult = dotenv.config({ path: path.join(process.cwd(), '.env') });
-  
-  if (envResult.error) {
-    // Only log in debug mode to avoid cluttering output for users without .env files
-    console.debug('Failed to load .env file:', envResult.error);
-  } else {
-    console.debug('.env file loaded successfully');
-  }
-} catch (error) {
-  console.debug('Error loading .env file:', error);
+// Load .env file from current working directory
+const envResult = dotenv.config({ path: path.join(process.cwd(), '.env') });
+
+if (envResult.error) {
+  // Only log in debug mode to avoid cluttering output for users without .env files
+  console.debug('Failed to load .env file:', envResult.error);
+} else {
+  console.debug('.env file loaded successfully');
 }
 
 // Create a debugger instance for the CLI
@@ -37,8 +50,63 @@ debug('Starting CLI script execution.');
 const program = new Command();
 debug('Commander instance created.');
 
-// Setup all commands using the base functionality
-setupCommands(program, pckg.name);
+// Setup all commands individually (can be customized here)
+initCommandDescribe(program.command('init')).action(async (options) => {
+  await initCommand(options, pckg.name);
+});
+
+devCommandDescribe(program.command('dev')).action(devCommand);
+buildCommandDescribe(program.command('build')).action(buildCommand);
+startCommandDescribe(program.command('start')).action(startCommand);
+buildClientCommandDescribe(program.command('build:client')).action(buildClientCommand);
+migrateCommandDescribe(program.command('migrate')).action(migrateCommand);
+unmigrateCommandDescribe(program.command('unmigrate')).action(unmigrateCommand);
+schemaCommandDescribe(program.command('schema')).action(schemaCommand);
+docCommandDescribe(program.command('doc')).action(docCommand);
+
+// Commands that use dynamic imports
+assetsCommandDescribe(program.command('assets')).action(async () => {
+  const { assetsCommand } = await import('./assets');
+  await assetsCommand();
+});
+
+eventsCommandDescribe(program.command('events')).action(async (options) => {
+  const { eventsCommand } = await import('./events-cli');
+  await eventsCommand(options);
+});
+
+unbuildCommandDescribe(program.command('unbuild')).action(async () => {
+  const { unbuildCommand } = await import('./unbuild');
+  await unbuildCommand();
+});
+
+assistCommandDescribe(program.command('assist')).action(async (options) => {
+  const assist = (await import('./assist')).default;
+  assist(options);
+});
+
+telegramCommandDescribe(program.command('telegram')).action(async (options) => {
+  const assistModule = await import('./assist'); 
+  if (!assistModule.runTelegramSetupAndCalibration) {
+      console.error('FATAL: runTelegramSetupAndCalibration function not found in assist module. Build might be corrupted or export is missing.');
+      process.exit(1);
+  }
+  assistModule.runTelegramSetupAndCalibration(options);
+});
+
+localCommandDescribe(program.command('local')).action(async () => {
+  const { localCommand } = await import('./local');
+  localCommand();
+});
+
+vercelCommandDescribe(program.command('vercel')).action(async () => {
+  const { vercelCommand } = await import('./vercel');
+  vercelCommand();
+});
+
+jsCommandDescribe(program.command('js [filePath]')).action(jsCommand);
+askCommandDescribe(program.command('ask')).action(askCommand);
+tsxCommandDescribe(program.command('tsx [filePath]')).action(tsxCommand);
 
 debug('Parsing CLI arguments...');
 program.parse(process.argv);

@@ -503,6 +503,21 @@
           "level": 2
         },
         {
+          "title": "🔍 Interface Overview",
+          "url": "/hasyx/doc/CONSTRUCTOR#interface-overview",
+          "level": 2
+        },
+        {
+          "title": "Left Panel: Query Builder",
+          "url": "/hasyx/doc/CONSTRUCTOR#left-panel-query-builder",
+          "level": 3
+        },
+        {
+          "title": "Right Panel: Multi-View Tabs ✨",
+          "url": "/hasyx/doc/CONSTRUCTOR#right-panel-multi-view-tabs",
+          "level": 3
+        },
+        {
           "title": "📖 Practical Usage",
           "url": "/hasyx/doc/CONSTRUCTOR#practical-usage",
           "level": 2
@@ -515,6 +530,11 @@
         {
           "title": "Page Integration",
           "url": "/hasyx/doc/CONSTRUCTOR#page-integration",
+          "level": 3
+        },
+        {
+          "title": "Tabs Usage Examples",
+          "url": "/hasyx/doc/CONSTRUCTOR#tabs-usage-examples",
           "level": 3
         },
         {
@@ -573,8 +593,8 @@
           "level": 3
         },
         {
-          "title": "Recent Improvements ✅:",
-          "url": "/hasyx/doc/CONSTRUCTOR#recent-improvements",
+          "title": "Recent Major Updates ✅:",
+          "url": "/hasyx/doc/CONSTRUCTOR#recent-major-updates",
           "level": 3
         },
         {
@@ -4106,5 +4126,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-29T15:19:44.034Z"
+  "lastUpdated": "2025-05-29T16:06:11.770Z"
 }

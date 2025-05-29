@@ -1,6 +1,6 @@
 # 🏗️ Hasyx Query Constructor
 
-Visual GraphQL query builder for Hasyx with real-time results.
+Visual GraphQL query builder for Hasyx with real-time results and multi-view tabs.
 
 ## 🚀 Quick Start
 
@@ -22,6 +22,23 @@ function MyApp() {
   );
 }
 ```
+
+## 🔍 Interface Overview
+
+The Constructor page (`/hasyx/constructor`) features a **split-view interface**:
+
+### Left Panel: Query Builder
+- **Table Selection**: Inline with minimal styling
+- **Where Conditions**: Add/remove filters with operator selection
+- **Returning Fields**: Select fields and nested relations
+- **Real-time Updates**: Changes immediately reflected in right panel
+
+### Right Panel: Multi-View Tabs ✨
+- **`exp`** - Hasyx query options object
+- **`gql`** - Generated GraphQL query with variables
+  - Sub-tabs: `query` ↔ `subscription` toggle
+- **`query`** - Live query execution with useQuery
+- **`subscription`** - Live subscription with useSubscription
 
 ## 📖 Practical Usage
 
@@ -47,12 +64,11 @@ const withConditions = {
   returning: ['id', 'name', 'email']
 };
 
-// 3. Real-time Query Execution
-const { data, loading, error } = useQuery({
-  table: query.table,
-  where: query.where,
-  returning: query.returning
-});
+// 3. View in Multiple Formats
+// - exp tab: See Hasyx options
+// - gql tab: See GraphQL query + variables
+// - query tab: Execute with useQuery
+// - subscription tab: Execute with useSubscription
 ```
 
 ### Page Integration
@@ -66,23 +82,47 @@ export default function QueryPage() {
     returning: []
   });
   
-  const { data } = useQuery(constructorState);
-  
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="flex h-screen">
       {/* Left: Constructor */}
-      <HasyxConstructor 
-        value={constructorState}
-        onChange={setConstructorState}
-      />
+      <div className="flex-1">
+        <HasyxConstructor 
+          value={constructorState}
+          onChange={setConstructorState}
+        />
+      </div>
       
-      {/* Right: Results */}
-      <div>
-        <pre>{JSON.stringify(data, null, 2)}</pre>
+      {/* Right: Multi-view Results */}
+      <div className="flex-1">
+        {/* Tabs automatically handle different views */}
       </div>
     </div>
   );
 }
+```
+
+### Tabs Usage Examples
+
+```typescript
+// exp tab shows:
+{
+  "table": "users",
+  "where": { "name": { "_eq": "John" } },
+  "returning": ["id", "name", "email"]
+}
+
+// gql tab shows:
+query QueryUsers($v1: users_bool_exp) {
+  users(where: $v1) {
+    id
+    name
+    email
+  }
+}
+// Variables: { "v1": { "name": { "_eq": "John" } } }
+
+// query tab: Live data from useQuery
+// subscription tab: Streaming data from useSubscription
 ```
 
 ### Integration with Forms
@@ -113,6 +153,7 @@ function UserFilter() {
       </button>
       
       <HasyxConstructor value={filters} onChange={setFilters} />
+      {/* Results automatically update in tabs */}
     </div>
   );
 }
@@ -140,7 +181,11 @@ function UserFilter() {
 - ✅ Real-time query execution
 - ✅ Schema integration
 - ✅ UI components (cards, selects, inputs)
-- ✅ **NEW: Minimal padding design** - Reduced spacing throughout interface
+- ✅ **NEW: Multi-view tabs system** - exp, gql, query, subscription
+- ✅ **NEW: GraphQL generation preview** - See generated queries before execution
+- ✅ **NEW: Subscription support** - Real-time data streaming
+- ✅ **NEW: Query/Subscription toggle** - Switch operation types in gql tab
+- ✅ **NEW: Minimal inline design** - Table selection inline with title
 - ✅ **NEW: Plus button field selection** - Add fields via dropdown
 - ✅ **NEW: Recursive relations** - Nested query building for relations
 - ✅ **NEW: Clean field management** - Remove fields with X button
@@ -150,8 +195,8 @@ function UserFilter() {
 - ❌ **Sorting (order_by)** - `{ created_at: 'desc', name: 'asc' }`
 - ❌ **Pagination** - `limit: 10, offset: 20`
 - ❌ **Complex where logic** - `_and`, `_or` operators
-- ❌ **Subscription mode** - switch query/subscription
 - ❌ **Field search** - filter available fields
+- ❌ **Query validation** - real-time validation feedback
 
 ### Phase 3: Advanced Queries ❌
 - ❌ **Advanced nested relations** - More sophisticated relation handling
@@ -171,8 +216,8 @@ function UserFilter() {
 - ❌ **Query history** - save/load queries
 - ❌ **Query templates** - predefined queries
 - ❌ **Export options** - save as GraphQL/JSON
-- ❌ **Validation** - real-time query validation
 - ❌ **Performance** - query optimization hints
+- ❌ **Query sharing** - shareable URLs
 
 ### Phase 6: Advanced Types ❌
 - ❌ **JSON/JSONB fields** - object/array inputs
@@ -187,31 +232,28 @@ function UserFilter() {
 1. **Sorting** - Most requested feature
 2. **Pagination** - Essential for large datasets  
 3. **Complex where** - Enables advanced filtering
-4. **Subscription toggle** - Real-time data
+4. **Query validation** - Better developer experience
 
-### Recent Improvements ✅:
-- **Unified Field Design**: Where and Returning fields now appear as single cohesive blocks with separators [fieldname|operator|input|delete]
-- **Circular Plus Buttons**: Strictly circular + buttons without dropdown arrows using `[&>svg]:hidden` to hide default SelectTrigger arrows
-- **Minimalist Spacing**: Dramatically reduced padding and margins throughout interface (text-xs, p-1, p-2, mb-1)
-- **Visual Consistency**: All interface elements now share consistent height (h-5, h-6) and rounded corner treatment
-- **Improved Header Layout**: Where and Returning sections use flex justify-between with labels left, + buttons right
-- **Enhanced Where Conditions**: Both regular fields and relations available in where conditions dropdown
-- **Full-Width Elements**: All field blocks now use w-full with delete buttons consistently positioned on the right
-- **Smart Field Selection**: Plus button reveals only relevant fields for selected table, including both regular fields and relations
-- **Recursive Relations**: Full support for nested query building with relation conditions and field selection
-- **Real Table Filtering**: Extracts only actual tables from `hasyx.tableMappings`, filtering out internal and mapping tables
-- **Clean UI Labels**: Simplified "Where Conditions" → "Where", "Returning Fields" → "Returning"
+### Recent Major Updates ✅:
+- **Multi-View Tabs System**: Complete redesign of right panel with 4 specialized views
+- **GraphQL Preview**: Real-time GraphQL generation with variables display
+- **Subscription Support**: Live data streaming with useSubscription tab
+- **Operation Type Switching**: Toggle between query/subscription in gql tab
+- **Inline Table Selection**: Space-efficient table picker integrated with title
+- **Unified Field Design**: Where and Returning fields as cohesive blocks with separators
+- **Minimalist Spacing**: Dramatically reduced padding throughout interface
+- **Visual Consistency**: All elements share consistent height and styling
+- **Smart Field Selection**: Context-aware field and relation selection
+- **Recursive Relations**: Full nested query building support
+- **Real Table Filtering**: Clean table list from `hasyx.tableMappings`
 
 ### Implementation Strategy:
 ```typescript
-// 1. Add to ConstructorState
+// 1. Current ConstructorState ✅ IMPLEMENTED
 interface ConstructorState {
   table: string;
   where: Record<string, any>;
-  returning: (string | NestedReturning)[];  // ✅ UPDATED: Now supports nested relations
-  order_by?: Array<{ [field: string]: 'asc' | 'desc' }>; // NEW
-  limit?: number;    // NEW
-  offset?: number;   // NEW
+  returning: (string | NestedReturning)[];  // ✅ Supports nested relations
 }
 
 // 2. Nested Relations Support ✅ COMPLETED
@@ -222,43 +264,45 @@ interface NestedReturning {
   };
 }
 
-// 3. UI Components ✅ COMPLETED
-<Card>
-  <CardContent>
-    <Label>Where</Label>
-    <Select> {/* Plus button for adding fields */}
-      <Plus className="h-3 w-3" />
-    </Select>
-  </CardContent>
-</Card>
+// 3. Tabs System ✅ COMPLETED
+<Tabs defaultValue="exp">
+  <TabsList>
+    <TabsTrigger value="exp">exp</TabsTrigger>      // Hasyx options
+    <TabsTrigger value="gql">gql</TabsTrigger>      // GraphQL + variables
+    <TabsTrigger value="query">query</TabsTrigger>  // useQuery execution
+    <TabsTrigger value="subscription">subscription</TabsTrigger> // useSubscription
+  </TabsList>
+</Tabs>
 ```
 
 ## 🔧 Technical Notes
 
 ### Schema Requirements
 - Hasura schema at `/public/hasura-schema.json`
-- **Real tables from `hasyx.tableMappings`** ✅ NEW
+- **Real tables from `hasyx.tableMappings`** ✅ 
 - Field types determine available operators
-- **Automatic relation detection** ✅ NEW
+- **Automatic relation detection** ✅ 
 
 ### Performance
-- Real-time queries on every change
-- Debounce recommended for production
-- Consider query caching
-- **Minimal re-renders with optimized state management** ✅ NEW
+- **Real-time query execution in tabs** ✅ 
+- **Conditional mounting** - Query/Subscription tabs only mount when active
+- **Memoized generation** - GraphQL generation optimized with useMemo
+- **Error handling** - Graceful error display in all tabs
 
 ### Testing Coverage
 - ✅ **35 passing tests** (updated)
 - ✅ Real schema validation
 - ✅ Component integration tests
 - ✅ Utility function tests
-- ✅ **Recursive relation testing** ✅ NEW
+- ✅ **Tab system testing** ✅ NEW
+- ✅ **GraphQL generation testing** ✅ NEW
 
 ### Browser Support
 - Modern browsers with ES2020+
 - React 18+ required
 - Next.js 15+ integration
+- **Radix UI Tabs** for accessible tab navigation
 
 ---
 
-*Constructor is part of the Hasyx ecosystem for GraphQL operations.* 
+*Constructor is part of the Hasyx ecosystem for GraphQL operations with multi-view real-time results.* 
