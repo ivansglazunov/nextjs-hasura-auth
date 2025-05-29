@@ -695,342 +695,342 @@
     },
     {
       "title": "Environment Variables Documentation",
-      "url": "/hasyx/doc/ENV",
+      "url": "/hasyx/doc/ENV.experiment",
       "collapse": true,
       "items": [
         {
           "title": "Core Database & GraphQL",
-          "url": "/hasyx/doc/ENV#core-database-graphql",
+          "url": "/hasyx/doc/ENV.experiment#core-database-graphql",
           "level": 2
         },
         {
           "title": "NEXT_PUBLIC_HASURA_GRAPHQL_URL",
-          "url": "/hasyx/doc/ENV#next-public-hasura-graphql-url",
+          "url": "/hasyx/doc/ENV.experiment#next-public-hasura-graphql-url",
           "level": 3
         },
         {
           "title": "HASURA_ADMIN_SECRET",
-          "url": "/hasyx/doc/ENV#hasura-admin-secret",
+          "url": "/hasyx/doc/ENV.experiment#hasura-admin-secret",
           "level": 3
         },
         {
           "title": "HASURA_JWT_SECRET",
-          "url": "/hasyx/doc/ENV#hasura-jwt-secret",
+          "url": "/hasyx/doc/ENV.experiment#hasura-jwt-secret",
           "level": 3
         },
         {
           "title": "HASURA_EVENT_SECRET",
-          "url": "/hasyx/doc/ENV#hasura-event-secret",
+          "url": "/hasyx/doc/ENV.experiment#hasura-event-secret",
           "level": 3
         },
         {
           "title": "Authentication & OAuth",
-          "url": "/hasyx/doc/ENV#authentication-oauth",
+          "url": "/hasyx/doc/ENV.experiment#authentication-oauth",
           "level": 2
         },
         {
           "title": "NEXTAUTH_SECRET",
-          "url": "/hasyx/doc/ENV#nextauth-secret",
+          "url": "/hasyx/doc/ENV.experiment#nextauth-secret",
           "level": 3
         },
         {
           "title": "TEST_TOKEN",
-          "url": "/hasyx/doc/ENV#test-token",
+          "url": "/hasyx/doc/ENV.experiment#test-token",
           "level": 3
         },
         {
           "title": "GOOGLE_CLIENT_ID",
-          "url": "/hasyx/doc/ENV#google-client-id",
+          "url": "/hasyx/doc/ENV.experiment#google-client-id",
           "level": 3
         },
         {
           "title": "GOOGLE_CLIENT_SECRET",
-          "url": "/hasyx/doc/ENV#google-client-secret",
+          "url": "/hasyx/doc/ENV.experiment#google-client-secret",
           "level": 3
         },
         {
           "title": "YANDEX_CLIENT_ID",
-          "url": "/hasyx/doc/ENV#yandex-client-id",
+          "url": "/hasyx/doc/ENV.experiment#yandex-client-id",
           "level": 3
         },
         {
           "title": "YANDEX_CLIENT_SECRET",
-          "url": "/hasyx/doc/ENV#yandex-client-secret",
+          "url": "/hasyx/doc/ENV.experiment#yandex-client-secret",
           "level": 3
         },
         {
           "title": "GITHUB_ID",
-          "url": "/hasyx/doc/ENV#github-id",
+          "url": "/hasyx/doc/ENV.experiment#github-id",
           "level": 3
         },
         {
           "title": "GITHUB_SECRET",
-          "url": "/hasyx/doc/ENV#github-secret",
+          "url": "/hasyx/doc/ENV.experiment#github-secret",
           "level": 3
         },
         {
           "title": "FACEBOOK_CLIENT_ID",
-          "url": "/hasyx/doc/ENV#facebook-client-id",
+          "url": "/hasyx/doc/ENV.experiment#facebook-client-id",
           "level": 3
         },
         {
           "title": "FACEBOOK_CLIENT_SECRET",
-          "url": "/hasyx/doc/ENV#facebook-client-secret",
+          "url": "/hasyx/doc/ENV.experiment#facebook-client-secret",
           "level": 3
         },
         {
           "title": "VK_CLIENT_ID",
-          "url": "/hasyx/doc/ENV#vk-client-id",
+          "url": "/hasyx/doc/ENV.experiment#vk-client-id",
           "level": 3
         },
         {
           "title": "VK_CLIENT_SECRET",
-          "url": "/hasyx/doc/ENV#vk-client-secret",
+          "url": "/hasyx/doc/ENV.experiment#vk-client-secret",
           "level": 3
         },
         {
           "title": "AI & External APIs",
-          "url": "/hasyx/doc/ENV#ai-external-apis",
+          "url": "/hasyx/doc/ENV.experiment#ai-external-apis",
           "level": 2
         },
         {
           "title": "OPENROUTER_API_KEY",
-          "url": "/hasyx/doc/ENV#openrouter-api-key",
+          "url": "/hasyx/doc/ENV.experiment#openrouter-api-key",
           "level": 3
         },
         {
           "title": "REACT_APP_OPENROUTER_API_KEY",
-          "url": "/hasyx/doc/ENV#react-app-openrouter-api-key",
+          "url": "/hasyx/doc/ENV.experiment#react-app-openrouter-api-key",
           "level": 3
         },
         {
           "title": "EXTERNAL_API_KEY",
-          "url": "/hasyx/doc/ENV#external-api-key",
+          "url": "/hasyx/doc/ENV.experiment#external-api-key",
           "level": 3
         },
         {
           "title": "Telegram Integration",
-          "url": "/hasyx/doc/ENV#telegram-integration",
+          "url": "/hasyx/doc/ENV.experiment#telegram-integration",
           "level": 2
         },
         {
           "title": "TELEGRAM_BOT_TOKEN",
-          "url": "/hasyx/doc/ENV#telegram-bot-token",
+          "url": "/hasyx/doc/ENV.experiment#telegram-bot-token",
           "level": 3
         },
         {
           "title": "TELEGRAM_ADMIN_CHAT_ID",
-          "url": "/hasyx/doc/ENV#telegram-admin-chat-id",
+          "url": "/hasyx/doc/ENV.experiment#telegram-admin-chat-id",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME",
-          "url": "/hasyx/doc/ENV#next-public-telegram-bot-username",
+          "url": "/hasyx/doc/ENV.experiment#next-public-telegram-bot-username",
           "level": 3
         },
         {
           "title": "Firebase Integration",
-          "url": "/hasyx/doc/ENV#firebase-integration",
+          "url": "/hasyx/doc/ENV.experiment#firebase-integration",
           "level": 2
         },
         {
           "title": "NEXT_PUBLIC_FIREBASE_API_KEY",
-          "url": "/hasyx/doc/ENV#next-public-firebase-api-key",
+          "url": "/hasyx/doc/ENV.experiment#next-public-firebase-api-key",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-          "url": "/hasyx/doc/ENV#next-public-firebase-auth-domain",
+          "url": "/hasyx/doc/ENV.experiment#next-public-firebase-auth-domain",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-          "url": "/hasyx/doc/ENV#next-public-firebase-project-id",
+          "url": "/hasyx/doc/ENV.experiment#next-public-firebase-project-id",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
-          "url": "/hasyx/doc/ENV#next-public-firebase-storage-bucket",
+          "url": "/hasyx/doc/ENV.experiment#next-public-firebase-storage-bucket",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
-          "url": "/hasyx/doc/ENV#next-public-firebase-messaging-sender-id",
+          "url": "/hasyx/doc/ENV.experiment#next-public-firebase-messaging-sender-id",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_FIREBASE_APP_ID",
-          "url": "/hasyx/doc/ENV#next-public-firebase-app-id",
+          "url": "/hasyx/doc/ENV.experiment#next-public-firebase-app-id",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_FIREBASE_VAPID_KEY",
-          "url": "/hasyx/doc/ENV#next-public-firebase-vapid-key",
+          "url": "/hasyx/doc/ENV.experiment#next-public-firebase-vapid-key",
           "level": 3
         },
         {
           "title": "Email Services",
-          "url": "/hasyx/doc/ENV#email-services",
+          "url": "/hasyx/doc/ENV.experiment#email-services",
           "level": 2
         },
         {
           "title": "RESEND_API_KEY",
-          "url": "/hasyx/doc/ENV#resend-api-key",
+          "url": "/hasyx/doc/ENV.experiment#resend-api-key",
           "level": 3
         },
         {
           "title": "Application URLs",
-          "url": "/hasyx/doc/ENV#application-urls",
+          "url": "/hasyx/doc/ENV.experiment#application-urls",
           "level": 2
         },
         {
           "title": "NEXT_PUBLIC_MAIN_URL",
-          "url": "/hasyx/doc/ENV#next-public-main-url",
+          "url": "/hasyx/doc/ENV.experiment#next-public-main-url",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_BASE_URL",
-          "url": "/hasyx/doc/ENV#next-public-base-url",
+          "url": "/hasyx/doc/ENV.experiment#next-public-base-url",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_API_URL",
-          "url": "/hasyx/doc/ENV#next-public-api-url",
+          "url": "/hasyx/doc/ENV.experiment#next-public-api-url",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_APP_URL",
-          "url": "/hasyx/doc/ENV#next-public-app-url",
+          "url": "/hasyx/doc/ENV.experiment#next-public-app-url",
           "level": 3
         },
         {
           "title": "VERCEL_URL",
-          "url": "/hasyx/doc/ENV#vercel-url",
+          "url": "/hasyx/doc/ENV.experiment#vercel-url",
           "level": 3
         },
         {
           "title": "Build & Configuration",
-          "url": "/hasyx/doc/ENV#build-configuration",
+          "url": "/hasyx/doc/ENV.experiment#build-configuration",
           "level": 2
         },
         {
           "title": "NEXT_PUBLIC_BUILD_TARGET",
-          "url": "/hasyx/doc/ENV#next-public-build-target",
+          "url": "/hasyx/doc/ENV.experiment#next-public-build-target",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_BASE_PATH",
-          "url": "/hasyx/doc/ENV#next-public-base-path",
+          "url": "/hasyx/doc/ENV.experiment#next-public-base-path",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_WS",
-          "url": "/hasyx/doc/ENV#next-public-ws",
+          "url": "/hasyx/doc/ENV.experiment#next-public-ws",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_HID_NAMESPACE",
-          "url": "/hasyx/doc/ENV#next-public-hid-namespace",
+          "url": "/hasyx/doc/ENV.experiment#next-public-hid-namespace",
           "level": 3
         },
         {
           "title": "Notifications",
-          "url": "/hasyx/doc/ENV#notifications",
+          "url": "/hasyx/doc/ENV.experiment#notifications",
           "level": 2
         },
         {
           "title": "NEXT_PUBLIC_NOTIFICATION_ICON",
-          "url": "/hasyx/doc/ENV#next-public-notification-icon",
+          "url": "/hasyx/doc/ENV.experiment#next-public-notification-icon",
           "level": 3
         },
         {
           "title": "NEXT_PUBLIC_APP_NAME",
-          "url": "/hasyx/doc/ENV#next-public-app-name",
+          "url": "/hasyx/doc/ENV.experiment#next-public-app-name",
           "level": 3
         },
         {
           "title": "Database Connection",
-          "url": "/hasyx/doc/ENV#database-connection",
+          "url": "/hasyx/doc/ENV.experiment#database-connection",
           "level": 2
         },
         {
           "title": "POSTGRES_URL",
-          "url": "/hasyx/doc/ENV#postgres-url",
+          "url": "/hasyx/doc/ENV.experiment#postgres-url",
           "level": 3
         },
         {
           "title": "PGHOST",
-          "url": "/hasyx/doc/ENV#pghost",
+          "url": "/hasyx/doc/ENV.experiment#pghost",
           "level": 3
         },
         {
           "title": "PGPORT",
-          "url": "/hasyx/doc/ENV#pgport",
+          "url": "/hasyx/doc/ENV.experiment#pgport",
           "level": 3
         },
         {
           "title": "PGUSER",
-          "url": "/hasyx/doc/ENV#pguser",
+          "url": "/hasyx/doc/ENV.experiment#pguser",
           "level": 3
         },
         {
           "title": "PGPASSWORD",
-          "url": "/hasyx/doc/ENV#pgpassword",
+          "url": "/hasyx/doc/ENV.experiment#pgpassword",
           "level": 3
         },
         {
           "title": "PGDATABASE",
-          "url": "/hasyx/doc/ENV#pgdatabase",
+          "url": "/hasyx/doc/ENV.experiment#pgdatabase",
           "level": 3
         },
         {
           "title": "PGSSLMODE",
-          "url": "/hasyx/doc/ENV#pgsslmode",
+          "url": "/hasyx/doc/ENV.experiment#pgsslmode",
           "level": 3
         },
         {
           "title": "Development & Testing",
-          "url": "/hasyx/doc/ENV#development-testing",
+          "url": "/hasyx/doc/ENV.experiment#development-testing",
           "level": 2
         },
         {
           "title": "NODE_ENV",
-          "url": "/hasyx/doc/ENV#node-env",
+          "url": "/hasyx/doc/ENV.experiment#node-env",
           "level": 3
         },
         {
           "title": "DEBUG",
-          "url": "/hasyx/doc/ENV#debug",
+          "url": "/hasyx/doc/ENV.experiment#debug",
           "level": 3
         },
         {
           "title": "HASYX_DEBUG",
-          "url": "/hasyx/doc/ENV#hasyx-debug",
+          "url": "/hasyx/doc/ENV.experiment#hasyx-debug",
           "level": 3
         },
         {
           "title": "JEST_LOCAL",
-          "url": "/hasyx/doc/ENV#jest-local",
+          "url": "/hasyx/doc/ENV.experiment#jest-local",
           "level": 3
         },
         {
           "title": "TERM_THEME",
-          "url": "/hasyx/doc/ENV#term-theme",
+          "url": "/hasyx/doc/ENV.experiment#term-theme",
           "level": 3
         },
         {
           "title": "npm_package_name",
-          "url": "/hasyx/doc/ENV#npm-package-name",
+          "url": "/hasyx/doc/ENV.experiment#npm-package-name",
           "level": 3
         },
         {
           "title": "Shell Environment",
-          "url": "/hasyx/doc/ENV#shell-environment",
+          "url": "/hasyx/doc/ENV.experiment#shell-environment",
           "level": 2
         },
         {
           "title": "SHELL",
-          "url": "/hasyx/doc/ENV#shell",
+          "url": "/hasyx/doc/ENV.experiment#shell",
           "level": 3
         }
       ],
@@ -3518,6 +3518,89 @@
       "level": 1
     },
     {
+      "title": "Hasyx Query Constructor Development Plan",
+      "url": "/hasyx/doc/constructor.experiment",
+      "collapse": true,
+      "items": [
+        {
+          "title": "ПРАВИЛА",
+          "url": "/hasyx/doc/constructor.experiment#",
+          "level": 2
+        },
+        {
+          "title": "Ограниченный список файлов для разработки",
+          "url": "/hasyx/doc/constructor.experiment#",
+          "level": 2
+        },
+        {
+          "title": "План разработки",
+          "url": "/hasyx/doc/constructor.experiment#",
+          "level": 2
+        },
+        {
+          "title": "Этап 1: Подготовка инфраструктуры",
+          "url": "/hasyx/doc/constructor.experiment#1",
+          "level": 3
+        },
+        {
+          "title": "Этап 2: Базовые утилиты и типы",
+          "url": "/hasyx/doc/constructor.experiment#2",
+          "level": 3
+        },
+        {
+          "title": "Этап 3: Input Field компоненты",
+          "url": "/hasyx/doc/constructor.experiment#3-input-field",
+          "level": 3
+        },
+        {
+          "title": "Этап 4: Where компоненты",
+          "url": "/hasyx/doc/constructor.experiment#4-where",
+          "level": 3
+        },
+        {
+          "title": "Этап 5: Returning компоненты",
+          "url": "/hasyx/doc/constructor.experiment#5-returning",
+          "level": 3
+        },
+        {
+          "title": "Этап 6: Основные компоненты конструктора",
+          "url": "/hasyx/doc/constructor.experiment#6",
+          "level": 3
+        },
+        {
+          "title": "Этап 7: Интеграция и страница",
+          "url": "/hasyx/doc/constructor.experiment#7",
+          "level": 3
+        },
+        {
+          "title": "Этап 8: Рефакторинг и оптимизация",
+          "url": "/hasyx/doc/constructor.experiment#8",
+          "level": 3
+        },
+        {
+          "title": "Структура файлов",
+          "url": "/hasyx/doc/constructor.experiment#",
+          "level": 2
+        },
+        {
+          "title": "Основные типы",
+          "url": "/hasyx/doc/constructor.experiment#",
+          "level": 2
+        },
+        {
+          "title": "Ключевые функции",
+          "url": "/hasyx/doc/constructor.experiment#",
+          "level": 2
+        },
+        {
+          "title": "Приоритеты для тестирования",
+          "url": "/hasyx/doc/constructor.experiment#",
+          "level": 2
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "Hasura Migration Refactoring Plan",
       "url": "/hasyx/doc/hasura.experiment",
       "collapse": true,
@@ -3777,5 +3860,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-29T09:29:12.982Z"
+  "lastUpdated": "2025-05-29T10:58:49.307Z"
 }

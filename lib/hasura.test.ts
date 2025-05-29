@@ -3262,4 +3262,187 @@ debug('✅ Real Hasura client initialized for testing');
       }
     }, 120000);
   });
+
+  describe('Data Source Management', () => {
+    const testSourceName = `test_source_${uuidv4().replace(/-/g, '_')}`;
+    const testDatabaseUrl = 'postgres://test:test@localhost:5432/test_db';
+
+    afterEach(async () => {
+      // Clean up test source
+      try {
+        await hasura.deleteSource({ name: testSourceName });
+      } catch (error) {
+        // Ignore if source doesn't exist
+      }
+    });
+
+    it('should list existing data sources', async () => {
+      const sources = await hasura.listSources();
+      
+      expect(Array.isArray(sources)).toBe(true);
+      
+      // Should have at least one source (default or postgres)
+      expect(sources.length).toBeGreaterThan(0);
+      
+      // Each source should have required properties
+      sources.forEach(source => {
+        expect(source).toHaveProperty('name');
+        expect(source).toHaveProperty('kind');
+        expect(source).toHaveProperty('tables');
+        expect(source).toHaveProperty('configuration');
+      });
+    }, 30000);
+
+    it('should check if source exists', async () => {
+      // Check for default source
+      const defaultExists = await hasura.checkSourceExists('default');
+      
+      // Should return boolean
+      expect(typeof defaultExists).toBe('boolean');
+      
+      // Check for non-existent source
+      const nonExistentExists = await hasura.checkSourceExists('non_existent_source_12345');
+      expect(nonExistentExists).toBe(false);
+    }, 30000);
+
+    it('should create a new data source', async () => {
+      const result = await hasura.createSource({
+        name: testSourceName,
+        kind: 'postgres',
+        configuration: {
+          connection_info: {
+            database_url: testDatabaseUrl,
+            isolation_level: 'read-committed',
+            use_prepared_statements: false
+          }
+        }
+      });
+      
+      // Should succeed
+      expect(result).toBeDefined();
+      
+      // Source should now exist
+      const exists = await hasura.checkSourceExists(testSourceName);
+      expect(exists).toBe(true);
+      
+      // Should appear in sources list
+      const sources = await hasura.listSources();
+      const testSource = sources.find(s => s.name === testSourceName);
+      expect(testSource).toBeDefined();
+      expect(testSource?.kind).toBe('postgres');
+    }, 30000);
+
+    it('should throw error when creating existing source', async () => {
+      // Create source first
+      await hasura.createSource({
+        name: testSourceName,
+        configuration: {
+          connection_info: {
+            database_url: testDatabaseUrl
+          }
+        }
+      });
+      
+      // Try to create again - should throw error
+      await expect(hasura.createSource({
+        name: testSourceName,
+        configuration: {
+          connection_info: {
+            database_url: testDatabaseUrl
+          }
+        }
+      })).rejects.toThrow('already exists');
+    }, 30000);
+
+    it('should define source (idempotent)', async () => {
+      // First call should create the source
+      const result1 = await hasura.defineSource({
+        name: testSourceName,
+        configuration: {
+          connection_info: {
+            database_url: testDatabaseUrl
+          }
+        }
+      });
+      
+      expect(result1).toBeDefined();
+      
+      // Source should exist
+      let exists = await hasura.checkSourceExists(testSourceName);
+      expect(exists).toBe(true);
+      
+      // Second call should succeed (idempotent)
+      const result2 = await hasura.defineSource({
+        name: testSourceName,
+        configuration: {
+          connection_info: {
+            database_url: testDatabaseUrl + '_modified'
+          }
+        }
+      });
+      
+      expect(result2).toBeDefined();
+      
+      // Source should still exist
+      exists = await hasura.checkSourceExists(testSourceName);
+      expect(exists).toBe(true);
+    }, 30000);
+
+    it('should delete data source', async () => {
+      // Create source first
+      await hasura.createSource({
+        name: testSourceName,
+        configuration: {
+          connection_info: {
+            database_url: testDatabaseUrl
+          }
+        }
+      });
+      
+      // Verify it exists
+      let exists = await hasura.checkSourceExists(testSourceName);
+      expect(exists).toBe(true);
+      
+      // Delete it
+      const result = await hasura.deleteSource({ name: testSourceName });
+      expect(result).toBeDefined();
+      
+      // Verify it's gone
+      exists = await hasura.checkSourceExists(testSourceName);
+      expect(exists).toBe(false);
+    }, 30000);
+
+    it('should ensure default source exists', async () => {
+      // This should always succeed, either finding existing or creating new
+      const result = await hasura.ensureDefaultSource();
+      expect(result.success).toBe(true);
+      
+      // Default source should exist after this call
+      const exists = await hasura.checkSourceExists('default');
+      expect(exists).toBe(true);
+    }, 30000);
+
+    it('should ensure default source with custom database URL', async () => {
+      const customUrl = 'postgres://custom:password@localhost:5432/custom_db';
+      
+      const result = await hasura.ensureDefaultSource(customUrl);
+      expect(result.success).toBe(true);
+      
+      // Default source should exist
+      const exists = await hasura.checkSourceExists('default');
+      expect(exists).toBe(true);
+    }, 30000);
+
+    it('should handle source operations gracefully when Hasura is unavailable', async () => {
+      // Create instance with invalid URL
+      const invalidHasura = new Hasura({
+        url: 'http://invalid-hasura-url:9999',
+        secret: 'invalid-secret'
+      });
+      
+      // Should handle gracefully
+      const exists = await invalidHasura.checkSourceExists('default');
+      expect(exists).toBe(false);
+    }, 30000);
+  });
 }); 

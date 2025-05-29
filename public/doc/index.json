@@ -774,7 +774,7 @@
       "path": "CYTO.md"
     },
     {
-      "filename": "ENV.md",
+      "filename": "ENV.experiment.md",
       "title": "Environment Variables Documentation",
       "headings": [
         {
@@ -1119,7 +1119,7 @@
         }
       ],
       "content": "",
-      "path": "ENV.md"
+      "path": "ENV.experiment.md"
     },
     {
       "filename": "EXEC-TSX.md",
@@ -4013,6 +4013,94 @@
       "path": "components/sidebar/README.md"
     },
     {
+      "filename": "constructor.experiment.md",
+      "title": "Hasyx Query Constructor Development Plan",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Hasyx Query Constructor Development Plan",
+          "id": "hasyx-query-constructor-development-plan"
+        },
+        {
+          "level": 2,
+          "text": "ПРАВИЛА",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "Ограниченный список файлов для разработки",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "План разработки",
+          "id": ""
+        },
+        {
+          "level": 3,
+          "text": "Этап 1: Подготовка инфраструктуры",
+          "id": "1"
+        },
+        {
+          "level": 3,
+          "text": "Этап 2: Базовые утилиты и типы",
+          "id": "2"
+        },
+        {
+          "level": 3,
+          "text": "Этап 3: Input Field компоненты",
+          "id": "3-input-field"
+        },
+        {
+          "level": 3,
+          "text": "Этап 4: Where компоненты",
+          "id": "4-where"
+        },
+        {
+          "level": 3,
+          "text": "Этап 5: Returning компоненты",
+          "id": "5-returning"
+        },
+        {
+          "level": 3,
+          "text": "Этап 6: Основные компоненты конструктора",
+          "id": "6"
+        },
+        {
+          "level": 3,
+          "text": "Этап 7: Интеграция и страница",
+          "id": "7"
+        },
+        {
+          "level": 3,
+          "text": "Этап 8: Рефакторинг и оптимизация",
+          "id": "8"
+        },
+        {
+          "level": 2,
+          "text": "Структура файлов",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "Основные типы",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "Ключевые функции",
+          "id": ""
+        },
+        {
+          "level": 2,
+          "text": "Приоритеты для тестирования",
+          "id": ""
+        }
+      ],
+      "content": "",
+      "path": "constructor.experiment.md"
+    },
+    {
       "filename": "hasura.experiment.md",
       "title": "Hasura Migration Refactoring Plan",
       "headings": [
@@ -4422,5 +4510,5 @@
       "path": "testing.experiment.md"
     }
   ],
-  "lastUpdated": "2025-05-29T09:29:12.958Z"
+  "lastUpdated": "2025-05-29T10:58:49.276Z"
 }
