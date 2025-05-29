@@ -9,7 +9,9 @@ Hasyx = Next.js + Hasura + auth + client + building
 Hasyx provides a robust starting point and a set of tools for building applications using Next.js (App Router), Hasura, and strong authentication patterns. It simplifies setup with JWT-based authentication via NextAuth.js, a secure GraphQL proxy to Hasura, direct WebSocket support for subscriptions, and a powerful dynamic query generator.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-%F0%9F%9A%80-brightgreen)](https://hasyx.vercel.app/)
-[![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md) [![Apollo Client Documentation](https://img.shields.io/badge/Apollo%20Client%20Docs-MD-orange)](APOLLO.md)
+[![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md) 
+[![Constructor Documentation](https://img.shields.io/badge/Constructor%20Docs-MD-teal)](CONSTRUCTOR.md)
+[![Apollo Client Documentation](https://img.shields.io/badge/Apollo%20Client%20Docs-MD-orange)](APOLLO.md)
 [![Authentication Helpers Documentation](https://img.shields.io/badge/Auth%20Helpers%20Docs-MD-green)](AUTH.md) [![Hasura Admin Client Documentation](https://img.shields.io/badge/Hasura%20Client%20Docs-MD-purple)](HASURA.md)
 [![Generated Client Documentation](https://img.shields.io/badge/Generated%20Hasyx%20Docs-MD-cyan)](HASYX.md)
 [![GraphQL Proxy Documentation](https://img.shields.io/badge/GraphQL%20Proxy%20Docs-MD-yellow)](GRAPHQL-PROXY.md)
@@ -120,6 +122,7 @@ Applying best development practices from the listed ecosystems, we have combined
 Explore the different modules and functionalities of Hasyx:
 
 *   **[GENERATOR.md](GENERATOR.md):** Learn about the powerful dynamic query generator for Hasura.
+*   **[CONSTRUCTOR.md](CONSTRUCTOR.md):** Visual GraphQL query builder with real-time results and development roadmap.
 *   **[APOLLO.md](APOLLO.md):** Understand how to use the Apollo Client with Hasyx.
 *   **[AUTH.md](AUTH.md):** Details on authentication helpers and NextAuth.js integration.
 *   **[HASURA.md](HASURA.md):** Information about the Hasura admin client and its usage.

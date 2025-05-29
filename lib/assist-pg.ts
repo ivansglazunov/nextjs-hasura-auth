@@ -20,8 +20,8 @@ export async function configurePg(rl: readline.Interface, envPath: string): Prom
   const envVars = parseEnvFile(envPath);
   
   // Check if already configured
-  if (envVars.DATABASE_URL) {
-    console.log('✅ PostgreSQL connection already configured in DATABASE_URL');
+  if (envVars.POSTGRES_URL) {
+    console.log('✅ PostgreSQL connection already configured in POSTGRES_URL');
     if (!await askYesNo(rl, 'Do you want to reconfigure it?', false)) {
       return envVars;
     }
@@ -43,8 +43,8 @@ export async function configurePg(rl: readline.Interface, envPath: string): Prom
       debug('Successfully parsed PostgreSQL URL:', options);
       
       // Save the URL to env variables
-      envVars.DATABASE_URL = pgUrl;
-      console.log('✅ PostgreSQL connection URL saved to DATABASE_URL');
+      envVars.POSTGRES_URL = pgUrl;
+      console.log('✅ PostgreSQL connection URL saved to POSTGRES_URL');
       
       // Write to .env file
       writeEnvFile(envPath, envVars);
@@ -82,7 +82,7 @@ export async function configurePg(rl: readline.Interface, envPath: string): Prom
   // Generate and save the URL
   try {
     const url = optionsToUrl(options);
-    envVars.DATABASE_URL = url;
+    envVars.POSTGRES_URL = url;
     
     // Save individual environment variables too
     envVars.PGHOST = options.host;
@@ -98,7 +98,7 @@ export async function configurePg(rl: readline.Interface, envPath: string): Prom
     // Write to .env file
     writeEnvFile(envPath, envVars);
     console.log('✅ PostgreSQL connection configured and saved to environment variables');
-    console.log(`  DATABASE_URL=${url.replace(/:[^:]*@/, ':****@')}`);
+    console.log(`  POSTGRES_URL=${url.replace(/:[^:]*@/, ':****@')}`);
     return envVars;
   } catch (error: any) {
     console.error(`❌ Error generating PostgreSQL URL: ${error.message}`);

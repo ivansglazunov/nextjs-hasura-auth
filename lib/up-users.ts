@@ -320,6 +320,9 @@ export async function up(customHasura?: Hasura) {
   });
   
   try {
+    // Ensure default data source exists before any operations
+    await hasura.ensureDefaultSource();
+    
     await applySQLSchema(hasura);
     await trackTables(hasura);
     await createRelationships(hasura);

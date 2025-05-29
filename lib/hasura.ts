@@ -1523,8 +1523,8 @@ export class Hasura {
       
       // Use provided database URL or try to get from environment
       const dbUrl = databaseUrl || 
-                   process.env.DATABASE_URL || 
-                   process.env.POSTGRES_URL ||
+                   process.env.POSTGRES_URL || 
+                   process.env.DATABASE_URL ||
                    'postgres://postgres:postgrespassword@postgres:5432/postgres';
       
       await this.defineSource({
