@@ -6,9 +6,4 @@ import { down } from 'hasyx/lib/down-payments'; // Adjusted import path
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // Run the migration
-if (require.main === module) {
-  down().catch(e => {
-    console.error('Migration DOWN script failed for 20240801120000-hasyx-payments:', e);
-    process.exit(1);
-  });
-} 
+down();

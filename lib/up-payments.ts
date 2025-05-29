@@ -2,7 +2,6 @@ import { Hasura, ColumnType } from './hasura';
 import Debug from './debug';
 
 const debug = Debug('lib:up-payments');
-const MIGRATION_NAME = '20240801120000-hasyx-payments';
 
 async function createPaymentsSchema(hasura: Hasura) {
   debug('Creating payments schema...');

@@ -275,7 +275,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'migrations/1746660891582-hasyx-users',
     'migrations/174670608552-hasyx-notify',
     'migrations/1746837333136-hasyx-debug',
-    'migrations/20240801120000-hasyx-payments',
+    'migrations/1748511896530-hasyx-payments',
     'migrations/29991231235959999-hasyx',
     'app/api/events/[name]',
     'events',
