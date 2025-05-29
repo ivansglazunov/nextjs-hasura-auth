@@ -187,6 +187,21 @@
           "level": 2
         },
         {
+          "title": "🎨 Beautiful Terminal Output",
+          "url": "/hasyx/doc/ASK#beautiful-terminal-output",
+          "level": 2
+        },
+        {
+          "title": "Formatted Output Features",
+          "url": "/hasyx/doc/ASK#formatted-output-features",
+          "level": 3
+        },
+        {
+          "title": "Example Formatted Output",
+          "url": "/hasyx/doc/ASK#example-formatted-output",
+          "level": 3
+        },
+        {
           "title": "🎯 Real-time Progress Indicators",
           "url": "/hasyx/doc/ASK#real-time-progress-indicators",
           "level": 2
@@ -197,8 +212,8 @@
           "level": 3
         },
         {
-          "title": "Example Output",
-          "url": "/hasyx/doc/ASK#example-output",
+          "title": "Example Output with Syntax Highlighting",
+          "url": "/hasyx/doc/ASK#example-output-with-syntax-highlighting",
           "level": 3
         },
         {
@@ -419,6 +434,11 @@
         {
           "title": "Contributing",
           "url": "/hasyx/doc/ASK#contributing",
+          "level": 2
+        },
+        {
+          "title": "Command Options",
+          "url": "/hasyx/doc/ASK#command-options",
           "level": 2
         }
       ],
@@ -669,6 +689,349 @@
           "title": "Key Aspects and Benefits",
           "url": "/hasyx/doc/CYTO#key-aspects-and-benefits",
           "level": 2
+        }
+      ],
+      "level": 1
+    },
+    {
+      "title": "Environment Variables Documentation",
+      "url": "/hasyx/doc/ENV",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Core Database & GraphQL",
+          "url": "/hasyx/doc/ENV#core-database-graphql",
+          "level": 2
+        },
+        {
+          "title": "NEXT_PUBLIC_HASURA_GRAPHQL_URL",
+          "url": "/hasyx/doc/ENV#next-public-hasura-graphql-url",
+          "level": 3
+        },
+        {
+          "title": "HASURA_ADMIN_SECRET",
+          "url": "/hasyx/doc/ENV#hasura-admin-secret",
+          "level": 3
+        },
+        {
+          "title": "HASURA_JWT_SECRET",
+          "url": "/hasyx/doc/ENV#hasura-jwt-secret",
+          "level": 3
+        },
+        {
+          "title": "HASURA_EVENT_SECRET",
+          "url": "/hasyx/doc/ENV#hasura-event-secret",
+          "level": 3
+        },
+        {
+          "title": "Authentication & OAuth",
+          "url": "/hasyx/doc/ENV#authentication-oauth",
+          "level": 2
+        },
+        {
+          "title": "NEXTAUTH_SECRET",
+          "url": "/hasyx/doc/ENV#nextauth-secret",
+          "level": 3
+        },
+        {
+          "title": "TEST_TOKEN",
+          "url": "/hasyx/doc/ENV#test-token",
+          "level": 3
+        },
+        {
+          "title": "GOOGLE_CLIENT_ID",
+          "url": "/hasyx/doc/ENV#google-client-id",
+          "level": 3
+        },
+        {
+          "title": "GOOGLE_CLIENT_SECRET",
+          "url": "/hasyx/doc/ENV#google-client-secret",
+          "level": 3
+        },
+        {
+          "title": "YANDEX_CLIENT_ID",
+          "url": "/hasyx/doc/ENV#yandex-client-id",
+          "level": 3
+        },
+        {
+          "title": "YANDEX_CLIENT_SECRET",
+          "url": "/hasyx/doc/ENV#yandex-client-secret",
+          "level": 3
+        },
+        {
+          "title": "GITHUB_ID",
+          "url": "/hasyx/doc/ENV#github-id",
+          "level": 3
+        },
+        {
+          "title": "GITHUB_SECRET",
+          "url": "/hasyx/doc/ENV#github-secret",
+          "level": 3
+        },
+        {
+          "title": "FACEBOOK_CLIENT_ID",
+          "url": "/hasyx/doc/ENV#facebook-client-id",
+          "level": 3
+        },
+        {
+          "title": "FACEBOOK_CLIENT_SECRET",
+          "url": "/hasyx/doc/ENV#facebook-client-secret",
+          "level": 3
+        },
+        {
+          "title": "VK_CLIENT_ID",
+          "url": "/hasyx/doc/ENV#vk-client-id",
+          "level": 3
+        },
+        {
+          "title": "VK_CLIENT_SECRET",
+          "url": "/hasyx/doc/ENV#vk-client-secret",
+          "level": 3
+        },
+        {
+          "title": "AI & External APIs",
+          "url": "/hasyx/doc/ENV#ai-external-apis",
+          "level": 2
+        },
+        {
+          "title": "OPENROUTER_API_KEY",
+          "url": "/hasyx/doc/ENV#openrouter-api-key",
+          "level": 3
+        },
+        {
+          "title": "REACT_APP_OPENROUTER_API_KEY",
+          "url": "/hasyx/doc/ENV#react-app-openrouter-api-key",
+          "level": 3
+        },
+        {
+          "title": "EXTERNAL_API_KEY",
+          "url": "/hasyx/doc/ENV#external-api-key",
+          "level": 3
+        },
+        {
+          "title": "Telegram Integration",
+          "url": "/hasyx/doc/ENV#telegram-integration",
+          "level": 2
+        },
+        {
+          "title": "TELEGRAM_BOT_TOKEN",
+          "url": "/hasyx/doc/ENV#telegram-bot-token",
+          "level": 3
+        },
+        {
+          "title": "TELEGRAM_ADMIN_CHAT_ID",
+          "url": "/hasyx/doc/ENV#telegram-admin-chat-id",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME",
+          "url": "/hasyx/doc/ENV#next-public-telegram-bot-username",
+          "level": 3
+        },
+        {
+          "title": "Firebase Integration",
+          "url": "/hasyx/doc/ENV#firebase-integration",
+          "level": 2
+        },
+        {
+          "title": "NEXT_PUBLIC_FIREBASE_API_KEY",
+          "url": "/hasyx/doc/ENV#next-public-firebase-api-key",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+          "url": "/hasyx/doc/ENV#next-public-firebase-auth-domain",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+          "url": "/hasyx/doc/ENV#next-public-firebase-project-id",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
+          "url": "/hasyx/doc/ENV#next-public-firebase-storage-bucket",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+          "url": "/hasyx/doc/ENV#next-public-firebase-messaging-sender-id",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_FIREBASE_APP_ID",
+          "url": "/hasyx/doc/ENV#next-public-firebase-app-id",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_FIREBASE_VAPID_KEY",
+          "url": "/hasyx/doc/ENV#next-public-firebase-vapid-key",
+          "level": 3
+        },
+        {
+          "title": "Email Services",
+          "url": "/hasyx/doc/ENV#email-services",
+          "level": 2
+        },
+        {
+          "title": "RESEND_API_KEY",
+          "url": "/hasyx/doc/ENV#resend-api-key",
+          "level": 3
+        },
+        {
+          "title": "Application URLs",
+          "url": "/hasyx/doc/ENV#application-urls",
+          "level": 2
+        },
+        {
+          "title": "NEXT_PUBLIC_MAIN_URL",
+          "url": "/hasyx/doc/ENV#next-public-main-url",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_BASE_URL",
+          "url": "/hasyx/doc/ENV#next-public-base-url",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_API_URL",
+          "url": "/hasyx/doc/ENV#next-public-api-url",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_APP_URL",
+          "url": "/hasyx/doc/ENV#next-public-app-url",
+          "level": 3
+        },
+        {
+          "title": "VERCEL_URL",
+          "url": "/hasyx/doc/ENV#vercel-url",
+          "level": 3
+        },
+        {
+          "title": "Build & Configuration",
+          "url": "/hasyx/doc/ENV#build-configuration",
+          "level": 2
+        },
+        {
+          "title": "NEXT_PUBLIC_BUILD_TARGET",
+          "url": "/hasyx/doc/ENV#next-public-build-target",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_BASE_PATH",
+          "url": "/hasyx/doc/ENV#next-public-base-path",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_WS",
+          "url": "/hasyx/doc/ENV#next-public-ws",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_HID_NAMESPACE",
+          "url": "/hasyx/doc/ENV#next-public-hid-namespace",
+          "level": 3
+        },
+        {
+          "title": "Notifications",
+          "url": "/hasyx/doc/ENV#notifications",
+          "level": 2
+        },
+        {
+          "title": "NEXT_PUBLIC_NOTIFICATION_ICON",
+          "url": "/hasyx/doc/ENV#next-public-notification-icon",
+          "level": 3
+        },
+        {
+          "title": "NEXT_PUBLIC_APP_NAME",
+          "url": "/hasyx/doc/ENV#next-public-app-name",
+          "level": 3
+        },
+        {
+          "title": "Database Connection",
+          "url": "/hasyx/doc/ENV#database-connection",
+          "level": 2
+        },
+        {
+          "title": "POSTGRES_URL",
+          "url": "/hasyx/doc/ENV#postgres-url",
+          "level": 3
+        },
+        {
+          "title": "PGHOST",
+          "url": "/hasyx/doc/ENV#pghost",
+          "level": 3
+        },
+        {
+          "title": "PGPORT",
+          "url": "/hasyx/doc/ENV#pgport",
+          "level": 3
+        },
+        {
+          "title": "PGUSER",
+          "url": "/hasyx/doc/ENV#pguser",
+          "level": 3
+        },
+        {
+          "title": "PGPASSWORD",
+          "url": "/hasyx/doc/ENV#pgpassword",
+          "level": 3
+        },
+        {
+          "title": "PGDATABASE",
+          "url": "/hasyx/doc/ENV#pgdatabase",
+          "level": 3
+        },
+        {
+          "title": "PGSSLMODE",
+          "url": "/hasyx/doc/ENV#pgsslmode",
+          "level": 3
+        },
+        {
+          "title": "Development & Testing",
+          "url": "/hasyx/doc/ENV#development-testing",
+          "level": 2
+        },
+        {
+          "title": "NODE_ENV",
+          "url": "/hasyx/doc/ENV#node-env",
+          "level": 3
+        },
+        {
+          "title": "DEBUG",
+          "url": "/hasyx/doc/ENV#debug",
+          "level": 3
+        },
+        {
+          "title": "HASYX_DEBUG",
+          "url": "/hasyx/doc/ENV#hasyx-debug",
+          "level": 3
+        },
+        {
+          "title": "JEST_LOCAL",
+          "url": "/hasyx/doc/ENV#jest-local",
+          "level": 3
+        },
+        {
+          "title": "TERM_THEME",
+          "url": "/hasyx/doc/ENV#term-theme",
+          "level": 3
+        },
+        {
+          "title": "npm_package_name",
+          "url": "/hasyx/doc/ENV#npm-package-name",
+          "level": 3
+        },
+        {
+          "title": "Shell Environment",
+          "url": "/hasyx/doc/ENV#shell-environment",
+          "level": 2
+        },
+        {
+          "title": "SHELL",
+          "url": "/hasyx/doc/ENV#shell",
+          "level": 3
         }
       ],
       "level": 1
@@ -2688,6 +3051,244 @@
       "level": 1
     },
     {
+      "title": "Terminal Library",
+      "url": "/hasyx/doc/TERMINAL",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Table of Contents",
+          "url": "/hasyx/doc/TERMINAL#table-of-contents",
+          "level": 2
+        },
+        {
+          "title": "Installation",
+          "url": "/hasyx/doc/TERMINAL#installation",
+          "level": 2
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/TERMINAL#basic-usage",
+          "level": 2
+        },
+        {
+          "title": "Configuration",
+          "url": "/hasyx/doc/TERMINAL#configuration",
+          "level": 2
+        },
+        {
+          "title": "Default Configuration",
+          "url": "/hasyx/doc/TERMINAL#default-configuration",
+          "level": 3
+        },
+        {
+          "title": "API Reference",
+          "url": "/hasyx/doc/TERMINAL#api-reference",
+          "level": 2
+        },
+        {
+          "title": "Constructor",
+          "url": "/hasyx/doc/TERMINAL#constructor",
+          "level": 3
+        },
+        {
+          "title": "Lifecycle Methods",
+          "url": "/hasyx/doc/TERMINAL#lifecycle-methods",
+          "level": 3
+        },
+        {
+          "title": "Command Execution",
+          "url": "/hasyx/doc/TERMINAL#command-execution",
+          "level": 3
+        },
+        {
+          "title": "Input Methods",
+          "url": "/hasyx/doc/TERMINAL#input-methods",
+          "level": 3
+        },
+        {
+          "title": "Terminal Control",
+          "url": "/hasyx/doc/TERMINAL#terminal-control",
+          "level": 3
+        },
+        {
+          "title": "State Methods",
+          "url": "/hasyx/doc/TERMINAL#state-methods",
+          "level": 3
+        },
+        {
+          "title": "Information Methods",
+          "url": "/hasyx/doc/TERMINAL#information-methods",
+          "level": 3
+        },
+        {
+          "title": "Factory Functions",
+          "url": "/hasyx/doc/TERMINAL#factory-functions",
+          "level": 2
+        },
+        {
+          "title": "Shell Terminals",
+          "url": "/hasyx/doc/TERMINAL#shell-terminals",
+          "level": 3
+        },
+        {
+          "title": "Interactive Environments",
+          "url": "/hasyx/doc/TERMINAL#interactive-environments",
+          "level": 3
+        },
+        {
+          "title": "System Terminals",
+          "url": "/hasyx/doc/TERMINAL#system-terminals",
+          "level": 3
+        },
+        {
+          "title": "Remote Terminals",
+          "url": "/hasyx/doc/TERMINAL#remote-terminals",
+          "level": 3
+        },
+        {
+          "title": "Event Handling",
+          "url": "/hasyx/doc/TERMINAL#event-handling",
+          "level": 2
+        },
+        {
+          "title": "Event Emitter Interface",
+          "url": "/hasyx/doc/TERMINAL#event-emitter-interface",
+          "level": 3
+        },
+        {
+          "title": "Event Handler Options",
+          "url": "/hasyx/doc/TERMINAL#event-handler-options",
+          "level": 3
+        },
+        {
+          "title": "Session Management",
+          "url": "/hasyx/doc/TERMINAL#session-management",
+          "level": 2
+        },
+        {
+          "title": "Command History",
+          "url": "/hasyx/doc/TERMINAL#command-history",
+          "level": 3
+        },
+        {
+          "title": "Session Information",
+          "url": "/hasyx/doc/TERMINAL#session-information",
+          "level": 3
+        },
+        {
+          "title": "Output Management",
+          "url": "/hasyx/doc/TERMINAL#output-management",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/TERMINAL#error-handling",
+          "level": 2
+        },
+        {
+          "title": "Common Error Scenarios",
+          "url": "/hasyx/doc/TERMINAL#common-error-scenarios",
+          "level": 3
+        },
+        {
+          "title": "Global Cleanup",
+          "url": "/hasyx/doc/TERMINAL#global-cleanup",
+          "level": 3
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/TERMINAL#best-practices",
+          "level": 2
+        },
+        {
+          "title": "Resource Management",
+          "url": "/hasyx/doc/TERMINAL#resource-management",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/TERMINAL#error-handling",
+          "level": 3
+        },
+        {
+          "title": "Performance",
+          "url": "/hasyx/doc/TERMINAL#performance",
+          "level": 3
+        },
+        {
+          "title": "Examples",
+          "url": "/hasyx/doc/TERMINAL#examples",
+          "level": 2
+        },
+        {
+          "title": "Basic Command Execution",
+          "url": "/hasyx/doc/TERMINAL#basic-command-execution",
+          "level": 3
+        },
+        {
+          "title": "Interactive Shell Session",
+          "url": "/hasyx/doc/TERMINAL#interactive-shell-session",
+          "level": 3
+        },
+        {
+          "title": "Development Environment Setup",
+          "url": "/hasyx/doc/TERMINAL#development-environment-setup",
+          "level": 3
+        },
+        {
+          "title": "File Operations",
+          "url": "/hasyx/doc/TERMINAL#file-operations",
+          "level": 3
+        },
+        {
+          "title": "Process Management",
+          "url": "/hasyx/doc/TERMINAL#process-management",
+          "level": 3
+        },
+        {
+          "title": "Testing",
+          "url": "/hasyx/doc/TERMINAL#testing",
+          "level": 2
+        },
+        {
+          "title": "Test Categories",
+          "url": "/hasyx/doc/TERMINAL#test-categories",
+          "level": 3
+        },
+        {
+          "title": "Test Design Principles",
+          "url": "/hasyx/doc/TERMINAL#test-design-principles",
+          "level": 3
+        },
+        {
+          "title": "Dependencies",
+          "url": "/hasyx/doc/TERMINAL#dependencies",
+          "level": 2
+        },
+        {
+          "title": "Platform Support",
+          "url": "/hasyx/doc/TERMINAL#platform-support",
+          "level": 2
+        },
+        {
+          "title": "Security Considerations",
+          "url": "/hasyx/doc/TERMINAL#security-considerations",
+          "level": 2
+        },
+        {
+          "title": "Contributing",
+          "url": "/hasyx/doc/TERMINAL#contributing",
+          "level": 2
+        },
+        {
+          "title": "License",
+          "url": "/hasyx/doc/TERMINAL#license",
+          "level": 2
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "Tinkoff API Documentation",
       "url": "/hasyx/doc/TINKOFF_API",
       "collapse": true,
@@ -3176,5 +3777,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-28T21:41:33.875Z"
+  "lastUpdated": "2025-05-29T09:29:12.982Z"
 }

@@ -38,14 +38,14 @@ $ npx hasyx ask -e "Show me a JavaScript function example"
 
 Here's a **simple function** that adds two numbers:
 
-```js
+\`\`\`js
 function addNumbers(a, b) {
   return a + b;
 }
 
 const result = addNumbers(5, 3);
 console.log(result); // Output: 8
-```
+\`\`\`
 
 This function:
 • Takes two parameters
@@ -97,9 +97,9 @@ $ npx hasyx ask -e "Check what operating system we're running on"
 🧠 AI думает...
 💭 AI ответил (156 символов)
 📋 Найден JS код для выполнения:
-```js
+\`\`\`js
 process.platform
-```
+\`\`\`
 ⚡ Выполняется JS код...
 ✅ Результат выполнения:
 darwin
@@ -149,12 +149,31 @@ pnpm add hasyx
 
 ### 3. Configure Environment
 
-Add your OpenRouter API key to your `.env` file:
+Add your OpenRouter API key to your `.env` file in your project directory:
 
 ```env
 # Required for AI features (ask command, OpenRouter integration)
 OPENROUTER_API_KEY=sk-or-v1-your_openrouter_api_key_here
 ```
+
+**🔧 Environment File Loading Behavior**
+
+The Ask command loads `.env` files from your **current working directory** (where you run the command), not from the Hasyx package directory. This means:
+
+- ✅ **When using `npx hasyx ask` from project `deep7`**: Loads `.env` from `deep7/.env`
+- ✅ **When using `npm run ask` inside any project**: Loads `.env` from that project's root
+- ✅ **Perfect for child projects**: Use Hasyx codebase but your project's environment
+
+**Example Usage in Child Projects:**
+```bash
+# In your project directory (e.g., deep7/)
+# This will use Hasyx code but load YOUR .env file
+npx hasyx ask -e "What's my current environment?"
+
+# Your .env file (deep7/.env) will be loaded, not hasyx/.env
+```
+
+This ensures that when you use Hasyx tools from external projects, your project's specific configuration (API keys, database URLs, etc.) is respected.
 
 ## Usage
 
@@ -255,7 +274,7 @@ Async/await is a syntax that makes it easier to work with asynchronous code...
 > Write a simple Express.js server
 Here's a basic Express.js server setup:
 
-```javascript
+\`\`\`javascript
 const express = require('express');
 const app = express();
 const port = 3000;
@@ -267,7 +286,7 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
-```
+\`\`\`
 
 > ^C
 ```

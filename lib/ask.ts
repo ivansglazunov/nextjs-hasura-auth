@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables from .env file in current working directory
+// This ensures that when using npx hasyx from a child project,
+// the .env is loaded from the user's current directory, not from hasyx package directory
+dotenv.config({ path: path.join(process.cwd(), '.env') });
+
 import { AI, Do } from 'hasyx/lib/ai';
 import { execDo, execContext } from 'hasyx/lib/exec';
 import { execTsDo, execTsContext } from 'hasyx/lib/exec-tsx';

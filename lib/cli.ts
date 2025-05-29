@@ -7,28 +7,16 @@ import Debug from './debug';
 // Import and configure dotenv to load environment variables from .env
 import dotenv from 'dotenv';
 import path from 'path';
-import fs from 'fs-extra';
 
 import pckg from '../package.json';
 
 console.log(`${pckg.name}@${pckg.version}`);
 
-// Attempt to load environment variables from .env file
+// Load environment variables from .env file in current working directory
+// This ensures that when using npx hasyx from a child project,
+// the .env is loaded from the user's current directory, not from hasyx package directory
 try {
-  // Determine project root to locate .env file
-  let projectRoot = process.cwd();
-  let pkgPath = path.join(projectRoot, 'package.json');
-  let maxDepth = 5;  // Limit the number of parent directories to check
-  
-  // Move up the directory tree to find package.json (limit to 5 levels)
-  while (!fs.existsSync(pkgPath) && maxDepth > 0) {
-    projectRoot = path.dirname(projectRoot);
-    pkgPath = path.join(projectRoot, 'package.json');
-    maxDepth--;
-  }
-  
-  // Load .env file from the project root
-  const envResult = dotenv.config({ path: path.join(projectRoot, '.env') });
+  const envResult = dotenv.config({ path: path.join(process.cwd(), '.env') });
   
   if (envResult.error) {
     // Only log in debug mode to avoid cluttering output for users without .env files

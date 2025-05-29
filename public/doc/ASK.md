@@ -2,19 +2,56 @@
 
 Ask Command - AI Assistant CLI
 
-The Ask command provides a powerful AI assistant interface for Hasyx projects, allowing you to ask questions and get intelligent responses directly from your command line. It uses OpenRouter's free DeepSeek model to provide high-quality AI assistance for coding, problem-solving, and general questions.
+The Ask command provides a powerful AI assistant interface for Hasyx projects, allowing you to ask questions and get intelligent responses directly from your command line. It uses OpenRouter's Google Gemini 2.5 Flash Preview model to provide high-quality AI assistance for coding, problem-solving, and general questions.
 
 ## Features
 
 - **Direct Question Mode**: Ask single questions with immediate responses
 - **Interactive Chat Mode**: Start a conversation session with the AI
-- **Free AI Model**: Uses DeepSeek's free model via OpenRouter API
+- **Advanced AI Model**: Uses Google Gemini 2.5 Flash Preview via OpenRouter API
 - **Multiple Question Types**: Supports coding, math, general knowledge, and more
-- **Clean Output**: Shows only AI responses without additional console messages
+- **🆕 Beautiful Terminal Output**: All responses formatted with markdown and syntax highlighting
 - **Environment Integration**: Automatically loads configuration from `.env` file
 - **🆕 Real-time Progress Indicators**: See exactly what AI is doing step-by-step
-- **🆕 Automatic Code Execution**: AI can execute JavaScript and TypeScript code automatically
+- **🆕 Automatic Code Execution**: AI can execute JavaScript, TypeScript, and terminal commands automatically
 - **🆕 Iterative Responses**: AI can execute multiple code blocks and continue reasoning
+
+## 🎨 Beautiful Terminal Output
+
+The Ask command now displays all responses with beautiful markdown formatting and syntax highlighting:
+
+### Formatted Output Features
+
+- **📝 Headers and Text**: Proper markdown rendering with colors
+- **💻 Code Blocks**: Syntax highlighting for JavaScript, TypeScript, Bash, JSON, and more
+- **📋 Lists and Bullets**: Clean bullet points and numbered lists
+- **🔗 Links**: Formatted links with proper highlighting
+- **⭐ Bold and Italic**: Rich text formatting support
+- **📊 Tables**: Clean table rendering in terminal
+
+### Example Formatted Output
+
+```bash
+$ npx hasyx ask -e "Show me a JavaScript function example"
+
+# JavaScript Function Example
+
+Here's a **simple function** that adds two numbers:
+
+\`\`\`js
+function addNumbers(a, b) {
+  return a + b;
+}
+
+const result = addNumbers(5, 3);
+console.log(result); // Output: 8
+\`\`\`
+
+This function:
+• Takes two parameters
+• Returns their sum  
+• Can be used with any numbers
+```
 
 ## 🎯 Real-time Progress Indicators
 
@@ -24,29 +61,30 @@ The Ask command now shows you exactly what's happening during AI processing:
 
 - **🧠 AI думает...** - When AI is generating a response
 - **💭 AI ответил (N символов)** - When AI response is received with character count  
-- **📋 Найден JS/TSX код для выполнения** - When executable code is found in AI response
-- **⚡ Выполняется JS/TSX код...** - When code execution starts
-- **✅ Результат выполнения** - When code execution completes with results
+- **📋 Найден JS/TSX/TERMINAL код для выполнения** - When executable code is found with syntax highlighting
+- **⚡ Выполняется JS/TSX/TERMINAL код...** - When code execution starts
+- **✅ Результат выполнения** - When code execution completes with formatted results
 
-### Example Output
+### Example Output with Syntax Highlighting
 
 ```bash
-$ npm run ask -- -e "Calculate 5 factorial using JavaScript"
+$ npx hasyx ask -e "Calculate 5 factorial using JavaScript"
 
 🧠 AI думает...
 💭 AI ответил (245 символов)
 📋 Найден JS код для выполнения:
-```js
-function factorial(n) {
-  return n <= 1 ? 1 : n * factorial(n - 1);
-}
-factorial(5);
-```
+    function factorial(n) {
+      return n <= 1 ? 1 : n * factorial(n - 1);
+    }
+    factorial(5);
+
 ⚡ Выполняется JS код...
 ✅ Результат выполнения:
-120
+    120
 
-The factorial of 5 is 120. This recursive function calculates...
+# Calculation Result
+
+The factorial of 5 is **120**. This recursive function calculates...
 ```
 
 ### Automatic Code Execution
@@ -54,14 +92,14 @@ The factorial of 5 is 120. This recursive function calculates...
 The AI can automatically execute code and use the results to provide better answers:
 
 ```bash
-$ npm run ask -- -e "Check what operating system we're running on"
+$ npx hasyx ask -e "Check what operating system we're running on"
 
 🧠 AI думает...
 💭 AI ответил (156 символов)
 📋 Найден JS код для выполнения:
-```js
+\`\`\`js
 process.platform
-```
+\`\`\`
 ⚡ Выполняется JS код...
 ✅ Результат выполнения:
 darwin
@@ -111,12 +149,31 @@ pnpm add hasyx
 
 ### 3. Configure Environment
 
-Add your OpenRouter API key to your `.env` file:
+Add your OpenRouter API key to your `.env` file in your project directory:
 
 ```env
 # Required for AI features (ask command, OpenRouter integration)
 OPENROUTER_API_KEY=sk-or-v1-your_openrouter_api_key_here
 ```
+
+**🔧 Environment File Loading Behavior**
+
+The Ask command loads `.env` files from your **current working directory** (where you run the command), not from the Hasyx package directory. This means:
+
+- ✅ **When using `npx hasyx ask` from project `deep7`**: Loads `.env` from `deep7/.env`
+- ✅ **When using `npm run ask` inside any project**: Loads `.env` from that project's root
+- ✅ **Perfect for child projects**: Use Hasyx codebase but your project's environment
+
+**Example Usage in Child Projects:**
+```bash
+# In your project directory (e.g., deep7/)
+# This will use Hasyx code but load YOUR .env file
+npx hasyx ask -e "What's my current environment?"
+
+# Your .env file (deep7/.env) will be loaded, not hasyx/.env
+```
+
+This ensures that when you use Hasyx tools from external projects, your project's specific configuration (API keys, database URLs, etc.) is respected.
 
 ## Usage
 
@@ -125,11 +182,15 @@ OPENROUTER_API_KEY=sk-or-v1-your_openrouter_api_key_here
 Ask a single question and get an immediate response:
 
 ```bash
-# Using npx hasyx
+# Primary usage via npx hasyx
 npx hasyx ask -e "What is the capital of France?"
 npx hasyx ask --eval "Write a JavaScript function to add two numbers"
 
-# Using npm script (recommended for projects)
+# Alternative for development inside hasyx project
+npm run cli -- ask -e "What is the capital of France?"
+npm run cli -- ask --eval "Write a JavaScript function to add two numbers"
+
+# For projects with hasyx integration (npm scripts)
 npm run ask -- -e "What is the capital of France?"
 npm run ask -- --eval "Write a JavaScript function to add two numbers"
 ```
@@ -139,10 +200,13 @@ npm run ask -- --eval "Write a JavaScript function to add two numbers"
 Start an interactive conversation session:
 
 ```bash
-# Using npx hasyx
+# Primary usage via npx hasyx
 npx hasyx ask
 
-# Using npm script (recommended for projects)
+# Alternative for development inside hasyx project
+npm run cli -- ask
+
+# For projects with hasyx integration (npm scripts)
 npm run ask
 ```
 
@@ -158,48 +222,48 @@ In interactive mode:
 
 ```bash
 # React component
-npm run ask -- -e "Write a React component for a todo list with add and delete functionality"
+npx hasyx ask -e "Write a React component for a todo list with add and delete functionality"
 
 # JavaScript functions
-npm run ask -- -e "Create a function that debounces another function"
+npx hasyx ask -e "Create a function that debounces another function"
 
 # TypeScript interfaces
-npm run ask -- -e "Design TypeScript interfaces for a user management system"
+npx hasyx ask -e "Design TypeScript interfaces for a user management system"
 
 # Algorithm help
-npm run ask -- -e "Explain how to implement a binary search algorithm"
+npx hasyx ask -e "Explain how to implement a binary search algorithm"
 ```
 
 ### Math and Calculations
 
 ```bash
 # Simple math
-npm run ask -- -e "What is 15 * 27?"
+npx hasyx ask -e "What is 15 * 27?"
 
 # Complex calculations
-npm run ask -- -e "Calculate the compound interest for $1000 at 5% annually for 10 years"
+npx hasyx ask -e "Calculate the compound interest for $1000 at 5% annually for 10 years"
 
 # Mathematical concepts
-npm run ask -- -e "Explain the difference between mean, median, and mode"
+npx hasyx ask -e "Explain the difference between mean, median, and mode"
 ```
 
 ### General Knowledge
 
 ```bash
 # Geography
-npm run ask -- -e "What are the capitals of all European countries?"
+npx hasyx ask -e "What are the capitals of all European countries?"
 
 # Science
-npm run ask -- -e "Explain how photosynthesis works"
+npx hasyx ask -e "Explain how photosynthesis works"
 
 # Technology
-npm run ask -- -e "What is the difference between REST and GraphQL APIs?"
+npx hasyx ask -e "What is the difference between REST and GraphQL APIs?"
 ```
 
 ### Interactive Session Example
 
 ```bash
-$ npm run ask
+$ npx hasyx ask
 
 > What is TypeScript?
 TypeScript is a strongly typed programming language that builds on JavaScript...
@@ -210,7 +274,7 @@ Async/await is a syntax that makes it easier to work with asynchronous code...
 > Write a simple Express.js server
 Here's a basic Express.js server setup:
 
-```javascript
+\`\`\`javascript
 const express = require('express');
 const app = express();
 const port = 3000;
@@ -222,7 +286,7 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
-```
+\`\`\`
 
 > ^C
 ```
@@ -235,21 +299,21 @@ The Ask command uses these default configuration settings:
 
 ```javascript
 {
-  model: 'google/gemini-2.5-flash-preview',  // Free DeepSeek model
-  temperature: 0.7,                              // Balanced creativity
-  max_tokens: 4096,                             // Long responses
-  timeout: 30000                                // 30 second timeout
+  model: 'google/gemini-2.5-flash-preview',  // Free Google Gemini Flash model
+  temperature: 0.1,
+  max_tokens: 2048
 }
 ```
 
 ### Model Information
 
-**DeepSeek Chat v3 (Free)**
+**Google Gemini 2.5 Flash Preview**
 - **Model ID**: `google/gemini-2.5-flash-preview`
-- **Cost**: Free tier available
-- **Strengths**: Code generation, mathematical reasoning, general knowledge
-- **Context Length**: Large context window for complex questions
-- **Response Quality**: High-quality responses comparable to premium models
+- **Cost**: Very affordable ($0.15/M input, $0.60/M output tokens)
+- **Strengths**: Fast responses, excellent code generation, mathematical reasoning, general knowledge, and multilingual support
+- **Context Length**: Large context window (1M tokens) for complex questions and long conversations
+- **Response Quality**: High-quality responses optimized for speed, accuracy, and code execution
+- **Special Features**: Advanced reasoning capabilities, code execution understanding, and iterative problem solving
 
 ## Error Handling
 
@@ -319,17 +383,27 @@ The command automatically loads environment variables from:
 
 ### CLI Integration
 
-The Ask command is fully integrated with the Hasyx CLI system:
+The Ask command is fully integrated with the Hasyx CLI system and supports different usage patterns depending on your context:
 
+**Primary Usage (via npx hasyx):**
 ```bash
-# Available as hasyx command
+# Available as hasyx command for any project
 npx hasyx ask -e "question"
-
-# Available as npm script
-npm run ask -- -e "question"
-
-# Help information
 npx hasyx ask --help
+```
+
+**Alternative for Development Inside Hasyx Project:**
+```bash
+# Use CLI script directly
+npm run cli -- ask -e "question"
+npm run cli -- ask --help
+```
+
+**For Projects with Hasyx Integration (npm scripts):**
+```bash
+# Available as npm script when configured
+npm run ask -- -e "question"
+npm run ask -- --help
 ```
 
 ## Advanced Usage
@@ -338,42 +412,42 @@ npx hasyx ask --help
 
 ```bash
 # 1. Ask for code structure
-npm run ask -- -e "Design the folder structure for a React TypeScript project"
+npx hasyx ask -e "Design the folder structure for a React TypeScript project"
 
 # 2. Get specific implementations
-npm run ask -- -e "Write a custom React hook for API data fetching"
+npx hasyx ask -e "Write a custom React hook for API data fetching"
 
 # 3. Debug issues
-npm run ask -- -e "Why might useState not update immediately in React?"
+npx hasyx ask -e "Why might useState not update immediately in React?"
 
 # 4. Optimization advice
-npm run ask -- -e "How to optimize React component performance?"
+npx hasyx ask -e "How to optimize React component performance?"
 ```
 
 ### Learning and Documentation
 
 ```bash
 # Understand concepts
-npm run ask -- -e "Explain GraphQL subscriptions with examples"
+npx hasyx ask -e "Explain GraphQL subscriptions with examples"
 
 # Compare technologies
-npm run ask -- -e "Compare Next.js vs Nuxt.js vs SvelteKit"
+npx hasyx ask -e "Compare Next.js vs Nuxt.js vs SvelteKit"
 
 # Best practices
-npm run ask -- -e "What are TypeScript best practices for large projects?"
+npx hasyx ask -e "What are TypeScript best practices for large projects?"
 ```
 
 ### Problem Solving
 
 ```bash
 # Algorithm design
-npm run ask -- -e "Design an algorithm to find the shortest path in a graph"
+npx hasyx ask -e "Design an algorithm to find the shortest path in a graph"
 
 # Architecture decisions
-npm run ask -- -e "How to structure a microservices architecture?"
+npx hasyx ask -e "How to structure a microservices architecture?"
 
 # Performance optimization
-npm run ask -- -e "How to optimize database queries for large datasets?"
+npx hasyx ask -e "How to optimize database queries for large datasets?"
 ```
 
 ## Tips and Best Practices
@@ -383,20 +457,20 @@ npm run ask -- -e "How to optimize database queries for large datasets?"
 1. **Be Specific**: Include context and requirements
    ```bash
    # Good
-   npm run ask -- -e "Write a React component that fetches user data from an API and displays it in a table with sorting"
+   npx hasyx ask -e "Write a React component that fetches user data from an API and displays it in a table with sorting"
    
    # Less effective
-   npm run ask -- -e "Make a React component"
+   npx hasyx ask -e "Make a React component"
    ```
 
 2. **Provide Context**: Mention the technology stack
    ```bash
-   npm run ask -- -e "How to implement authentication in a Next.js app with TypeScript and Hasura?"
+   npx hasyx ask -e "How to implement authentication in a Next.js app with TypeScript and Hasura?"
    ```
 
 3. **Ask for Examples**: Request code examples when needed
    ```bash
-   npm run ask -- -e "Explain Promise.all() with a practical example"
+   npx hasyx ask -e "Explain Promise.all() with a practical example"
    ```
 
 ### Interactive Mode Tips
@@ -420,8 +494,8 @@ npm run ask -- -e "How to optimize database queries for large datasets?"
    # Ensure Hasyx is installed
    npm install hasyx
    
-   # Check npm scripts
-   npm run ask -- --help
+   # Test npx hasyx command
+   npx hasyx ask --help
    ```
 
 2. **Environment Variables Not Loading**
@@ -503,4 +577,15 @@ To contribute to the Ask command functionality:
 4. Update this documentation
 5. Submit a pull request
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines. 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
+
+## Command Options
+
+The Ask command supports the following options:
+
+```bash
+-e, --eval <question>    Ask a direct question and get a response
+-y, --yes               Auto-approve code execution (no confirmation) 
+-m, --model <model>     Specify OpenRouter model (e.g., 'anthropic/claude-3-sonnet')
+-h, --help              Show help information
+```

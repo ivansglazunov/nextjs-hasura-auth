@@ -207,6 +207,21 @@
         },
         {
           "level": 2,
+          "text": "🎨 Beautiful Terminal Output",
+          "id": "beautiful-terminal-output"
+        },
+        {
+          "level": 3,
+          "text": "Formatted Output Features",
+          "id": "formatted-output-features"
+        },
+        {
+          "level": 3,
+          "text": "Example Formatted Output",
+          "id": "example-formatted-output"
+        },
+        {
+          "level": 2,
           "text": "🎯 Real-time Progress Indicators",
           "id": "real-time-progress-indicators"
         },
@@ -217,8 +232,8 @@
         },
         {
           "level": 3,
-          "text": "Example Output",
-          "id": "example-output"
+          "text": "Example Output with Syntax Highlighting",
+          "id": "example-output-with-syntax-highlighting"
         },
         {
           "level": 3,
@@ -439,6 +454,11 @@
           "level": 2,
           "text": "Contributing",
           "id": "contributing"
+        },
+        {
+          "level": 2,
+          "text": "Command Options",
+          "id": "command-options"
         }
       ],
       "content": "",
@@ -752,6 +772,354 @@
       ],
       "content": "",
       "path": "CYTO.md"
+    },
+    {
+      "filename": "ENV.md",
+      "title": "Environment Variables Documentation",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Environment Variables Documentation",
+          "id": "environment-variables-documentation"
+        },
+        {
+          "level": 2,
+          "text": "Core Database & GraphQL",
+          "id": "core-database-graphql"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_HASURA_GRAPHQL_URL",
+          "id": "next-public-hasura-graphql-url"
+        },
+        {
+          "level": 3,
+          "text": "HASURA_ADMIN_SECRET",
+          "id": "hasura-admin-secret"
+        },
+        {
+          "level": 3,
+          "text": "HASURA_JWT_SECRET",
+          "id": "hasura-jwt-secret"
+        },
+        {
+          "level": 3,
+          "text": "HASURA_EVENT_SECRET",
+          "id": "hasura-event-secret"
+        },
+        {
+          "level": 2,
+          "text": "Authentication & OAuth",
+          "id": "authentication-oauth"
+        },
+        {
+          "level": 3,
+          "text": "NEXTAUTH_SECRET",
+          "id": "nextauth-secret"
+        },
+        {
+          "level": 3,
+          "text": "TEST_TOKEN",
+          "id": "test-token"
+        },
+        {
+          "level": 3,
+          "text": "GOOGLE_CLIENT_ID",
+          "id": "google-client-id"
+        },
+        {
+          "level": 3,
+          "text": "GOOGLE_CLIENT_SECRET",
+          "id": "google-client-secret"
+        },
+        {
+          "level": 3,
+          "text": "YANDEX_CLIENT_ID",
+          "id": "yandex-client-id"
+        },
+        {
+          "level": 3,
+          "text": "YANDEX_CLIENT_SECRET",
+          "id": "yandex-client-secret"
+        },
+        {
+          "level": 3,
+          "text": "GITHUB_ID",
+          "id": "github-id"
+        },
+        {
+          "level": 3,
+          "text": "GITHUB_SECRET",
+          "id": "github-secret"
+        },
+        {
+          "level": 3,
+          "text": "FACEBOOK_CLIENT_ID",
+          "id": "facebook-client-id"
+        },
+        {
+          "level": 3,
+          "text": "FACEBOOK_CLIENT_SECRET",
+          "id": "facebook-client-secret"
+        },
+        {
+          "level": 3,
+          "text": "VK_CLIENT_ID",
+          "id": "vk-client-id"
+        },
+        {
+          "level": 3,
+          "text": "VK_CLIENT_SECRET",
+          "id": "vk-client-secret"
+        },
+        {
+          "level": 2,
+          "text": "AI & External APIs",
+          "id": "ai-external-apis"
+        },
+        {
+          "level": 3,
+          "text": "OPENROUTER_API_KEY",
+          "id": "openrouter-api-key"
+        },
+        {
+          "level": 3,
+          "text": "REACT_APP_OPENROUTER_API_KEY",
+          "id": "react-app-openrouter-api-key"
+        },
+        {
+          "level": 3,
+          "text": "EXTERNAL_API_KEY",
+          "id": "external-api-key"
+        },
+        {
+          "level": 2,
+          "text": "Telegram Integration",
+          "id": "telegram-integration"
+        },
+        {
+          "level": 3,
+          "text": "TELEGRAM_BOT_TOKEN",
+          "id": "telegram-bot-token"
+        },
+        {
+          "level": 3,
+          "text": "TELEGRAM_ADMIN_CHAT_ID",
+          "id": "telegram-admin-chat-id"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME",
+          "id": "next-public-telegram-bot-username"
+        },
+        {
+          "level": 2,
+          "text": "Firebase Integration",
+          "id": "firebase-integration"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_FIREBASE_API_KEY",
+          "id": "next-public-firebase-api-key"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+          "id": "next-public-firebase-auth-domain"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+          "id": "next-public-firebase-project-id"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
+          "id": "next-public-firebase-storage-bucket"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+          "id": "next-public-firebase-messaging-sender-id"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_FIREBASE_APP_ID",
+          "id": "next-public-firebase-app-id"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_FIREBASE_VAPID_KEY",
+          "id": "next-public-firebase-vapid-key"
+        },
+        {
+          "level": 2,
+          "text": "Email Services",
+          "id": "email-services"
+        },
+        {
+          "level": 3,
+          "text": "RESEND_API_KEY",
+          "id": "resend-api-key"
+        },
+        {
+          "level": 2,
+          "text": "Application URLs",
+          "id": "application-urls"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_MAIN_URL",
+          "id": "next-public-main-url"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_BASE_URL",
+          "id": "next-public-base-url"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_API_URL",
+          "id": "next-public-api-url"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_APP_URL",
+          "id": "next-public-app-url"
+        },
+        {
+          "level": 3,
+          "text": "VERCEL_URL",
+          "id": "vercel-url"
+        },
+        {
+          "level": 2,
+          "text": "Build & Configuration",
+          "id": "build-configuration"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_BUILD_TARGET",
+          "id": "next-public-build-target"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_BASE_PATH",
+          "id": "next-public-base-path"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_WS",
+          "id": "next-public-ws"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_HID_NAMESPACE",
+          "id": "next-public-hid-namespace"
+        },
+        {
+          "level": 2,
+          "text": "Notifications",
+          "id": "notifications"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_NOTIFICATION_ICON",
+          "id": "next-public-notification-icon"
+        },
+        {
+          "level": 3,
+          "text": "NEXT_PUBLIC_APP_NAME",
+          "id": "next-public-app-name"
+        },
+        {
+          "level": 2,
+          "text": "Database Connection",
+          "id": "database-connection"
+        },
+        {
+          "level": 3,
+          "text": "POSTGRES_URL",
+          "id": "postgres-url"
+        },
+        {
+          "level": 3,
+          "text": "PGHOST",
+          "id": "pghost"
+        },
+        {
+          "level": 3,
+          "text": "PGPORT",
+          "id": "pgport"
+        },
+        {
+          "level": 3,
+          "text": "PGUSER",
+          "id": "pguser"
+        },
+        {
+          "level": 3,
+          "text": "PGPASSWORD",
+          "id": "pgpassword"
+        },
+        {
+          "level": 3,
+          "text": "PGDATABASE",
+          "id": "pgdatabase"
+        },
+        {
+          "level": 3,
+          "text": "PGSSLMODE",
+          "id": "pgsslmode"
+        },
+        {
+          "level": 2,
+          "text": "Development & Testing",
+          "id": "development-testing"
+        },
+        {
+          "level": 3,
+          "text": "NODE_ENV",
+          "id": "node-env"
+        },
+        {
+          "level": 3,
+          "text": "DEBUG",
+          "id": "debug"
+        },
+        {
+          "level": 3,
+          "text": "HASYX_DEBUG",
+          "id": "hasyx-debug"
+        },
+        {
+          "level": 3,
+          "text": "JEST_LOCAL",
+          "id": "jest-local"
+        },
+        {
+          "level": 3,
+          "text": "TERM_THEME",
+          "id": "term-theme"
+        },
+        {
+          "level": 3,
+          "text": "npm_package_name",
+          "id": "npm-package-name"
+        },
+        {
+          "level": 2,
+          "text": "Shell Environment",
+          "id": "shell-environment"
+        },
+        {
+          "level": 3,
+          "text": "SHELL",
+          "id": "shell"
+        }
+      ],
+      "content": "",
+      "path": "ENV.md"
     },
     {
       "filename": "EXEC-TSX.md",
@@ -3143,6 +3511,259 @@
       "path": "TELEGRAM-BOT.md"
     },
     {
+      "filename": "TERMINAL.md",
+      "title": "Terminal Library",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Terminal Library",
+          "id": "terminal-library"
+        },
+        {
+          "level": 2,
+          "text": "Table of Contents",
+          "id": "table-of-contents"
+        },
+        {
+          "level": 2,
+          "text": "Installation",
+          "id": "installation"
+        },
+        {
+          "level": 2,
+          "text": "Basic Usage",
+          "id": "basic-usage"
+        },
+        {
+          "level": 2,
+          "text": "Configuration",
+          "id": "configuration"
+        },
+        {
+          "level": 3,
+          "text": "Default Configuration",
+          "id": "default-configuration"
+        },
+        {
+          "level": 2,
+          "text": "API Reference",
+          "id": "api-reference"
+        },
+        {
+          "level": 3,
+          "text": "Constructor",
+          "id": "constructor"
+        },
+        {
+          "level": 3,
+          "text": "Lifecycle Methods",
+          "id": "lifecycle-methods"
+        },
+        {
+          "level": 3,
+          "text": "Command Execution",
+          "id": "command-execution"
+        },
+        {
+          "level": 3,
+          "text": "Input Methods",
+          "id": "input-methods"
+        },
+        {
+          "level": 3,
+          "text": "Terminal Control",
+          "id": "terminal-control"
+        },
+        {
+          "level": 4,
+          "text": "`pause(): void` / `resume(): void`",
+          "id": "pause-void-resume-void"
+        },
+        {
+          "level": 3,
+          "text": "State Methods",
+          "id": "state-methods"
+        },
+        {
+          "level": 3,
+          "text": "Information Methods",
+          "id": "information-methods"
+        },
+        {
+          "level": 4,
+          "text": "`getCols(): number | undefined` / `getRows(): number | undefined`",
+          "id": "getcols-number-undefined-getrows-number-undefined"
+        },
+        {
+          "level": 2,
+          "text": "Factory Functions",
+          "id": "factory-functions"
+        },
+        {
+          "level": 3,
+          "text": "Shell Terminals",
+          "id": "shell-terminals"
+        },
+        {
+          "level": 3,
+          "text": "Interactive Environments",
+          "id": "interactive-environments"
+        },
+        {
+          "level": 3,
+          "text": "System Terminals",
+          "id": "system-terminals"
+        },
+        {
+          "level": 3,
+          "text": "Remote Terminals",
+          "id": "remote-terminals"
+        },
+        {
+          "level": 2,
+          "text": "Event Handling",
+          "id": "event-handling"
+        },
+        {
+          "level": 3,
+          "text": "Event Emitter Interface",
+          "id": "event-emitter-interface"
+        },
+        {
+          "level": 3,
+          "text": "Event Handler Options",
+          "id": "event-handler-options"
+        },
+        {
+          "level": 2,
+          "text": "Session Management",
+          "id": "session-management"
+        },
+        {
+          "level": 3,
+          "text": "Command History",
+          "id": "command-history"
+        },
+        {
+          "level": 3,
+          "text": "Session Information",
+          "id": "session-information"
+        },
+        {
+          "level": 3,
+          "text": "Output Management",
+          "id": "output-management"
+        },
+        {
+          "level": 2,
+          "text": "Error Handling",
+          "id": "error-handling"
+        },
+        {
+          "level": 3,
+          "text": "Common Error Scenarios",
+          "id": "common-error-scenarios"
+        },
+        {
+          "level": 3,
+          "text": "Global Cleanup",
+          "id": "global-cleanup"
+        },
+        {
+          "level": 2,
+          "text": "Best Practices",
+          "id": "best-practices"
+        },
+        {
+          "level": 3,
+          "text": "Resource Management",
+          "id": "resource-management"
+        },
+        {
+          "level": 3,
+          "text": "Error Handling",
+          "id": "error-handling"
+        },
+        {
+          "level": 3,
+          "text": "Performance",
+          "id": "performance"
+        },
+        {
+          "level": 2,
+          "text": "Examples",
+          "id": "examples"
+        },
+        {
+          "level": 3,
+          "text": "Basic Command Execution",
+          "id": "basic-command-execution"
+        },
+        {
+          "level": 3,
+          "text": "Interactive Shell Session",
+          "id": "interactive-shell-session"
+        },
+        {
+          "level": 3,
+          "text": "Development Environment Setup",
+          "id": "development-environment-setup"
+        },
+        {
+          "level": 3,
+          "text": "File Operations",
+          "id": "file-operations"
+        },
+        {
+          "level": 3,
+          "text": "Process Management",
+          "id": "process-management"
+        },
+        {
+          "level": 2,
+          "text": "Testing",
+          "id": "testing"
+        },
+        {
+          "level": 3,
+          "text": "Test Categories",
+          "id": "test-categories"
+        },
+        {
+          "level": 3,
+          "text": "Test Design Principles",
+          "id": "test-design-principles"
+        },
+        {
+          "level": 2,
+          "text": "Dependencies",
+          "id": "dependencies"
+        },
+        {
+          "level": 2,
+          "text": "Platform Support",
+          "id": "platform-support"
+        },
+        {
+          "level": 2,
+          "text": "Security Considerations",
+          "id": "security-considerations"
+        },
+        {
+          "level": 2,
+          "text": "Contributing",
+          "id": "contributing"
+        },
+        {
+          "level": 2,
+          "text": "License",
+          "id": "license"
+        }
+      ],
+      "content": "",
+      "path": "TERMINAL.md"
+    },
+    {
       "filename": "TINKOFF_API.md",
       "title": "Tinkoff API Documentation",
       "headings": [
@@ -3801,5 +4422,5 @@
       "path": "testing.experiment.md"
     }
   ],
-  "lastUpdated": "2025-05-28T21:41:33.845Z"
+  "lastUpdated": "2025-05-29T09:29:12.958Z"
 }
