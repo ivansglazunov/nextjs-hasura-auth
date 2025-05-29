@@ -493,6 +493,124 @@
       "level": 1
     },
     {
+      "title": "🏗️ Hasyx Query Constructor",
+      "url": "/hasyx/doc/CONSTRUCTOR",
+      "collapse": true,
+      "items": [
+        {
+          "title": "🚀 Quick Start",
+          "url": "/hasyx/doc/CONSTRUCTOR#quick-start",
+          "level": 2
+        },
+        {
+          "title": "📖 Practical Usage",
+          "url": "/hasyx/doc/CONSTRUCTOR#practical-usage",
+          "level": 2
+        },
+        {
+          "title": "Basic Query Building",
+          "url": "/hasyx/doc/CONSTRUCTOR#basic-query-building",
+          "level": 3
+        },
+        {
+          "title": "Page Integration",
+          "url": "/hasyx/doc/CONSTRUCTOR#page-integration",
+          "level": 3
+        },
+        {
+          "title": "Integration with Forms",
+          "url": "/hasyx/doc/CONSTRUCTOR#integration-with-forms",
+          "level": 3
+        },
+        {
+          "title": "Schema-driven Development",
+          "url": "/hasyx/doc/CONSTRUCTOR#schema-driven-development",
+          "level": 3
+        },
+        {
+          "title": "🛣️ Development Roadmap",
+          "url": "/hasyx/doc/CONSTRUCTOR#development-roadmap",
+          "level": 2
+        },
+        {
+          "title": "Phase 1: Core Functionality ✅",
+          "url": "/hasyx/doc/CONSTRUCTOR#phase-1-core-functionality",
+          "level": 3
+        },
+        {
+          "title": "Phase 2: Essential Operations ❌",
+          "url": "/hasyx/doc/CONSTRUCTOR#phase-2-essential-operations",
+          "level": 3
+        },
+        {
+          "title": "Phase 3: Advanced Queries ❌",
+          "url": "/hasyx/doc/CONSTRUCTOR#phase-3-advanced-queries",
+          "level": 3
+        },
+        {
+          "title": "Phase 4: Mutations ❌",
+          "url": "/hasyx/doc/CONSTRUCTOR#phase-4-mutations",
+          "level": 3
+        },
+        {
+          "title": "Phase 5: Professional Features ❌",
+          "url": "/hasyx/doc/CONSTRUCTOR#phase-5-professional-features",
+          "level": 3
+        },
+        {
+          "title": "Phase 6: Advanced Types ❌",
+          "url": "/hasyx/doc/CONSTRUCTOR#phase-6-advanced-types",
+          "level": 3
+        },
+        {
+          "title": "🎯 Recommended Development Order",
+          "url": "/hasyx/doc/CONSTRUCTOR#recommended-development-order",
+          "level": 2
+        },
+        {
+          "title": "Next Priority (Phase 2):",
+          "url": "/hasyx/doc/CONSTRUCTOR#next-priority-phase-2",
+          "level": 3
+        },
+        {
+          "title": "Recent Improvements ✅:",
+          "url": "/hasyx/doc/CONSTRUCTOR#recent-improvements",
+          "level": 3
+        },
+        {
+          "title": "Implementation Strategy:",
+          "url": "/hasyx/doc/CONSTRUCTOR#implementation-strategy",
+          "level": 3
+        },
+        {
+          "title": "🔧 Technical Notes",
+          "url": "/hasyx/doc/CONSTRUCTOR#technical-notes",
+          "level": 2
+        },
+        {
+          "title": "Schema Requirements",
+          "url": "/hasyx/doc/CONSTRUCTOR#schema-requirements",
+          "level": 3
+        },
+        {
+          "title": "Performance",
+          "url": "/hasyx/doc/CONSTRUCTOR#performance",
+          "level": 3
+        },
+        {
+          "title": "Testing Coverage",
+          "url": "/hasyx/doc/CONSTRUCTOR#testing-coverage",
+          "level": 3
+        },
+        {
+          "title": "Browser Support",
+          "url": "/hasyx/doc/CONSTRUCTOR#browser-support",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "Contributing",
       "url": "/hasyx/doc/CONTRIBUTING",
       "collapse": true,
@@ -3860,5 +3978,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-29T11:18:37.642Z"
+  "lastUpdated": "2025-05-29T13:07:10.596Z"
 }

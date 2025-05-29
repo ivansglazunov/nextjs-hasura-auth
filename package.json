@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.219",
+  "version": "0.1.220",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -187,7 +187,8 @@
     "vercel": "^41.7.3",
     "vm-browserify": "^1.1.2",
     "ws": "^8.18.2",
-    "zod": "^3.25.4"
+    "zod": "^3.25.4",
+    "node-pty": "^1.0.0"
   },
   "bin": {
     "hasyx": "./lib/cli.js"
@@ -198,7 +199,6 @@
     "cross-env": "^7.0.3",
     "glob": "^11.0.2",
     "ignore-loader": "^0.1.2",
-    "node-pty": "^1.0.0",
     "tsx": "^4.19.4",
     "uuid": "^11.1.0"
   }

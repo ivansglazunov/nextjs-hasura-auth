@@ -518,6 +518,129 @@
       "path": "AUTH.md"
     },
     {
+      "filename": "CONSTRUCTOR.md",
+      "title": "🏗️ Hasyx Query Constructor",
+      "headings": [
+        {
+          "level": 1,
+          "text": "🏗️ Hasyx Query Constructor",
+          "id": "hasyx-query-constructor"
+        },
+        {
+          "level": 2,
+          "text": "🚀 Quick Start",
+          "id": "quick-start"
+        },
+        {
+          "level": 2,
+          "text": "📖 Practical Usage",
+          "id": "practical-usage"
+        },
+        {
+          "level": 3,
+          "text": "Basic Query Building",
+          "id": "basic-query-building"
+        },
+        {
+          "level": 3,
+          "text": "Page Integration",
+          "id": "page-integration"
+        },
+        {
+          "level": 3,
+          "text": "Integration with Forms",
+          "id": "integration-with-forms"
+        },
+        {
+          "level": 3,
+          "text": "Schema-driven Development",
+          "id": "schema-driven-development"
+        },
+        {
+          "level": 2,
+          "text": "🛣️ Development Roadmap",
+          "id": "development-roadmap"
+        },
+        {
+          "level": 3,
+          "text": "Phase 1: Core Functionality ✅",
+          "id": "phase-1-core-functionality"
+        },
+        {
+          "level": 3,
+          "text": "Phase 2: Essential Operations ❌",
+          "id": "phase-2-essential-operations"
+        },
+        {
+          "level": 3,
+          "text": "Phase 3: Advanced Queries ❌",
+          "id": "phase-3-advanced-queries"
+        },
+        {
+          "level": 3,
+          "text": "Phase 4: Mutations ❌",
+          "id": "phase-4-mutations"
+        },
+        {
+          "level": 3,
+          "text": "Phase 5: Professional Features ❌",
+          "id": "phase-5-professional-features"
+        },
+        {
+          "level": 3,
+          "text": "Phase 6: Advanced Types ❌",
+          "id": "phase-6-advanced-types"
+        },
+        {
+          "level": 2,
+          "text": "🎯 Recommended Development Order",
+          "id": "recommended-development-order"
+        },
+        {
+          "level": 3,
+          "text": "Next Priority (Phase 2):",
+          "id": "next-priority-phase-2"
+        },
+        {
+          "level": 3,
+          "text": "Recent Improvements ✅:",
+          "id": "recent-improvements"
+        },
+        {
+          "level": 3,
+          "text": "Implementation Strategy:",
+          "id": "implementation-strategy"
+        },
+        {
+          "level": 2,
+          "text": "🔧 Technical Notes",
+          "id": "technical-notes"
+        },
+        {
+          "level": 3,
+          "text": "Schema Requirements",
+          "id": "schema-requirements"
+        },
+        {
+          "level": 3,
+          "text": "Performance",
+          "id": "performance"
+        },
+        {
+          "level": 3,
+          "text": "Testing Coverage",
+          "id": "testing-coverage"
+        },
+        {
+          "level": 3,
+          "text": "Browser Support",
+          "id": "browser-support"
+        }
+      ],
+      "content": "",
+      "path": "CONSTRUCTOR.md"
+    },
+    {
       "filename": "CONTRIBUTING.md",
       "title": "Contributing",
       "headings": [
@@ -4510,5 +4633,5 @@
       "path": "testing.experiment.md"
     }
   ],
-  "lastUpdated": "2025-05-29T11:18:37.609Z"
+  "lastUpdated": "2025-05-29T13:07:10.557Z"
 }

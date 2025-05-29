@@ -110,89 +110,120 @@ describe('Terminal', () => {
     });
   });
 
-  describe('Terminal Lifecycle (without node-pty)', () => {
-    it('should handle start failure when node-pty is not available', async () => {
+  describe('Terminal Lifecycle', () => {
+    it('should start terminal successfully when node-pty is available', async () => {
       const terminal = new Terminal({ autoStart: false });
       
-      expect(terminal.isRunning()).toBe(false);
-      expect(terminal.isTerminalReady()).toBe(false);
-      
       try {
-        await expect(terminal.start()).rejects.toThrow('node-pty is not available');
         expect(terminal.isRunning()).toBe(false);
+        expect(terminal.isTerminalReady()).toBe(false);
+        
+        await terminal.start();
+        expect(terminal.isRunning()).toBe(true);
+        expect(terminal.isTerminalReady()).toBe(true);
       } finally {
         terminal.destroy();
       }
     });
 
-    it('should handle auto-start failure when node-pty is not available', async () => {
-      // Create terminal with autoStart: true but handle the error
-      let errorOccurred = false;
-      let errorMessage = '';
-      
+    it('should handle auto-start successfully when node-pty is available', async () => {
       const terminal = new Terminal({ 
         autoStart: true,
-        onError: (error) => { 
-          errorOccurred = true;
-          errorMessage = error.message;
-        }
-      });
-      
-      // Also listen to the error event
-      terminal.on('error', (error) => {
-        errorOccurred = true;
-        errorMessage = error.message;
+        onData: () => {}, // Handle data to prevent noise
       });
       
       try {
-        // Wait longer for auto-start to attempt and fail
+        // Give auto-start some time to complete
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Auto-start should fail, terminal should remain not running, error should be handled
-        expect(terminal.isRunning()).toBe(false);
-        expect(errorOccurred).toBe(true);
-        expect(errorMessage).toContain('node-pty is not available');
+        // Auto-start should succeed
+        expect(terminal.isRunning()).toBe(true);
+        expect(terminal.isTerminalReady()).toBe(true);
       } finally {
         terminal.destroy();
       }
     });
   });
 
-  describe('Command Execution (without node-pty)', () => {
-    it('should handle execution failure when terminal is not running', async () => {
+  describe('Command Execution', () => {
+    it('should execute simple commands successfully', async () => {
       const terminal = new Terminal({ autoStart: false });
       
       try {
-        // Command should be queued and then rejected when terminal is destroyed
-        const promise = terminal.execute('echo "test"');
-        terminal.destroy(); // Destroy immediately to reject queued commands
-        await expect(promise).rejects.toThrow('Terminal destroyed');
+        await terminal.start();
+        
+        // Execute a simple command that should work on all platforms
+        const result = await terminal.execute('echo "hello"');
+        expect(result).toContain('hello');
       } finally {
         terminal.destroy();
       }
     });
 
-    it('should queue commands when terminal is not ready', async () => {
+    it('should queue commands when terminal is not ready and execute them after start', async () => {
       const terminal = new Terminal({ autoStart: false });
       
       try {
-        // Execute command before starting terminal - should queue and then fail when start fails
-        const promise1 = terminal.execute('echo "Queued1"');
-        const promise2 = terminal.execute('echo "Queued2"');
+        // Execute commands before starting terminal - should queue
+        const promise1 = terminal.execute('echo "test1"');
+        const promise2 = terminal.execute('echo "test2"');
         
-        // Destroy immediately to reject queued commands
-        terminal.destroy();
+        // Start terminal - should execute queued commands
+        await terminal.start();
         
-        // Queued commands should be rejected
-        await expect(promise1).rejects.toThrow('Terminal destroyed');
-        await expect(promise2).rejects.toThrow('Terminal destroyed');
+        const result1 = await promise1;
+        const result2 = await promise2;
+        
+        expect(result1).toContain('test1');
+        expect(result2).toContain('test2');
       } finally {
         terminal.destroy();
       }
     });
   });
 
-  describe('Terminal Input/Output (without node-pty)', () => {
+  describe('Terminal Input/Output', () => {
+    it('should write data to running terminal', async () => {
+      const terminal = new Terminal({ autoStart: false });
+      
+      try {
+        await terminal.start();
+        const success = terminal.write('test\n');
+        expect(success).toBe(true);
+      } finally {
+        terminal.destroy();
+      }
+    });
+
+    it('should send input to running terminal', async () => {
+      const terminal = new Terminal({ autoStart: false });
+      
+      try {
+        await terminal.start();
+        const success = terminal.sendInput('test\n');
+        expect(success).toBe(true);
+      } finally {
+        terminal.destroy();
+      }
+    });
+
+    it('should send key presses to running terminal', async () => {
+      const terminal = new Terminal({ autoStart: false });
+      
+      try {
+        await terminal.start();
+        const enterSuccess = terminal.sendKeyPress('enter');
+        const tabSuccess = terminal.sendKeyPress('tab');
+        const ctrlCSuccess = terminal.sendKeyPress('ctrl+c');
+        
+        expect(enterSuccess).toBe(true);
+        expect(tabSuccess).toBe(true);
+        expect(ctrlCSuccess).toBe(true);
+      } finally {
+        terminal.destroy();
+      }
+    });
+
     it('should handle write when terminal is not running', () => {
       const terminal = new Terminal({ autoStart: false });
       
@@ -201,54 +232,60 @@ describe('Terminal', () => {
       
       expect(success).toBe(false);
     });
-
-    it('should handle sendInput when terminal is not running', () => {
-      const terminal = new Terminal({ autoStart: false });
-      
-      const success = terminal.sendInput('test\n');
-      terminal.destroy();
-      
-      expect(success).toBe(false);
-    });
-
-    it('should handle sendKeyPress when terminal is not running', () => {
-      const terminal = new Terminal({ autoStart: false });
-      
-      const enterSuccess = terminal.sendKeyPress('enter');
-      const tabSuccess = terminal.sendKeyPress('tab');
-      const ctrlCSuccess = terminal.sendKeyPress('ctrl+c');
-      
-      terminal.destroy();
-      
-      expect(enterSuccess).toBe(false);
-      expect(tabSuccess).toBe(false);
-      expect(ctrlCSuccess).toBe(false);
-    });
   });
 
-  describe('Terminal Control Operations (without node-pty)', () => {
-    it('should handle resize on non-running terminal', () => {
+  describe('Terminal Control Operations', () => {
+    it('should resize running terminal', async () => {
+      const terminal = new Terminal({ autoStart: false });
+      
+      try {
+        await terminal.start();
+        
+        // Should not throw error
+        expect(() => terminal.resize(100, 50)).not.toThrow();
+        
+        // Check that options were updated
+        const options = terminal.getOptions();
+        expect(options.cols).toBe(100);
+        expect(options.rows).toBe(50);
+      } finally {
+        terminal.destroy();
+      }
+    });
+
+    it('should clear running terminal', async () => {
+      const terminal = new Terminal({ autoStart: false });
+      
+      try {
+        await terminal.start();
+        
+        // Should not throw error
+        expect(() => terminal.clear()).not.toThrow();
+      } finally {
+        terminal.destroy();
+      }
+    });
+
+    it('should pause and resume running terminal', async () => {
+      const terminal = new Terminal({ autoStart: false });
+      
+      try {
+        await terminal.start();
+        
+        // Should not throw error
+        expect(() => terminal.pause()).not.toThrow();
+        expect(() => terminal.resume()).not.toThrow();
+      } finally {
+        terminal.destroy();
+      }
+    });
+
+    it('should handle operations on non-running terminal gracefully', () => {
       const terminal = new Terminal({ autoStart: false });
       
       // Should not throw error
       expect(() => terminal.resize(100, 50)).not.toThrow();
-      
-      terminal.destroy();
-    });
-
-    it('should handle clear on non-running terminal', () => {
-      const terminal = new Terminal({ autoStart: false });
-      
-      // Should not throw error
       expect(() => terminal.clear()).not.toThrow();
-      
-      terminal.destroy();
-    });
-
-    it('should handle pause and resume on non-running terminal', () => {
-      const terminal = new Terminal({ autoStart: false });
-      
-      // Should not throw error
       expect(() => terminal.pause()).not.toThrow();
       expect(() => terminal.resume()).not.toThrow();
       
@@ -352,6 +389,36 @@ describe('Terminal', () => {
   });
 
   describe('Error Handling', () => {
+    it('should kill running terminal', async () => {
+      const terminal = new Terminal({ autoStart: false });
+      
+      try {
+        await terminal.start();
+        expect(terminal.isRunning()).toBe(true);
+        
+        const killSuccess = terminal.kill();
+        expect(killSuccess).toBe(true);
+        expect(terminal.isRunning()).toBe(false);
+      } finally {
+        terminal.destroy();
+      }
+    });
+
+    it('should kill running terminal with different signals', async () => {
+      const terminal = new Terminal({ autoStart: false });
+      
+      try {
+        await terminal.start();
+        expect(terminal.isRunning()).toBe(true);
+        
+        const killSuccess = terminal.kill('SIGTERM');
+        expect(killSuccess).toBe(true);
+        expect(terminal.isRunning()).toBe(false);
+      } finally {
+        terminal.destroy();
+      }
+    });
+
     it('should handle kill on non-running terminal', () => {
       const terminal = new Terminal({ autoStart: false });
       
@@ -360,18 +427,31 @@ describe('Terminal', () => {
       
       expect(killSuccess).toBe(false);
     });
-
-    it('should handle kill with different signals on non-running terminal', () => {
-      const terminal = new Terminal({ autoStart: false });
-      
-      const killSuccess = terminal.kill('SIGTERM');
-      terminal.destroy();
-      
-      expect(killSuccess).toBe(false);
-    });
   });
 
   describe('Terminal Process Information', () => {
+    it('should provide process information when running', async () => {
+      const terminal = new Terminal({ autoStart: false });
+      
+      try {
+        // Before starting
+        expect(terminal.getPid()).toBeUndefined();
+        expect(terminal.getProcess()).toBeUndefined();
+        expect(terminal.getCols()).toBeUndefined();
+        expect(terminal.getRows()).toBeUndefined();
+        
+        // After starting
+        await terminal.start();
+        expect(terminal.getPid()).toBeDefined();
+        expect(typeof terminal.getPid()).toBe('number');
+        expect(terminal.getProcess()).toBeDefined();
+        expect(terminal.getCols()).toBeDefined();
+        expect(terminal.getRows()).toBeDefined();
+      } finally {
+        terminal.destroy();
+      }
+    });
+
     it('should provide undefined process information when not running', () => {
       const terminal = new Terminal({ autoStart: false });
       
