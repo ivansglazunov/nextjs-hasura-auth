@@ -3976,7 +3976,135 @@
         }
       ],
       "level": 1
+    },
+    {
+      "title": "WebSocket Subscription Problem Experiment",
+      "url": "/hasyx/doc/ws-problem.experiment",
+      "collapse": true,
+      "items": [
+        {
+          "title": "🚨 ПРАВИЛА ЭКСПЕРИМЕНТА",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 2
+        },
+        {
+          "title": "РАЗРЕШЁННЫЕ ДЕЙСТВИЯ:",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 3
+        },
+        {
+          "title": "ЗАПРЕЩЁННЫЕ ДЕЙСТВИЯ:",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 3
+        },
+        {
+          "title": "DEV SERVER УПРАВЛЕНИЕ:",
+          "url": "/hasyx/doc/ws-problem.experiment#dev-server",
+          "level": 3
+        },
+        {
+          "title": "🔍 ВЫЯВЛЕННЫЕ ПРОБЛЕМЫ",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 2
+        },
+        {
+          "title": "❌ Проблема 1: Протокольная несовместимость",
+          "url": "/hasyx/doc/ws-problem.experiment#1",
+          "level": 3
+        },
+        {
+          "title": "❌ Проблема 2: JWT подпись неверна",
+          "url": "/hasyx/doc/ws-problem.experiment#2-jwt",
+          "level": 3
+        },
+        {
+          "title": "⚠️ Проблема 3: Конфликт аутентификации",
+          "url": "/hasyx/doc/ws-problem.experiment#3",
+          "level": 3
+        },
+        {
+          "title": "🧪 ПЛАН ЭКСПЕРИМЕНТОВ",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 2
+        },
+        {
+          "title": "✅ Эксперимент 1: Проверка JWT конфигурации",
+          "url": "/hasyx/doc/ws-problem.experiment#1-jwt",
+          "level": 3
+        },
+        {
+          "title": "✅ Эксперимент 2: Трассировка прямого подключения к Hasura",
+          "url": "/hasyx/doc/ws-problem.experiment#2-hasura",
+          "level": 3
+        },
+        {
+          "title": "✅ Эксперимент 3: Тест proxy подключения с debug",
+          "url": "/hasyx/doc/ws-problem.experiment#3-proxy-debug",
+          "level": 3
+        },
+        {
+          "title": "📊 РЕЗУЛЬТАТЫ ЭКСПЕРИМЕНТОВ",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 2
+        },
+        {
+          "title": "🔬 РЕЗУЛЬТАТ ЭКСПЕРИМЕНТА 1",
+          "url": "/hasyx/doc/ws-problem.experiment#1",
+          "level": 3
+        },
+        {
+          "title": "🔬 РЕЗУЛЬТАТ ЭКСПЕРИМЕНТА 2",
+          "url": "/hasyx/doc/ws-problem.experiment#2",
+          "level": 3
+        },
+        {
+          "title": "🔬 РЕЗУЛЬТАТ ЭКСПЕРИМЕНТА 3",
+          "url": "/hasyx/doc/ws-problem.experiment#3",
+          "level": 3
+        },
+        {
+          "title": "📝 КОРНЕВАЯ ПРИЧИНА",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 2
+        },
+        {
+          "title": "🎯 ГЛАВНАЯ ПРОБЛЕМА: JWT Signature Mismatch",
+          "url": "/hasyx/doc/ws-problem.experiment#jwt-signature-mismatch",
+          "level": 3
+        },
+        {
+          "title": "🔧 ПЛАН ИСПРАВЛЕНИЯ",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 2
+        },
+        {
+          "title": "Приоритет 1: Синхронизировать JWT секреты",
+          "url": "/hasyx/doc/ws-problem.experiment#1-jwt",
+          "level": 3
+        },
+        {
+          "title": "Приоритет 2: Улучшить обработку ошибок прокси",
+          "url": "/hasyx/doc/ws-problem.experiment#2",
+          "level": 3
+        },
+        {
+          "title": "Приоритет 3: Добавить fallback логику",
+          "url": "/hasyx/doc/ws-problem.experiment#3-fallback",
+          "level": 3
+        },
+        {
+          "title": "📈 СЛЕДУЮЩИЕ ШАГИ",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 2
+        },
+        {
+          "title": "🎉 ЗАКЛЮЧЕНИЕ",
+          "url": "/hasyx/doc/ws-problem.experiment#",
+          "level": 2
+        }
+      ],
+      "level": 1
     }
   ],
-  "lastUpdated": "2025-05-29T13:07:10.596Z"
+  "lastUpdated": "2025-05-29T15:19:44.034Z"
 }

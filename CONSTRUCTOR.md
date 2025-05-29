@@ -190,11 +190,14 @@ function UserFilter() {
 4. **Subscription toggle** - Real-time data
 
 ### Recent Improvements ✅:
-- **Minimalist Design**: Reduced padding and spacing throughout interface with improved header layouts
+- **Unified Field Design**: Where and Returning fields now appear as single cohesive blocks with separators [fieldname|operator|input|delete]
+- **Circular Plus Buttons**: Strictly circular + buttons without dropdown arrows using `[&>svg]:hidden` to hide default SelectTrigger arrows
+- **Minimalist Spacing**: Dramatically reduced padding and margins throughout interface (text-xs, p-1, p-2, mb-1)
+- **Visual Consistency**: All interface elements now share consistent height (h-5, h-6) and rounded corner treatment
+- **Improved Header Layout**: Where and Returning sections use flex justify-between with labels left, + buttons right
+- **Enhanced Where Conditions**: Both regular fields and relations available in where conditions dropdown
+- **Full-Width Elements**: All field blocks now use w-full with delete buttons consistently positioned on the right
 - **Smart Field Selection**: Plus button reveals only relevant fields for selected table, including both regular fields and relations
-- **Improved Header Layout**: Where and Returning sections now use flex justify-between layout with labels on left and + buttons on right
-- **Circular Action Buttons**: All + and X buttons are now perfectly circular and properly centered
-- **Enhanced Where Conditions**: Can now add both regular fields and relations to where conditions, not just fields
 - **Recursive Relations**: Full support for nested query building with relation conditions and field selection
 - **Real Table Filtering**: Extracts only actual tables from `hasyx.tableMappings`, filtering out internal and mapping tables
 - **Clean UI Labels**: Simplified "Where Conditions" → "Where", "Returning Fields" → "Returning"

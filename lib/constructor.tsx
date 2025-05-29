@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import _ from 'lodash';
-import { useQuery } from "hasyx/lib/hasyx-client";
+import { useQuery, useSubscription, useClient } from "hasyx/lib/hasyx-client";
 import { SidebarLayout } from "hasyx/components/sidebar/layout";
 import { SidebarData } from "hasyx/components/sidebar";
 import { Card, CardHeader, CardTitle, CardContent } from "hasyx/components/ui/card";
@@ -12,6 +12,7 @@ import { Input } from "hasyx/components/ui/input";
 import { Label } from "hasyx/components/ui/label";
 import { Checkbox } from "hasyx/components/ui/checkbox";
 import { Badge } from "hasyx/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "hasyx/components/ui/tabs";
 import { Plus, X } from 'lucide-react';
 import { Session } from 'next-auth';
 import { useSession } from 'next-auth/react';
@@ -164,7 +165,7 @@ function WhereInput({ value, onChange, operator, fieldType }: {
   if (operator === '_is_null') {
     return (
       <Select value={value?.toString() || 'false'} onValueChange={(val) => onChange(val === 'true')}>
-        <SelectTrigger className="w-20 h-6 text-xs">
+        <SelectTrigger className="h-full border-0 rounded-none text-xs bg-transparent">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -185,7 +186,7 @@ function WhereInput({ value, onChange, operator, fieldType }: {
           onChange(values);
         }}
         placeholder="value1, value2, value3"
-        className="min-w-32 h-6 text-xs"
+        className="h-full border-0 rounded-none text-xs bg-transparent focus:bg-transparent px-1"
       />
     );
   }
@@ -193,7 +194,7 @@ function WhereInput({ value, onChange, operator, fieldType }: {
   if (fieldType === 'Boolean') {
     return (
       <Select value={value?.toString() || 'true'} onValueChange={(val) => onChange(val === 'true')}>
-        <SelectTrigger className="w-20 h-6 text-xs">
+        <SelectTrigger className="h-full border-0 rounded-none text-xs bg-transparent">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -211,7 +212,7 @@ function WhereInput({ value, onChange, operator, fieldType }: {
         value={value || ''}
         onChange={(e) => onChange(Number(e.target.value))}
         placeholder="0"
-        className="w-20 h-6 text-xs"
+        className="h-full border-0 rounded-none text-xs bg-transparent focus:bg-transparent px-1"
       />
     );
   }
@@ -222,7 +223,7 @@ function WhereInput({ value, onChange, operator, fieldType }: {
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder="value"
-      className="min-w-24 h-6 text-xs"
+      className="h-full border-0 rounded-none text-xs bg-transparent focus:bg-transparent px-1"
     />
   );
 }
@@ -246,11 +247,18 @@ function WhereField({
   const currentValue = value?.[currentOperator];
   
   return (
-    <div className="flex items-center gap-2 py-1">
-      <Badge variant="outline" className="min-w-16 text-xs">{fieldName}</Badge>
+    <div className="w-full flex items-center border rounded h-6 bg-background">
+      {/* Field Name */}
+      <div className="px-2 py-1 text-xs font-medium bg-muted/50 flex-shrink-0">
+        {fieldName}
+      </div>
       
+      {/* Separator */}
+      <div className="w-px h-4 bg-border"></div>
+      
+      {/* Operator Select */}
       <Select value={currentOperator} onValueChange={(op) => onUpdate(op, currentValue)}>
-        <SelectTrigger className="w-20 h-6 text-xs">
+        <SelectTrigger className="h-6 border-0 rounded-none px-2 text-xs bg-transparent hover:bg-muted/50 flex-shrink-0 min-w-12 max-h-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -260,14 +268,29 @@ function WhereField({
         </SelectContent>
       </Select>
       
-      <WhereInput 
-        value={currentValue}
-        onChange={(val) => onUpdate(currentOperator, val)}
-        operator={currentOperator}
-        fieldType={fieldType}
-      />
+      {/* Separator */}
+      <div className="w-px h-4 bg-border"></div>
       
-      <Button variant="ghost" size="sm" onClick={onRemove} className="h-6 w-6 p-0 rounded-full">
+      {/* Input */}
+      <div className="flex-1 px-1">
+        <WhereInput 
+          value={currentValue}
+          onChange={(val) => onUpdate(currentOperator, val)}
+          operator={currentOperator}
+          fieldType={fieldType}
+        />
+      </div>
+      
+      {/* Separator */}
+      <div className="w-px h-4 bg-border"></div>
+      
+      {/* Delete Button */}
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={onRemove} 
+        className="h-full w-6 px-0 border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
+      >
         <X className="h-3 w-3" />
       </Button>
     </div>
@@ -328,9 +351,9 @@ function ReturningSection({
   );
   
   return (
-    <div className={level > 0 ? "ml-3 border-l pl-2" : ""}>
-      <div className="flex items-center justify-between mb-2">
-        <Label className="text-sm font-medium">Returning</Label>
+    <div className={level > 0 ? "ml-1 border-l pl-1" : ""}>
+      <div className="flex items-center justify-between mb-1">
+        <Label className="text-xs font-medium">Returning</Label>
         
         {availableFields.length > 0 && (
           <Select onValueChange={(fieldName) => {
@@ -339,8 +362,8 @@ function ReturningSection({
               addField(field.name, field.isRelation, field.targetTable);
             }
           }}>
-            <SelectTrigger className="w-6 h-6 rounded-full p-0 border-2">
-              <Plus className="h-3 w-3" />
+            <SelectTrigger className="square border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0 [&>svg:nth-child(2)]:hidden">
+              <Plus className="h-2.5 w-2.5 flex-shrink-0" />
             </SelectTrigger>
             <SelectContent>
               {availableFields.map(field => (
@@ -357,10 +380,18 @@ function ReturningSection({
         {returning.map((item, index) => {
           if (typeof item === 'string') {
             return (
-              <div key={index} className="flex items-center gap-2 py-1">
-                <Badge variant="secondary" className="text-xs">{item}</Badge>
-                <Button variant="ghost" size="sm" onClick={() => removeField(index)} className="h-6 w-6 p-0 rounded-full">
-                  <X className="h-3 w-3" />
+              <div key={index} className="w-full flex items-center border rounded h-6 bg-background">
+                <div className="px-2 py-1 text-xs font-medium bg-muted/50 flex-1">
+                  {item}
+                </div>
+                <div className="w-px h-4 bg-border"></div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => removeField(index)} 
+                  className="h-full w-6 px-0 border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
+                >
+                  <X className="h-2.5 w-2.5" />
                 </Button>
               </div>
             );
@@ -371,30 +402,40 @@ function ReturningSection({
             const targetFields = field?.targetTable ? getFieldsFromTable(schema, field.targetTable) : [];
             
             return (
-              <div key={index} className="border rounded p-2 my-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className="text-xs">{relationName}</Badge>
-                  <Button variant="ghost" size="sm" onClick={() => removeField(index)} className="h-6 w-6 p-0 rounded-full">
-                    <X className="h-3 w-3" />
+              <div key={index} className="border rounded p-1 my-1">
+                <div className="w-full flex items-center border rounded h-6 bg-background mb-1">
+                  <div className="px-2 py-1 text-xs font-medium bg-primary/10 flex-1">
+                    {relationName}
+                  </div>
+                  <div className="w-px h-4 bg-border"></div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => removeField(index)} 
+                    className="h-full w-6 px-0 border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
+                  >
+                    <X className="h-2.5 w-2.5" />
                   </Button>
                 </div>
                 
-                {/* Nested Where */}
-                <WhereSection 
-                  fields={targetFields}
-                  where={relationData.where || {}}
-                  onWhereChange={(newWhere) => updateNestedWhere(index, relationName, newWhere)}
-                  level={level + 1}
-                />
-                
-                {/* Nested Returning */}
-                <ReturningSection
-                  fields={targetFields}
-                  returning={relationData.returning}
-                  onReturningChange={(newNestedReturning) => updateNestedReturning(index, relationName, newNestedReturning)}
-                  schema={schema}
-                  level={level + 1}
-                />
+                <div className="space-y-1">
+                  {/* Nested Where */}
+                  <WhereSection 
+                    fields={targetFields}
+                    where={relationData.where || {}}
+                    onWhereChange={(newWhere) => updateNestedWhere(index, relationName, newWhere)}
+                    level={level + 1}
+                  />
+                  
+                  {/* Nested Returning */}
+                  <ReturningSection
+                    fields={targetFields}
+                    returning={relationData.returning}
+                    onReturningChange={(newNestedReturning) => updateNestedReturning(index, relationName, newNestedReturning)}
+                    schema={schema}
+                    level={0}
+                  />
+                </div>
               </div>
             );
           }
@@ -436,16 +477,16 @@ function WhereSection({
   const availableFields = fields.filter(field => !where[field.name]);
   
   return (
-    <div className={level > 0 ? "mb-2" : "mb-3"}>
-      <div className="flex items-center justify-between mb-2">
-        <Label className="text-sm font-medium">Where</Label>
+    <div className={level > 0 ? "mb-1" : "mb-2"}>
+      <div className="flex items-center justify-between mb-1">
+        <Label className="text-xs font-medium">Where</Label>
         
         {availableFields.length > 0 && (
           <Select onValueChange={(fieldName) => {
             addWhereCondition(fieldName);
           }}>
-            <SelectTrigger className="w-6 h-6 rounded-full p-0 border-2">
-              <Plus className="h-3 w-3" />
+            <SelectTrigger className="square border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0 [&>svg:nth-child(2)]:hidden">
+              <Plus className="h-2.5 w-2.5 flex-shrink-0" />
             </SelectTrigger>
             <SelectContent>
               {availableFields.map(field => (
@@ -526,40 +567,31 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users' }: HasyxCons
   }
   
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Table Selection */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Table</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 pb-3">
-          <Select value={value.table} onValueChange={handleTableChange}>
-            <SelectTrigger className="h-7">
-              <SelectValue placeholder="Select table" />
-            </SelectTrigger>
-            <SelectContent>
-              {tables.map(table => (
-                <SelectItem key={table} value={table} className="text-xs">{table}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-      
-      {/* Where Conditions */}
-      <Card>
-        <CardContent className="pt-3 pb-3">
+        <CardContent className="pt-2 pb-2">
+          <div className="w-full flex items-center border rounded h-6 bg-background mb-2">
+            <div className="px-2 py-1 text-xs font-medium bg-muted/50 flex-shrink-0">
+              Table
+            </div>
+            <div className="w-px h-4 bg-border"></div>
+            <Select value={value.table} onValueChange={handleTableChange}>
+              <SelectTrigger className="border-0 rounded-none px-2 text-xs bg-transparent hover:bg-muted/50 flex-1 max-h-full">
+                <SelectValue placeholder="Select table" />
+              </SelectTrigger>
+              <SelectContent>
+                {tables.map(table => (
+                  <SelectItem key={table} value={table} className="text-xs">{table}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <WhereSection 
             fields={fields}
             where={value.where}
             onWhereChange={handleWhereChange}
           />
-        </CardContent>
-      </Card>
-      
-      {/* Returning Fields */}
-      <Card>
-        <CardContent className="pt-3 pb-3">
           <ReturningSection
             fields={fields}
             returning={value.returning}
@@ -569,6 +601,161 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users' }: HasyxCons
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Tab Components
+function ExpTab({ constructorState }: { constructorState: ConstructorState }) {
+  const queryOptions = constructorState.table ? {
+    table: constructorState.table,
+    where: Object.keys(constructorState.where).length > 0 ? constructorState.where : undefined,
+    returning: constructorState.returning.length > 0 ? constructorState.returning : ['id']
+  } : {
+    table: 'users',
+    where: undefined,
+    returning: ['id']
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-2">
+        <pre className="text-xs bg-muted/30 p-2 rounded overflow-auto font-mono max-h-96">
+          {JSON.stringify(queryOptions, null, 2)}
+        </pre>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GqlTab({ constructorState }: { constructorState: ConstructorState }) {
+  const [operationType, setOperationType] = useState<'query' | 'subscription'>('query');
+  const client = useClient();
+  
+  const queryOptions = useMemo(() => {
+    if (!constructorState.table) return null;
+    
+    return {
+      operation: operationType,
+      table: constructorState.table,
+      where: Object.keys(constructorState.where).length > 0 ? constructorState.where : undefined,
+      returning: constructorState.returning.length > 0 ? constructorState.returning : ['id']
+    };
+  }, [constructorState, operationType]);
+
+  const generatedQuery = useMemo(() => {
+    if (!queryOptions || !client?.generate) return null;
+    
+    try {
+      return client.generate(queryOptions);
+    } catch (error: any) {
+      return { error: error?.message || 'Unknown error' };
+    }
+  }, [queryOptions, client?.generate]);
+
+  return (
+    <div className="space-y-2">
+      {/* Query/Subscription tabs */}
+      <Tabs value={operationType} onValueChange={(value: string) => setOperationType(value as 'query' | 'subscription')}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="query" className="text-xs h-full">query</TabsTrigger>
+          <TabsTrigger value="subscription" className="text-xs h-full">subscription</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* GraphQL Query */}
+      <Card>
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xs">GraphQL Query</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 pb-2">
+          {generatedQuery && 'error' in generatedQuery ? (
+            <div className="text-red-500 text-xs">
+              <pre className="whitespace-pre-wrap text-xs">{generatedQuery.error}</pre>
+            </div>
+          ) : (
+            <pre className="text-xs bg-muted/30 p-2 rounded overflow-auto font-mono max-h-48">
+              {generatedQuery?.queryString || 'Loading...'}
+            </pre>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Variables */}
+      <Card>
+        <CardHeader className="pb-1">
+          <CardTitle className="text-xs">Variables</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 pb-2">
+          <pre className="text-xs bg-muted/30 p-2 rounded overflow-auto font-mono max-h-48">
+            {generatedQuery && 'variables' in generatedQuery ? JSON.stringify(generatedQuery.variables, null, 2) : '{}'}
+          </pre>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function QueryTab({ constructorState }: { constructorState: ConstructorState }) {
+  const queryOptions = constructorState.table ? {
+    table: constructorState.table,
+    where: Object.keys(constructorState.where).length > 0 ? constructorState.where : undefined,
+    returning: constructorState.returning.length > 0 ? constructorState.returning : ['id']
+  } : {
+    table: 'users',
+    where: undefined,
+    returning: ['id']
+  };
+  
+  const { data, loading, error } = useQuery(queryOptions);
+  
+  return (
+    <Card>
+      <CardContent className="p-2">
+        {loading && <div className="text-muted-foreground text-xs">Loading...</div>}
+        {error && (
+          <div className="text-red-500 text-xs">
+            <pre className="whitespace-pre-wrap text-xs">{JSON.stringify(error, null, 2)}</pre>
+          </div>
+        )}
+        {data && (
+          <pre className="text-xs bg-muted/30 p-2 rounded overflow-auto font-mono max-h-96">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SubscriptionTab({ constructorState }: { constructorState: ConstructorState }) {
+  const queryOptions = constructorState.table ? {
+    table: constructorState.table,
+    where: Object.keys(constructorState.where).length > 0 ? constructorState.where : undefined,
+    returning: constructorState.returning.length > 0 ? constructorState.returning : ['id']
+  } : {
+    table: 'users',
+    where: undefined,
+    returning: ['id']
+  };
+  
+  const { data, loading, error } = useSubscription(queryOptions);
+  
+  return (
+    <Card>
+      <CardContent className="p-2">
+        {loading && <div className="text-muted-foreground text-xs">Loading subscription...</div>}
+        {error && (
+          <div className="text-red-500 text-xs">
+            <pre className="whitespace-pre-wrap text-xs">{JSON.stringify(error, null, 2)}</pre>
+          </div>
+        )}
+        {data && (
+          <pre className="text-xs bg-muted/30 p-2 rounded overflow-auto font-mono max-h-96">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -584,18 +771,6 @@ export default function Constructor({ serverSession, sidebarData }: ConstructorP
     returning: []
   });
   
-  const queryOptions = constructorState.table ? {
-    table: constructorState.table,
-    where: Object.keys(constructorState.where).length > 0 ? constructorState.where : undefined,
-    returning: constructorState.returning.length > 0 ? constructorState.returning : ['id']
-  } : {
-    table: 'users',
-    where: undefined,
-    returning: ['id']
-  };
-  
-  const { data, loading, error } = useQuery(queryOptions);
-  
   return (
     <SidebarLayout sidebarData={sidebarData} breadcrumb={[
       { title: 'Hasyx', link: '/' },
@@ -603,8 +778,8 @@ export default function Constructor({ serverSession, sidebarData }: ConstructorP
     ]}>
       <div className="flex flex-1 h-full">
         {/* Left side - Constructor */}
-        <div className="flex-1 p-3 border-r overflow-auto">
-          <h2 className="text-lg font-semibold mb-3">Query Constructor</h2>
+        <div className="flex-1 p-2 border-r overflow-auto">
+          <h2 className="text-base font-semibold mb-2">Query Constructor</h2>
           <HasyxConstructor 
             value={constructorState}
             onChange={setConstructorState}
@@ -612,24 +787,33 @@ export default function Constructor({ serverSession, sidebarData }: ConstructorP
           />
         </div>
         
-        {/* Right side - Results */}
-        <div className="flex-1 p-3 overflow-auto">
-          <h2 className="text-lg font-semibold mb-3">Query Results</h2>
-          <Card>
-            <CardContent className="p-3">
-              {loading && <div className="text-muted-foreground text-sm">Loading...</div>}
-              {error && (
-                <div className="text-red-500 text-sm">
-                  <pre className="whitespace-pre-wrap text-xs">{JSON.stringify(error, null, 2)}</pre>
-                </div>
-              )}
-              {data && (
-                <pre className="text-xs bg-muted/30 p-3 rounded overflow-auto font-mono max-h-96">
-                  {JSON.stringify(data, null, 2)}
-                </pre>
-              )}
-            </CardContent>
-          </Card>
+        {/* Right side - Tabs */}
+        <div className="flex-1 p-2 overflow-auto">
+          <h2 className="text-base font-semibold mb-2">Query Results</h2>
+          <Tabs defaultValue="exp" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="exp" className="text-xs">exp</TabsTrigger>
+              <TabsTrigger value="gql" className="text-xs">gql</TabsTrigger>
+              <TabsTrigger value="query" className="text-xs">query</TabsTrigger>
+              <TabsTrigger value="subscription" className="text-xs">subscription</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="exp" className="mt-2">
+              <ExpTab constructorState={constructorState} />
+            </TabsContent>
+            
+            <TabsContent value="gql" className="mt-2">
+              <GqlTab constructorState={constructorState} />
+            </TabsContent>
+            
+            <TabsContent value="query" className="mt-2">
+              <QueryTab constructorState={constructorState} />
+            </TabsContent>
+            
+            <TabsContent value="subscription" className="mt-2">
+              <SubscriptionTab constructorState={constructorState} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </SidebarLayout>

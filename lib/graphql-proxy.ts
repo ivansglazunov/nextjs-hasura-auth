@@ -229,33 +229,47 @@ export async function proxySOCKET(
   };
 
   try {
+    debugGraphql(`🔐 [${clientId}] === AUTHENTICATION FLOW START ===`);
     const token = await getToken({
       req: request as any,
       secret: NEXTAUTH_SECRET
     }) as NextAuthToken | null;
 
+    debugGraphql(`🎫 [${clientId}] getToken result:`, {
+      hasToken: !!token,
+      hasSub: !!token?.sub,
+      tokenType: typeof token,
+      sub: token?.sub
+    });
+
     const headers: Record<string, string> = {};
 
     if (token?.sub) {
       debugGraphql(`👤 [${clientId}] User authenticated (ID: ${token.sub}). Generating Hasura JWT.`);
+      debugGraphql(`🔑 [${clientId}] === JWT GENERATION FOR AUTHENTICATED USER ===`);
       try {
         const hasuraClaims = {
           'x-hasura-allowed-roles': ['user', 'anonymous', 'me'], // Keep fixed roles for simplicity in proxy
           'x-hasura-default-role': 'user',
           'x-hasura-user-id': token.sub,
         };
+        debugGraphql(`🏷️ [${clientId}] Hasura claims for user:`, hasuraClaims);
+        
         const jwt = await generateJWT(token.sub, hasuraClaims); // Assumes generateJWT uses env secret
         headers['Authorization'] = `Bearer ${jwt}`;
         debugGraphql(`🔑 [${clientId}] Using generated JWT (user role) for Hasura WS connection.`);
+        debugGraphql(`📝 [${clientId}] JWT header added: Authorization: Bearer ${jwt.substring(0, 50)}...`);
       } catch (jwtError: any) {
         console.error(`❌ [${clientId}] Failed to generate Hasura JWT for user:`, jwtError);
         debugGraphql(`❌ [${clientId}] Failed to generate Hasura JWT for user:`, jwtError.message);
+        debugGraphql(`❌ [${clientId}] JWT Error stack:`, jwtError.stack);
         closeConnections(1011, "JWT generation failed");
         return;
       }
     } else {
       // --- MODIFICATION START: Generate Anonymous JWT instead of using Admin Secret ---
       debugGraphql(`👤 [${clientId}] User not authenticated. Generating Anonymous JWT.`);
+      debugGraphql(`🔑 [${clientId}] === JWT GENERATION FOR ANONYMOUS USER ===`);
       try {
         const anonymousUserId = `anon-${clientId}`; // Create a unique-ish ID for anonymous user
         const hasuraClaims = {
@@ -263,13 +277,17 @@ export async function proxySOCKET(
           'x-hasura-default-role': 'anonymous',
           'x-hasura-user-id': anonymousUserId, // Provide an ID
         };
+        debugGraphql(`🏷️ [${clientId}] Hasura claims for anonymous:`, hasuraClaims);
+        
         // Use the same secret mechanism as for authenticated users
         const jwt = await generateJWT(anonymousUserId, hasuraClaims); // Assumes generateJWT uses env secret
         headers['Authorization'] = `Bearer ${jwt}`;
         debugGraphql(`🔑 [${clientId}] Using generated JWT (anonymous role) for Hasura WS connection.`);
+        debugGraphql(`📝 [${clientId}] JWT header added: Authorization: Bearer ${jwt.substring(0, 50)}...`);
       } catch (jwtError: any) {
         console.error(`❌ [${clientId}] Failed to generate Hasura JWT for anonymous:`, jwtError);
         debugGraphql(`❌ [${clientId}] Failed to generate Hasura JWT for anonymous:`, jwtError.message);
+        debugGraphql(`❌ [${clientId}] JWT Error stack:`, jwtError.stack);
         // Fallback or error closing might depend on requirements, here we close.
         closeConnections(1011, "Anonymous JWT generation failed");
         return;
@@ -277,7 +295,10 @@ export async function proxySOCKET(
       // --- MODIFICATION END ---
     }
 
+    debugGraphql(`🔐 [${clientId}] === AUTHENTICATION FLOW END ===`);
+    debugGraphql(`📋 [${clientId}] Final headers for Hasura connection:`, Object.keys(headers));
     debugGraphql(`🔗 [${clientId}] Establishing connection to Hasura WS: ${HASURA_WS_ENDPOINT}`);
+    
     hasuraWs = new ws(HASURA_WS_ENDPOINT, 'graphql-ws', { headers });
 
     // --- WebSocket Event Handlers (Moved logic here) --- 
@@ -344,6 +365,28 @@ export async function proxySOCKET(
         const messageStr = message.toString();
         const parsedMessage = JSON.parse(messageStr);
         const type = parsedMessage.type;
+
+        debugGraphql(`📬 [${clientId}] Received message from Hasura: type=${type}`);
+        
+        if (type === 'connection_error') {
+          debugGraphql(`❌ [${clientId}] === CONNECTION ERROR FROM HASURA ===`);
+          debugGraphql(`📋 [${clientId}] Error payload:`, parsedMessage.payload);
+          debugGraphql(`❗ [${clientId}] This is likely a JWT verification issue on Hasura side!`);
+          // Forward the error to client but convert to valid graphql-transport-ws format
+          const errorMessage = {
+            type: 'error',
+            id: 'connection-error',
+            payload: {
+              message: parsedMessage.payload || 'Connection error from Hasura',
+              extensions: {
+                code: 'CONNECTION_ERROR',
+                hasuraError: parsedMessage
+              }
+            }
+          };
+          client.send(JSON.stringify(errorMessage));
+          return;
+        }
 
         if (type === 'connection_ack') {
           debugGraphql(`🤝 [${clientId}] Received connection_ack from Hasura.`);

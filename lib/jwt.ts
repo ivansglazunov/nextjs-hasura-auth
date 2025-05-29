@@ -14,21 +14,29 @@ const debug = Debug('jwt');
  * @returns {Uint8Array} Secret key for JWT signing
  */
 export const getJwtSecret = (): Uint8Array => {
+  debug('🔑 Getting JWT secret from environment...');
   try {
     const jwtSecret = process.env.HASURA_JWT_SECRET || '{"type":"HS256","key":"your-secret-key"}';
+    debug(`📋 Raw HASURA_JWT_SECRET: ${jwtSecret.substring(0, 50)}...`);
+    
     let secretKey: string;
     try {
       const jwtConfig = typeof jwtSecret === 'string' ? JSON.parse(jwtSecret) : jwtSecret;
       secretKey = jwtConfig.key;
+      debug(`🔓 Extracted key from config, length: ${secretKey?.length || 0} chars`);
       if (!secretKey) {
         throw new Error('JWT key not found in configuration');
       }
     } catch (e) {
+      debug('⚠️ Failed to parse JWT config, using raw secret');
       secretKey = jwtSecret as string;
     }
-    return new TextEncoder().encode(secretKey);
+    
+    const secretBytes = new TextEncoder().encode(secretKey);
+    debug(`✅ JWT secret converted to Uint8Array, length: ${secretBytes.length} bytes`);
+    return secretBytes;
   } catch (error) {
-    debug('Error getting JWT secret:', error); // Use logger
+    debug('❌ Error getting JWT secret:', error);
     throw error;
   }
 };
@@ -89,6 +97,11 @@ export const generateJWT = async (
   additionalClaims: Record<string, any> = {},
   options: { expiresIn?: string } = {}
 ): Promise<string> => {
+  debug(`🔑 === generateJWT START ===`);
+  debug(`👤 User ID: ${userId}`);
+  debug(`📄 Additional claims:`, additionalClaims);
+  debug(`⚙️ Options:`, options);
+  
   try {
     if (!userId) {
       throw new Error('User ID is undefined for generateJWT');
@@ -97,6 +110,7 @@ export const generateJWT = async (
     // Get the JWT secret key and algorithm
     const secretKeyUint8Array = getJwtSecret(); // Gets Uint8Array
     const algorithm = getJwtAlgorithm(); // Gets algorithm string e.g., 'HS256'
+    debug(`🔐 Algorithm: ${algorithm}`);
 
     if (!algorithm.startsWith('HS') && !algorithm.startsWith('ES') && !algorithm.startsWith('RS') && !algorithm.startsWith('PS')) {
         throw new Error(`Unsupported JWT algorithm: ${algorithm}`);
@@ -109,6 +123,7 @@ export const generateJWT = async (
       'x-hasura-user-id': userId,
       ...additionalClaims
     };
+    debug(`🏷️ Final Hasura claims:`, hasuraClaims);
     
     // Create the payload
     const payload: JWTPayload = {
@@ -116,9 +131,11 @@ export const generateJWT = async (
       'https://hasura.io/jwt/claims': hasuraClaims
       // Add other standard claims like iat, exp if needed, SignJWT handles them
     };
+    debug(`📦 JWT payload:`, payload);
     
     // Use jose.SignJWT to sign
     const { expiresIn = '1h' } = options;
+    debug(`⏰ Expires in: ${expiresIn}`);
 
     const jwt = await new SignJWT(payload)
         .setProtectedHeader({ alg: algorithm })
@@ -127,10 +144,13 @@ export const generateJWT = async (
         .setExpirationTime(expiresIn) // Sets 'exp' claim
         .sign(secretKeyUint8Array); // Use the Uint8Array key
     
-    debug('JWT token successfully created using jose');
+    debug(`✅ JWT token successfully created using jose`);
+    debug(`📝 Generated JWT: ${jwt.substring(0, 50)}...${jwt.substring(jwt.length - 20)}`);
+    debug(`🔑 === generateJWT END ===`);
     return jwt;
   } catch (error) {
-    debug('Error generating JWT using jose:', error);
+    debug('❌ Error generating JWT using jose:', error);
+    debug(`🔑 === generateJWT ERROR END ===`);
     throw error;
   }
 };
@@ -141,13 +161,21 @@ export const generateJWT = async (
  * @returns {Promise<JWTPayload>} Token payload
  */
 export const verifyJWT = async (token: string): Promise<JWTPayload> => {
+  debug(`🔍 === verifyJWT START ===`);
+  debug(`📝 Token to verify: ${token.substring(0, 50)}...${token.substring(token.length - 20)}`);
+  
   try {
     const secret = getJwtSecret();
+    debug(`🔐 Using secret for verification, length: ${secret.length} bytes`);
+    
     const { payload } = await jwtVerify(token, secret);
-    debug('JWT (JWS) token successfully verified');
+    debug(`✅ JWT (JWS) token successfully verified`);
+    debug(`📦 Verified payload:`, payload);
+    debug(`🔍 === verifyJWT END ===`);
     return payload;
   } catch (error) {
-    debug('Error verifying JWT (JWS):', error);
+    debug('❌ Error verifying JWT (JWS):', error);
+    debug(`🔍 === verifyJWT ERROR END ===`);
     throw error;
   }
 };
