@@ -150,7 +150,11 @@ export class Terminal extends EventEmitter {
 
     // Auto-start if requested
     if (this.options.autoStart) {
-      this.start();
+      this.start().catch(error => {
+        // Emit error but don't block terminal creation
+        this.emit('error', error);
+        if (this.onError) this.onError(error);
+      });
     }
   }
 

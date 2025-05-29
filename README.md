@@ -15,6 +15,7 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![GraphQL Proxy Documentation](https://img.shields.io/badge/GraphQL%20Proxy%20Docs-MD-yellow)](GRAPHQL-PROXY.md)
 [![Code Execution Engine Documentation](https://img.shields.io/badge/Exec%20Engine-MD-darkgreen)](EXEC.md)
 [![TypeScript Execution Engine Documentation](https://img.shields.io/badge/ExecTs%20Engine-MD-darkblue)](EXEC-TS.md)
+[![Terminal Library Documentation](https://img.shields.io/badge/Terminal%20Library-MD-indigo)](TERMINAL.md)
 [![OpenRouter AI Integration Documentation](https://img.shields.io/badge/OpenRouter%20AI-MD-brightgreen)](OPENROUTER.md)
 [![Cytoscape Integration Documentation](https://img.shields.io/badge/Cyto%20Docs-MD-red)](CYTO.md)
 [![Hasyx Identifier (HID) Documentation](https://img.shields.io/badge/HID%20Docs-MD-lightgrey)](HID.md)
@@ -45,6 +46,7 @@ Hasyx takes responsibility for:
 *   Interactive `npx hasyx cli js [<filePath>] [-e "<script>" | --eval "<script>"]` for quick scripting, data exploration, or debugging interactions with your Hasura backend, with the `client` object available in the global scope.
 *   **Universal Code Execution Engine:** A secure JavaScript execution environment that works in both Node.js and browser contexts, with isolated VM contexts, timeout protection, async/await support, and built-in dynamic npm package loading via use-m. See [`EXEC.md`](EXEC.md) for details.
 *   **TypeScript Execution Engine:** A TypeScript-aware code execution engine that extends the base Exec class with in-memory TypeScript compilation, automatic tsconfig.lib.json loading, and seamless TypeScript syntax detection. Includes `npx hasyx tsx` command for TypeScript execution. See [`EXEC-TS.md`](EXEC-TS.md) for details.
+*   **Terminal Emulation Library:** A comprehensive terminal emulation library for Node.js applications with support for spawning shell processes, executing commands with timeout protection, session management, event handling, and factory functions for different terminal types (bash, zsh, node, python, docker, ssh). Features complete test coverage and graceful handling of environments without node-pty. See [`TERMINAL.md`](TERMINAL.md) for details.
 *   **OpenRouter AI Integration:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Features real-time progress indicators showing AI thinking, code found, execution status, and results. AI can execute JavaScript/TypeScript code automatically and continue reasoning based on results through iterative processing (up to 3 iterations). Includes both programmatic API and CLI interface with `npx hasyx ask` command. See [`OPENROUTER.md`](OPENROUTER.md) and [`ASK.md`](ASK.md) for details.
 *   Migrations control with `npx hasyx migrate` and `npx hasyx unmigrate` for easy database schema management from `./migrations` directory.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
@@ -125,6 +127,7 @@ Explore the different modules and functionalities of Hasyx:
 *   **[GRAPHQL-PROXY.md](GRAPHQL-PROXY.md):** How the secure GraphQL proxy to Hasura works.
 *   **[EXEC.md](EXEC.md):** Universal JavaScript code execution engine for both Node.js and browser environments.
 *   **[EXEC-TS.md](EXEC-TS.md):** TypeScript execution engine with in-memory compilation and automatic configuration loading.
+*   **[TERMINAL.md](TERMINAL.md):** Comprehensive terminal emulation library for Node.js with process spawning, command execution, session management, and factory functions for different terminal types.
 *   **[OPENROUTER.md](OPENROUTER.md):** AI integration with OpenRouter API and code execution capabilities.
 *   **[ASK.md](ASK.md):** AI assistant command-line interface for asking questions using OpenRouter with free DeepSeek model.
 *   **[MARKDOWN-TERMINAL.md](MARKDOWN-TERMINAL.md):** Beautiful markdown formatting for terminal output with colors, syntax highlighting, and proper styling.
