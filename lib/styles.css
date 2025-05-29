@@ -4215,11 +4215,6 @@
       pointer-events: none;
     }
   }
-  .\[\&\>svg\]\:hidden {
-    &>svg {
-      display: none;
-    }
-  }
   .\[\&\>svg\]\:size-3 {
     &>svg {
       width: calc(var(--spacing) * 3);
