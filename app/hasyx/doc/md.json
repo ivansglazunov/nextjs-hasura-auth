@@ -6,6 +6,141 @@
       "collapse": true,
       "items": [
         {
+          "title": "🚀 New Real-time Streaming Features",
+          "url": "/hasyx/doc/AI#new-real-time-streaming-features",
+          "level": 2
+        },
+        {
+          "title": "Stream Event Types",
+          "url": "/hasyx/doc/AI#stream-event-types",
+          "level": 2
+        },
+        {
+          "title": "Event Interfaces",
+          "url": "/hasyx/doc/AI#event-interfaces",
+          "level": 3
+        },
+        {
+          "title": "Streaming Methods",
+          "url": "/hasyx/doc/AI#streaming-methods",
+          "level": 2
+        },
+        {
+          "title": "1. Full Event Streaming: `asking()`",
+          "url": "/hasyx/doc/AI#1-full-event-streaming-asking",
+          "level": 3
+        },
+        {
+          "title": "2. Simple Text Streaming: `askStream()`",
+          "url": "/hasyx/doc/AI#2-simple-text-streaming-askstream",
+          "level": 3
+        },
+        {
+          "title": "3. Complete Response: `askWithStreaming()`",
+          "url": "/hasyx/doc/AI#3-complete-response-askwithstreaming",
+          "level": 3
+        },
+        {
+          "title": "4. Execution Results Only: `getExecutionResults()`",
+          "url": "/hasyx/doc/AI#4-execution-results-only-getexecutionresults",
+          "level": 3
+        },
+        {
+          "title": "Real-time Progress in CLI",
+          "url": "/hasyx/doc/AI#real-time-progress-in-cli",
+          "level": 2
+        },
+        {
+          "title": "OpenRouter Streaming Integration",
+          "url": "/hasyx/doc/AI#openrouter-streaming-integration",
+          "level": 2
+        },
+        {
+          "title": "New `askStream()` method in OpenRouter class:",
+          "url": "/hasyx/doc/AI#new-askstream-method-in-openrouter-class",
+          "level": 3
+        },
+        {
+          "title": "Migration from Old `asking()`",
+          "url": "/hasyx/doc/AI#migration-from-old-asking",
+          "level": 2
+        },
+        {
+          "title": "❌ Old (Fake) Implementation:",
+          "url": "/hasyx/doc/AI#old-fake-implementation",
+          "level": 3
+        },
+        {
+          "title": "✅ New (Real) Implementation:",
+          "url": "/hasyx/doc/AI#new-real-implementation",
+          "level": 3
+        },
+        {
+          "title": "Advanced Examples",
+          "url": "/hasyx/doc/AI#advanced-examples",
+          "level": 2
+        },
+        {
+          "title": "React Component with Real-time Streaming",
+          "url": "/hasyx/doc/AI#react-component-with-real-time-streaming",
+          "level": 3
+        },
+        {
+          "title": "Node.js Express API with Streaming",
+          "url": "/hasyx/doc/AI#nodejs-express-api-with-streaming",
+          "level": 3
+        },
+        {
+          "title": "WebSocket Integration",
+          "url": "/hasyx/doc/AI#websocket-integration",
+          "level": 3
+        },
+        {
+          "title": "Performance Benefits",
+          "url": "/hasyx/doc/AI#performance-benefits",
+          "level": 2
+        },
+        {
+          "title": "Real Streaming vs Fake:",
+          "url": "/hasyx/doc/AI#real-streaming-vs-fake",
+          "level": 3
+        },
+        {
+          "title": "Benchmarks:",
+          "url": "/hasyx/doc/AI#benchmarks",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/AI#error-handling",
+          "level": 2
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/AI#best-practices",
+          "level": 2
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/AI#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues:",
+          "url": "/hasyx/doc/AI#common-issues",
+          "level": 3
+        },
+        {
+          "title": "Debug Streaming:",
+          "url": "/hasyx/doc/AI#debug-streaming",
+          "level": 3
+        },
+        {
+          "title": "Related Documentation",
+          "url": "/hasyx/doc/AI#related-documentation",
+          "level": 2
+        },
+        {
           "title": "Features",
           "url": "/hasyx/doc/AI#features",
           "level": 2
@@ -282,8 +417,8 @@
           "level": 3
         },
         {
-          "title": "Interactive Session Example",
-          "url": "/hasyx/doc/ASK#interactive-session-example",
+          "title": "Interactive Session Example with Real-time Streaming",
+          "url": "/hasyx/doc/ASK#interactive-session-example-with-real-time-streaming",
           "level": 3
         },
         {
@@ -2817,6 +2952,104 @@
           "title": "`ask` 🤖",
           "url": "/hasyx/doc/README#ask",
           "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
+      "title": "📋 Финальное ТЗ: Проверка соответствия документации реальному стримингу",
+      "url": "/hasyx/doc/STREAMING_FINAL_TEST",
+      "collapse": true,
+      "items": [
+        {
+          "title": "🎯 Цель",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 2
+        },
+        {
+          "title": "✅ Обновленные файлы",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 2
+        },
+        {
+          "title": "1. **README.md** ✅",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#1-readmemd",
+          "level": 3
+        },
+        {
+          "title": "2. **ASK.md** ✅",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#2-askmd",
+          "level": 3
+        },
+        {
+          "title": "3. **AI.md** ✅",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#3-aimd",
+          "level": 3
+        },
+        {
+          "title": "🧪 Тесты для выполнения",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 2
+        },
+        {
+          "title": "Тест 1: Проверка unit-тестов стриминга",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#1-unit",
+          "level": 3
+        },
+        {
+          "title": "Тест 2: Проверка реального стриминга",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#2",
+          "level": 3
+        },
+        {
+          "title": "Тест 3: Интерактивный режим со стримингом",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#3",
+          "level": 3
+        },
+        {
+          "title": "Тест 4: Программный API стриминга",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#4-api",
+          "level": 3
+        },
+        {
+          "title": "🎯 Критерии успеха",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 2
+        },
+        {
+          "title": "✅ Документация:",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 3
+        },
+        {
+          "title": "✅ Реализация:",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 3
+        },
+        {
+          "title": "✅ Производительность:",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 3
+        },
+        {
+          "title": "🚨 Важные отличия от старой версии",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 2
+        },
+        {
+          "title": "❌ Старая (фейковая) реализация:",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 3
+        },
+        {
+          "title": "✅ Новая (реальная) реализация:",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 3
+        },
+        {
+          "title": "📝 Итоговый отчет",
+          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
+          "level": 2
         }
       ],
       "level": 1
@@ -8185,5 +8418,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-30T18:32:32.798Z"
+  "lastUpdated": "2025-05-30T22:06:32.420Z"
 }

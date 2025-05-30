@@ -375,16 +375,66 @@ export const ask = new Ask(
   process?.env?.npm_package_name || 'Unknown Project'
 );
 
+/**
+ * Ensures OPENROUTER_API_KEY is available, setting it up interactively if needed
+ */
+async function ensureOpenRouterApiKey() {
+  if (!process?.env?.OPENROUTER_API_KEY) {
+    console.log('🔑 OpenRouter API Key not found. Let\'s set it up...');
+    
+    try {
+      const { configureOpenRouter } = await import('./assist-openrouter');
+      const { createRlInterface } = await import('./assist-common');
+      
+      const rl = createRlInterface();
+      const envPath = path.join(process.cwd(), '.env');
+      
+      try {
+        await configureOpenRouter(rl, envPath);
+        
+        // Reload environment variables
+        const envResult = dotenv.config({ path: envPath });
+        if (envResult.error) {
+          console.debug('Warning: Could not reload .env file:', envResult.error);
+        }
+        
+        // Check if the key is now available
+        if (!process?.env?.OPENROUTER_API_KEY) {
+          console.error('❌ OPENROUTER_API_KEY is still not available. Please check your .env file.');
+          process.exit(1);
+        }
+        
+        console.log('✅ OpenRouter API Key configured successfully!');
+        
+        // Recreate Ask instance with the new API key
+        const newAsk = new Ask(
+          process.env.OPENROUTER_API_KEY,
+          process?.env?.npm_package_name || 'Unknown Project'
+        );
+        
+        // Copy settings from old instance
+        Object.assign(ask, newAsk);
+        
+      } finally {
+        rl.close();
+      }
+    } catch (error) {
+      console.error('❌ Failed to configure OpenRouter API Key:', error);
+      process.exit(1);
+    }
+  }
+}
+
 // Run REPL if this file is executed directly
 if (typeof require !== 'undefined' && require.main === module) {
-  if (!process?.env?.OPENROUTER_API_KEY) {
-    console.error('❌ OPENROUTER_API_KEY environment variable is required');
-    console.error('   Please set it in your .env file or environment');
-    process.exit(1);
-  }
-  
-  ask.repl().catch((error) => {
-    console.error('❌ Error in ask REPL:', error);
-    process.exit(1);
-  });
+  (async () => {
+    // Ensure OpenRouter API Key is configured
+    await ensureOpenRouterApiKey();
+    
+    // Start REPL
+    ask.repl().catch((error) => {
+      console.error('❌ Error in ask REPL:', error);
+      process.exit(1);
+    });
+  })();
 } 
