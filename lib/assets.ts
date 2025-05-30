@@ -91,27 +91,82 @@ export const assetsCommand = async () => {
     console.warn('⚠️ Error running @capacitor/assets:', error);
     debug(`Error running @capacitor/assets: ${error}`);
   }
-  
-  // Generate PWA icons manually if needed
+
+  // Move PWA icons from root icons/ to public/icons/ if they exist
   try {
-    console.log('🌐 Ensuring PWA icons are available...');
-    const iconsDir = path.join(projectRoot, 'public', 'icons');
-    await fs.ensureDir(iconsDir);
+    console.log('🌐 Processing PWA icons...');
     
-    // Check if icons already exist
-    const icon192 = path.join(iconsDir, 'icon-192.png');
-    const icon512 = path.join(iconsDir, 'icon-512.png');
+    const rootIconsDir = path.join(projectRoot, 'icons');
+    const publicIconsDir = path.join(projectRoot, 'public', 'icons');
     
-    if (!fs.existsSync(icon192) || !fs.existsSync(icon512)) {
-      console.log(`📱 Generating PWA icons from ${logoType} logo...`);
+    // Ensure public/icons directory exists
+    await fs.ensureDir(publicIconsDir);
+    
+    if (fs.existsSync(rootIconsDir)) {
+      console.log('📁 Moving PWA icons to public/icons/...');
+      debug('Moving PWA icons from root icons/ to public/icons/');
+      
+      // Get all files from root icons directory
+      const iconFiles = await fs.readdir(rootIconsDir);
+      
+      let movedCount = 0;
+      for (const file of iconFiles) {
+        if (file.startsWith('icon-') && (file.endsWith('.webp') || file.endsWith('.png'))) {
+          const sourceFile = path.join(rootIconsDir, file);
+          const targetFile = path.join(publicIconsDir, file);
+          
+          try {
+            await fs.move(sourceFile, targetFile, { overwrite: true });
+            console.log(`   ✅ Moved ${file}`);
+            debug(`Moved PWA icon: ${file}`);
+            movedCount++;
+          } catch (moveError) {
+            console.warn(`   ⚠️ Failed to move ${file}:`, moveError);
+            debug(`Failed to move PWA icon ${file}: ${moveError}`);
+          }
+        }
+      }
+      
+      if (movedCount > 0) {
+        console.log(`✅ Moved ${movedCount} PWA icons to public/icons/`);
+        debug(`Moved ${movedCount} PWA icons to public/icons/`);
+        
+        // Try to remove empty root icons directory
+        try {
+          const remainingFiles = await fs.readdir(rootIconsDir);
+          if (remainingFiles.length === 0) {
+            await fs.remove(rootIconsDir);
+            console.log('🗑️ Removed empty root icons/ directory');
+            debug('Removed empty root icons directory');
+          }
+        } catch (removeError) {
+          debug(`Could not remove root icons directory: ${removeError}`);
+        }
+      }
+    } else {
+      console.log('📱 No root icons/ directory found, checking existing PWA icons...');
+      debug('No root icons directory found');
+    }
+    
+    // Check if we have the minimum required PWA icons
+    const icon192 = path.join(publicIconsDir, 'icon-192.png');
+    const icon512 = path.join(publicIconsDir, 'icon-512.png');
+    const icon192webp = path.join(publicIconsDir, 'icon-192.webp');
+    const icon512webp = path.join(publicIconsDir, 'icon-512.webp');
+    
+    const hasRequiredIcons = (fs.existsSync(icon192) || fs.existsSync(icon192webp)) && 
+                            (fs.existsSync(icon512) || fs.existsSync(icon512webp));
+    
+    if (!hasRequiredIcons) {
+      console.log(`📱 Generating missing PWA icons from ${logoType} logo...`);
       debug(`Generating PWA icons from ${logoType} logo`);
       
       // Try to use sharp to convert logo to PNG
       try {
         const sharp = require('sharp');
         
-        // Generate 192x192 icon
-        if (!fs.existsSync(icon192)) {
+        // Generate 192x192 icon if missing
+        if (!fs.existsSync(icon192) && !fs.existsSync(icon192webp)) {
           await sharp(logoPath)
             .resize(192, 192)
             .png()
@@ -120,39 +175,14 @@ export const assetsCommand = async () => {
           debug('Generated 192x192 PWA icon');
         }
         
-        // Generate 512x512 icon
-        if (!fs.existsSync(icon512)) {
+        // Generate 512x512 icon if missing
+        if (!fs.existsSync(icon512) && !fs.existsSync(icon512webp)) {
           await sharp(logoPath)
             .resize(512, 512)
             .png()
             .toFile(icon512);
           console.log('✅ Generated icon-512.png');
           debug('Generated 512x512 PWA icon');
-        }
-        
-        // Generate favicon
-        const faviconPath = path.join(projectRoot, 'public', 'favicon.ico');
-        if (!fs.existsSync(faviconPath)) {
-          console.log(`🔖 Generating favicon from ${logoType} logo...`);
-          debug(`Generating favicon from ${logoType} logo`);
-          
-          const favicon32 = await sharp(logoPath)
-            .resize(32, 32)
-            .png()
-            .toBuffer();
-          
-          // Try to convert to ICO format
-          try {
-            const pngToIco = require('png-to-ico');
-            const icoBuffer = await pngToIco(favicon32);
-            await fs.writeFile(faviconPath, icoBuffer);
-            console.log('✅ Generated favicon.ico');
-            debug('Generated favicon.ico');
-          } catch (icoError) {
-            console.warn('⚠️ Could not generate favicon.ico, using PNG fallback');
-            await fs.writeFile(path.join(projectRoot, 'public', 'favicon.png'), favicon32);
-            debug(`ICO conversion failed: ${icoError}`);
-          }
         }
         
       } catch (sharpError) {
@@ -165,9 +195,107 @@ export const assetsCommand = async () => {
       debug('PWA icons already exist, skipping generation');
     }
     
+    // Update manifest.webmanifest to use correct icon paths
+    try {
+      console.log('📝 Updating PWA manifest...');
+      const manifestPath = path.join(projectRoot, 'public', 'manifest.webmanifest');
+      
+      if (fs.existsSync(manifestPath)) {
+        const manifestContent = await fs.readFile(manifestPath, 'utf8');
+        const manifest = JSON.parse(manifestContent);
+        
+        // Check what icons we actually have
+        const availableIcons = await fs.readdir(publicIconsDir);
+        const webpIcons = availableIcons.filter(f => f.startsWith('icon-') && f.endsWith('.webp'));
+        const pngIcons = availableIcons.filter(f => f.startsWith('icon-') && f.endsWith('.png'));
+        
+        // Prefer WebP icons if available, fallback to PNG
+        const iconsToUse = webpIcons.length > 0 ? webpIcons : pngIcons;
+        
+        if (iconsToUse.length > 0) {
+          console.log(`   Using ${iconsToUse.length} ${webpIcons.length > 0 ? 'WebP' : 'PNG'} icons`);
+          
+          // Update manifest icons
+          manifest.icons = [];
+          
+          for (const iconFile of iconsToUse) {
+            const sizeMatch = iconFile.match(/icon-(\d+)\./);
+            if (sizeMatch) {
+              const size = sizeMatch[1];
+              const isWebP = iconFile.endsWith('.webp');
+              
+              manifest.icons.push({
+                src: `/icons/${iconFile}`,
+                type: isWebP ? 'image/webp' : 'image/png',
+                sizes: `${size}x${size}`,
+                purpose: 'any maskable'
+              });
+            }
+          }
+          
+          // Update shortcuts icon reference too
+          if (manifest.shortcuts && manifest.shortcuts.length > 0) {
+            const icon192File = iconsToUse.find(f => f.includes('192')) || iconsToUse[0];
+            manifest.shortcuts[0].icons = [{
+              src: `/icons/${icon192File}`,
+              sizes: '192x192'
+            }];
+          }
+          
+          // Write updated manifest
+          await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+          console.log('✅ Updated PWA manifest with correct icon paths');
+          debug('Updated PWA manifest with correct icon paths');
+        }
+      } else {
+        console.log('   ⚠️ manifest.webmanifest not found, skipping update');
+        debug('manifest.webmanifest not found');
+      }
+    } catch (manifestError) {
+      console.warn('⚠️ Error updating PWA manifest:', manifestError);
+      debug(`Error updating PWA manifest: ${manifestError}`);
+    }
+    
   } catch (error) {
-    console.warn('⚠️ Error generating PWA icons:', error);
-    debug(`Error generating PWA icons: ${error}`);
+    console.warn('⚠️ Error processing PWA icons:', error);
+    debug(`Error processing PWA icons: ${error}`);
+  }
+
+  // Generate favicon if needed
+  try {
+    const faviconPath = path.join(projectRoot, 'public', 'favicon.ico');
+    if (!fs.existsSync(faviconPath)) {
+      console.log(`🔖 Generating favicon from ${logoType} logo...`);
+      debug(`Generating favicon from ${logoType} logo`);
+      
+      try {
+        const sharp = require('sharp');
+        
+        const favicon32 = await sharp(logoPath)
+          .resize(32, 32)
+          .png()
+          .toBuffer();
+        
+        // Try to convert to ICO format
+        try {
+          const pngToIco = require('png-to-ico');
+          const icoBuffer = await pngToIco(favicon32);
+          await fs.writeFile(faviconPath, icoBuffer);
+          console.log('✅ Generated favicon.ico');
+          debug('Generated favicon.ico');
+        } catch (icoError) {
+          console.warn('⚠️ Could not generate favicon.ico, using PNG fallback');
+          await fs.writeFile(path.join(projectRoot, 'public', 'favicon.png'), favicon32);
+          debug(`ICO conversion failed: ${icoError}`);
+        }
+      } catch (sharpError) {
+        console.warn('⚠️ Sharp not available for favicon generation:', sharpError);
+        debug(`Sharp error for favicon: ${sharpError}`);
+      }
+    }
+  } catch (error) {
+    console.warn('⚠️ Error generating favicon:', error);
+    debug(`Error generating favicon: ${error}`);
   }
   
   // Set Telegram bot profile picture if token is available

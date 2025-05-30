@@ -26,7 +26,7 @@ export async function syncEnvironmentVariables(rl: readline.Interface, envPath: 
   ];
 
   if (!options.skipVercel) {
-    if (await askYesNo(rl, 'Do you want to sync .env with Vercel?', true)) {
+    if (await askYesNo(rl, 'Do you want to sync .env with Vercel?', false)) {
       debug('Proceeding with Vercel sync.');
       if (!vercelToken) {
         console.log('⚠️ VERCEL_TOKEN not found in .env. Skipping Vercel sync.');
@@ -43,13 +43,18 @@ export async function syncEnvironmentVariables(rl: readline.Interface, envPath: 
           console.log(`\n🔗 Ensuring your local directory is linked to Vercel project "${vercelProjectNameForLink}".`);
           console.log("   You might be prompted by Vercel CLI to confirm the project and scope (team/organization).");
 
-          const linkCommandParts = ['npx', 'vercel', 'link', vercelProjectNameForLink, `--token=${vercelToken}`];
+          // First try to link using project name via environment variable or use interactive mode
+          process.env.VERCEL_PROJECT_ID = vercelProjectNameForLink;
+          const linkCommandParts = ['npx', 'vercel', 'link', '--yes', `--token=${vercelToken}`];
           if (vercelOrgId) {
             linkCommandParts.push(`--scope=${vercelOrgId}`);
           }
 
           debug(`Executing Vercel link command: ${linkCommandParts.join(' ')}`);
-          const linkResult = spawn.sync(linkCommandParts[0], linkCommandParts.slice(1), { stdio: 'inherit' });
+          const linkResult = spawn.sync(linkCommandParts[0], linkCommandParts.slice(1), { 
+            stdio: 'inherit',
+            env: { ...process.env, VERCEL_PROJECT_ID: vercelProjectNameForLink }
+          });
 
           if (linkResult.status === 0) {
             console.log(`✅ Successfully linked to Vercel project: ${vercelProjectNameForLink}.`);
@@ -190,7 +195,7 @@ export async function syncEnvironmentVariables(rl: readline.Interface, envPath: 
   }
 
   if (!options.skipGithub) {
-    if (await askYesNo(rl, 'Do you want to sync .env with GitHub Actions secrets?', true)) {
+    if (await askYesNo(rl, 'Do you want to sync .env with GitHub Actions secrets?', false)) {
       debug('Proceeding with GitHub Actions secrets sync.');
       const remoteUrl = getGitHubRemoteUrl();
       if (!remoteUrl) { 

@@ -37,14 +37,14 @@ export async function runMigrations(rl: readline.Interface, envPath: string, opt
 
   const cliCommand = fs.existsSync(hasuraCliPath) ? hasuraCliPath : 'hasura-cli'; // Fallback to global
 
-  if (await askYesNo(rl, 'Do you want to apply Hasura migrations?', true)) {
+  if (await askYesNo(rl, 'Do you want to apply Hasura migrations?', false)) {
     console.log(`Applying migrations from ${projectDir}...`);
     const migrateApply = spawn.sync(cliCommand, ['migrate', 'apply', '--project', projectDir, '--disable-interactive'], { stdio: 'inherit', env: { ...process.env, ...envVars } });
     if (migrateApply.status !== 0) { console.error('❌ Failed to apply migrations.'); }
     else { console.log('✅ Migrations applied.'); }
   }
 
-  if (await askYesNo(rl, 'Do you want to apply/reload Hasura metadata?', true)) {
+  if (await askYesNo(rl, 'Do you want to apply/reload Hasura metadata?', false)) {
     console.log(`Applying metadata from ${projectDir}...`);
     const metadataApply = spawn.sync(cliCommand, ['metadata', 'apply', '--project', projectDir], { stdio: 'inherit', env: { ...process.env, ...envVars } });
     if (metadataApply.status !== 0) { console.error('❌ Failed to apply metadata.'); }

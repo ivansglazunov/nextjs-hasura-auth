@@ -32,7 +32,7 @@ export async function setupPackageJson(rl: readline.Interface, options: { projec
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
     if (pkg.name !== projectName) {
       console.log(`Current package name is \"${pkg.name}\".`);
-      if (await askYesNo(rl, `Do you want to change it to \"${projectName}\"?`, true)) {
+      if (await askYesNo(rl, `Do you want to change it to \"${projectName}\"?`, false)) {
         pkg.name = projectName;
         fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2));
         console.log(`✅ Package name updated to ${projectName}`);

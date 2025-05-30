@@ -83,7 +83,7 @@ export async function configureOAuth(rl: readline.Interface, envPath: string, ef
       console.log(`✅ ${provider.name} has Client ID set (ID: ${maskDisplaySecret(clientId, false)}), but secret is missing.`);
     }
 
-    if (await askYesNo(rl, `Do you want to set up ${provider.name} OAuth?`, true)) {
+    if (await askYesNo(rl, `Do you want to set up ${provider.name} OAuth?`, false)) {
       console.log(`Please create an OAuth app on ${provider.name}: ${provider.docsLink}`);
       
       let instructionText = provider.instructions.replace(/{EFFECTIVE_OAUTH_CALLBACK_BASE_URL}/g, effectiveOauthCallbackBaseUrl);

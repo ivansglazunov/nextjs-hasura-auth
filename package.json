@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.228",
+  "version": "0.1.229",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -19,7 +19,7 @@
     "build:next": "next build --turbopack",
     "client": "tsx lib/build-client.ts",
     "build:android": "npm run client && npm run cli -- assets && npx cap sync android",
-    "build:ios": "npm run client && npm run cli -- assets && npx cap sync ios",
+    "ios": "npm run client && npm run cli -- assets && npx cap sync ios",
     "start": "NODE_ENV=production NODE_OPTIONS=\"--experimental-vm-modules\" npx -y hasyx start",
     "lint": "next lint --turbopack",
     "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest --verbose",
@@ -155,8 +155,10 @@
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
     "next-ws": "^2.0.7",
+    "node-pty": "^1.0.0",
     "png-to-ico": "^2.1.8",
     "prettier": "^3.5.3",
+    "puppeteer": "^24.9.0",
     "react": "^19.0.0",
     "react-cytoscapejs": "^2.0.0",
     "react-day-picker": "^8.10.1",
@@ -187,8 +189,7 @@
     "vercel": "^41.7.3",
     "vm-browserify": "^1.1.2",
     "ws": "^8.18.2",
-    "zod": "^3.25.4",
-    "node-pty": "^1.0.0"
+    "zod": "^3.25.4"
   },
   "bin": {
     "hasyx": "./lib/cli.js"

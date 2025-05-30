@@ -13,6 +13,14 @@ export interface ExecContext {
   [key: string]: any;
 }
 
+// Global results storage for persistent state between executions
+const globalResults: { [uuid: string]: any } = {};
+
+// Clear results function for testing
+export function clearResults(): void {
+  Object.keys(globalResults).forEach(key => delete globalResults[key]);
+}
+
 // Cache for use-m function
 let useFunction: any = null;
 let useInitialized = false;
@@ -53,6 +61,8 @@ const getEnvironmentGlobals = () => {
     Math: Math,
     JSON: JSON,
     Promise: Promise,
+    // Add global results object for persistent state
+    results: globalResults,
   };
 
   // Add Node.js specific globals only if available
@@ -292,6 +302,31 @@ export class Exec {
     }
     return window.isSecureContext || location.protocol === 'https:';
   }
+
+  // Static methods for working with global results object
+  static getResults(): { [uuid: string]: any } {
+    return globalResults;
+  }
+
+  static setResult(uuid: string, value: any): void {
+    globalResults[uuid] = value;
+  }
+
+  static getResult(uuid: string): any {
+    return globalResults[uuid];
+  }
+
+  static deleteResult(uuid: string): boolean {
+    if (uuid in globalResults) {
+      delete globalResults[uuid];
+      return true;
+    }
+    return false;
+  }
+
+  static clearResults(): void {
+    clearResults();
+  }
 }
 
 // Factory function for easier usage
@@ -362,6 +397,13 @@ You can execute JavaScript code using Node.js VM with full async/await support.
 - File system access
 - Dynamic imports and module resolution
 
+**Persistent State Management:**
+- \`results[uuid]\` - Global object for storing persistent state between executions
+- Use unique UUIDs to store and retrieve objects that need to persist
+- Perfect for browser instances, database connections, complex objects
+- Example: \`results['browser1'] = await puppeteer.launch()\`
+- Later: \`const browser = results['browser1']\`
+
 **Execution Format:**
 > 🪬<uuid>/do/exec/js
 \`\`\`js
@@ -382,6 +424,13 @@ process.platform
 > 🪬async1/do/exec/js
 \`\`\`js
 await fetch('https://api.github.com/users/octocat').then(r => r.json())
+\`\`\`
+
+> 🪬state1/do/exec/js
+\`\`\`js
+// Store persistent state
+results['myData'] = { value: 42 };
+results['myData']
 \`\`\`
 `;
 

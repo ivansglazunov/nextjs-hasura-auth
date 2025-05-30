@@ -20,7 +20,7 @@ export async function checkGitHubAuth(rl: readline.Interface): Promise<void> {
     const authStatusResult = spawn.sync('gh', ['auth', 'status'], { stdio: 'pipe', encoding: 'utf-8' });
     if (authStatusResult.status !== 0) {
       console.log('❌ You are not authenticated with GitHub. Please login:');
-      const shouldLogin = await askYesNo(rl, 'Do you want to login now?', true);
+      const shouldLogin = await askYesNo(rl, 'Do you want to login now?', false);
       if (shouldLogin) {
         const loginResult = spawn.sync('gh', ['auth', 'login'], { stdio: 'inherit' });
         if (loginResult.error || loginResult.status !== 0) { console.error('❌ GitHub login failed.'); process.exit(1); }
@@ -39,7 +39,7 @@ export async function setupRepository(rl: readline.Interface): Promise<void> {
       console.log(`✅ Current directory is already a GitHub repository: ${remoteUrlRes.stdout.trim()}`); return;
     }
     console.log('⚠️ Current directory is a git repository but has no GitHub remote or it is not GitHub.');
-    if (await askYesNo(rl, 'Would you like to add a GitHub remote?', true)) {
+    if (await askYesNo(rl, 'Would you like to add a GitHub remote?', false)) {
       const repoName = path.basename(process.cwd());
       const createPublic = await askYesNo(rl, 'Create as public repository?', false);
       console.log(`🔨 Creating GitHub repository: ${repoName}...`);
@@ -49,7 +49,7 @@ export async function setupRepository(rl: readline.Interface): Promise<void> {
     }
   } else {
     console.log('⚠️ Current directory is not a git repository.');
-    if (await askYesNo(rl, 'Would you like to create a new GitHub repository here?', true)) {
+    if (await askYesNo(rl, 'Would you like to create a new GitHub repository here?', false)) {
       spawn.sync('git', ['init'], { stdio: 'inherit' });
       const repoName = path.basename(process.cwd());
       const createPublic = await askYesNo(rl, 'Create as public repository?', false);
@@ -57,7 +57,7 @@ export async function setupRepository(rl: readline.Interface): Promise<void> {
       const createResult = spawn.sync('gh', ['repo', 'create', repoName, '--source=.', createPublic ? '--public' : '--private', '--push'], { stdio: 'inherit' });
       if (createResult.error || createResult.status !== 0) { console.error('❌ Failed to create GitHub repository.'); if (!await askYesNo(rl, 'Continue without GitHub remote?', false)) process.exit(1); }
       else { console.log('✅ GitHub repository created and configured as remote.'); }
-    } else if (await askYesNo(rl, 'Do you have an existing GitHub repository you want to use?', true)) {
+    } else if (await askYesNo(rl, 'Do you have an existing GitHub repository you want to use?', false)) {
       const repoUrl = await askForInput(rl, 'Enter the GitHub repository URL');
       if (!repoUrl) { console.error('❌ No repository URL provided.'); process.exit(1); }
       if (fs.readdirSync(process.cwd()).length !== 0) { console.error('❌ Current directory is not empty. Please use an empty directory for cloning.'); process.exit(1); }

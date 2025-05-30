@@ -21,7 +21,7 @@ export async function configureProjectUser(rl: readline.Interface, envPath: stri
     }
   }
 
-  if (await askYesNo(rl, 'Do you want to configure a default project user (e.g., for admin actions via scripts)?', true)) {
+  if (await askYesNo(rl, 'Do you want to configure a default project user (e.g., for admin actions via scripts)?', false)) {
     envVars.PROJECT_USER_EMAIL = await askForInput(rl, 'Enter project user email', envVars.PROJECT_USER_EMAIL || 'admin@example.com');
     envVars.PROJECT_USER_PASSWORD = await askForInput(rl, 'Enter project user password', envVars.PROJECT_USER_PASSWORD || 'password', true);
     console.log('✅ Project user credentials configured. Ensure this user exists in your database with appropriate roles.');

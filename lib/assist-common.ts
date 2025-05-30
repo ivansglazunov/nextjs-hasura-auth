@@ -8,7 +8,7 @@ export function createRlInterface(): readline.Interface {
   return readline.createInterface({ input: process.stdin, output: process.stdout });
 }
 
-export async function askYesNo(rl: readline.Interface, question: string, defaultValue: boolean = true): Promise<boolean> {
+export async function askYesNo(rl: readline.Interface, question: string, defaultValue: boolean = false): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     const prompt = defaultValue ? `${question} [Y/n]: ` : `${question} [y/N]: `;
     debug(`Asking: ${question} (default: ${defaultValue ? 'Y' : 'N'})`);

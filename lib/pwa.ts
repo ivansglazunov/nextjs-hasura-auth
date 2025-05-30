@@ -110,13 +110,16 @@ export function setupInstallPrompt(): PWAInstallPrompt {
   };
 
   if (typeof window === 'undefined') {
+    debug('setupInstallPrompt called on server side');
     return result;
   }
+
+  debug('Setting up install prompt...');
 
   // Check if app is already installed
   if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
     result.isInstalled = true;
-    debug('PWA is already installed');
+    debug('PWA is already installed (standalone mode)');
     return result;
   }
 
@@ -124,48 +127,103 @@ export function setupInstallPrompt(): PWAInstallPrompt {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isStandalone = (window.navigator as any).standalone;
   
-  if (isIOS && !isStandalone) {
-    result.isAvailable = true;
-    result.platform = 'ios';
-    result.prompt = async () => {
-      // Show iOS installation instructions
-      showIOSInstallInstructions();
-    };
+  debug(`Device detection - iOS: ${isIOS}, Standalone: ${isStandalone}, UserAgent: ${navigator.userAgent.substring(0, 100)}`);
+  
+  if (isIOS) {
+    if (isStandalone) {
+      result.isInstalled = true;
+      debug('iOS app is running in standalone mode');
+      return result;
+    } else {
+      result.isAvailable = true;
+      result.platform = 'ios';
+      result.prompt = async () => {
+        debug('Showing iOS installation instructions');
+        // Show iOS installation instructions
+        showIOSInstallInstructions();
+      };
+      debug('iOS install prompt configured');
+    }
   }
 
   // Listen for beforeinstallprompt event (Chrome, Edge, etc.)
   window.addEventListener('beforeinstallprompt', (event: Event) => {
+    debug('beforeinstallprompt event received');
     event.preventDefault();
     deferredPrompt = event as BeforeInstallPromptEvent;
     
+    const platforms = (deferredPrompt as any).platforms || [];
+    debug(`Install prompt available for platforms: ${platforms.join(', ')}`);
+    
     result.isAvailable = true;
-    result.platform = 'android'; // or 'desktop' depending on context
+    result.platform = platforms.includes('android') ? 'android' : 'desktop';
     result.prompt = async () => {
       if (deferredPrompt) {
-        await deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        debug(`User response to install prompt: ${outcome}`);
-        deferredPrompt = null;
-        
-        if (outcome === 'accepted') {
-          result.isInstalled = true;
+        debug('Triggering deferred install prompt');
+        try {
+          await deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          debug(`User response to install prompt: ${outcome}`);
+          deferredPrompt = null;
+          
+          if (outcome === 'accepted') {
+            result.isInstalled = true;
+            debug('User accepted install prompt');
+          } else {
+            debug('User dismissed install prompt');
+          }
+        } catch (error) {
+          debug('Error showing install prompt:', error);
+          throw error;
         }
+      } else {
+        const errorMsg = 'No deferred prompt available';
+        debug(errorMsg);
+        throw new Error(errorMsg);
       }
     };
     
     // Dispatch custom event
     window.dispatchEvent(new CustomEvent('pwa-install-available'));
-    debug('PWA install prompt available');
+    debug('PWA install prompt available event dispatched');
   });
 
   // Listen for app installed event
   window.addEventListener('appinstalled', () => {
+    debug('App installed event received');
     result.isInstalled = true;
     deferredPrompt = null;
-    debug('PWA was installed');
     window.dispatchEvent(new CustomEvent('pwa-installed'));
   });
 
+  // Check for common installation blockers
+  setTimeout(() => {
+    if (!result.isAvailable && !result.isInstalled) {
+      const userAgent = navigator.userAgent;
+      let blockingReason = 'Unknown reason';
+      
+      if (isIOS && !/Safari/.test(userAgent)) {
+        blockingReason = 'iOS device detected but not using Safari browser';
+      } else if (/Android/.test(userAgent) && !/Chrome/.test(userAgent)) {
+        blockingReason = 'Android device detected but not using Chrome browser';
+      } else if (!window.isSecureContext) {
+        blockingReason = 'Page is not served over HTTPS';
+      } else if (!('serviceWorker' in navigator)) {
+        blockingReason = 'Service Workers not supported';
+      } else {
+        blockingReason = 'PWA criteria not met (may need manifest, service worker, or user engagement)';
+      }
+      
+      debug(`Install prompt not available after 2 seconds. Reason: ${blockingReason}`);
+      
+      // Dispatch custom event with reason
+      window.dispatchEvent(new CustomEvent('pwa-install-blocked', {
+        detail: { reason: blockingReason, userAgent, isIOS, platform: result.platform }
+      }));
+    }
+  }, 2000);
+
+  debug('Install prompt setup completed');
   return result;
 }
 

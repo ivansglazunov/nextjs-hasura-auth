@@ -67,7 +67,7 @@ export async function configureHasura(rl: readline.Interface, envPath: string): 
   if (currentEventSecret) {
     envVars.HASURA_EVENT_SECRET = await askForInput(rl, `Enter Hasura Event Secret (current: ${maskDisplaySecret(currentEventSecret)}) or press Enter to keep`, currentEventSecret, true);
   } else {
-    if (await askYesNo(rl, 'Generate new Hasura Event Secret?', true)) {
+    if (await askYesNo(rl, 'Generate new Hasura Event Secret?', false)) {
       envVars.HASURA_EVENT_SECRET = crypto.randomBytes(32).toString('hex');
        console.log(`✨ Generated Hasura Event Secret: ${maskDisplaySecret(envVars.HASURA_EVENT_SECRET)}...`);
     } else {

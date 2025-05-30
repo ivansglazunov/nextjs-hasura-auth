@@ -6,7 +6,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import { getMarkdownFile, type MarkdownFile } from "@/lib/doc";
+import { getMarkdownFile, type MarkdownFile } from "hasyx/lib/doc";
 import { SidebarLayout } from "hasyx/components/sidebar/layout";
 import sidebar from "@/app/sidebar";
 import { Button } from "hasyx/components/ui/button";

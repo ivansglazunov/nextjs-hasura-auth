@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getMarkdownFiles, type MarkdownFile } from "@/lib/doc";
+import { getMarkdownFiles, type MarkdownFile } from "hasyx/lib/doc";
 import { SidebarLayout } from "hasyx/components/sidebar/layout";
 import sidebar from "@/app/sidebar";
 import Link from "next/link";

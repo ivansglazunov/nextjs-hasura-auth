@@ -16,7 +16,7 @@ export async function initializeHasyx(rl: readline.Interface): Promise<void> {
   }
   if (!fs.existsSync(path.join(process.cwd(), 'hasura'))) {
     console.log('Hasyx files not found.');
-    if (await askYesNo(rl, 'Do you want to initialize Hasyx in the current directory?', true)) {
+    if (await askYesNo(rl, 'Do you want to initialize Hasyx in the current directory?', false)) {
       console.log('Running npx hasyx init...');
       const initResult = spawn.sync('npx', ['hasyx', 'init'], { stdio: 'inherit' });
       if (initResult.status !== 0) { console.error('❌ Hasyx initialization failed.'); process.exit(1); }

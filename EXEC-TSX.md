@@ -13,6 +13,191 @@ ExecTs is a TypeScript-aware code execution engine that extends the base `Exec` 
 - **Context inheritance** - Inherits all capabilities from the base Exec class
 - **Configurable compiler options** - Allows custom TypeScript compiler settings
 
+## Persistent State Management
+
+ExecTs inherits the powerful persistent state management from the base `Exec` class, allowing you to store and share complex TypeScript objects between executions:
+
+### Using results[uuid] for Persistent State
+
+```typescript
+import { ExecTs } from 'hasyx';
+
+const execTs = new ExecTs();
+
+// Store a complex TypeScript object with types
+await execTs.execTs(`
+  interface UserData {
+    id: string;
+    name: string;
+    preferences: {
+      theme: 'light' | 'dark';
+      notifications: boolean;
+    };
+  }
+
+  class UserManager {
+    private data: UserData;
+    
+    constructor(userData: UserData) {
+      this.data = userData;
+    }
+    
+    updatePreferences(prefs: Partial<UserData['preferences']>): void {
+      this.data.preferences = { ...this.data.preferences, ...prefs };
+    }
+    
+    getData(): UserData {
+      return this.data;
+    }
+  }
+
+  const manager = new UserManager({
+    id: '123',
+    name: 'John Doe',
+    preferences: { theme: 'light', notifications: true }
+  });
+
+  // Store the manager instance for later use
+  results['userManager'] = manager;
+  
+  return "UserManager stored successfully";
+`);
+
+// Later execution - use the stored TypeScript object
+const userData = await execTs.execTs(`
+  const manager: any = results['userManager'];
+  manager.updatePreferences({ theme: 'dark' });
+  return manager.getData();
+`);
+
+console.log(userData); 
+// { id: '123', name: 'John Doe', preferences: { theme: 'dark', notifications: true } }
+```
+
+### TypeScript Browser Automation Example
+
+```typescript
+// Step 1: Launch browser with TypeScript types
+await execTs.execTs(`
+  const puppeteer = await use('puppeteer');
+
+  interface BrowserSession {
+    browser: any;
+    currentPage: any;
+    visitedUrls: string[];
+  }
+
+  async function createSession(): Promise<BrowserSession> {
+    const browser = await puppeteer.launch({ headless: false });
+    const page = await browser.newPage();
+    
+    return {
+      browser,
+      currentPage: page,
+      visitedUrls: []
+    };
+  }
+
+  const session = await createSession();
+  await session.currentPage.goto('https://example.com');
+  session.visitedUrls.push('https://example.com');
+
+  // Store typed session
+  results['browserSession'] = session;
+  
+  return session.currentPage.title();
+`);
+
+// Step 2: Continue with the same browser session
+await execTs.execTs(`
+  const session: any = results['browserSession'];
+  
+  // Navigate to a new page
+  await session.currentPage.goto('https://github.com');
+  session.visitedUrls.push('https://github.com');
+  
+  const title = await session.currentPage.title();
+  
+  // Update the stored session
+  results['browserSession'] = session;
+  
+  return {
+    currentTitle: title,
+    visitedUrls: session.visitedUrls
+  };
+`);
+```
+
+### Database Connection with Types
+
+```typescript
+// TypeScript-typed database operations
+await execTs.execTs(`
+  interface DatabaseConfig {
+    host: string;
+    port: number;
+    database: string;
+  }
+
+  interface QueryResult<T = any> {
+    rows: T[];
+    rowCount: number;
+  }
+
+  class TypedDatabase {
+    private config: DatabaseConfig;
+    
+    constructor(config: DatabaseConfig) {
+      this.config = config;
+    }
+    
+    async query<T>(sql: string): Promise<QueryResult<T>> {
+      // Mock implementation
+      return {
+        rows: [{ id: 1, name: 'John' }] as T[],
+        rowCount: 1
+      };
+    }
+    
+    getConfig(): DatabaseConfig {
+      return this.config;
+    }
+  }
+
+  const db = new TypedDatabase({
+    host: 'localhost',
+    port: 5432,
+    database: 'myapp'
+  });
+
+  // Store typed database connection
+  results['database'] = db;
+  
+  return "Database connection established";
+`);
+
+// Use the stored database with full TypeScript support
+await execTs.execTs(`
+  interface User {
+    id: number;
+    name: string;
+  }
+
+  const db: any = results['database'];
+  const result = await db.query<User>('SELECT * FROM users');
+  
+  return result.rows.map((user: User) => user.name);
+`);
+```
+
+### Benefits for TypeScript Development
+
+- **Type Safety**: Store complex typed objects and maintain type information
+- **State Persistence**: Keep database connections, browser sessions, API clients alive
+- **Memory Efficiency**: Reuse expensive objects instead of recreating them
+- **Development Speed**: Iterate on code without losing context
+- **Complex Workflows**: Build multi-step processes with typed intermediate state
+
 ## Installation
 
 ExecTs is included in the hasyx library:

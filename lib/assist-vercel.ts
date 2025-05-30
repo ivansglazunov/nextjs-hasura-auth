@@ -39,7 +39,7 @@ export async function setupVercel(rl: readline.Interface, envPath: string, envVa
   const vercelJsonPath = path.join(process.cwd(), 'vercel.json');
   if (!fs.existsSync(vercelJsonPath)) {
     console.log('vercel.json not found.');
-    if (await askYesNo(rl, 'Create a basic vercel.json for Next.js? (recommended)', true)) {
+    if (await askYesNo(rl, 'Create a basic vercel.json for Next.js? (recommended)', false)) {
       fs.writeJsonSync(vercelJsonPath, { $schema: 'https://openapi.vercel.sh/vercel.json', builds: [{ src: 'package.json', use: '@vercel/next' }] }, { spaces: 2 });
       console.log('✅ Created vercel.json');
     }
@@ -49,7 +49,7 @@ export async function setupVercel(rl: readline.Interface, envPath: string, envVa
     const loginStatusResult = spawn.sync('vercel', ['login'], { stdio: 'pipe', encoding: 'utf-8' });
     if (loginStatusResult.error || loginStatusResult.status !== 0 || !loginStatusResult.stdout.includes('Logged in as')) {
         console.log('You are not logged into Vercel CLI or an error occurred.');
-        if (await askYesNo(rl, 'Log in to Vercel now?', true)) {
+        if (await askYesNo(rl, 'Log in to Vercel now?', false)) {
             spawn.sync('vercel', ['login'], { stdio: 'inherit' });
         }
     } else {
@@ -58,14 +58,14 @@ export async function setupVercel(rl: readline.Interface, envPath: string, envVa
   } catch(e) { debug('Error during Vercel login check:', e); }
 
   if (!envVars.VERCEL_TOKEN) {
-    if (await askYesNo(rl, 'Do you want to set VERCEL_TOKEN? (needed for programmatic Vercel operations)', true)) {
+    if (await askYesNo(rl, 'Do you want to set VERCEL_TOKEN? (needed for programmatic Vercel operations)', false)) {
       console.log('You can create a Vercel Access Token at: https://vercel.com/account/tokens');
       envVars.VERCEL_TOKEN = await askForInput(rl, 'Enter Vercel Access Token', '', true);
       debug('VERCEL_TOKEN obtained from user input:', envVars.VERCEL_TOKEN ? 'Set' : 'Not Set');
     }
   }
   if (!envVars.VERCEL_TEAM_ID) {
-    if (await askYesNo(rl, 'Do you want to set VERCEL_TEAM_ID? (optional, for personal accounts can be skipped by pressing Enter)', true)) {
+    if (await askYesNo(rl, 'Do you want to set VERCEL_TEAM_ID? (optional, for personal accounts can be skipped by pressing Enter)', false)) {
       envVars.VERCEL_TEAM_ID = await askForInput(rl, 'Enter Vercel Team ID (if applicable)');
       if (!envVars.VERCEL_TEAM_ID) {
         delete envVars.VERCEL_TEAM_ID; // remove if empty

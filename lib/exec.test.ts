@@ -438,4 +438,239 @@ describe('Exec', () => {
       expect(result).toBe('function');
     }, 30000);
   });
+
+  describe('Persistent State with results[uuid]', () => {
+    beforeEach(() => {
+      // Clear results before each test
+      Exec.clearResults();
+    });
+
+    it('should have results object available in execution context', async () => {
+      const result = await exec.exec('typeof results');
+      expect(result).toBe('object');
+    });
+
+    it('should store and retrieve values with results[uuid]', async () => {
+      // Store a value
+      await exec.exec('results["test1"] = "stored value"');
+      
+      // Retrieve in another execution
+      const result = await exec.exec('results["test1"]');
+      expect(result).toBe('stored value');
+    });
+
+    it('should persist complex objects in results', async () => {
+      await exec.exec(`
+        results["complex"] = {
+          name: "test object",
+          data: [1, 2, 3],
+          nested: { prop: "value" }
+        }
+      `);
+      
+      const result = await exec.exec('results["complex"].nested.prop');
+      expect(result).toBe('value');
+    });
+
+    it('should persist functions in results', async () => {
+      await exec.exec(`
+        results["func"] = function(a, b) { return a + b; }
+      `);
+      
+      const result = await exec.exec('results["func"](5, 10)');
+      expect(result).toBe(15);
+    });
+
+    it('should simulate puppeteer browser persistence', async () => {
+      // Simulate browser launch
+      await exec.exec(`
+        const mockBrowser = {
+          isConnected: true,
+          newPage: () => ({
+            url: null,
+            goto: function(url) { this.url = url; return Promise.resolve(); },
+            title: function() { return Promise.resolve("Page Title: " + this.url); }
+          }),
+          close: function() { this.isConnected = false; }
+        };
+        results["browser1"] = mockBrowser;
+        "Browser launched"
+      `);
+      
+      // Create page in next execution
+      await exec.exec(`
+        const browser = results["browser1"];
+        const page = browser.newPage();
+        page.goto("https://example.com");
+        results["page1"] = page;
+      `);
+      
+      // Use page in third execution
+      const result = await exec.exec(`
+        const page = results["page1"];
+        page.title()
+      `);
+      
+      expect(result).toBe("Page Title: https://example.com");
+    });
+
+    it('should work with async operations in results', async () => {
+      await exec.exec(`
+        results["asyncFunc"] = async function(delay) {
+          return new Promise(resolve => {
+            setTimeout(() => resolve("async result"), delay);
+          });
+        }
+      `);
+      
+      const result = await exec.exec('await results["asyncFunc"](10)');
+      expect(result).toBe('async result');
+    });
+
+    it('should handle multiple UUID storage', async () => {
+      await exec.exec(`
+        results["uuid1"] = "value1";
+        results["uuid2"] = "value2";
+        results["uuid3"] = "value3";
+      `);
+      
+      const result = await exec.exec('Object.keys(results).sort()');
+      expect(result).toEqual(["uuid1", "uuid2", "uuid3"]);
+    });
+
+    it('should provide static methods for results management', () => {
+      Exec.setResult('test-uuid', 'test-value');
+      expect(Exec.getResult('test-uuid')).toBe('test-value');
+      
+      const allResults = Exec.getResults();
+      expect(allResults['test-uuid']).toBe('test-value');
+      
+      Exec.clearResults();
+      expect(Exec.getResult('test-uuid')).toBeUndefined();
+    });
+
+    it('should preserve results across different Exec instances', async () => {
+      const exec1 = new Exec();
+      const exec2 = new Exec();
+      
+      await exec1.exec('results["shared"] = "from exec1"');
+      const result = await exec2.exec('results["shared"]');
+      
+      expect(result).toBe('from exec1');
+    });
+
+    it('should handle results in createExec factory instances', async () => {
+      const execInstance1 = createExec();
+      const execInstance2 = createExec();
+      
+      await execInstance1.exec('results["factory"] = "factory value"');
+      const result = await execInstance2.exec('results["factory"]');
+      
+      expect(result).toBe('factory value');
+    });
+
+    it('should support complex workflow with use-m and results', async () => {
+      // First execution: install package and store
+      await exec.exec(`
+        const _ = await use('lodash@4.17.21');
+        results["lodash"] = _;
+        "Lodash loaded and stored"
+      `);
+      
+      // Second execution: use stored package
+      const result = await exec.exec(`
+        const _ = results["lodash"];
+        _.capitalize("hello world")
+      `);
+      
+      expect(result).toBe('Hello world');
+    }, 30000);
+
+    it('should handle errors when accessing non-existent results', async () => {
+      const result = await exec.exec('results["non-existent"]');
+      expect(result).toBeUndefined();
+    });
+
+    it('should support browser-like workflow simulation', async () => {
+      // Step 1: Launch browser
+      await exec.exec(`
+        const mockPuppeteer = {
+          launch: () => ({
+            isConnected: true,
+            pages: [],
+            newPage: function() {
+              const page = {
+                id: Math.random(),
+                url: 'about:blank',
+                goto: function(url) { 
+                  this.url = url; 
+                  return Promise.resolve(); 
+                },
+                title: function() { 
+                  return Promise.resolve(this.url.split('/').pop() || 'Blank'); 
+                },
+                click: function(selector) {
+                  return Promise.resolve();
+                },
+                type: function(selector, text) {
+                  this.lastTyped = text;
+                  return Promise.resolve();
+                }
+              };
+              this.pages.push(page);
+              return page;
+            },
+            close: function() { this.isConnected = false; }
+          })
+        };
+        
+        results["puppeteer"] = mockPuppeteer;
+        results["browser"] = mockPuppeteer.launch();
+        "Browser launched"
+      `);
+      
+      // Step 2: Open page and navigate
+      await exec.exec(`
+        const browser = results["browser"];
+        const page = browser.newPage();
+        page.goto("https://example.com");
+        results["mainPage"] = page;
+      `);
+      
+      // Step 3: Navigate to different page
+      const title = await exec.exec(`
+        const page = results["mainPage"];
+        page.goto("https://github.com/explore");
+        page.title()
+      `);
+      
+      expect(title).toBe('explore');
+    });
+
+    it('should support database connection simulation', async () => {
+      // Step 1: Create connection
+      await exec.exec(`
+        const mockDB = {
+          isConnected: true,
+          query: function(sql) {
+            if (sql.includes('SELECT')) {
+              return Promise.resolve([{ id: 1, name: 'John' }, { id: 2, name: 'Jane' }]);
+            }
+            return Promise.resolve({ affectedRows: 1 });
+          },
+          close: function() { this.isConnected = false; }
+        };
+        results["db"] = mockDB;
+        "Database connected"
+      `);
+      
+      // Step 2: Query data
+      const data = await exec.exec(`
+        const db = results["db"];
+        db.query("SELECT * FROM users")
+      `);
+      
+      expect(data).toEqual([{ id: 1, name: 'John' }, { id: 2, name: 'Jane' }]);
+    });
+  });
 }); 

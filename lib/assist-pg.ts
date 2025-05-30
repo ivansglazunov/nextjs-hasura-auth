@@ -28,7 +28,7 @@ export async function configurePg(rl: readline.Interface, envPath: string): Prom
   }
   
   // Ask if we should configure PostgreSQL
-  if (!await askYesNo(rl, 'Do you want to configure PostgreSQL connection?', true)) {
+  if (!await askYesNo(rl, 'Do you want to configure PostgreSQL connection?', false)) {
     console.log('Skipping PostgreSQL configuration.');
     return envVars;
   }

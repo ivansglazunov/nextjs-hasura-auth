@@ -16,7 +16,7 @@ export async function configureResend(rl: readline.Interface, envPath: string): 
     }
   }
 
-  if (await askYesNo(rl, 'Do you want to set up Resend for email sending?', true)) {
+  if (await askYesNo(rl, 'Do you want to set up Resend for email sending?', false)) {
     console.log('You can get a Resend API key from https://resend.com/docs/api-keys');
     envVars.RESEND_API_KEY = await askForInput(rl, 'Enter Resend API Key', envVars.RESEND_API_KEY || '', true);
     console.log('✅ Resend API Key configured.');
