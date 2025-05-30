@@ -1,6 +1,6 @@
 # Terminal Library
 
-A comprehensive terminal emulation library for Node.js applications, providing a robust interface for spawning, managing, and interacting with terminal processes.
+A comprehensive terminal emulation library for Node.js applications, providing a robust interface for spawning, managing, and interacting with terminal processes using native Node.js child_process APIs.
 
 ## Table of Contents
 
@@ -18,11 +18,13 @@ A comprehensive terminal emulation library for Node.js applications, providing a
 
 ## Installation
 
-The Terminal library requires the `node-pty` package as a peer dependency:
+The Terminal library uses native Node.js APIs and requires no additional dependencies:
 
 ```bash
-npm install node-pty
+npm install hasyx
 ```
+
+**Note:** This library uses a native Node.js implementation based on `child_process` instead of `node-pty`, ensuring better compatibility across different environments and CI/CD systems.
 
 ## Basic Usage
 
@@ -416,8 +418,8 @@ const recentOutput = terminal.getOutputSince(timestamp);
 try {
   await terminal.start();
 } catch (error) {
-  if (error.message.includes('node-pty is not available')) {
-    console.error('Please install node-pty: npm install node-pty');
+  if (error.message.includes('spawn')) {
+    console.error('Failed to spawn shell process:', error);
   } else {
     console.error('Failed to start terminal:', error);
   }
@@ -430,8 +432,10 @@ try {
     console.error('Command took too long to execute');
   } else if (error.message.includes('Terminal is not running')) {
     console.error('Terminal process has stopped');
-  } else {
+  } else if (error.message.includes('failed with code')) {
     console.error('Command execution failed:', error);
+  } else {
+    console.error('Unexpected error:', error);
   }
 }
 ```
@@ -701,15 +705,17 @@ DEBUG="hasyx:terminal" npm test -- lib/terminal.test.ts
 
 ## Dependencies
 
-- **node-pty**: Required for actual terminal process spawning
-- **events**: Built-in Node.js EventEmitter
+- **child_process**: Built-in Node.js child process management
+- **events**: Built-in Node.js EventEmitter  
 - **os**: Built-in Node.js operating system utilities
 - **path**: Built-in Node.js path utilities
+
+**Note:** This library uses only native Node.js APIs, eliminating the need for external dependencies like node-pty.
 
 ## Platform Support
 
 - **Linux**: Full support with bash, zsh, fish, etc.
-- **macOS**: Full support with native shells
+- **macOS**: Full support with native shells  
 - **Windows**: Support for PowerShell and Command Prompt
 
 ## Security Considerations
@@ -727,7 +733,7 @@ When contributing to the Terminal library:
 2. **Ensure cross-platform compatibility**
 3. **Add comprehensive error handling**
 4. **Update documentation** for new features
-5. **Test with and without node-pty** to ensure graceful degradation
+5. **Test in different environments** to ensure consistent behavior
 
 ## License
 

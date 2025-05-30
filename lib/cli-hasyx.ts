@@ -769,14 +769,15 @@ export const askCommand = async (options: any) => {
 
   try {
     // Always use Hasyx's ask module
-    debug('Using default Hasyx ask.ts');
+    debug('Using default Hasyx ask.ts with streaming support');
 
     if (options.eval) {
-      // Direct question mode
-      const response = await ask.ask(options.eval);
-      await printMarkdown(response);
+      // Direct question mode with beautiful streaming output
+      const response = await ask.askWithBeautifulOutput(options.eval);
+      // Response is already printed with beautiful markdown formatting
+      debug('Direct question completed with streaming output');
     } else {
-      // Interactive REPL mode
+      // Interactive REPL mode with real-time streaming
       await ask.repl();
     }
   } catch (error) {

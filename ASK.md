@@ -6,15 +6,17 @@ The Ask command provides a powerful AI assistant interface for Hasyx projects, a
 
 ## Features
 
+- **🚀 Real-time Streaming**: Genuine Server-Sent Events (SSE) streaming from OpenRouter API - text appears character by character
 - **Direct Question Mode**: Ask single questions with immediate responses
 - **Interactive Chat Mode**: Start a conversation session with the AI
 - **Advanced AI Model**: Uses Google Gemini 2.5 Flash Preview via OpenRouter API
 - **Multiple Question Types**: Supports coding, math, general knowledge, and more
 - **🆕 Beautiful Terminal Output**: All responses formatted with markdown and syntax highlighting
 - **Environment Integration**: Automatically loads configuration from `.env` file
-- **🆕 Real-time Progress Indicators**: See exactly what AI is doing step-by-step
+- **🆕 Real-time Progress Indicators**: See exactly what AI is doing step-by-step with live updates
 - **🆕 Automatic Code Execution**: AI can execute JavaScript, TypeScript, and terminal commands automatically
 - **🆕 Iterative Responses**: AI can execute multiple code blocks and continue reasoning
+- **⚡ Ultra-fast First Response**: First words appear in 0.5-2 seconds instead of 5-10 seconds
 
 ## 🎨 Beautiful Terminal Output
 
@@ -260,35 +262,58 @@ npx hasyx ask -e "Explain how photosynthesis works"
 npx hasyx ask -e "What is the difference between REST and GraphQL APIs?"
 ```
 
-### Interactive Session Example
+### Interactive Session Example with Real-time Streaming
 
 ```bash
 $ npx hasyx ask
 
+🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.
+💡 Responses with code, formatting, or markdown will be beautifully rendered!
+🚀 Real-time streaming enabled!
+🪬 AI can execute code automatically!
+
 > What is TypeScript?
-TypeScript is a strongly typed programming language that builds on JavaScript...
+
+🧠 AI думает...
+TypeScript is a strongly typed programming language that builds on JavaScript by adding static type definitions. It's developed by Microsoft and allows developers to catch errors early in development through its type system...
 
 > How do I use async/await in JavaScript?
-Async/await is a syntax that makes it easier to work with asynchronous code...
 
-> Write a simple Express.js server
-Here's a basic Express.js server setup:
+🧠 AI думает...
+Async/await is a syntax that makes it easier to work with asynchronous code in JavaScript. Here's how it works:
 
-\`\`\`javascript
-const express = require('express');
-const app = express();
-const port = 3000;
+```javascript
+async function fetchData() {
+  try {
+    const response = await fetch('https://api.example.com/data');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+```
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+> Calculate factorial of 5 with code execution
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
-\`\`\`
+🧠 AI думает...
+I'll calculate the factorial of 5 using JavaScript:
+
+📋 Найден JS код для выполнения:
+```js
+function factorial(n) {
+  return n <= 1 ? 1 : n * factorial(n - 1);
+}
+factorial(5);
+```
+⚡ Выполняется JS код...
+✅ Результат выполнения:
+120
+
+The factorial of 5 is **120**. This means 5! = 5 × 4 × 3 × 2 × 1 = 120.
 
 > ^C
+👋 Goodbye!
 ```
 
 ## Configuration
@@ -314,6 +339,8 @@ The Ask command uses these default configuration settings:
 - **Context Length**: Large context window (1M tokens) for complex questions and long conversations
 - **Response Quality**: High-quality responses optimized for speed, accuracy, and code execution
 - **Special Features**: Advanced reasoning capabilities, code execution understanding, and iterative problem solving
+- **🚀 Streaming Support**: Full Server-Sent Events (SSE) streaming with character-by-character output
+- **⚡ Performance**: First response tokens appear in 0.5-2 seconds vs 5-10 seconds with non-streaming
 
 ## Error Handling
 

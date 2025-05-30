@@ -596,6 +596,343 @@ Let me continue...`;
     });
   });
 
+  describe('Real Streaming Tests', () => {
+    it('should emit different types of events during streaming', (done) => {
+      const ai = new AI('test-key', {}, { model: 'test-model' });
+      
+      // Mock the openRouter.askStream method
+      (ai as any).openRouter.askStream = async () => {
+        return new ReadableStream({
+          start(controller) {
+            controller.enqueue('Hello ');
+            setTimeout(() => {
+              controller.enqueue('world!');
+              setTimeout(() => {
+                controller.close();
+              }, 10);
+            }, 10);
+          }
+        });
+      };
+
+      const events: any[] = [];
+      
+      ai.asking('Hello').subscribe({
+        next: (event) => {
+          events.push(event);
+        },
+        complete: () => {
+          // Check that we got the expected event types
+          const eventTypes = events.map(e => e.type);
+          expect(eventTypes).toContain('thinking');
+          expect(eventTypes).toContain('iteration');
+          expect(eventTypes).toContain('text');
+          expect(eventTypes).toContain('complete');
+          
+          // Check text events
+          const textEvents = events.filter(e => e.type === 'text');
+          expect(textEvents.length).toBeGreaterThan(0);
+          expect(textEvents[0].data.delta).toBeTruthy();
+          
+          // Check complete event
+          const completeEvent = events.find(e => e.type === 'complete');
+          expect(completeEvent).toBeTruthy();
+          expect(completeEvent.data.finalResponse).toBeTruthy();
+          
+          done();
+        },
+        error: (error) => {
+          done(error);
+        }
+      });
+    }, 5000);
+
+    it('should accumulate text correctly in streaming', (done) => {
+      const ai = new AI('test-key', {}, { model: 'test-model' });
+      
+      // Mock the openRouter.askStream method
+      (ai as any).openRouter.askStream = async () => {
+        return new ReadableStream({
+          start(controller) {
+            controller.enqueue('First ');
+            controller.enqueue('second ');
+            controller.enqueue('third.');
+            controller.close();
+          }
+        });
+      };
+
+      const textEvents: any[] = [];
+      
+      ai.asking('Hello').subscribe({
+        next: (event) => {
+          if (event.type === 'text') {
+            textEvents.push(event);
+          }
+        },
+        complete: () => {
+          expect(textEvents.length).toBe(3);
+          expect(textEvents[0].data.delta).toBe('First ');
+          expect(textEvents[0].data.accumulated).toBe('First ');
+          expect(textEvents[1].data.delta).toBe('second ');
+          expect(textEvents[1].data.accumulated).toBe('First second ');
+          expect(textEvents[2].data.delta).toBe('third.');
+          expect(textEvents[2].data.accumulated).toBe('First second third.');
+          done();
+        },
+        error: (error) => {
+          done(error);
+        }
+      });
+    }, 5000);
+
+    it('should handle multiple iterations in streaming', (done) => {
+      const ai = new AI('test-key', {}, { model: 'test-model' });
+      
+      let iterationCount = 0;
+      
+      // Mock the openRouter.askStream method to simulate iterations
+      (ai as any).openRouter.askStream = async () => {
+        iterationCount++;
+        
+        if (iterationCount === 1) {
+          return new ReadableStream({
+            start(controller) {
+              controller.enqueue('I will calculate:\n\n');
+              controller.enqueue('> 🪬test-uuid/do/exec/js\n');
+              controller.enqueue('```js\n');
+              controller.enqueue('2 + 2\n');
+              controller.enqueue('```\n');
+              controller.close();
+            }
+          });
+        } else {
+          return new ReadableStream({
+            start(controller) {
+              controller.enqueue('The result is 4!');
+              controller.close();
+            }
+          });
+        }
+      };
+
+      // Mock the do method
+      ai._do = async (doItem) => {
+        return {
+          ...doItem,
+          response: '4'
+        };
+      };
+
+      const events: any[] = [];
+      
+      ai.asking('Calculate 2+2').subscribe({
+        next: (event) => {
+          events.push(event);
+        },
+        complete: () => {
+          const iterationEvents = events.filter(e => e.type === 'iteration');
+          expect(iterationEvents.length).toBeGreaterThan(1);
+          
+          const codeEvents = events.filter(e => e.type === 'code_found');
+          expect(codeEvents.length).toBe(1);
+          
+          const completeEvent = events.find(e => e.type === 'complete');
+          expect(completeEvent.data.iterations).toBeGreaterThan(1);
+          
+          done();
+        },
+        error: (error) => {
+          done(error);
+        }
+      });
+    }, 10000);
+
+    it('should stream text deltas with askStream method', (done) => {
+      const ai = new AI('test-key', {}, { model: 'test-model' });
+      
+      // Mock the openRouter.askStream method
+      (ai as any).openRouter.askStream = async () => {
+        return new ReadableStream({
+          start(controller) {
+            controller.enqueue('Hello ');
+            setTimeout(() => {
+              controller.enqueue('world!');
+              setTimeout(() => {
+                controller.close();
+              }, 10);
+            }, 10);
+          }
+        });
+      };
+
+      const deltas: string[] = [];
+      
+      ai.askStream('Hello').subscribe({
+        next: (delta) => {
+          deltas.push(delta);
+        },
+        complete: () => {
+          expect(deltas.length).toBeGreaterThan(0);
+          expect(deltas.join('')).toBe('Hello world!');
+          done();
+        },
+        error: (error) => {
+          done(error);
+        }
+      });
+    }, 5000);
+
+    it('should get complete response with askWithStreaming method', (done) => {
+      const ai = new AI('test-key', {}, { model: 'test-model' });
+      
+      // Mock the openRouter.askStream method
+      (ai as any).openRouter.askStream = async () => {
+        return new ReadableStream({
+          start(controller) {
+            controller.enqueue('Complete response text');
+            controller.close();
+          }
+        });
+      };
+
+      ai.askWithStreaming('Hello').subscribe({
+        next: (response) => {
+          expect(response).toBe('Complete response text');
+          done();
+        },
+        error: (error) => {
+          done(error);
+        }
+      });
+    }, 5000);
+
+    it('should get execution results with getExecutionResults method', (done) => {
+      const ai = new AI('test-key', {}, { model: 'test-model' });
+      
+      // Mock the openRouter.askStream method
+      (ai as any).openRouter.askStream = async () => {
+        return new ReadableStream({
+          start(controller) {
+            controller.enqueue('> 🪬test-uuid/do/exec/js\n');
+            controller.enqueue('```js\n');
+            controller.enqueue('2 + 2\n');
+            controller.enqueue('```\n');
+            controller.close();
+          }
+        });
+      };
+
+      // Mock the do method
+      ai._do = async (doItem) => {
+        return {
+          ...doItem,
+          response: '4'
+        };
+      };
+
+      ai.getExecutionResults('Calculate 2+2').subscribe({
+        next: (results) => {
+          expect(Array.isArray(results)).toBe(true);
+          expect(results.length).toBeGreaterThan(0);
+          expect(results[0]).toHaveProperty('result', '4');
+          done();
+        },
+        error: (error) => {
+          done(error);
+        }
+      });
+    }, 5000);
+
+    it('should handle code execution events during streaming', (done) => {
+      const ai = new AI('test-key', {}, { model: 'test-model' });
+      
+      // Mock the openRouter.askStream method to return code
+      (ai as any).openRouter.askStream = async () => {
+        return new ReadableStream({
+          start(controller) {
+            controller.enqueue('I will calculate 2+2:\n\n');
+            controller.enqueue('> 🪬test-uuid/do/exec/js\n');
+            controller.enqueue('```js\n');
+            controller.enqueue('2 + 2\n');
+            controller.enqueue('```\n\n');
+            controller.enqueue('The result is above.');
+            controller.close();
+          }
+        });
+      };
+
+      // Mock the do method
+      ai._do = async (doItem) => {
+        return {
+          ...doItem,
+          response: '4'
+        };
+      };
+
+      const events: any[] = [];
+      
+      ai.asking('Calculate 2+2').subscribe({
+        next: (event) => {
+          events.push(event);
+        },
+        complete: () => {
+          const eventTypes = events.map(e => e.type);
+          expect(eventTypes).toContain('code_found');
+          expect(eventTypes).toContain('code_executing');
+          expect(eventTypes).toContain('code_result');
+          
+          const codeFoundEvent = events.find(e => e.type === 'code_found');
+          expect(codeFoundEvent.data.code).toBe('2 + 2');
+          expect(codeFoundEvent.data.format).toBe('js');
+          
+          const codeResultEvent = events.find(e => e.type === 'code_result');
+          expect(codeResultEvent.data.result).toBe('4');
+          expect(codeResultEvent.data.success).toBe(true);
+          
+          done();
+        },
+        error: (error) => {
+          done(error);
+        }
+      });
+    }, 10000);
+
+    it('should handle streaming errors gracefully', (done) => {
+      const ai = new AI('test-key', {}, { model: 'test-model' });
+      
+      // Mock the openRouter.askStream method to throw error
+      (ai as any).openRouter.askStream = async () => {
+        throw new Error('Stream error');
+      };
+
+      let errorHandled = false;
+
+      ai.asking('Hello').subscribe({
+        next: (event) => {
+          if (event.type === 'error' && !errorHandled) {
+            errorHandled = true;
+            expect(event.data.error).toBeInstanceOf(Error);
+            expect(event.data.error.message).toContain('Stream error');
+            done();
+          }
+        },
+        complete: () => {
+          if (!errorHandled) {
+            done(new Error('Expected error event but got complete'));
+          }
+        },
+        error: (error) => {
+          if (!errorHandled) {
+            errorHandled = true;
+            expect(error).toBeInstanceOf(Error);
+            done();
+          }
+        }
+      });
+    }, 5000);
+  });
+
   skipIfNoApiKey('Real AI Integration Tests', () => {
     let realAi: AI;
 

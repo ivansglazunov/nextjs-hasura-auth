@@ -163,6 +163,126 @@ export class OpenRouter {
   }
 
   /**
+   * Send a message or array of messages to the AI with streaming support
+   */
+  async askStream(
+    messages: string | OpenRouterMessage | OpenRouterMessage[],
+    options: OpenRouterOptions = {}
+  ): Promise<ReadableStream<string>> {
+    const finalOptions = { ...this.defaultOptions, ...options, stream: true };
+    
+    // Normalize messages to array format
+    let normalizedMessages: OpenRouterMessage[];
+    
+    if (typeof messages === 'string') {
+      normalizedMessages = [{ role: 'user', content: messages }];
+    } else if (Array.isArray(messages)) {
+      normalizedMessages = messages;
+    } else {
+      normalizedMessages = [messages];
+    }
+
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://github.com/ivansglazunov/hasyx',
+          'X-Title': 'Hasyx Framework'
+        },
+        body: JSON.stringify({
+          model: finalOptions.model,
+          messages: normalizedMessages,
+          temperature: finalOptions.temperature,
+          max_tokens: finalOptions.max_tokens,
+          top_p: finalOptions.top_p,
+          top_k: finalOptions.top_k,
+          frequency_penalty: finalOptions.frequency_penalty,
+          presence_penalty: finalOptions.presence_penalty,
+          tools: finalOptions.tools,
+          tool_choice: finalOptions.tool_choice,
+          response_format: finalOptions.response_format,
+          user: finalOptions.user,
+          stream: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      if (!response.body) {
+        throw new Error('Response body is null');
+      }
+
+      // Create a ReadableStream that parses SSE and extracts content
+      return new ReadableStream<string>({
+        start(controller) {
+          const reader = response.body!.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          function pump(): Promise<void> {
+            return reader.read().then(({ done, value }) => {
+              if (done) {
+                controller.close();
+                return;
+              }
+
+              buffer += decoder.decode(value, { stream: true });
+              
+              // Process complete lines
+              let lines = buffer.split('\n');
+              buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+              for (const line of lines) {
+                const trimmedLine = line.trim();
+                
+                // Skip empty lines and comments
+                if (!trimmedLine || trimmedLine.startsWith(':')) {
+                  continue;
+                }
+
+                if (trimmedLine.startsWith('data: ')) {
+                  const data = trimmedLine.slice(6);
+                  
+                  // Check for end marker
+                  if (data === '[DONE]') {
+                    controller.close();
+                    return;
+                  }
+
+                  try {
+                    const parsed = JSON.parse(data);
+                    const content = parsed.choices?.[0]?.delta?.content;
+                    
+                    if (content) {
+                      controller.enqueue(content);
+                    }
+                  } catch (error) {
+                    // Skip invalid JSON chunks
+                    continue;
+                  }
+                }
+              }
+
+              return pump();
+            }).catch(error => {
+              controller.error(error);
+            });
+          }
+
+          return pump();
+        }
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`OpenRouter stream error: ${errorMessage}`);
+    }
+  }
+
+  /**
    * Execute JavaScript code in the current context
    */
   async exec(code: string, contextExtend: ExecContext = {}): Promise<any> {

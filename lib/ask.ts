@@ -2,6 +2,8 @@
 
 import dotenv from 'dotenv';
 import path from 'path';
+import readline from 'readline';
+import Debug from 'hasyx/lib/debug';
 
 // Load environment variables from .env file in current working directory
 // This ensures that when using npx hasyx from a child project,
@@ -13,6 +15,8 @@ import { execDo, execContext } from 'hasyx/lib/exec';
 import { execTsDo, execTsContext } from 'hasyx/lib/exec-tsx';
 import { terminalDo, terminalContext } from 'hasyx/lib/terminal';
 import { printMarkdown } from 'hasyx/lib/markdown-terminal';
+
+const debug = Debug('hasyx:ask');
 
 export class Ask extends AI {
   public context: string;
@@ -162,13 +166,204 @@ ${terminalContext}
   }
 
   /**
-   * Interactive REPL mode for terminal interaction
+   * Ask a question with beautiful streaming output (for non-REPL usage)
+   */
+  async askWithBeautifulOutput(question: string): Promise<string> {
+    debug('Processing question with beautiful output:', question);
+    
+    return new Promise((resolve, reject) => {
+      let accumulatedText = '';
+      let finalResponse = '';
+      
+      this.asking(question).subscribe({
+        next: (event) => {
+          switch (event.type) {
+            case 'thinking':
+              console.log('🧠 AI думает...');
+              break;
+              
+            case 'iteration':
+              if (event.data.iteration > 1) {
+                console.log(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
+              }
+              break;
+              
+            case 'text':
+              // For non-REPL mode, we can buffer text for markdown rendering
+              accumulatedText += event.data.delta;
+              break;
+              
+            case 'code_found':
+              console.log(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
+              const displayFormat = event.data.format === 'terminal' ? 'bash' : event.data.format;
+              console.log(`\`\`\`${displayFormat}`);
+              console.log(event.data.code);
+              console.log('```');
+              break;
+              
+            case 'code_executing':
+              console.log(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
+              break;
+              
+            case 'code_result':
+              const status = event.data.success ? '✅' : '❌';
+              console.log(`${status} Результат выполнения:`);
+              console.log('```');
+              console.log(event.data.result);
+              console.log('```');
+              break;
+              
+            case 'complete':
+              finalResponse = event.data.finalResponse;
+              console.log(`💭 Завершено (${event.data.iterations} итераций)`);
+              break;
+              
+            case 'error':
+              console.error(`❌ Ошибка в итерации ${event.data.iteration}:`, event.data.error.message);
+              break;
+          }
+        },
+        complete: async () => {
+          try {
+            // Render accumulated text as markdown for beautiful output
+            if (accumulatedText) {
+              await printMarkdown(accumulatedText);
+            }
+            resolve(finalResponse || accumulatedText);
+          } catch (error) {
+            reject(error);
+          }
+        },
+        error: (error) => {
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Interactive REPL mode for terminal interaction with streaming support
    */
   async repl(): Promise<void> {
     this.isReplMode = true; // Enable progress callbacks for REPL
     
     try {
-      await super.repl();
+      console.log('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
+      console.log('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
+      console.log('🚀 Real-time streaming enabled!');
+      if (this._do) {
+        console.log('🪬 AI can execute code automatically!');
+      }
+      
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        prompt: '> '
+      });
+
+      rl.prompt();
+
+      rl.on('line', async (input) => {
+        const question = input.trim();
+        
+        if (!question) {
+          rl.prompt();
+          return;
+        }
+
+        debug('Processing REPL question with streaming:', question);
+        
+        try {
+          let accumulatedText = '';
+          let responseBuffer = '';
+          
+          // Use new streaming method
+          this.asking(question).subscribe({
+            next: (event) => {
+              switch (event.type) {
+                case 'thinking':
+                  console.log('🧠 AI думает...');
+                  break;
+                  
+                case 'iteration':
+                  if (event.data.iteration > 1) {
+                    console.log(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
+                  }
+                  break;
+                  
+                case 'text':
+                  // Print text in real-time without newlines
+                  process.stdout.write(event.data.delta);
+                  accumulatedText += event.data.delta;
+                  responseBuffer += event.data.delta;
+                  break;
+                  
+                case 'code_found':
+                  // Add newline before code block if needed
+                  if (responseBuffer && !responseBuffer.endsWith('\n')) {
+                    console.log('');
+                  }
+                  console.log(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
+                  const displayFormat = event.data.format === 'terminal' ? 'bash' : event.data.format;
+                  console.log(`\`\`\`${displayFormat}`);
+                  console.log(event.data.code);
+                  console.log('```');
+                  responseBuffer = ''; // Reset buffer after code block
+                  break;
+                  
+                case 'code_executing':
+                  console.log(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
+                  break;
+                  
+                case 'code_result':
+                  const status = event.data.success ? '✅' : '❌';
+                  console.log(`${status} Результат выполнения:`);
+                  console.log('```');
+                  console.log(event.data.result);
+                  console.log('```');
+                  break;
+                  
+                case 'complete':
+                  // Ensure we end with a newline
+                  if (responseBuffer && !responseBuffer.endsWith('\n')) {
+                    console.log('');
+                  }
+                  console.log(`💭 Завершено (${event.data.iterations} итераций)`);
+                  break;
+                  
+                case 'error':
+                  console.error(`❌ Ошибка в итерации ${event.data.iteration}:`, event.data.error.message);
+                  break;
+              }
+            },
+            complete: () => {
+              console.log('');
+              rl.prompt();
+            },
+            error: (error) => {
+              console.error('❌ Ошибка стриминга:', error.message);
+              rl.prompt();
+            }
+          });
+          
+        } catch (error) {
+          debug('Error in streaming REPL:', error);
+          console.error('❌ Error:', error instanceof Error ? error.message : String(error));
+          rl.prompt();
+        }
+      });
+
+      rl.on('close', () => {
+        debug('REPL closed');
+        console.log('\n👋 Goodbye!');
+        process.exit(0);
+      });
+
+      rl.on('SIGINT', () => {
+        debug('SIGINT received in REPL');
+        console.log('\n👋 Goodbye!');
+        process.exit(0);
+      });
     } finally {
       this.isReplMode = false; // Disable progress callbacks when exiting REPL
     }

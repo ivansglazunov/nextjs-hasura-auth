@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import * as os from 'os';
 import * as path from 'path';
+import { spawn, ChildProcess } from 'child_process';
 
 // Global terminal registry for cleanup
 const terminalRegistry = new Set<Terminal>();
@@ -16,46 +17,6 @@ export function destroyAllTerminals(): void {
     }
   });
   terminalRegistry.clear();
-}
-
-// Type definitions for node-pty (since we might not have @types/node-pty)
-interface IPtyForkOptions {
-  name?: string;
-  cols?: number;
-  rows?: number;
-  cwd?: string;
-  env?: NodeJS.ProcessEnv;
-  encoding?: string;
-  handleFlowControl?: boolean;
-  flowControlPause?: string;
-  flowControlResume?: string;
-}
-
-interface IPty {
-  pid: number;
-  process: string;
-  handleFlowControl: boolean;
-  cols: number;
-  rows: number;
-  
-  write(data: string): void;
-  resize(cols: number, rows: number): void;
-  clear(): void;
-  kill(signal?: string): void;
-  pause(): void;
-  resume(): void;
-  
-  on(event: 'data', listener: (data: string) => void): this;
-  on(event: 'exit', listener: (exitCode: number, signal?: number) => void): this;
-  on(event: string, listener: (...args: any[]) => void): this;
-  
-  removeListener(event: string, listener: (...args: any[]) => void): this;
-  removeAllListeners(event?: string): this;
-}
-
-// Fallback interface for when node-pty is not available
-interface INodePty {
-  spawn(shell?: string, args?: string[] | string, options?: IPtyForkOptions): IPty;
 }
 
 export interface TerminalOptions {
@@ -95,14 +56,13 @@ export interface TerminalSession {
 }
 
 export class Terminal extends EventEmitter {
-  private pty: IPty | null = null;
+  private childProcess: ChildProcess | null = null;
   private options: TerminalOptions;
   private session: TerminalSession;
   private commandHistory: TerminalCommand[] = [];
   private outputBuffer: string = '';
   private isReady: boolean = false;
   private commandQueue: Array<{ command: string; resolve: (value: string) => void; reject: (reason: any) => void }> = [];
-  private nodePty: INodePty | null = null;
   private sessionCounter: number = 0;
 
   public onData?: (data: string) => void;
@@ -145,9 +105,6 @@ export class Terminal extends EventEmitter {
       isActive: false
     };
 
-    // Try to load node-pty
-    this.loadNodePty();
-
     // Auto-start if requested
     if (this.options.autoStart) {
       this.start().catch(error => {
@@ -162,25 +119,12 @@ export class Terminal extends EventEmitter {
     }
   }
 
-  private loadNodePty(): void {
-    try {
-      this.nodePty = require('node-pty');
-    } catch (error) {
-      // Suppress warning in Jest test environment to keep test output clean
-      const isJestEnvironment = typeof jest !== 'undefined' || process.env.JEST_WORKER_ID !== undefined;
-      if (!isJestEnvironment) {
-        console.warn('node-pty not available. Some terminal features may be limited.');
-      }
-      this.nodePty = null;
-    }
-  }
-
   private getDefaultShell(): string {
     const platform = os.platform();
     
     switch (platform) {
       case 'win32':
-        return process.env.COMSPEC || 'powershell.exe';
+        return process.env.COMSPEC || 'cmd.exe';
       case 'darwin':
       case 'linux':
       default:
@@ -190,34 +134,28 @@ export class Terminal extends EventEmitter {
 
   public start(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.pty) {
+      if (this.childProcess) {
         resolve();
         return;
       }
 
-      if (!this.nodePty) {
-        const error = new Error('node-pty is not available. Please install it: npm install node-pty');
-        reject(error);
-        return;
-      }
-
-      const ptyOptions: IPtyForkOptions = {
-        name: this.options.name,
-        cols: this.options.cols,
-        rows: this.options.rows,
-        cwd: this.options.cwd,
-        env: this.options.env,
-        encoding: this.options.encoding,
-        handleFlowControl: this.options.handleFlowControl,
-        flowControlPause: this.options.flowControlPause,
-        flowControlResume: this.options.flowControlResume
-      };
-
       try {
-        this.pty = this.nodePty.spawn(this.options.shell!, this.options.args!, ptyOptions);
-        this.session.isActive = true;
+        // Set up environment with terminal information
+        const env = { ...this.options.env } as any;
+        // Add terminal-specific vars
+        if (this.options.name) env.TERM = this.options.name;
+        if (this.options.cols) env.COLUMNS = this.options.cols.toString();
+        if (this.options.rows) env.LINES = this.options.rows.toString();
+
+        // Spawn the shell process
+        this.childProcess = spawn(this.options.shell!, this.options.args!, {
+          cwd: this.options.cwd,
+          env: env,
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
         
-        this.setupPtyHandlers();
+        this.session.isActive = true;
+        this.setupChildProcessHandlers();
         
         // Wait a bit for shell to initialize
         setTimeout(() => {
@@ -231,9 +169,9 @@ export class Terminal extends EventEmitter {
           sessionId: this.session.id,
           shell: this.options.shell, 
           args: this.options.args, 
-          pid: this.pty.pid,
-          cols: this.pty.cols,
-          rows: this.pty.rows
+          pid: this.childProcess?.pid,
+          cols: this.options.cols,
+          rows: this.options.rows
         });
         
       } catch (error) {
@@ -252,10 +190,18 @@ export class Terminal extends EventEmitter {
         return;
       }
 
-      if (!this.pty) {
+      if (!this.childProcess || !this.childProcess.stdin) {
         reject(new Error('Terminal is not running'));
         return;
       }
+
+      // For simple command execution, we'll use a separate child process
+      // This ensures we get clean output without shell interactions
+      const commandProcess = spawn(this.options.shell!, ['-c', command], {
+        cwd: this.options.cwd,
+        env: this.options.env,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
 
       const terminalCommand: TerminalCommand = {
         id: `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -267,107 +213,68 @@ export class Terminal extends EventEmitter {
       this.commandHistory.push(terminalCommand);
       this.session.commands.push(terminalCommand);
 
-      const outputStartLength = this.outputBuffer.length;
-      let commandOutput = '';
-      let commandSent = false;
-      
+      let stdout = '';
+      let stderr = '';
+
       // Set up timeout
       const commandTimeout = setTimeout(() => {
-        this.removeListener('data', dataListener);
+        commandProcess.kill('SIGKILL');
         terminalCommand.completed = true;
-        terminalCommand.output = commandOutput;
+        terminalCommand.output = stdout || stderr;
         this.emit('commandTimeout', terminalCommand);
         reject(new Error(`Command timeout: ${command}`));
-      }, 5000); // 5 seconds timeout
+      }, 10000); // 10 seconds timeout
 
-      // Listen for data
-      const dataListener = (data: string) => {
-        commandOutput += data;
+      commandProcess.stdout?.on('data', (data) => {
+        const output = data.toString(this.options.encoding as BufferEncoding || 'utf8');
+        stdout += output;
+        this.outputBuffer += output;
+        this.session.fullOutput += output;
+        this.emit('data', output);
+        if (this.onData) this.onData(output);
+      });
+
+      commandProcess.stderr?.on('data', (data) => {
+        const output = data.toString(this.options.encoding as BufferEncoding || 'utf8');
+        stderr += output;
+        this.outputBuffer += output;
+        this.session.fullOutput += output;
+        this.emit('data', output);
+        if (this.onData) this.onData(output);
+      });
+
+      commandProcess.on('close', (code, signal) => {
+        clearTimeout(commandTimeout);
+        terminalCommand.completed = true;
+        terminalCommand.output = stdout;
         
-        // Simple approach: wait for the command to be echoed back and then for a new prompt
-        if (!commandSent && commandOutput.includes(command)) {
-          commandSent = true;
-          return;
-        }
+        this.emit('commandComplete', terminalCommand);
         
-        if (commandSent) {
-          // Look for prompt patterns at the end of the output
-          const lines = commandOutput.split('\n');
-          const lastLine = lines[lines.length - 1] || '';
-          
-          // Strip ANSI escape sequences for better prompt detection
-          const cleanLastLine = lastLine.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\[[?][0-9]*[a-zA-Z]/g, '');
-          
-          // Simple prompt detection - look for $, #, or % at the end (% is used by zsh on macOS)
-          if (cleanLastLine.match(/[\$#%]\s*$/) || cleanLastLine.match(/>\s*$/)) {
-            // Wait a bit to ensure all output is captured
-            setTimeout(() => {
-              clearTimeout(commandTimeout);
-              this.removeListener('data', dataListener);
-              
-              terminalCommand.completed = true;
-              
-              // Clean output: extract only the actual command output
-              let cleanOutput = commandOutput;
-              
-              // Split into lines and find the actual output
-              const outputLines = cleanOutput.split('\n');
-              const resultLines: string[] = [];
-              
-              let commandFound = false;
-              
-              for (const line of outputLines) {
-                // Clean the line from ANSI sequences and carriage returns
-                const cleanLine = line.replace(/\r/g, '').replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\[[?][0-9]*[a-zA-Z]/g, '');
-                
-                // Skip until we find the command
-                if (!commandFound) {
-                  if (cleanLine.includes(command)) {
-                    commandFound = true;
-                  }
-                  continue;
-                }
-                
-                // Skip prompt lines and empty lines at the end
-                if (cleanLine.match(/.*@.*:\S*[\$#%]\s*$/) || 
-                    cleanLine.match(/^[\$#%]\s*$/) ||
-                    cleanLine.match(/^\s*$/) ||
-                    cleanLine.includes('% ')) {
-                  continue;
-                }
-                
-                // This should be actual output
-                if (cleanLine.trim() !== '') {
-                  resultLines.push(cleanLine.trim());
-                }
-              }
-              
-              cleanOutput = resultLines.join('\n');
-              
-              terminalCommand.output = cleanOutput;
-              
-              this.emit('commandComplete', terminalCommand);
-              resolve(cleanOutput);
-            }, 50); // Small delay to capture any remaining output
-          }
+        if (code === 0) {
+          resolve(stdout.trim());
+        } else {
+          reject(new Error(`Command failed with code ${code}: ${stderr || stdout}`));
         }
-      };
+      });
 
-      this.on('data', dataListener);
+      commandProcess.on('error', (error) => {
+        clearTimeout(commandTimeout);
+        terminalCommand.completed = true;
+        this.emit('error', error);
+        reject(error);
+      });
 
-      // Send command
-      this.pty.write(`${command}\n`);
       this.emit('commandSent', terminalCommand);
     });
   }
 
   public write(data: string): boolean {
-    if (!this.pty) {
+    if (!this.childProcess || !this.childProcess.stdin) {
       return false;
     }
 
     try {
-      this.pty.write(data);
+      this.childProcess.stdin.write(data);
       return true;
     } catch (error) {
       this.emit('error', error);
@@ -380,25 +287,14 @@ export class Terminal extends EventEmitter {
   }
 
   public sendKeyPress(key: string): boolean {
-    // Handle special keys
+    // Handle special keys (simplified for native implementation)
     const specialKeys: Record<string, string> = {
-      'enter': '\r',
+      'enter': '\n',
       'tab': '\t',
       'escape': '\x1b',
-      'backspace': '\x08',
-      'delete': '\x7f',
-      'up': '\x1b[A',
-      'down': '\x1b[B',
-      'right': '\x1b[C',
-      'left': '\x1b[D',
-      'home': '\x1b[H',
-      'end': '\x1b[F',
-      'pageup': '\x1b[5~',
-      'pagedown': '\x1b[6~',
       'ctrl+c': '\x03',
       'ctrl+d': '\x04',
-      'ctrl+z': '\x1a',
-      'ctrl+l': '\x0c'
+      'ctrl+z': '\x1a'
     };
 
     const keySequence = specialKeys[key.toLowerCase()] || key;
@@ -409,32 +305,26 @@ export class Terminal extends EventEmitter {
     this.options.cols = cols;
     this.options.rows = rows;
     
-    if (this.pty) {
-      try {
-        this.pty.resize(cols, rows);
-        this.emit('resize', { cols, rows });
-        if (this.onResize) this.onResize(cols, rows);
-      } catch (error) {
-        this.emit('error', error);
-      }
-    }
+    // Native implementation doesn't support runtime resize
+    // But we can emit the event for compatibility
+    this.emit('resize', { cols, rows });
+    if (this.onResize) this.onResize(cols, rows);
   }
 
   public clear(): void {
-    if (this.pty) {
-      try {
-        this.pty.clear();
-        this.outputBuffer = '';
-      } catch (error) {
-        this.emit('error', error);
-      }
+    // Clear our buffer
+    this.outputBuffer = '';
+    
+    // Try to send clear command to shell
+    if (this.childProcess && this.childProcess.stdin) {
+      this.write('clear\n');
     }
   }
 
   public pause(): void {
-    if (this.pty) {
+    if (this.childProcess) {
       try {
-        this.pty.pause();
+        this.childProcess.kill('SIGSTOP' as any);
         this.emit('pause');
       } catch (error) {
         this.emit('error', error);
@@ -443,9 +333,9 @@ export class Terminal extends EventEmitter {
   }
 
   public resume(): void {
-    if (this.pty) {
+    if (this.childProcess) {
       try {
-        this.pty.resume();
+        this.childProcess.kill('SIGCONT' as any);
         this.emit('resume');
       } catch (error) {
         this.emit('error', error);
@@ -454,33 +344,25 @@ export class Terminal extends EventEmitter {
   }
 
   public kill(signal: string = 'SIGTERM'): boolean {
-    if (!this.pty) {
+    if (!this.childProcess) {
       return false;
     }
 
     try {
-      // Remove all listeners first to prevent any callbacks
-      if (this.pty.removeAllListeners) {
-        this.pty.removeAllListeners();
-      }
-      
-      // Kill the process
-      if (typeof this.pty.kill === 'function') {
-        this.pty.kill(signal);
-      }
+      this.childProcess.kill(signal as any);
       
       // Wait a bit and force kill if still running
       setTimeout(() => {
-        if (this.pty && typeof this.pty.kill === 'function') {
+        if (this.childProcess && !this.childProcess.killed) {
           try {
-            this.pty.kill('SIGKILL');
+            this.childProcess.kill('SIGKILL');
           } catch (e) {
             // Ignore errors on force kill
           }
         }
       }, 100);
       
-      this.pty = null;
+      this.childProcess = null;
       this.isReady = false;
       this.session.isActive = false;
       this.session.endTime = new Date();
@@ -493,7 +375,7 @@ export class Terminal extends EventEmitter {
   }
 
   public isRunning(): boolean {
-    return this.pty !== null && this.session.isActive;
+    return this.childProcess !== null && this.session.isActive;
   }
 
   public isTerminalReady(): boolean {
@@ -527,19 +409,20 @@ export class Terminal extends EventEmitter {
   }
 
   public getPid(): number | undefined {
-    return this.pty?.pid;
+    return this.childProcess?.pid;
   }
 
   public getProcess(): string | undefined {
-    return this.pty?.process;
+    // Return shell name as process name only when running
+    return this.isRunning() ? this.options.shell : undefined;
   }
 
   public getCols(): number | undefined {
-    return this.pty?.cols;
+    return this.isRunning() ? this.options.cols : undefined;
   }
 
   public getRows(): number | undefined {
-    return this.pty?.rows;
+    return this.isRunning() ? this.options.rows : undefined;
   }
 
   public getOptions(): TerminalOptions {
@@ -563,25 +446,42 @@ export class Terminal extends EventEmitter {
     }
   }
 
-  private setupPtyHandlers(): void {
-    if (!this.pty) return;
+  private setupChildProcessHandlers(): void {
+    if (!this.childProcess) return;
 
-    this.pty.on('data', (data: string) => {
-      this.outputBuffer += data;
-      this.session.fullOutput += data;
+    this.childProcess.stdout?.on('data', (data: Buffer) => {
+      const output = data.toString(this.options.encoding as BufferEncoding || 'utf8');
+      this.outputBuffer += output;
+      this.session.fullOutput += output;
       
-      this.emit('data', data);
-      if (this.onData) this.onData(data);
+      this.emit('data', output);
+      if (this.onData) this.onData(output);
     });
 
-    this.pty.on('exit', (exitCode: number, signal?: number) => {
-      this.pty = null;
+    this.childProcess.stderr?.on('data', (data: Buffer) => {
+      const output = data.toString(this.options.encoding as BufferEncoding || 'utf8');
+      this.outputBuffer += output;
+      this.session.fullOutput += output;
+      
+      this.emit('data', output);
+      if (this.onData) this.onData(output);
+    });
+
+    this.childProcess.on('exit', (exitCode: number | null, signal: any) => {
+      this.childProcess = null;
       this.isReady = false;
       this.session.isActive = false;
       this.session.endTime = new Date();
       
-      this.emit('exit', exitCode, signal);
-      if (this.onExit) this.onExit(exitCode, signal);
+      // Convert signal to number if it exists, otherwise undefined
+      const signalNumber = signal ? (typeof signal === 'string' ? parseInt(signal, 10) : Number(signal)) : undefined;
+      this.emit('exit', exitCode || 0, signalNumber);
+      if (this.onExit) this.onExit(exitCode || 0, signalNumber);
+    });
+
+    this.childProcess.on('error', (error: Error) => {
+      this.emit('error', error);
+      if (this.onError) this.onError(error);
     });
   }
 
@@ -599,23 +499,15 @@ export class Terminal extends EventEmitter {
     });
     this.commandQueue = [];
     
-    // Kill the terminal process aggressively
-    if (this.pty) {
+    // Kill the child process
+    if (this.childProcess) {
       try {
-        // Remove all listeners first
-        if (this.pty.removeAllListeners) {
-          this.pty.removeAllListeners();
-        }
-        
-        // Force kill immediately
-        if (typeof this.pty.kill === 'function') {
-          this.pty.kill('SIGKILL');
-        }
+        this.childProcess.kill('SIGKILL');
       } catch (e) {
         // Ignore kill errors
       }
       
-      this.pty = null;
+      this.childProcess = null;
     }
     
     // Remove all event listeners

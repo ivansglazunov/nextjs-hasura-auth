@@ -6,6 +6,7 @@ import * as path from 'path';
 import { OpenRouter, OpenRouterMessage, OpenRouterOptions } from './openrouter';
 import { printMarkdown } from './markdown-terminal';
 import Debug from './debug';
+import { filter, map } from 'rxjs/operators';
 
 const debug = Debug('hasyx:ai');
 
@@ -25,6 +26,87 @@ export interface ProjectInfo {
   description?: string;
   features?: string[];
 }
+
+// Stream event types for asking method
+export interface AIStreamEvent {
+  type: 'thinking' | 'text' | 'code_found' | 'code_executing' | 'code_result' | 'iteration' | 'complete' | 'error';
+  data?: any;
+}
+
+export interface AIThinkingEvent extends AIStreamEvent {
+  type: 'thinking';
+}
+
+export interface AITextEvent extends AIStreamEvent {
+  type: 'text';
+  data: {
+    content: string;
+    delta: string;
+    accumulated: string;
+  };
+}
+
+export interface AICodeFoundEvent extends AIStreamEvent {
+  type: 'code_found';
+  data: {
+    code: string;
+    format: 'js' | 'tsx' | 'terminal';
+    id: string;
+  };
+}
+
+export interface AICodeExecutingEvent extends AIStreamEvent {
+  type: 'code_executing';
+  data: {
+    code: string;
+    format: 'js' | 'tsx' | 'terminal';
+    id: string;
+  };
+}
+
+export interface AICodeResultEvent extends AIStreamEvent {
+  type: 'code_result';
+  data: {
+    id: string;
+    result: string;
+    success: boolean;
+  };
+}
+
+export interface AIIterationEvent extends AIStreamEvent {
+  type: 'iteration';
+  data: {
+    iteration: number;
+    reason: string;
+  };
+}
+
+export interface AICompleteEvent extends AIStreamEvent {
+  type: 'complete';
+  data: {
+    finalResponse: string;
+    iterations: number;
+    executionResults: any[];
+  };
+}
+
+export interface AIErrorEvent extends AIStreamEvent {
+  type: 'error';
+  data: {
+    error: Error;
+    iteration?: number;
+  };
+}
+
+export type AIStreamEventUnion = 
+  | AIThinkingEvent 
+  | AITextEvent 
+  | AICodeFoundEvent 
+  | AICodeExecutingEvent 
+  | AICodeResultEvent 
+  | AIIterationEvent 
+  | AICompleteEvent 
+  | AIErrorEvent;
 
 export class AI {
   private openRouter: OpenRouter;
@@ -303,19 +385,234 @@ ${executedDo.response}
   }
 
   /**
-   * Stream AI responses (returns Observable)
+   * Stream AI responses with real-time events (returns Observable)
    */
-  asking(question: string | OpenRouterMessage | OpenRouterMessage[]): Observable<string> {
-    return new Observable<string>(observer => {
-      this.ask(question)
-        .then(response => {
-          observer.next(response);
-          observer.complete();
-        })
-        .catch(error => {
-          observer.error(error);
-        });
+  asking(question: string | OpenRouterMessage | OpenRouterMessage[]): Observable<AIStreamEventUnion> {
+    return new Observable<AIStreamEventUnion>(observer => {
+      this.askWithStream(question, observer).catch(error => {
+        observer.error(error);
+      });
     });
+  }
+
+  /**
+   * Internal method for streaming AI responses with real-time events
+   */
+  private async askWithStream(
+    question: string | OpenRouterMessage | OpenRouterMessage[],
+    observer: any
+  ): Promise<void> {
+    debug('Processing ask request with streaming');
+    
+    // Normalize input to messages array
+    let messages: OpenRouterMessage[];
+    if (typeof question === 'string') {
+      messages = [{ role: 'user', content: question }];
+    } else if (Array.isArray(question)) {
+      messages = question;
+    } else {
+      messages = [question];
+    }
+
+    // Add to memory
+    messages.forEach(msg => this.addToMemory(msg));
+
+    let finalResponse = '';
+    let allExecutionResults: any[] = [];
+    let iterationCount = 0;
+    const maxIterations = 3;
+
+    while (iterationCount < maxIterations) {
+      iterationCount++;
+      
+      try {
+        debug(`AI iteration ${iterationCount}/${maxIterations}`);
+        
+        // Emit thinking event
+        observer.next({ type: 'thinking' } as AIThinkingEvent);
+        
+        // Emit iteration event
+        observer.next({ 
+          type: 'iteration', 
+          data: { 
+            iteration: iterationCount, 
+            reason: iterationCount === 1 ? 'Initial response' : 'Continue after code execution' 
+          } 
+        } as AIIterationEvent);
+        
+        // Get context with memory
+        const contextMessages = this.contextMemory(messages);
+        
+        // Get streaming response from OpenRouter
+        const stream = await this.openRouter.askStream(contextMessages);
+        const reader = stream.getReader();
+        
+        let streamedResponse = '';
+        let accumulated = '';
+        
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) break;
+            
+            accumulated += value;
+            
+            // Emit text event with delta
+            observer.next({
+              type: 'text',
+              data: {
+                content: value,
+                delta: value,
+                accumulated: accumulated
+              }
+            } as AITextEvent);
+          }
+          
+          streamedResponse = accumulated;
+        } finally {
+          reader.releaseLock();
+        }
+        
+        debug(`AI streamed response received (length: ${streamedResponse.length})`);
+        
+        // Find and process Do operations
+        const dos = this.findDos(streamedResponse);
+        debug(`Found ${dos.length} Do operations`);
+        
+        if (dos.length > 0) {
+          // Execute all Do operations and collect results
+          const executionResults: any[] = [];
+          
+          for (const doItem of dos) {
+            debug(`Executing Do operation: ${doItem.id}`);
+            
+            // Emit code found event
+            observer.next({
+              type: 'code_found',
+              data: {
+                code: doItem.request,
+                format: doItem.format,
+                id: doItem.id
+              }
+            } as AICodeFoundEvent);
+            
+            // Emit code executing event
+            observer.next({
+              type: 'code_executing',
+              data: {
+                code: doItem.request,
+                format: doItem.format,
+                id: doItem.id
+              }
+            } as AICodeExecutingEvent);
+            
+            const executedDo = await this.do(doItem);
+            this.addToMemory(executedDo);
+            
+            // Emit code result event
+            observer.next({
+              type: 'code_result',
+              data: {
+                id: executedDo.id,
+                result: executedDo.response || '',
+                success: !executedDo.response?.startsWith('Error:')
+              }
+            } as AICodeResultEvent);
+            
+            if (executedDo.response) {
+              executionResults.push({
+                id: executedDo.id,
+                code: executedDo.request,
+                result: executedDo.response,
+                format: executedDo.format
+              });
+              allExecutionResults.push(executionResults[executionResults.length - 1]);
+            }
+          }
+
+          // Remove Do operations from response
+          const cleanResponse = this.removeDo(streamedResponse, dos);
+          
+          // Add clean response to final response
+          if (finalResponse) {
+            finalResponse += '\n\n' + cleanResponse;
+          } else {
+            finalResponse = cleanResponse;
+          }
+          
+          debug(`Clean response length: ${cleanResponse.length}`);
+          
+          // Create assistant message with clean response
+          const assistantMessage: OpenRouterMessage = {
+            role: 'assistant',
+            content: cleanResponse
+          };
+          this.addToMemory(assistantMessage);
+          
+          // Only continue if we haven't reached max iterations
+          if (iterationCount < maxIterations) {
+            // Add a follow-up message to continue the conversation
+            const followUpMessage: OpenRouterMessage = {
+              role: 'user',
+              content: 'Continue your response based on the execution results. You can execute more code if needed, but try to provide a complete answer.'
+            };
+            messages = [followUpMessage];
+            debug(`Continuing to iteration ${iterationCount + 1}`);
+            // Continue the loop
+          } else {
+            debug('Reached max iterations, stopping');
+            break;
+          }
+        } else {
+          // No Do operations found, this is the final response
+          if (finalResponse) {
+            finalResponse += '\n\n' + streamedResponse;
+          } else {
+            finalResponse = streamedResponse;
+          }
+          
+          // Create assistant message
+          const assistantMessage: OpenRouterMessage = {
+            role: 'assistant',
+            content: streamedResponse
+          };
+          this.addToMemory(assistantMessage);
+          
+          debug('No Do operations found, ending iterations');
+          break;
+        }
+      } catch (error) {
+        debug('Error during AI iteration:', error);
+        observer.next({
+          type: 'error',
+          data: {
+            error: error instanceof Error ? error : new Error(String(error)),
+            iteration: iterationCount
+          }
+        } as AIErrorEvent);
+        
+        if (finalResponse) {
+          // Return what we have so far
+          break;
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    // Emit completion event
+    observer.next({
+      type: 'complete',
+      data: {
+        finalResponse,
+        iterations: iterationCount,
+        executionResults: allExecutionResults
+      }
+    } as AICompleteEvent);
+    
+    observer.complete();
+    debug('AI ask with streaming completed');
   }
 
   /**
@@ -648,5 +945,35 @@ ${executedDo.response}
         });
       }
     };
+  }
+
+  /**
+   * Simple streaming method that returns just text deltas
+   */
+  askStream(question: string | OpenRouterMessage | OpenRouterMessage[]): Observable<string> {
+    return this.asking(question).pipe(
+      filter((event: AIStreamEventUnion) => event.type === 'text'),
+      map((event: AITextEvent) => event.data.delta)
+    );
+  }
+
+  /**
+   * Get complete response via streaming (collects all text)
+   */
+  askWithStreaming(question: string | OpenRouterMessage | OpenRouterMessage[]): Observable<string> {
+    return this.asking(question).pipe(
+      filter((event: AIStreamEventUnion) => event.type === 'complete'),
+      map((event: AICompleteEvent) => event.data.finalResponse)
+    );
+  }
+
+  /**
+   * Get just execution results from streaming
+   */
+  getExecutionResults(question: string | OpenRouterMessage | OpenRouterMessage[]): Observable<any[]> {
+    return this.asking(question).pipe(
+      filter((event: AIStreamEventUnion) => event.type === 'complete'),
+      map((event: AICompleteEvent) => event.data.executionResults)
+    );
   }
 } 

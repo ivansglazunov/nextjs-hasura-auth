@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.229",
+  "version": "0.1.230",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -155,7 +155,6 @@
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
     "next-ws": "^2.0.7",
-    "node-pty": "^1.0.0",
     "png-to-ico": "^2.1.8",
     "prettier": "^3.5.3",
     "puppeteer": "^24.9.0",

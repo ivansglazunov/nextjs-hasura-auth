@@ -3,9 +3,6 @@ import { Terminal, createBashTerminal, createZshTerminal, createNodeTerminal, cr
 import * as os from 'os';
 import { createRequire } from 'module';
 
-// Check if we're in CI environment
-const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
-
 // Check if node-pty is available
 let isNodePtyAvailable = false;
 try {
@@ -128,7 +125,7 @@ describe('Terminal', () => {
 
   describe('Terminal Lifecycle', () => {
     // Only run real terminal tests in non-CI environments to avoid hanging
-    (isCI ? it.skip : it)('should start terminal successfully when node-pty is available', async () => {
+    it('should start terminal successfully when node-pty is available', async () => {
       if (!isNodePtyAvailable) {
         console.log('⚠️  node-pty not available - skipping terminal start test');
         return;
@@ -188,7 +185,7 @@ describe('Terminal', () => {
 
   describe('Command Execution', () => {
     // Only run real command tests in non-CI environments
-    (isCI ? it.skip : it)('should execute simple commands successfully', async () => {
+    it('should execute simple commands successfully', async () => {
       if (!isNodePtyAvailable) {
         console.log('⚠️  node-pty not available - skipping command execution test');
         return;
@@ -500,14 +497,6 @@ describe('Terminal', () => {
     });
 
     it('should handle cleanup of terminals with pending operations', async () => {
-      if (isCI) {
-        // In CI, just test basic cleanup functionality
-        const terminal = new Terminal({ autoStart: false });
-        expect(() => terminal.destroy()).not.toThrow();
-        expect(terminal.isRunning()).toBe(false);
-        return;
-      }
-
       // Full test for local development only
       const terminal = new Terminal({ autoStart: false });
       
