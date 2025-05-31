@@ -352,23 +352,28 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
    * Interactive REPL mode for terminal interaction with streaming support
    */
   async repl(): Promise<void> {
-    this.isReplMode = true; // Enable progress callbacks for REPL
+    this.isReplMode = true;
     
-    try {
+    // Build enabled engines list for welcome message
+    const enabledEngines: string[] = [];
+    if (this.askOptions.exec) enabledEngines.push('JavaScript');
+    if (this.askOptions.execTs) enabledEngines.push('TypeScript');
+    if (this.askOptions.terminal) enabledEngines.push('Terminal');
+
+    // Use output handler for welcome or default console output
+    if (this.outputHandlers.onWelcome) {
+      await this.outputHandlers.onWelcome(enabledEngines);
+    } else {
       this.defaultOutput('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
       this.defaultOutput('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
-      this.defaultOutput('🚀 Real-time streaming enabled!');
+      if (enabledEngines.length > 0) {
+        this.defaultOutput(`🪬 AI can execute code automatically! Enabled engines: ${enabledEngines.join(', ')}`);
+      }
+    }
+
+    try {
       if (this._do) {
-        const enabledEngines = [];
-        if (this.askOptions.exec) enabledEngines.push('JavaScript');
-        if (this.askOptions.execTs) enabledEngines.push('TypeScript');
-        if (this.askOptions.terminal) enabledEngines.push('Terminal');
-        
-        if (this.outputHandlers.onWelcome) {
-          await this.outputHandlers.onWelcome(enabledEngines);
-        } else {
-          this.defaultOutput(`🪬 AI can execute code automatically! (${enabledEngines.join(', ')})`);
-        }
+        // Code execution is available - this is handled in welcome message above
       }
       
       const rl = readline.createInterface({

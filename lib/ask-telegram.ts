@@ -1,17 +1,19 @@
-import { AskHasyx, AskOptions, OutputHandlers } from 'hasyx/lib/ask-hasyx';
-import { sendTelegramMessage } from 'hasyx/lib/telegram-bot';
-import Debug from 'hasyx/lib/debug';
+import { AskHasyx, AskOptions, OutputHandlers } from './ask-hasyx';
+import { sendTelegramMessage } from './telegram-bot';
+import Debug from './debug';
 
 const debug = Debug('hasyx:ask-telegram');
 
+export interface TelegramConfig {
+  botToken: string;
+  chatId: number;
+  bufferTime?: number; // Milliseconds to buffer messages (default: 1000)
+  maxMessageLength?: number; // Max Telegram message length (default: 4096)
+  enableCodeBlocks?: boolean; // Whether to format code blocks (default: true)
+}
+
 export interface TelegramAskOptions extends AskOptions {
-  telegram?: {
-    botToken: string;
-    chatId: number;
-    bufferTime?: number; // Milliseconds to buffer messages (default: 1000)
-    maxMessageLength?: number; // Max Telegram message length (default: 4096)
-    enableCodeBlocks?: boolean; // Whether to format code blocks (default: true)
-  };
+  telegram?: TelegramConfig;
 }
 
 export interface TelegramAskInstance {
@@ -42,8 +44,14 @@ export class TelegramAskWrapper extends AskHasyx {
     systemPrompt?: string,
     askOptions: TelegramAskOptions = {}
   ) {
-    // Extract telegram options
-    const telegramOptions = askOptions.telegram || {};
+    // Extract telegram options with proper default handling
+    const telegramOptions = askOptions.telegram || {
+      botToken,
+      chatId,
+      bufferTime: 1000,
+      maxMessageLength: 4096,
+      enableCodeBlocks: true
+    };
     
     // Create output handlers for Telegram
     const outputHandlers: OutputHandlers = {
@@ -332,64 +340,55 @@ export function clearAllTelegramAskInstances(): void {
 }
 
 /**
- * Wrapper function that creates a Telegram-enabled Ask class from any Ask class
+ * Wraps any Ask class to work with Telegram
+ * Creates a factory function that returns TelegramAskWrapper instances
  */
 export function wrapTelegramAsk<T extends typeof AskHasyx>(
   AskClass: T,
   chatId: number,
   botToken: string,
-  telegramOptions: TelegramAskOptions['telegram'] = {}
-): new (...args: any[]) => TelegramAskWrapper {
-  return class extends AskClass {
-    constructor(...args: any[]) {
-      // Extract or create outputHandlers for Telegram
-      const outputHandlers: OutputHandlers = {
-        onThinking: () => sendTelegramMessage(botToken, chatId, '🧠 AI думает...'),
-        onCodeFound: async (code: string, format: 'js' | 'tsx' | 'terminal') => {
-          await sendTelegramMessage(botToken, chatId, `📋 Найден ${format.toUpperCase()} код для выполнения:`);
-          if (telegramOptions.enableCodeBlocks !== false) {
-            const displayFormat = format === 'terminal' ? 'bash' : format;
-            await sendTelegramMessage(botToken, chatId, `\`\`\`${displayFormat}\n${code}\n\`\`\``);
-          } else {
-            await sendTelegramMessage(botToken, chatId, code);
-          }
-        },
-        onCodeExecuting: (code: string, format: 'js' | 'tsx' | 'terminal') => 
-          sendTelegramMessage(botToken, chatId, `⚡ Выполняется ${format.toUpperCase()} код...`),
-        onCodeResult: async (result: string) => {
-          await sendTelegramMessage(botToken, chatId, '✅ Результат выполнения:');
-          if (telegramOptions.enableCodeBlocks !== false) {
-            await sendTelegramMessage(botToken, chatId, `\`\`\`\n${result}\n\`\`\``);
-          } else {
-            await sendTelegramMessage(botToken, chatId, result);
-          }
-        },
-        onResponse: (response: string) => 
-          sendTelegramMessage(botToken, chatId, `💭 AI ответил (${response.length} символов)`),
-        onOutput: (message: string) => sendTelegramMessage(botToken, chatId, message),
-        onError: (error: string) => sendTelegramMessage(botToken, chatId, `❌ ${error}`),
-        onWelcome: async (enabledEngines: string[]) => {
-          await sendTelegramMessage(botToken, chatId, '🤖 Добро пожаловать в AI Bot!');
-          if (enabledEngines.length > 0) {
-            await sendTelegramMessage(botToken, chatId, `🪬 Доступны движки: ${enabledEngines.join(', ')}`);
-          }
-        },
-        onGoodbye: () => sendTelegramMessage(botToken, chatId, '👋 До свидания!')
+  telegramOptions: Partial<TelegramConfig> = {}
+): new (token: string, context?: any, options?: any, systemPrompt?: string, askOptions?: TelegramAskOptions) => TelegramAskWrapper {
+  
+  const fullTelegramOptions: Required<TelegramConfig> = {
+    botToken,
+    chatId,
+    bufferTime: telegramOptions.bufferTime || 1000,
+    maxMessageLength: telegramOptions.maxMessageLength || 4096,
+    enableCodeBlocks: telegramOptions.enableCodeBlocks !== false
+  };
+
+  return class TelegramWrappedAsk extends TelegramAskWrapper {
+    constructor(
+      token: string,
+      context: any = {},
+      options: any = {},
+      systemPrompt?: string,
+      askOptions: TelegramAskOptions = {}
+    ) {
+      // Merge telegram options
+      const mergedAskOptions: TelegramAskOptions = {
+        ...askOptions,
+        telegram: {
+          botToken: fullTelegramOptions.botToken,
+          chatId: fullTelegramOptions.chatId,
+          bufferTime: askOptions.telegram?.bufferTime || fullTelegramOptions.bufferTime,
+          maxMessageLength: askOptions.telegram?.maxMessageLength || fullTelegramOptions.maxMessageLength,
+          enableCodeBlocks: askOptions.telegram?.enableCodeBlocks !== undefined 
+            ? askOptions.telegram.enableCodeBlocks 
+            : fullTelegramOptions.enableCodeBlocks
+        }
       };
 
-      // Add outputHandlers to constructor arguments
-      const newArgs = [...args];
-      if (newArgs.length >= 6) {
-        newArgs[5] = outputHandlers; // Replace or add outputHandlers parameter
-      } else {
-        // Fill missing parameters up to outputHandlers position
-        while (newArgs.length < 5) {
-          newArgs.push(undefined);
-        }
-        newArgs.push(outputHandlers);
-      }
-
-      super(...newArgs);
+      super(
+        token,
+        chatId,
+        botToken,
+        context,
+        options,
+        systemPrompt,
+        mergedAskOptions
+      );
     }
-  } as any;
+  };
 } 

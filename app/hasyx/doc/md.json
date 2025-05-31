@@ -324,6 +324,41 @@
           "title": "Integration with Streaming",
           "url": "/hasyx/doc/AI#integration-with-streaming",
           "level": 3
+        },
+        {
+          "title": "Ask System Architecture",
+          "url": "/hasyx/doc/AI#ask-system-architecture",
+          "level": 2
+        },
+        {
+          "title": "Inheritance Hierarchy",
+          "url": "/hasyx/doc/AI#inheritance-hierarchy",
+          "level": 3
+        },
+        {
+          "title": "AskHasyx Class",
+          "url": "/hasyx/doc/AI#askhasyx-class",
+          "level": 3
+        },
+        {
+          "title": "Project-Specific Ask Classes",
+          "url": "/hasyx/doc/AI#project-specific-ask-classes",
+          "level": 3
+        },
+        {
+          "title": "Template System",
+          "url": "/hasyx/doc/AI#template-system",
+          "level": 3
+        },
+        {
+          "title": "Integration with AI Base Class",
+          "url": "/hasyx/doc/AI#integration-with-ai-base-class",
+          "level": 3
+        },
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/AI#features",
+          "level": 2
         }
       ],
       "level": 1
@@ -630,6 +665,36 @@
           "title": "Command Options",
           "url": "/hasyx/doc/ASK#command-options",
           "level": 2
+        },
+        {
+          "title": "Architecture",
+          "url": "/hasyx/doc/ASK#architecture",
+          "level": 2
+        },
+        {
+          "title": "Class Hierarchy",
+          "url": "/hasyx/doc/ASK#class-hierarchy",
+          "level": 3
+        },
+        {
+          "title": "Key Files",
+          "url": "/hasyx/doc/ASK#key-files",
+          "level": 3
+        },
+        {
+          "title": "AskOptions Configuration",
+          "url": "/hasyx/doc/ASK#askoptions-configuration",
+          "level": 3
+        },
+        {
+          "title": "Example Usage in Child Projects",
+          "url": "/hasyx/doc/ASK#example-usage-in-child-projects",
+          "level": 3
+        },
+        {
+          "title": "Execution Engine Control",
+          "url": "/hasyx/doc/ASK#execution-engine-control",
+          "level": 3
         }
       ],
       "level": 1
@@ -3627,6 +3692,259 @@
       "level": 1
     },
     {
+      "title": "Telegram Ask Integration",
+      "url": "/hasyx/doc/TELEGRAM-ASK",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/TELEGRAM-ASK#features",
+          "level": 2
+        },
+        {
+          "title": "Architecture",
+          "url": "/hasyx/doc/TELEGRAM-ASK#architecture",
+          "level": 2
+        },
+        {
+          "title": "Основные компоненты",
+          "url": "/hasyx/doc/TELEGRAM-ASK#",
+          "level": 3
+        },
+        {
+          "title": "Схема работы",
+          "url": "/hasyx/doc/TELEGRAM-ASK#",
+          "level": 3
+        },
+        {
+          "title": "Quick Start",
+          "url": "/hasyx/doc/TELEGRAM-ASK#quick-start",
+          "level": 2
+        },
+        {
+          "title": "1. Environment Setup",
+          "url": "/hasyx/doc/TELEGRAM-ASK#1-environment-setup",
+          "level": 3
+        },
+        {
+          "title": "2. Basic Integration in route.ts",
+          "url": "/hasyx/doc/TELEGRAM-ASK#2-basic-integration-in-routets",
+          "level": 3
+        },
+        {
+          "title": "3. Testing",
+          "url": "/hasyx/doc/TELEGRAM-ASK#3-testing",
+          "level": 3
+        },
+        {
+          "title": "API Reference",
+          "url": "/hasyx/doc/TELEGRAM-ASK#api-reference",
+          "level": 2
+        },
+        {
+          "title": "Instance Management",
+          "url": "/hasyx/doc/TELEGRAM-ASK#instance-management",
+          "level": 3
+        },
+        {
+          "title": "Advanced Usage",
+          "url": "/hasyx/doc/TELEGRAM-ASK#advanced-usage",
+          "level": 2
+        },
+        {
+          "title": "Custom Ask Options",
+          "url": "/hasyx/doc/TELEGRAM-ASK#custom-ask-options",
+          "level": 3
+        },
+        {
+          "title": "Custom Output Handlers",
+          "url": "/hasyx/doc/TELEGRAM-ASK#custom-output-handlers",
+          "level": 3
+        },
+        {
+          "title": "wrapTelegramAsk()",
+          "url": "/hasyx/doc/TELEGRAM-ASK#wraptelegramask",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/TELEGRAM-ASK#error-handling",
+          "level": 2
+        },
+        {
+          "title": "Automatic Error Handling",
+          "url": "/hasyx/doc/TELEGRAM-ASK#automatic-error-handling",
+          "level": 3
+        },
+        {
+          "title": "Custom Error Handling",
+          "url": "/hasyx/doc/TELEGRAM-ASK#custom-error-handling",
+          "level": 3
+        },
+        {
+          "title": "Performance & Optimization",
+          "url": "/hasyx/doc/TELEGRAM-ASK#performance-optimization",
+          "level": 2
+        },
+        {
+          "title": "Instance Lifecycle",
+          "url": "/hasyx/doc/TELEGRAM-ASK#instance-lifecycle",
+          "level": 3
+        },
+        {
+          "title": "Message Buffering",
+          "url": "/hasyx/doc/TELEGRAM-ASK#message-buffering",
+          "level": 3
+        },
+        {
+          "title": "Rate Limiting",
+          "url": "/hasyx/doc/TELEGRAM-ASK#rate-limiting",
+          "level": 3
+        },
+        {
+          "title": "Monitoring & Debugging",
+          "url": "/hasyx/doc/TELEGRAM-ASK#monitoring-debugging",
+          "level": 2
+        },
+        {
+          "title": "Statistics",
+          "url": "/hasyx/doc/TELEGRAM-ASK#statistics",
+          "level": 3
+        },
+        {
+          "title": "Debug Logging",
+          "url": "/hasyx/doc/TELEGRAM-ASK#debug-logging",
+          "level": 3
+        },
+        {
+          "title": "Health Check",
+          "url": "/hasyx/doc/TELEGRAM-ASK#health-check",
+          "level": 3
+        },
+        {
+          "title": "Examples",
+          "url": "/hasyx/doc/TELEGRAM-ASK#examples",
+          "level": 2
+        },
+        {
+          "title": "Simple Math Bot",
+          "url": "/hasyx/doc/TELEGRAM-ASK#simple-math-bot",
+          "level": 3
+        },
+        {
+          "title": "Code Generation Bot",
+          "url": "/hasyx/doc/TELEGRAM-ASK#code-generation-bot",
+          "level": 3
+        },
+        {
+          "title": "Terminal Command Bot",
+          "url": "/hasyx/doc/TELEGRAM-ASK#terminal-command-bot",
+          "level": 3
+        },
+        {
+          "title": "Security Considerations",
+          "url": "/hasyx/doc/TELEGRAM-ASK#security-considerations",
+          "level": 2
+        },
+        {
+          "title": "API Key Management",
+          "url": "/hasyx/doc/TELEGRAM-ASK#api-key-management",
+          "level": 3
+        },
+        {
+          "title": "User Isolation",
+          "url": "/hasyx/doc/TELEGRAM-ASK#user-isolation",
+          "level": 3
+        },
+        {
+          "title": "Rate Limiting",
+          "url": "/hasyx/doc/TELEGRAM-ASK#rate-limiting",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/TELEGRAM-ASK#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/TELEGRAM-ASK#common-issues",
+          "level": 3
+        },
+        {
+          "title": "Debug Mode",
+          "url": "/hasyx/doc/TELEGRAM-ASK#debug-mode",
+          "level": 3
+        },
+        {
+          "title": "Migration Guide",
+          "url": "/hasyx/doc/TELEGRAM-ASK#migration-guide",
+          "level": 2
+        },
+        {
+          "title": "From Basic Telegram Bot",
+          "url": "/hasyx/doc/TELEGRAM-ASK#from-basic-telegram-bot",
+          "level": 3
+        },
+        {
+          "title": "From Console Ask",
+          "url": "/hasyx/doc/TELEGRAM-ASK#from-console-ask",
+          "level": 3
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/TELEGRAM-ASK#best-practices",
+          "level": 2
+        },
+        {
+          "title": "1. Instance Management",
+          "url": "/hasyx/doc/TELEGRAM-ASK#1-instance-management",
+          "level": 3
+        },
+        {
+          "title": "2. Error Handling",
+          "url": "/hasyx/doc/TELEGRAM-ASK#2-error-handling",
+          "level": 3
+        },
+        {
+          "title": "3. Performance",
+          "url": "/hasyx/doc/TELEGRAM-ASK#3-performance",
+          "level": 3
+        },
+        {
+          "title": "4. Security",
+          "url": "/hasyx/doc/TELEGRAM-ASK#4-security",
+          "level": 3
+        },
+        {
+          "title": "Related Documentation",
+          "url": "/hasyx/doc/TELEGRAM-ASK#related-documentation",
+          "level": 2
+        },
+        {
+          "title": "Contributing",
+          "url": "/hasyx/doc/TELEGRAM-ASK#contributing",
+          "level": 2
+        },
+        {
+          "title": "Examples Repository",
+          "url": "/hasyx/doc/TELEGRAM-ASK#examples-repository",
+          "level": 2
+        },
+        {
+          "title": "Roadmap",
+          "url": "/hasyx/doc/TELEGRAM-ASK#roadmap",
+          "level": 2
+        },
+        {
+          "title": "Planned Features",
+          "url": "/hasyx/doc/TELEGRAM-ASK#planned-features",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "Telegram Bot",
       "url": "/hasyx/doc/TELEGRAM-BOT",
       "collapse": true,
@@ -5283,6 +5601,184 @@
           "title": "SHELL",
           "url": "/hasyx/doc/ENV.experiment#shell",
           "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
+      "title": "Events System Documentation",
+      "url": "/hasyx/doc/EVENTS",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Overview",
+          "url": "/hasyx/doc/EVENTS#overview",
+          "level": 2
+        },
+        {
+          "title": "Architecture Flow",
+          "url": "/hasyx/doc/EVENTS#architecture-flow",
+          "level": 2
+        },
+        {
+          "title": "Event Trigger Definitions",
+          "url": "/hasyx/doc/EVENTS#event-trigger-definitions",
+          "level": 2
+        },
+        {
+          "title": "Directory Structure",
+          "url": "/hasyx/doc/EVENTS#directory-structure",
+          "level": 3
+        },
+        {
+          "title": "Configuration Format",
+          "url": "/hasyx/doc/EVENTS#configuration-format",
+          "level": 3
+        },
+        {
+          "title": "Configuration Options",
+          "url": "/hasyx/doc/EVENTS#configuration-options",
+          "level": 3
+        },
+        {
+          "title": "CLI Commands",
+          "url": "/hasyx/doc/EVENTS#cli-commands",
+          "level": 2
+        },
+        {
+          "title": "API Route Handlers",
+          "url": "/hasyx/doc/EVENTS#api-route-handlers",
+          "level": 2
+        },
+        {
+          "title": "Default Handler: `/app/api/events/[name]/route.ts`",
+          "url": "/hasyx/doc/EVENTS#default-handler-appapieventsnameroutets",
+          "level": 3
+        },
+        {
+          "title": "Custom Handlers",
+          "url": "/hasyx/doc/EVENTS#custom-handlers",
+          "level": 3
+        },
+        {
+          "title": "Event Payload Structure",
+          "url": "/hasyx/doc/EVENTS#event-payload-structure",
+          "level": 3
+        },
+        {
+          "title": "Security",
+          "url": "/hasyx/doc/EVENTS#security",
+          "level": 2
+        },
+        {
+          "title": "HASURA_EVENT_SECRET",
+          "url": "/hasyx/doc/EVENTS#hasura-event-secret",
+          "level": 3
+        },
+        {
+          "title": "Request Verification",
+          "url": "/hasyx/doc/EVENTS#request-verification",
+          "level": 3
+        },
+        {
+          "title": "Environment Variables",
+          "url": "/hasyx/doc/EVENTS#environment-variables",
+          "level": 2
+        },
+        {
+          "title": "Required Variables",
+          "url": "/hasyx/doc/EVENTS#required-variables",
+          "level": 3
+        },
+        {
+          "title": "Optional Variables",
+          "url": "/hasyx/doc/EVENTS#optional-variables",
+          "level": 3
+        },
+        {
+          "title": "Workflow Examples",
+          "url": "/hasyx/doc/EVENTS#workflow-examples",
+          "level": 2
+        },
+        {
+          "title": "1. Adding a New Event Trigger",
+          "url": "/hasyx/doc/EVENTS#1-adding-a-new-event-trigger",
+          "level": 3
+        },
+        {
+          "title": "2. Handling User Registration Events",
+          "url": "/hasyx/doc/EVENTS#2-handling-user-registration-events",
+          "level": 3
+        },
+        {
+          "title": "3. Debugging Events",
+          "url": "/hasyx/doc/EVENTS#3-debugging-events",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/EVENTS#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/EVENTS#common-issues",
+          "level": 3
+        },
+        {
+          "title": "Debug Commands",
+          "url": "/hasyx/doc/EVENTS#debug-commands",
+          "level": 3
+        },
+        {
+          "title": "Advanced Usage",
+          "url": "/hasyx/doc/EVENTS#advanced-usage",
+          "level": 2
+        },
+        {
+          "title": "Manual Event Triggers",
+          "url": "/hasyx/doc/EVENTS#manual-event-triggers",
+          "level": 3
+        },
+        {
+          "title": "Custom Retry Configuration",
+          "url": "/hasyx/doc/EVENTS#custom-retry-configuration",
+          "level": 3
+        },
+        {
+          "title": "Multiple Environment Support",
+          "url": "/hasyx/doc/EVENTS#multiple-environment-support",
+          "level": 3
+        },
+        {
+          "title": "Integration with Other Systems",
+          "url": "/hasyx/doc/EVENTS#integration-with-other-systems",
+          "level": 2
+        },
+        {
+          "title": "Email Notifications",
+          "url": "/hasyx/doc/EVENTS#email-notifications",
+          "level": 3
+        },
+        {
+          "title": "Analytics Tracking",
+          "url": "/hasyx/doc/EVENTS#analytics-tracking",
+          "level": 3
+        },
+        {
+          "title": "External API Synchronization",
+          "url": "/hasyx/doc/EVENTS#external-api-synchronization",
+          "level": 3
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/EVENTS#best-practices",
+          "level": 2
+        },
+        {
+          "title": "Related Documentation",
+          "url": "/hasyx/doc/EVENTS#related-documentation",
+          "level": 2
         }
       ],
       "level": 1
@@ -8769,5 +9265,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-31T14:25:46.304Z"
+  "lastUpdated": "2025-05-31T17:15:28.490Z"
 }
