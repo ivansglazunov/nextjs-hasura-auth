@@ -616,3 +616,81 @@ The Ask command supports the following options:
 -m, --model <model>     Specify OpenRouter model (e.g., 'anthropic/claude-3-sonnet')
 -h, --help              Show help information
 ```
+
+## Architecture
+
+The Ask system is built with a modular architecture:
+
+### Class Hierarchy
+
+- **`AskHasyx`** (in `lib/ask-hasyx.ts`) - Base class with full AI functionality and execution engines
+- **`Ask`** (in `lib/ask.ts`) - Project-specific extension with custom prompting
+- **`ask.template`** - Template for child projects to create their own Ask classes
+
+### Key Files
+
+- **`lib/ask-hasyx.ts`** - Core Ask functionality with configurable execution engines
+- **`lib/ask.ts`** - Minimal project-specific Ask implementation  
+- **`ask.template`** - Template for child projects (copied during npm publish)
+
+### AskOptions Configuration
+
+The `AskHasyx` constructor accepts `AskOptions` to control which execution engines are enabled:
+
+```typescript
+interface AskOptions {
+  exec?: boolean;     // JavaScript execution (default: true)
+  execTs?: boolean;   // TypeScript execution (default: true) 
+  terminal?: boolean; // Terminal execution (default: true)
+}
+```
+
+### Example Usage in Child Projects
+
+Child projects can create their own `ask.ts` by copying `ask.template` and customizing:
+
+```typescript
+import { AskHasyx, AskOptions } from 'hasyx/lib/ask-hasyx';
+
+export class Ask extends AskHasyx {
+  constructor(token: string, projectName: string = 'My Project') {
+    const systemPrompt = `You are an AI assistant for the "${projectName}" project.
+    
+    // Custom project-specific prompting here
+    `;
+
+    super(
+      token,
+      {}, // context
+      { model: 'google/gemini-2.5-flash-preview' }, // options
+      systemPrompt, // system prompt
+      { exec: true, execTs: false, terminal: true } // ask options
+    );
+  }
+}
+```
+
+### Execution Engine Control
+
+You can disable specific execution engines by setting `AskOptions`:
+
+```typescript
+// Only JavaScript execution
+const ask = new AskHasyx(token, {}, {}, undefined, {
+  exec: true,
+  execTs: false,
+  terminal: false
+});
+
+// No code execution at all
+const ask = new AskHasyx(token, {}, {}, undefined, {
+  exec: false,
+  execTs: false,
+  terminal: false
+});
+```
+
+When engines are disabled:
+- The corresponding context is not added to the system prompt
+- Execution attempts return an error message
+- The AI receives appropriate context about available capabilities

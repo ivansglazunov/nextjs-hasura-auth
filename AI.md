@@ -954,18 +954,15 @@ When AI thinks, it automatically receives:
 // AI can now create sophisticated workflows
 const response = await ai.ask(`
   Create a data analysis pipeline:
-  1. Generate sample data (100 random numbers), store as 'data'
-  2. Calculate mean and store as 'mean'
-  3. Calculate standard deviation and store as 'std'
-  4. Find outliers (values > 2 std from mean) and store as 'outliers'
-  5. Create a summary report
+  1. Generate sample data (100 random numbers), store as 'rawData'
+  2. Clean the data (remove nulls) and store as 'cleanData'
+  3. Transform to specific format and store as 'transformedData'
+  4. Generate summary statistics and store as 'stats'
+  5. Create visualization data and store as 'chartData'
 `);
 
-// Each step builds on the previous:
-// Step 1: results['data'] = [1.2, 5.6, ...]
-// Step 2: results['mean'] = 42.5 (uses results['data'])
-// Step 3: results['std'] = 12.3 (uses results['data'] and results['mean'])
-// Step 4: results['outliers'] = [...] (uses all previous results)
+// AI will automatically use results from each previous step
+console.log('Pipeline results:', ai.getResults());
 ```
 
 ### Real-world Example Output
@@ -1184,3 +1181,86 @@ ai.asking('Build calculation chain').subscribe({
 ```
 
 This creates a powerful foundation for **AI-driven computation chains** where each step builds intelligently on previous results! 🚀 
+
+## Ask System Architecture
+
+The Ask system is built on top of the AI class to provide a complete development assistant:
+
+### Inheritance Hierarchy
+
+```
+AI (core AI functionality)
+└── AskHasyx (base Ask with execution engines)
+    └── Ask (project-specific implementations)
+```
+
+### AskHasyx Class
+
+`AskHasyx` extends the `AI` class with:
+
+- **Execution Engine Integration**: JavaScript, TypeScript, and Terminal execution
+- **Progress Callbacks**: Real-time feedback during code execution
+- **Configurable Engines**: Enable/disable execution engines via `AskOptions`
+- **Beautiful Output**: Markdown formatting and syntax highlighting
+- **REPL Mode**: Interactive chat interface
+
+```typescript
+import { AskHasyx, AskOptions } from 'hasyx/lib/ask-hasyx';
+
+const askOptions: AskOptions = {
+  exec: true,     // Enable JavaScript execution
+  execTs: true,   // Enable TypeScript execution  
+  terminal: true  // Enable terminal execution
+};
+
+const ask = new AskHasyx(
+  'api-key',
+  {}, // context
+  {}, // OpenRouter options
+  'System prompt', // system prompt
+  askOptions // execution engine configuration
+);
+```
+
+### Project-Specific Ask Classes
+
+Child projects create minimal `Ask` classes that extend `AskHasyx`:
+
+```typescript
+// lib/ask.ts in child project
+import { AskHasyx } from 'hasyx/lib/ask-hasyx';
+
+export class Ask extends AskHasyx {
+  constructor(token: string, projectName: string = 'My Project') {
+    const systemPrompt = `Project-specific prompting for ${projectName}`;
+    
+    super(token, {}, {}, systemPrompt, {
+      exec: true,
+      execTs: true, 
+      terminal: true
+    });
+  }
+}
+```
+
+### Template System
+
+The `ask.template` file provides a starting point for child projects:
+
+1. **Development**: Copy `ask.template` to `lib/ask.ts` 
+2. **Customization**: Modify system prompt and options
+3. **Distribution**: `ask.template` is included in npm package
+
+### Integration with AI Base Class
+
+`AskHasyx` leverages all AI class features:
+
+- **Streaming Responses**: Real-time text streaming via `asking()`
+- **Memory Management**: Conversation history and context
+- **Results Tracking**: Persistent state between executions
+- **Error Handling**: Graceful handling of execution failures
+- **Observable Pattern**: RxJS-based event streaming
+
+See the [Ask Documentation](ASK.md) for complete usage examples.
+
+## Features
