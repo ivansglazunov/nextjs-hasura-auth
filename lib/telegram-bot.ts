@@ -249,16 +249,11 @@ export class TelegramBot {
 }
 
 /**
- * Processes an incoming Telegram update.
- * This function will be called from the API route.
+ * Handles the /start command for Telegram bot.
+ * This function only handles database operations, response generation should be done in the route.
  */
-export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx, env: Record<string, string | undefined>): Promise<any> {
+export async function handleStartEvent(update: TelegramUpdate, client: Hasyx): Promise<{ success: boolean; message: string; chatId?: number; userId?: number; username?: string }> {
   debug('Processing Telegram update:', update);
-  const botToken = env.TELEGRAM_BOT_TOKEN;
-  if (!botToken) {
-    debug('TELEGRAM_BOT_TOKEN not configured, skipping event processing.');
-    return { success: false, message: 'Bot token not configured.' };
-  }
 
   if (update.message) {
     const message = update.message;
@@ -272,7 +267,7 @@ export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx
       return { success: false, message: 'User ID missing.' };
     }
 
-    // Handle /start command: Register permission and reply with Chat ID
+    // Handle /start command: Register permission (no telegram response here)
     if (messageText && messageText.trim().toLowerCase() === '/start') {
       debug(`Processing /start command from chat ID: ${chatId} for user: ${username} (${userId})`);
       try {
@@ -297,29 +292,42 @@ export async function processTelegramEvent(update: TelegramUpdate, client: Hasyx
         });
         debug('New telegram_bot permission potentially created/updated for chat ID:', chatId);
         
-        await sendTelegramMessage(botToken, chatId, `Hello ${username}! Your Chat ID for Hasyx is: ${chatId}\nSend any message to test correspondence.`);
-        return { success: true, message: '/start command processed' };
+        return { 
+          success: true, 
+          message: '/start command processed', 
+          chatId, 
+          userId, 
+          username 
+        };
 
       } catch (dbError) {
         debug('Error processing /start command (DB operation):', dbError);
-        await sendTelegramMessage(botToken, chatId, 'Sorry, there was an error processing your /start command. Please try again later.');
-        return { success: false, message: 'DB error during /start processing.' };
+        return { 
+          success: false, 
+          message: 'DB error during /start processing.',
+          chatId,
+          userId,
+          username
+        };
       }
     }
     
     if (messageText) {
         debug(`Message from ${username} (Chat ID: ${chatId}) received, not /start. Potential for AI reply.`);
-        // The API route and telegram-handler will decide if this needs an AI reply.
-        return { success: true, message: 'Text message received, no specific action taken by core processor.' };
+        return { 
+          success: true, 
+          message: 'Text message received, no specific action taken by core processor.',
+          chatId,
+          userId,
+          username
+        };
     }
 
   } else if (update.my_chat_member) {
     // Handle bot being added/removed from a chat, or status change
     debug('Received my_chat_member update:', update.my_chat_member);
     return { success: true, message: 'my_chat_member update processed.' };
-    // Potentially log this or update bot's understanding of where it's active.
   }
-  // Add handlers for other update types like callback_query if needed
 
   return { success: true, message: 'Event received, no specific action taken for this update type.' };
 } 

@@ -32,7 +32,8 @@ We are working together on this project. When we need to execute code, analyze d
         exec: true,
         execTs: true,
         terminal: true
-      } // ask options - enable all engines by default
+      }, // ask options - enable all engines by default
+      {} // output handlers - use defaults
     );
   }
 }

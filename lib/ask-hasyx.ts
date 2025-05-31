@@ -24,6 +24,18 @@ export interface AskOptions {
   terminal?: boolean;
 }
 
+export interface OutputHandlers {
+  onThinking?: () => void | Promise<void>;
+  onCodeFound?: (code: string, format: 'js' | 'tsx' | 'terminal') => void | Promise<void>;
+  onCodeExecuting?: (code: string, format: 'js' | 'tsx' | 'terminal') => void | Promise<void>;
+  onCodeResult?: (result: string) => void | Promise<void>;
+  onResponse?: (response: string) => void | Promise<void>;
+  onOutput?: (message: string) => void | Promise<void>;
+  onError?: (error: string) => void | Promise<void>;
+  onWelcome?: (enabledEngines: string[]) => void | Promise<void>;
+  onGoodbye?: () => void | Promise<void>;
+}
+
 export class AskHasyx extends AI {
   public context: string;
   public engines: {
@@ -33,13 +45,15 @@ export class AskHasyx extends AI {
   };
   private isReplMode: boolean = false;
   public askOptions: AskOptions;
+  public outputHandlers: OutputHandlers;
 
   constructor(
     token: string, 
     context: any = {}, 
     options: any = {}, 
     systemPrompt?: string, 
-    askOptions: AskOptions = {}
+    askOptions: AskOptions = {},
+    outputHandlers: OutputHandlers = {}
   ) {
     // Set default ask options
     const defaultAskOptions: AskOptions = {
@@ -101,6 +115,7 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     super(token, context, finalOptions, finalSystemPrompt);
 
     this.askOptions = finalAskOptions;
+    this.outputHandlers = outputHandlers;
     this.context = contextParts.join('\n\n');
     
     // Initialize engines based on options
@@ -115,37 +130,47 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
       this.engines.terminal = terminalDo;
     }
 
-    // Setup real-time progress callbacks for transparency (only in REPL mode)
+    // Setup progress callbacks with overridable handlers
     this._onThinking = () => {
-      if (this.isReplMode) {
-        console.log('🧠 AI думает...');
+      if (this.outputHandlers.onThinking) {
+        this.outputHandlers.onThinking();
+      } else if (this.isReplMode) {
+        this.defaultOutput('🧠 AI думает...');
       }
     };
 
     this._onCodeFound = async (code: string, format: 'js' | 'tsx' | 'terminal') => {
-      if (this.isReplMode) {
-        console.log(`📋 Найден ${format.toUpperCase()} код для выполнения:`);
+      if (this.outputHandlers.onCodeFound) {
+        await this.outputHandlers.onCodeFound(code, format);
+      } else if (this.isReplMode) {
+        this.defaultOutput(`📋 Найден ${format.toUpperCase()} код для выполнения:`);
         const displayFormat = format === 'terminal' ? 'bash' : format;
         await printMarkdown(`\`\`\`${displayFormat}\n${code}\n\`\`\``);
       }
     };
 
     this._onCodeExecuting = (code: string, format: 'js' | 'tsx' | 'terminal') => {
-      if (this.isReplMode) {
-        console.log(`⚡ Выполняется ${format.toUpperCase()} код...`);
+      if (this.outputHandlers.onCodeExecuting) {
+        this.outputHandlers.onCodeExecuting(code, format);
+      } else if (this.isReplMode) {
+        this.defaultOutput(`⚡ Выполняется ${format.toUpperCase()} код...`);
       }
     };
 
     this._onCodeResult = async (result: string) => {
-      if (this.isReplMode) {
-        console.log(`✅ Результат выполнения:`);
+      if (this.outputHandlers.onCodeResult) {
+        await this.outputHandlers.onCodeResult(result);
+      } else if (this.isReplMode) {
+        this.defaultOutput(`✅ Результат выполнения:`);
         await printMarkdown(`\`\`\`\n${result}\n\`\`\``);
       }
     };
 
     this._onResponse = (response: string) => {
-      if (this.isReplMode) {
-        console.log(`💭 AI ответил (${response.length} символов)`);
+      if (this.outputHandlers.onResponse) {
+        this.outputHandlers.onResponse(response);
+      } else if (this.isReplMode) {
+        this.defaultOutput(`💭 AI ответил (${response.length} символов)`);
       }
     };
 
@@ -229,6 +254,24 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     return String(result);
   }
 
+  // Default output handler - can be overridden
+  protected defaultOutput(message: string): void {
+    if (this.outputHandlers.onOutput) {
+      this.outputHandlers.onOutput(message);
+    } else {
+      console.log(message);
+    }
+  }
+
+  // Default error handler - can be overridden  
+  protected defaultError(error: string): void {
+    if (this.outputHandlers.onError) {
+      this.outputHandlers.onError(error);
+    } else {
+      console.error(error);
+    }
+  }
+
   /**
    * Ask a question with beautiful streaming output (for non-REPL usage)
    */
@@ -243,12 +286,12 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
         next: (event) => {
           switch (event.type) {
             case 'thinking':
-              console.log('🧠 AI думает...');
+              this.defaultOutput('🧠 AI думает...');
               break;
               
             case 'iteration':
               if (event.data.iteration > 1) {
-                console.log(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
+                this.defaultOutput(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
               }
               break;
               
@@ -258,32 +301,32 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
               break;
               
             case 'code_found':
-              console.log(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
+              this.defaultOutput(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
               const displayFormat = event.data.format === 'terminal' ? 'bash' : event.data.format;
-              console.log(`\`\`\`${displayFormat}`);
-              console.log(event.data.code);
-              console.log('```');
+              this.defaultOutput(`\`\`\`${displayFormat}`);
+              this.defaultOutput(event.data.code);
+              this.defaultOutput('```');
               break;
               
             case 'code_executing':
-              console.log(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
+              this.defaultOutput(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
               break;
               
             case 'code_result':
               const status = event.data.success ? '✅' : '❌';
-              console.log(`${status} Результат выполнения:`);
-              console.log('```');
-              console.log(event.data.result);
-              console.log('```');
+              this.defaultOutput(`${status} Результат выполнения:`);
+              this.defaultOutput('```');
+              this.defaultOutput(event.data.result);
+              this.defaultOutput('```');
               break;
               
             case 'complete':
               finalResponse = event.data.finalResponse;
-              console.log(`💭 Завершено (${event.data.iterations} итераций)`);
+              this.defaultOutput(`💭 Завершено (${event.data.iterations} итераций)`);
               break;
               
             case 'error':
-              console.error(`❌ Ошибка в итерации ${event.data.iteration}:`, event.data.error.message);
+              this.defaultError(`❌ Ошибка в итерации ${event.data.iteration}: ${event.data.error.message}`);
               break;
           }
         },
@@ -312,15 +355,20 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     this.isReplMode = true; // Enable progress callbacks for REPL
     
     try {
-      console.log('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
-      console.log('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
-      console.log('🚀 Real-time streaming enabled!');
+      this.defaultOutput('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
+      this.defaultOutput('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
+      this.defaultOutput('🚀 Real-time streaming enabled!');
       if (this._do) {
         const enabledEngines = [];
         if (this.askOptions.exec) enabledEngines.push('JavaScript');
         if (this.askOptions.execTs) enabledEngines.push('TypeScript');
         if (this.askOptions.terminal) enabledEngines.push('Terminal');
-        console.log(`🪬 AI can execute code automatically! (${enabledEngines.join(', ')})`);
+        
+        if (this.outputHandlers.onWelcome) {
+          await this.outputHandlers.onWelcome(enabledEngines);
+        } else {
+          this.defaultOutput(`🪬 AI can execute code automatically! (${enabledEngines.join(', ')})`);
+        }
       }
       
       const rl = readline.createInterface({
@@ -350,12 +398,12 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
             next: (event) => {
               switch (event.type) {
                 case 'thinking':
-                  console.log('🧠 AI думает...');
+                  this.defaultOutput('🧠 AI думает...');
                   break;
                   
                 case 'iteration':
                   if (event.data.iteration > 1) {
-                    console.log(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
+                    this.defaultOutput(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
                   }
                   break;
                   
@@ -369,67 +417,75 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
                 case 'code_found':
                   // Add newline before code block if needed
                   if (responseBuffer && !responseBuffer.endsWith('\n')) {
-                    console.log('');
+                    this.defaultOutput('');
                   }
-                  console.log(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
+                  this.defaultOutput(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
                   const displayFormat = event.data.format === 'terminal' ? 'bash' : event.data.format;
-                  console.log(`\`\`\`${displayFormat}`);
-                  console.log(event.data.code);
-                  console.log('```');
+                  this.defaultOutput(`\`\`\`${displayFormat}`);
+                  this.defaultOutput(event.data.code);
+                  this.defaultOutput('```');
                   responseBuffer = ''; // Reset buffer after code block
                   break;
                   
                 case 'code_executing':
-                  console.log(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
+                  this.defaultOutput(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
                   break;
                   
                 case 'code_result':
                   const status = event.data.success ? '✅' : '❌';
-                  console.log(`${status} Результат выполнения:`);
-                  console.log('```');
-                  console.log(event.data.result);
-                  console.log('```');
+                  this.defaultOutput(`${status} Результат выполнения:`);
+                  this.defaultOutput('```');
+                  this.defaultOutput(event.data.result);
+                  this.defaultOutput('```');
                   break;
                   
                 case 'complete':
                   // Ensure we end with a newline
                   if (responseBuffer && !responseBuffer.endsWith('\n')) {
-                    console.log('');
+                    this.defaultOutput('');
                   }
-                  console.log(`💭 Завершено (${event.data.iterations} итераций)`);
+                  this.defaultOutput(`💭 Завершено (${event.data.iterations} итераций)`);
                   break;
                   
                 case 'error':
-                  console.error(`❌ Ошибка в итерации ${event.data.iteration}:`, event.data.error.message);
+                  this.defaultError(`❌ Ошибка в итерации ${event.data.iteration}: ${event.data.error.message}`);
                   break;
               }
             },
             complete: () => {
-              console.log('');
+              this.defaultOutput('');
               rl.prompt();
             },
             error: (error) => {
-              console.error('❌ Ошибка стриминга:', error.message);
+              this.defaultError(`❌ Ошибка стриминга: ${error.message}`);
               rl.prompt();
             }
           });
           
         } catch (error) {
           debug('Error in streaming REPL:', error);
-          console.error('❌ Error:', error instanceof Error ? error.message : String(error));
+          this.defaultError(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
           rl.prompt();
         }
       });
 
       rl.on('close', () => {
         debug('REPL closed');
-        console.log('\n👋 Goodbye!');
+        if (this.outputHandlers.onGoodbye) {
+          this.outputHandlers.onGoodbye();
+        } else {
+          this.defaultOutput('\n👋 Goodbye!');
+        }
         process.exit(0);
       });
 
       rl.on('SIGINT', () => {
         debug('SIGINT received in REPL');
-        console.log('\n👋 Goodbye!');
+        if (this.outputHandlers.onGoodbye) {
+          this.outputHandlers.onGoodbye();
+        } else {
+          this.defaultOutput('\n👋 Goodbye!');
+        }
         process.exit(0);
       });
     } finally {
@@ -441,9 +497,12 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
 /**
  * Ensures OPENROUTER_API_KEY is available, setting it up interactively if needed
  */
-export async function ensureOpenRouterApiKey() {
+export async function ensureOpenRouterApiKey(outputHandler?: (message: string) => void) {
+  const output = outputHandler || console.log;
+  const error = outputHandler ? outputHandler : console.error;
+  
   if (!process?.env?.OPENROUTER_API_KEY) {
-    console.log('🔑 OpenRouter API Key not found. Let\'s set it up...');
+    output('🔑 OpenRouter API Key not found. Let\'s set it up...');
     
     try {
       const { configureOpenRouter } = await import('./assist-openrouter');
@@ -463,17 +522,17 @@ export async function ensureOpenRouterApiKey() {
         
         // Check if the key is now available
         if (!process?.env?.OPENROUTER_API_KEY) {
-          console.error('❌ OPENROUTER_API_KEY is still not available. Please check your .env file.');
+          error('❌ OPENROUTER_API_KEY is still not available. Please check your .env file.');
           process.exit(1);
         }
         
-        console.log('✅ OpenRouter API Key configured successfully!');
+        output('✅ OpenRouter API Key configured successfully!');
         
       } finally {
         rl.close();
       }
-    } catch (error) {
-      console.error('❌ Failed to configure OpenRouter API Key:', error);
+    } catch (err) {
+      error(`❌ Failed to configure OpenRouter API Key: ${err}`);
       process.exit(1);
     }
   }
