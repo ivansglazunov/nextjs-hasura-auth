@@ -16,9 +16,9 @@ const rootDebug = _debug(pckg.name);
  * @param namespace - Namespace for the debugger.
  * @returns A debugger function for the specified namespace.
  */
-function Debug(namespace?: string): DebuggerFunction {
+export function Debug(namespace?: string): DebuggerFunction {
   // Return the debugger function for that namespace, defaulting to 'app'
   return rootDebug.extend(namespace || 'app') as DebuggerFunction;
 }
 
-export default Debug; 
+export default Debug;

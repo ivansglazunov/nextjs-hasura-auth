@@ -458,7 +458,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
       }
       
       const requiredScripts = {
-        "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest --verbose",
+        "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest --verbose --runInBand",
         "build": `NODE_ENV=production npx -y ${packageName} build`,
         "unbuild": `npx -y ${packageName} unbuild`,
         "start": `NODE_ENV=production NODE_OPTIONS=\"--experimental-vm-modules\" npx -y ${packageName} start`,
