@@ -52,6 +52,7 @@ Hasyx takes responsibility for:
 *   **OpenRouter AI Integration with Real-time Streaming:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Features **genuine Server-Sent Events (SSE) streaming** with character-by-character output and real-time progress indicators showing AI thinking, code found, execution status, and results. AI can execute JavaScript/TypeScript code automatically and continue reasoning based on results through iterative processing (up to 3 iterations). Includes both programmatic API and CLI interface with `npx hasyx ask` command. First response tokens appear in 0.5-2 seconds vs 5-10 seconds without streaming. See [`OPENROUTER.md`](OPENROUTER.md) and [`ASK.md`](ASK.md) for details.
 *   Migrations control with `npx hasyx migrate [filter]` and `npx hasyx unmigrate [filter]` for easy database schema management from `./migrations` directory, with optional filtering to run only specific migrations.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
+*   **Server-side Debug Logging:** Built-in `debug()` method for database logging when `HASYX_DEBUG=1` is enabled, storing structured debug data in a dedicated `debug` table for monitoring and troubleshooting production systems.
 *   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
 *   **Cytoscape Integration:** A powerful set of React components for graph visualizations using Cytoscape.js, allowing for custom HTML rendering within nodes and reactive style updates. See [`CYTO.md`](CYTO.md) for details.
@@ -136,6 +137,7 @@ Explore the different modules and functionalities of Hasyx:
 *   **[MARKDOWN-TERMINAL.md](MARKDOWN-TERMINAL.md):** Beautiful markdown formatting for terminal output with colors, syntax highlighting, and proper styling.
 *   **[CYTO.md](CYTO.md):** Guide to Cytoscape.js integration for graph visualizations.
 *   **[HID.md](HID.md):** Explanation of Hasyx Identifiers (HID) for resource identification.
+*   **[EVENTS.md](EVENTS.md):** Complete guide to Hasura Event Triggers integration with automatic synchronization and secure webhook handling.
 *   **[PWA.md](PWA.md):** Progressive Web App support with offline functionality, installability, and push notifications.
 *   **[NOTIFY.md](NOTIFY.md):** Overview of the notifications system.
 *   **[NOTIFY-FIREBASE.md](NOTIFY-FIREBASE.md):** Specifics on Firebase Cloud Messaging for push notifications.

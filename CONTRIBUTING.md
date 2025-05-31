@@ -48,8 +48,49 @@ Debug output includes:
 - `hasyx:apollo` - Apollo client operations
 - `hasyx:auth` - Authentication and JWT handling
 - `hasyx:terminal` - Terminal and CLI operations
+- `hasyx:events` - Event triggers and webhook handling
+- `hasyx:events-cli` - Event CLI command operations
 
 Use `DEBUG="hasyx*"` to see all debug information, or specific namespaces for focused debugging.
+
+### Database Debug Logging
+
+For server-side debugging and production monitoring, Hasyx provides database debug logging:
+
+```bash
+# Enable database debug logging
+HASYX_DEBUG=1
+```
+
+**How it works:**
+- Only works with admin-level Hasyx instances (requires `HASURA_ADMIN_SECRET`)
+- Stores structured debug data in a dedicated `debug` table
+- Useful for monitoring production systems and troubleshooting server-side issues
+
+**Usage in code:**
+```typescript
+// Create admin client for debug logging
+const adminClient = createApolloClient({
+  url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
+  secret: process.env.HASURA_ADMIN_SECRET!,
+});
+const hasyx = new Hasyx(adminClient, Generator(schema));
+
+// Log debug information to database
+await hasyx.debug({
+  action: 'user_login',
+  userId: 'user123',
+  timestamp: Date.now(),
+  metadata: { ip: '192.168.1.1' }
+});
+```
+
+**Requirements:**
+- `HASYX_DEBUG=1` environment variable
+- Admin secret configured in Hasyx instance
+- `debug` table must exist (created by migrations)
+
+See [`HASYX.md`](HASYX.md#debug-logging) for complete documentation on database debug logging.
 
 ## Running Tests
 

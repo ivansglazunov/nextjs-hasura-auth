@@ -198,14 +198,13 @@ async function executeDatabaseMaintenance() {
         DATE_TRUNC('day', created_at) as date,
         COUNT(*) as user_count
       FROM users 
-      WHERE created_at >= NOW() - INTERVAL '7 days'
+      WHERE created_at > NOW() - INTERVAL '30 days'
       GROUP BY DATE_TRUNC('day', created_at)
-      ORDER BY date
+      ORDER BY date DESC
     `);
-    console.log('Weekly user stats:', analyticsResult.result);
+    console.log('Analytics data:', analyticsResult);
   } catch (error) {
-    console.error('SQL execution failed:', error);
-    // Will throw error if no admin secret or URL configured
+    console.error('Database operation failed:', error);
   }
 }
 
@@ -994,3 +993,283 @@ These examples showcase the flexibility and power of the Hasyx hooks when workin
     *   The polling mechanism uses deep equality checks (`react-fast-compare`) to ensure subscribers only receive updates when data has actually changed.
 *   **Class Method Return Values:** Methods like `select`, `insert`, `update`, `delete` now return the *unwrapped* data where applicable (e.g., `User[]` or `User` object). For bulk mutations or aggregate queries, they return the standard Hasura response structure (`{ affected_rows, returning }` or `{ aggregate, nodes }`). Ensure the generic `TData` type matches the expected return value.
 *   **Hook Return Values:** Hooks (`useQuery`, `useSubscription`, etc.) return the standard Apollo Client result objects with the added benefit of automatically unwrapped data. Like the class methods, the hooks extract data from the nested Hasura structure, so you directly get the data without needing to access it via the query name (e.g., you get `result.data` instead of `result.data.users`). Only aggregate queries preserve the full structure. This consistent behavior makes it easier to switch between class methods and hooks. 
+
+### Debug Logging
+
+The Hasyx class provides a `debug()` method for server-side debug logging to the database. This method inserts debug entries into a dedicated `debug` table for monitoring and troubleshooting.
+
+#### Debug Method
+
+```typescript
+debug(value: any): Promise<any> | undefined
+```
+
+**Description:** Inserts a debug log entry if `HASYX_DEBUG` is enabled and admin secret is present. This method is intended for server-side admin use only.
+
+**Parameters:**
+- `value: any` - The JSONB value to log (objects, arrays, strings, numbers, etc.)
+
+**Returns:** 
+- `Promise<any>` - The result of the insert operation if executed
+- `undefined` - If debug logging is disabled or not in admin context
+
+**Conditions for Execution:**
+1. `HASYX_DEBUG` environment variable must be set to `1` or any truthy value
+2. The Hasyx instance must have an admin secret (admin context)
+
+#### Environment Setup
+
+**Enable Debug Logging:**
+```bash
+# In your .env file
+HASYX_DEBUG=1
+```
+
+**Database Migration:**
+Debug logging requires the `debug` table to exist in your database. This is automatically created by the Hasyx debug migration:
+
+```bash
+# Run the debug migration (included in standard Hasyx migrations)
+npx hasyx migrate
+```
+
+#### Usage Examples
+
+**Basic Debug Logging:**
+```typescript
+import { createApolloClient } from 'hasyx/lib/apollo';
+import { Hasyx } from 'hasyx/lib/hasyx';
+import { Generator } from 'hasyx/lib/generator';
+import schema from '@/public/hasura-schema.json';
+
+// Create admin client for debug logging
+const adminClient = createApolloClient({
+  url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
+  secret: process.env.HASURA_ADMIN_SECRET!, // Required for debug logging
+});
+
+const hasyx = new Hasyx(adminClient, Generator(schema));
+
+// Simple debug logging
+async function debugExample() {
+  // Log a simple message
+  await hasyx.debug({ message: 'User login attempt', userId: '123' });
+  
+  // Log complex objects
+  await hasyx.debug({
+    action: 'payment_processing',
+    paymentData: {
+      amount: 99.99,
+      currency: 'USD',
+      provider: 'stripe'
+    },
+    timestamp: new Date().toISOString(),
+    metadata: { ip: '192.168.1.1', userAgent: 'Mozilla/5.0...' }
+  });
+  
+  // Log error information
+  try {
+    // Some operation that might fail
+    await riskyOperation();
+  } catch (error) {
+    await hasyx.debug({
+      error: 'Operation failed',
+      details: error.message,
+      stack: error.stack,
+      context: { userId: 'user123', action: 'riskyOperation' }
+    });
+    throw error;
+  }
+}
+```
+
+**API Route Debug Logging:**
+```typescript
+// app/api/webhook/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { Hasyx } from 'hasyx';
+
+export async function POST(request: NextRequest) {
+  const adminHasyx = createAdminHasyx();
+  
+  try {
+    const payload = await request.json();
+    
+    // Log incoming webhook
+    await adminHasyx.debug({
+      type: 'webhook_received',
+      payload,
+      headers: Object.fromEntries(request.headers),
+      timestamp: Date.now()
+    });
+    
+    // Process webhook...
+    const result = await processWebhook(payload);
+    
+    // Log successful processing
+    await adminHasyx.debug({
+      type: 'webhook_processed',
+      success: true,
+      result,
+      processingTime: Date.now() - startTime
+    });
+    
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    // Log error with context
+    await adminHasyx.debug({
+      type: 'webhook_error',
+      error: error.message,
+      stack: error.stack,
+      requestId: request.headers.get('x-request-id')
+    });
+    
+    return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
+  }
+}
+```
+
+**Event Handler Debug Logging:**
+```typescript
+// app/api/events/users/route.ts
+import { hasyxEvent, HasuraEventPayload } from 'hasyx/lib/events';
+
+export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
+  const adminHasyx = createAdminHasyx();
+  
+  // Log event processing
+  await adminHasyx.debug({
+    event_type: 'hasura_event',
+    operation: payload.event.op,
+    table: `${payload.table.schema}.${payload.table.name}`,
+    trigger: payload.trigger.name,
+    data_summary: {
+      has_old: !!payload.event.data.old,
+      has_new: !!payload.event.data.new,
+      new_id: payload.event.data.new?.id
+    },
+    delivery_info: payload.delivery_info
+  });
+  
+  if (payload.event.op === 'INSERT') {
+    const newUser = payload.event.data.new;
+    
+    // Log user registration
+    await adminHasyx.debug({
+      action: 'user_registered',
+      user_id: newUser.id,
+      email: newUser.email,
+      registration_method: newUser.provider || 'email',
+      has_verified_email: !!newUser.email_verified
+    });
+    
+    // Send welcome email, etc.
+  }
+  
+  return { success: true };
+});
+```
+
+#### Debug Table Structure
+
+The debug table has the following structure:
+
+```sql
+CREATE TABLE debug (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000,
+  updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000,
+  value JSONB, -- Your debug data stored here
+  _hasyx_schema_name TEXT,
+  _hasyx_table_name TEXT
+);
+```
+
+#### Querying Debug Logs
+
+**Via Hasura Console:**
+1. Go to Hasura Console → Data → debug table
+2. Browse entries or run GraphQL queries
+
+**Via GraphQL:**
+```graphql
+query GetRecentDebugLogs {
+  debug(
+    order_by: { created_at: desc }
+    limit: 50
+  ) {
+    id
+    created_at
+    value
+  }
+}
+
+# Filter by specific debug types
+query GetErrorLogs {
+  debug(
+    where: {
+      value: { _contains: { type: "webhook_error" } }
+    }
+    order_by: { created_at: desc }
+  ) {
+    id
+    created_at
+    value
+  }
+}
+```
+
+**Via Hasyx Client:**
+```typescript
+// Get recent debug logs
+const logs = await hasyx.select({
+  table: 'debug',
+  order_by: [{ created_at: 'desc' }],
+  limit: 100,
+  returning: ['id', 'created_at', 'value']
+});
+
+// Filter by debug type
+const errorLogs = await hasyx.select({
+  table: 'debug',
+  where: {
+    value: { _contains: { type: 'error' } }
+  },
+  order_by: [{ created_at: 'desc' }],
+  returning: ['id', 'created_at', 'value']
+});
+```
+
+#### Best Practices
+
+1. **Enable Only When Needed:** Debug logging creates database entries, so only enable `HASYX_DEBUG=1` when actively debugging
+2. **Structure Your Logs:** Use consistent structure in debug objects for easier querying
+3. **Include Context:** Always include relevant context like user IDs, request IDs, timestamps
+4. **Clean Up Regularly:** Consider implementing log rotation to prevent the debug table from growing too large
+5. **Sensitive Data:** Avoid logging sensitive information like passwords, tokens, or personal data
+6. **Performance Impact:** Debug logging involves database writes, so use judiciously in high-traffic scenarios
+
+#### Security Considerations
+
+- Debug logging only works with admin-level Hasyx instances (requires `HASURA_ADMIN_SECRET`)
+- Debug logs are stored in your database and accessible via GraphQL queries
+- Ensure proper access controls on the debug table in production
+- Consider who has access to debug logs as they may contain sensitive operational data
+
+#### Troubleshooting Debug Logging
+
+**Debug Logging Not Working:**
+1. Check `HASYX_DEBUG=1` is set in environment
+2. Verify Hasyx instance has admin secret configured
+3. Ensure debug table exists (run migrations)
+4. Check database permissions
+
+**Debug Method Returns Undefined:**
+```typescript
+const result = await hasyx.debug({ test: 'value' });
+if (result === undefined) {
+  console.log('Debug logging is disabled or not in admin context');
+}
+```
+
+This debug functionality is particularly useful for monitoring production systems, troubleshooting issues, and understanding application behavior in server-side contexts. 
