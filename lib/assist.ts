@@ -22,6 +22,7 @@ import { configurePg } from './assist-pg';
 import { configureProjectUser } from './assist-project-user';
 import { configureResend } from './assist-resend';
 import { syncEnvironmentVariables } from './assist-sync';
+import { configureTBankTest } from './assist-tbank-test';
 import { calibrateTelegramBot, configureTelegramBot } from './assist-telegram';
 import { setupVercel } from './assist-vercel';
 import Debug from './debug';
@@ -264,6 +265,25 @@ if (require.main === module) {
     .option('--skip-pg', 'Skip PostgreSQL configuration')
     .action((cmdOptions) => {
       assist(cmdOptions);
+    });
+
+  // Add T-Bank test setup command
+  program
+    .command('tbank-test')
+    .description('Configure T-Bank test environment for integration testing')
+    .action(async () => {
+      const rl = createRlInterface();
+      const envPath = path.join(process.cwd(), '.env');
+      
+      try {
+        await configureTBankTest(rl, envPath);
+        console.log('✅ T-Bank test configuration completed');
+      } catch (error) {
+        console.error('❌ Error configuring T-Bank test environment:', error);
+        process.exit(1);
+      } finally {
+        rl.close();
+      }
     });
 
   program.parse(process.argv);
