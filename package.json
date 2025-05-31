@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.231",
+  "version": "0.1.232",
   "homepage": "https://hasyx.vercel.app/",
   "engines": {
     "node": "22.14"
@@ -10,7 +10,7 @@
     "url": "https://github.com/ivansglazunov/hasyx.git"
   },
   "scripts": {
-    "dev": "npm run doc:build && NODE_OPTIONS=\"--experimental-vm-modules\" npx -y hasyx dev",
+    "dev": "npm run doc:build && npm run unbuild && NODE_OPTIONS=\"--experimental-vm-modules\" npx -y hasyx dev",
     "build": "npm run build:lib && npm run build:css && npm run doc:build && NODE_ENV=production next build",
     "build:lib": "tsc -p tsconfig.lib.json",
     "build:css": "tailwindcss -i ./app/globals.css -o ./lib/styles.css",
