@@ -195,7 +195,26 @@ export async function proxySOCKET(
 
   const closeConnections = (code: number | string = 1000, reason = 'Closing connection') => {
     // Ensure code is a valid WebSocket close code number
-    const closeCode = typeof code === 'number' ? code : 1000;
+    let closeCode: number;
+    
+    if (typeof code === 'number') {
+      // Validate that the code is in the valid range for WebSocket close codes
+      if (code >= 1000 && code <= 4999) {
+        closeCode = code;
+      } else {
+        closeCode = 1000; // Default close code for normal closure
+      }
+    } else if (typeof code === 'string') {
+      const parsedCode = parseInt(code, 10);
+      if (!isNaN(parsedCode) && parsedCode >= 1000 && parsedCode <= 4999) {
+        closeCode = parsedCode;
+      } else {
+        closeCode = 1000; // Default close code for normal closure
+      }
+    } else {
+      closeCode = 1000; // Default close code for normal closure
+    }
+    
     const closeReason = typeof reason === 'string' ? reason : 'Closing connection';
     
     debugGraphql(`[${clientId}] Closing connections: Code=${closeCode}, Reason=${closeReason}`);
@@ -431,14 +450,14 @@ export async function proxySOCKET(
 
     client.on('close', (code, reason: Buffer) => {
       const reasonStr = reason.toString();
-      debugGraphql(`👋 [${clientId}] Client disconnected: ${code} ${reasonStr}`);
+      debugGraphql(`👋 [${clientId}] Client disconnected: code=${code} (type: ${typeof code}), reason=${reasonStr}`);
       debugGraphql(`--- proxySOCKET [${clientId}] End (Client Close) ---`);
       closeConnections(code, reasonStr);
     });
 
     hasuraWs.on('close', (code, reason: Buffer) => {
       const reasonStr = reason.toString();
-      debugGraphql(`👋 [${clientId}] Hasura disconnected: ${code} ${reasonStr}`);
+      debugGraphql(`👋 [${clientId}] Hasura disconnected: code=${code} (type: ${typeof code}), reason=${reasonStr}`);
       debugGraphql(`--- proxySOCKET [${clientId}] End (Hasura Close) ---`);
       closeConnections(code, reasonStr);
     });
