@@ -2,7 +2,6 @@
 
 import { HasyxProvider } from "hasyx";
 import { PWAInstallPrompt, PWAStatus } from "hasyx/components/pwa-install-prompt";
-import { PWADebug } from "../components/pwa-debug";
 import "@/app/globals.css";
 import "hasyx/lib/styles.css";
 import { Generator } from "hasyx";
@@ -73,7 +72,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* PWA Components - available on all pages */}
             <PWAInstallPrompt />
             <PWAStatus />
-            <PWADebug />
           </HasyxProvider>
         </body>
       </html>
