@@ -63,7 +63,7 @@ interface TestResult {
 }
 
 export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagnosticsProps) {
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [cacheInfo, setCacheInfo] = useState<CacheInfo[]>([]);
   const [installStatus, setInstallStatus] = useState<InstallationStatus>({ 
     canInstall: false, 
@@ -90,16 +90,18 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    // Set initial state
-    setIsOnline(navigator.onLine);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      
+      // Set initial state
+      setIsOnline(navigator.onLine);
+      
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
   }, []);
 
   // Load cache information
@@ -114,7 +116,7 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
 
   const loadCacheInfo = async () => {
     try {
-      if ('caches' in window) {
+      if (typeof window !== 'undefined' && 'caches' in window) {
         const cacheNames = await caches.keys();
         const info: CacheInfo[] = [];
         
@@ -138,6 +140,10 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
   };
 
   const updateInstallationStatus = () => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return;
+    }
+
     const userAgent = navigator.userAgent;
     const isIOS = /iPad|iPhone|iPod/.test(userAgent);
     const isAndroid = /Android/.test(userAgent);
@@ -169,6 +175,10 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
 
   const clearCache = async (cacheName?: string) => {
     try {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
       if (cacheName) {
         const { clearCache: clearSingleCache } = await import('./pwa-cache-utils');
         await clearSingleCache(cacheName);
@@ -194,6 +204,10 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
 
   const forceUpdate = async () => {
     try {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
       const { forceReloadFromServer } = await import('./pwa-cache-utils');
       await forceReloadFromServer();
     } catch (error) {
@@ -204,6 +218,10 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
   };
 
   const uninstallPWA = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     setIsUninstalling(true);
     
     try {
@@ -235,6 +253,10 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
   };
 
   const runPWATests = async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     setIsRunningTests(true);
     const results: TestResult[] = [];
 
@@ -286,15 +308,17 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
     }
 
     // Test 4: HTTPS
+    const isSecure = typeof window !== 'undefined' ? window.isSecureContext : false;
+    const protocol = typeof window !== 'undefined' ? window.location.protocol : 'unknown';
     results.push({
       name: 'Secure Context',
-      status: window.isSecureContext ? 'passed' : 'failed',
-      message: window.isSecureContext ? 'Running on HTTPS' : 'HTTPS required for PWA',
-      details: { protocol: window.location.protocol }
+      status: isSecure ? 'passed' : 'failed',
+      message: isSecure ? 'Running on HTTPS' : 'HTTPS required for PWA',
+      details: { protocol }
     });
 
     // Test 5: Notifications
-    const notificationPermission = 'Notification' in window ? Notification.permission : 'not-supported';
+    const notificationPermission = typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'not-supported';
     results.push({
       name: 'Notifications',
       status: notificationPermission === 'granted' ? 'passed' : 
@@ -304,7 +328,7 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
     });
 
     // Test 6: Cache API
-    const cacheSupported = 'caches' in window;
+    const cacheSupported = typeof window !== 'undefined' && 'caches' in window;
     results.push({
       name: 'Cache API',
       status: cacheSupported ? 'passed' : 'failed',
@@ -608,7 +632,7 @@ export default function PWADiagnostics({ serverSession, sidebarData }: PWADiagno
                     <div>
                       <h4 className="font-medium">Platform</h4>
                       <p className="text-sm text-muted-foreground">
-                        {installStatus.platform} - {navigator.userAgent.substring(0, 50)}...
+                        {installStatus.platform} - {typeof navigator !== 'undefined' ? navigator.userAgent.substring(0, 50) + '...' : 'User agent not available'}
                       </p>
                     </div>
                     <Badge variant="outline">
