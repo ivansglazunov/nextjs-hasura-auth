@@ -115,6 +115,10 @@ export class AI {
   public memory: (OpenRouterMessage | Do)[] = [];
   public systemPrompt?: string;
   
+  // Results tracking for AI context
+  public results: Record<string, any> = {};
+  public executionHistory: Array<{ id: string; code: string; result: any; format: 'js' | 'tsx' | 'terminal'; timestamp: Date }> = [];
+  
   // Callbacks for external handling
   public _onMemory?: (message: OpenRouterMessage | Do) => void;
   public _do?: (doItem: Do) => Promise<Do>;
@@ -802,7 +806,41 @@ ${executedDo.response}
     if (this._do) {
       // Use custom handler if provided
       debug(`Using custom _do handler for: ${doItem.id}`);
-      return await this._do(doItem);
+      const result = await this._do(doItem);
+      
+      // Track execution results and history
+      if (result.response && !result.response.startsWith('Error:')) {
+        // Try to parse the result for storage
+        let parsedResult: any = result.response;
+        try {
+          // If it's valid JSON, parse it
+          parsedResult = JSON.parse(result.response);
+        } catch {
+          // Keep as string if not JSON
+          parsedResult = result.response;
+        }
+        
+        // Store in results with doItem.id as key
+        this.results[doItem.id] = parsedResult;
+        
+        // Add to execution history
+        this.executionHistory.push({
+          id: doItem.id,
+          code: doItem.request,
+          result: parsedResult,
+          format: doItem.format,
+          timestamp: new Date()
+        });
+        
+        // Limit execution history to last 50 entries
+        if (this.executionHistory.length > 50) {
+          this.executionHistory = this.executionHistory.slice(-50);
+        }
+        
+        debug(`Stored result for ${doItem.id}:`, parsedResult);
+      }
+      
+      return result;
     }
     
     // Default behavior if no handler is provided
@@ -831,9 +869,39 @@ ${executedDo.response}
     const allMessages: OpenRouterMessage[] = [];
     
     if (this.systemPrompt) {
+      // Build enhanced system prompt with results context
+      let enhancedSystemPrompt = this.systemPrompt;
+      
+      // Add results context if there are any results
+      if (Object.keys(this.results).length > 0 || this.executionHistory.length > 0) {
+        enhancedSystemPrompt += '\n\n**🔄 AVAILABLE RESULTS CONTEXT:**\n\n';
+        
+        // Add current results state
+        if (Object.keys(this.results).length > 0) {
+          enhancedSystemPrompt += '**Current Results State:**\n';
+          enhancedSystemPrompt += '```json\n';
+          enhancedSystemPrompt += JSON.stringify(this.results, null, 2);
+          enhancedSystemPrompt += '\n```\n\n';
+        }
+        
+        // Add recent execution history (last 5 executions)
+        if (this.executionHistory.length > 0) {
+          const recentExecutions = this.executionHistory.slice(-5);
+          enhancedSystemPrompt += '**Recent Execution History:**\n';
+          recentExecutions.forEach((exec, index) => {
+            enhancedSystemPrompt += `${index + 1}. **${exec.id}** (${exec.format}) - ${exec.timestamp.toISOString()}\n`;
+            enhancedSystemPrompt += `   Code: \`${exec.code.substring(0, 100)}${exec.code.length > 100 ? '...' : ''}\`\n`;
+            enhancedSystemPrompt += `   Result: \`${String(exec.result).substring(0, 100)}${String(exec.result).length > 100 ? '...' : ''}\`\n`;
+          });
+          enhancedSystemPrompt += '\n';
+        }
+        
+        enhancedSystemPrompt += '**Important:** You can reference previous results using `results["key"]` in your code. Build upon previous computations and maintain state between executions.\n\n';
+      }
+      
       allMessages.push({
         role: 'system',
-        content: this.systemPrompt
+        content: enhancedSystemPrompt
       });
     }
     
@@ -870,6 +938,60 @@ ${executedDo.response}
   clearMemory(): void {
     this.memory = [];
     debug('Memory cleared');
+  }
+
+  /**
+   * Clear results and execution history
+   */
+  clearResults(): void {
+    this.results = {};
+    this.executionHistory = [];
+    debug('Results and execution history cleared');
+  }
+
+  /**
+   * Clear both memory and results
+   */
+  clearAll(): void {
+    this.clearMemory();
+    this.clearResults();
+    debug('All memory and results cleared');
+  }
+
+  /**
+   * Get current results state
+   */
+  getResults(): Record<string, any> {
+    return { ...this.results };
+  }
+
+  /**
+   * Get execution history
+   */
+  getExecutionHistory(): Array<{ id: string; code: string; result: any; format: 'js' | 'tsx' | 'terminal'; timestamp: Date }> {
+    return [...this.executionHistory];
+  }
+
+  /**
+   * Set a result manually (useful for external state)
+   */
+  setResult(key: string, value: any): void {
+    this.results[key] = value;
+    debug(`Set result for ${key}:`, value);
+  }
+
+  /**
+   * Get a specific result
+   */
+  getResult(key: string): any {
+    return this.results[key];
+  }
+
+  /**
+   * Check if a result exists
+   */
+  hasResult(key: string): boolean {
+    return key in this.results;
   }
 
   /**

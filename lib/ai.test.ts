@@ -338,77 +338,6 @@ Line 9`;
   });
 
   describe('Real Code Execution', () => {
-    /*
-    it('should execute JavaScript Do operation with real exec engine', async () => {
-      // Setup real execution handler
-      const { AskExec } = await import('./ask-exec');
-      const askExec = new AskExec({ autoConfirm: true });
-      askExec.setupAI(ai);
-
-      const doItem: Do = {
-        role: 'tool',
-        content: '',
-        id: 'test-uuid',
-        operation: 'do/exec/js',
-        format: 'js',
-        request: '2 + 2',
-        startLine: 0,
-        endLine: 0
-      };
-
-      const result = await ai.do(doItem);
-
-      expect(result.id).toBe('test-uuid');
-      expect(result.response).toBe('4');
-    });
-
-    it('should execute TypeScript Do operation with real exec-tsx engine', async () => {
-      // Setup real execution handler
-      const { AskExec } = await import('./ask-exec');
-      const askExec = new AskExec({ autoConfirm: true });
-      askExec.setupAI(ai);
-
-      const doItem: Do = {
-        role: 'tool',
-        content: '',
-        id: 'test-uuid',
-        operation: 'do/exec/tsx',
-        format: 'tsx',
-        request: '42 * 2',
-        startLine: 0,
-        endLine: 0
-      };
-
-      const result = await ai.do(doItem);
-
-      expect(result.id).toBe('test-uuid');
-      expect(result.response).toBe('84');
-    });
-
-    it('should handle execution errors in real environment', async () => {
-      // Setup real execution handler
-      const { AskExec } = await import('./ask-exec');
-      const askExec = new AskExec({ autoConfirm: true });
-      askExec.setupAI(ai);
-
-      const doItem: Do = {
-        role: 'tool',
-        content: '',
-        id: 'test-uuid',
-        operation: 'do/exec/js',
-        format: 'js',
-        request: 'throw new Error("Test error");',
-        startLine: 0,
-        endLine: 0
-      };
-
-      const result = await ai.do(doItem);
-
-      expect(result.id).toBe('test-uuid');
-      expect(result.response).toContain('Error: Test error');
-    });
-    */
-
     it('should use custom _do handler when provided', async () => {
       const customResult: Do = {
         role: 'tool',
@@ -463,6 +392,42 @@ Line 9`;
       expect(result.content).toBe('original content');
       expect(result.id).toBe('test-uuid');
     });
+
+    it('should track results when Do operations execute successfully', async () => {
+      // Setup custom handler that simulates successful execution
+      ai._do = async (doItem: Do) => {
+        return {
+          ...doItem,
+          response: '42' // Simulate successful result
+        };
+      };
+
+      const doItem: Do = {
+        role: 'tool',
+        content: '',
+        id: 'test-calc',
+        operation: 'do/exec/js',
+        format: 'js',
+        request: '6 * 7',
+        startLine: 0,
+        endLine: 0
+      };
+
+      const result = await ai.do(doItem);
+
+      // Check that result was stored (AI auto-parses numeric strings to numbers)
+      expect(ai.hasResult('test-calc')).toBe(true);
+      expect(ai.getResult('test-calc')).toBe(42); // Should be parsed as number
+      
+      // Check execution history
+      const history = ai.getExecutionHistory();
+      expect(history).toHaveLength(1);
+      expect(history[0].id).toBe('test-calc');
+      expect(history[0].code).toBe('6 * 7');
+      expect(history[0].result).toBe(42); // Should be parsed as number
+      expect(history[0].format).toBe('js');
+      expect(history[0].timestamp).toBeInstanceOf(Date);
+    });
   });
 
   describe('Ask Method with Mocked Responses', () => {
@@ -494,63 +459,6 @@ This should return 4.`;
       expect(response).toContain('2 + 2');
       expect(response).toContain('4');
     });
-
-    /*
-    it('should handle iterative execution with mocked responses', async () => {
-      // Setup real execution handler for code execution
-      const { AskExec } = await import('./ask-exec');
-      const askExec = new AskExec({ autoConfirm: true });
-      askExec.setupAI(ai);
-
-      let callCount = 0;
-      const mockResponses = [
-        // First response with Do operation
-        `Let me try to get system info:
-
-> 🪬test-uuid-1/do/exec/js
-\`\`\`js
-navigator.platform
-\`\`\`
-
-This should work in browser.`,
-        
-        // Second response after getting error result
-        `I see that navigator is not available. Let me try Node.js approach:
-
-> 🪬test-uuid-2/do/exec/js
-\`\`\`js
-process.platform
-\`\`\`
-
-This should work in Node.js environment.`,
-        
-        // Final response without Do operations
-        `Perfect! Based on the execution results, we are running in a Node.js environment on the ${process.platform} platform.`
-      ];
-
-      // Mock the OpenRouter ask method to return different responses
-      (ai as any).openRouter.ask = async () => {
-        const response = mockResponses[callCount];
-        callCount++;
-        return response;
-      };
-
-      const response = await ai.ask('Get system information, try browser APIs first then Node.js APIs');
-
-      // Should contain all parts of the conversation from all iterations
-      expect(response).toContain('Let me try to get system info');
-      expect(response).toContain('Node.js environment');
-      
-      // Should contain execution results from all iterations
-      expect(response).toContain('**Code Executed:**');
-      expect(response).toContain('**Result:**');
-      expect(response).toContain('Error: ReferenceError: navigator is not defined');
-      expect(response).toContain(process.platform);
-      
-      // All 3 calls should be made (max iterations)
-      expect(callCount).toBe(3);
-    });
-    */
 
     it('should stop after max iterations', async () => {
       let callCount = 0;
@@ -931,6 +839,236 @@ Let me continue...`;
         }
       });
     }, 5000);
+  });
+
+  describe('Results Tracking System', () => {
+    it('should initialize with empty results and execution history', () => {
+      expect(ai.getResults()).toEqual({});
+      expect(ai.getExecutionHistory()).toEqual([]);
+      expect(ai.hasResult('test')).toBe(false);
+    });
+
+    it('should track results when Do operations execute successfully', async () => {
+      // Setup custom handler that simulates successful execution
+      ai._do = async (doItem: Do) => {
+        return {
+          ...doItem,
+          response: '42' // Simulate successful result
+        };
+      };
+
+      const doItem: Do = {
+        role: 'tool',
+        content: '',
+        id: 'test-calc',
+        operation: 'do/exec/js',
+        format: 'js',
+        request: '6 * 7',
+        startLine: 0,
+        endLine: 0
+      };
+
+      const result = await ai.do(doItem);
+
+      // Check that result was stored (AI auto-parses numeric strings to numbers)
+      expect(ai.hasResult('test-calc')).toBe(true);
+      expect(ai.getResult('test-calc')).toBe(42); // Should be parsed as number
+      
+      // Check execution history
+      const history = ai.getExecutionHistory();
+      expect(history).toHaveLength(1);
+      expect(history[0].id).toBe('test-calc');
+      expect(history[0].code).toBe('6 * 7');
+      expect(history[0].result).toBe(42); // Should be parsed as number
+      expect(history[0].format).toBe('js');
+      expect(history[0].timestamp).toBeInstanceOf(Date);
+    });
+
+    it('should not track results for error responses', async () => {
+      ai._do = async (doItem: Do) => {
+        return {
+          ...doItem,
+          response: 'Error: Something went wrong'
+        };
+      };
+
+      const doItem: Do = {
+        role: 'tool',
+        content: '',
+        id: 'error-test',
+        operation: 'do/exec/js',
+        format: 'js',
+        request: 'throw new Error("test")',
+        startLine: 0,
+        endLine: 0
+      };
+
+      await ai.do(doItem);
+
+      // Should not store error results
+      expect(ai.hasResult('error-test')).toBe(false);
+      expect(ai.getExecutionHistory()).toHaveLength(0);
+    });
+
+    it('should parse JSON results correctly', async () => {
+      ai._do = async (doItem: Do) => {
+        return {
+          ...doItem,
+          response: '{"name": "test", "value": 123}' // JSON response
+        };
+      };
+
+      const doItem: Do = {
+        role: 'tool',
+        content: '',
+        id: 'json-test',
+        operation: 'do/exec/js',
+        format: 'js',
+        request: 'return {name: "test", value: 123}',
+        startLine: 0,
+        endLine: 0
+      };
+
+      await ai.do(doItem);
+
+      const result = ai.getResult('json-test');
+      expect(result).toEqual({ name: 'test', value: 123 });
+    });
+
+    it('should include results context in system prompt', () => {
+      // Add some results manually
+      ai.setResult('calculation1', 42);
+      ai.setResult('data', [1, 2, 3]);
+
+      // Add some execution history manually
+      ai.executionHistory.push({
+        id: 'test-1',
+        code: '6 * 7',
+        result: 42,
+        format: 'js',
+        timestamp: new Date('2024-01-01T10:00:00Z')
+      });
+
+      const messages = ai.contextMemory([{ role: 'user', content: 'Test' }]);
+
+      const systemMessage = messages.find(msg => msg.role === 'system');
+      expect(systemMessage).toBeDefined();
+      expect(systemMessage!.content).toContain('🔄 AVAILABLE RESULTS CONTEXT');
+      expect(systemMessage!.content).toContain('Current Results State');
+      expect(systemMessage!.content).toContain('calculation1');
+      expect(systemMessage!.content).toContain('Recent Execution History');
+      expect(systemMessage!.content).toContain('results["key"]');
+    });
+
+    it('should manage results manually', () => {
+      // Set results
+      ai.setResult('test1', 'value1');
+      ai.setResult('test2', { complex: 'object' });
+
+      // Check existence
+      expect(ai.hasResult('test1')).toBe(true);
+      expect(ai.hasResult('test2')).toBe(true);
+      expect(ai.hasResult('nonexistent')).toBe(false);
+
+      // Get results
+      expect(ai.getResult('test1')).toBe('value1');
+      expect(ai.getResult('test2')).toEqual({ complex: 'object' });
+      expect(ai.getResult('nonexistent')).toBeUndefined();
+
+      // Get all results
+      const allResults = ai.getResults();
+      expect(allResults).toEqual({
+        test1: 'value1',
+        test2: { complex: 'object' }
+      });
+    });
+
+    it('should clear results and execution history', () => {
+      // Add some data
+      ai.setResult('test', 'value');
+      ai.executionHistory.push({
+        id: 'test',
+        code: 'test',
+        result: 'test',
+        format: 'js',
+        timestamp: new Date()
+      });
+
+      expect(ai.getResults()).not.toEqual({});
+      expect(ai.getExecutionHistory()).not.toEqual([]);
+
+      // Clear results only
+      ai.clearResults();
+      expect(ai.getResults()).toEqual({});
+      expect(ai.getExecutionHistory()).toEqual([]);
+    });
+
+    it('should clear all (memory + results)', () => {
+      // Add memory and results
+      (ai as any).addToMemory({ role: 'user', content: 'test' });
+      ai.setResult('test', 'value');
+
+      expect(ai.getMemory()).not.toEqual([]);
+      expect(ai.getResults()).not.toEqual({});
+
+      // Clear all
+      ai.clearAll();
+      expect(ai.getMemory()).toEqual([]);
+      expect(ai.getResults()).toEqual({});
+    });
+
+    it('should limit execution history to 50 entries', async () => {
+      ai._do = async (doItem: Do) => {
+        return {
+          ...doItem,
+          response: 'result'
+        };
+      };
+
+      // Add 55 executions
+      for (let i = 0; i < 55; i++) {
+        const doItem: Do = {
+          role: 'tool',
+          content: '',
+          id: `test-${i}`,
+          operation: 'do/exec/js',
+          format: 'js',
+          request: `return ${i}`,
+          startLine: 0,
+          endLine: 0
+        };
+
+        await ai.do(doItem);
+      }
+
+      // Should only keep last 50
+      const history = ai.getExecutionHistory();
+      expect(history).toHaveLength(50);
+      expect(history[0].id).toBe('test-5'); // First entry should be test-5 (keeping last 50)
+      expect(history[49].id).toBe('test-54'); // Last entry should be test-54
+    });
+
+    it('should include only recent execution history in context (last 5)', () => {
+      // Add 10 executions
+      for (let i = 0; i < 10; i++) {
+        ai.executionHistory.push({
+          id: `test-${i}`,
+          code: `code ${i}`,
+          result: `result ${i}`,
+          format: 'js',
+          timestamp: new Date()
+        });
+      }
+
+      const messages = ai.contextMemory([{ role: 'user', content: 'Test' }]);
+      const systemMessage = messages.find(msg => msg.role === 'system');
+
+      // Should only contain last 5 executions (test-5 to test-9)
+      expect(systemMessage!.content).toContain('test-5');
+      expect(systemMessage!.content).toContain('test-9');
+      expect(systemMessage!.content).not.toContain('test-0');
+      expect(systemMessage!.content).not.toContain('test-4');
+    });
   });
 
   skipIfNoApiKey('Real AI Integration Tests', () => {

@@ -909,3 +909,278 @@ This will show:
 - Code execution results
 - Memory operations
 - Error details 
+
+## Results Tracking System
+
+The AI class now includes a sophisticated **results tracking system** that allows AI to build chains of computations and maintain state between code executions.
+
+### Key Features
+
+- **🔄 Persistent Results**: AI can store and retrieve computation results
+- **📚 Execution History**: Tracks the chain of code executions with timestamps
+- **🤖 Context Awareness**: AI automatically receives previous results in its thinking context
+- **🔗 Chained Computations**: Build complex workflows across multiple iterations
+
+### How It Works
+
+```typescript
+import { AI } from 'hasyx/lib/ai';
+
+const ai = new AI('your-api-key');
+
+// AI can now build computation chains
+const response = await ai.ask(`
+  First calculate 10 factorial, store it as 'fact10'.
+  Then calculate 20 factorial, store it as 'fact20'.
+  Finally calculate the ratio fact20/fact10 and explain the result.
+`);
+
+// Results are automatically tracked and available
+console.log('Current results:', ai.getResults());
+console.log('Execution history:', ai.getExecutionHistory());
+```
+
+### Automatic Results Context
+
+When AI thinks, it automatically receives:
+
+1. **Current Results State** - All stored results as JSON
+2. **Recent Execution History** - Last 5 executions with code and results
+3. **Context Instructions** - How to use `results["key"]` in code
+
+### Example: Building a Computation Chain
+
+```javascript
+// AI can now create sophisticated workflows
+const response = await ai.ask(`
+  Create a data analysis pipeline:
+  1. Generate sample data (100 random numbers), store as 'data'
+  2. Calculate mean and store as 'mean'
+  3. Calculate standard deviation and store as 'std'
+  4. Find outliers (values > 2 std from mean) and store as 'outliers'
+  5. Create a summary report
+`);
+
+// Each step builds on the previous:
+// Step 1: results['data'] = [1.2, 5.6, ...]
+// Step 2: results['mean'] = 42.5 (uses results['data'])
+// Step 3: results['std'] = 12.3 (uses results['data'] and results['mean'])
+// Step 4: results['outliers'] = [...] (uses all previous results)
+```
+
+### Real-world Example Output
+
+```bash
+$ npx hasyx ask -e "Build a calculation chain for compound interest"
+
+🧠 AI думает...
+I'll create a compound interest calculation chain.
+
+📋 Найден JS код для выполнения:
+```js
+// Step 1: Define parameters
+results['principal'] = 1000;
+results['rate'] = 0.05; // 5%
+results['years'] = 10;
+console.log('Initial parameters set');
+```
+⚡ Выполняется JS код...
+✅ Результат выполнения:
+Initial parameters set
+
+📋 Найден JS код для выполнения:
+```js
+// Step 2: Calculate compound interest using previous results
+const principal = results['principal'];
+const rate = results['rate'];
+const years = results['years'];
+
+results['finalAmount'] = principal * Math.pow(1 + rate, years);
+results['totalInterest'] = results['finalAmount'] - principal;
+
+console.log(`Final amount: $${results['finalAmount'].toFixed(2)}`);
+console.log(`Total interest: $${results['totalInterest'].toFixed(2)}`);
+```
+⚡ Выполняется JS код...
+✅ Результат выполнения:
+Final amount: $1628.89
+Total interest: $628.89
+
+Perfect! The calculation chain shows:
+- **Principal**: $1,000
+- **Rate**: 5% annually
+- **Years**: 10
+- **Final Amount**: $1,628.89
+- **Interest Earned**: $628.89
+
+Each calculation built upon the previous results stored in the system.
+```
+
+### API Methods
+
+#### Results Management
+
+```typescript
+// Get all current results
+const results = ai.getResults();
+
+// Get specific result
+const value = ai.getResult('myKey');
+
+// Set result manually
+ai.setResult('config', { timeout: 5000 });
+
+// Check if result exists
+if (ai.hasResult('data')) {
+  // Use the data
+}
+
+// Clear results only
+ai.clearResults();
+
+// Clear everything (memory + results)
+ai.clearAll();
+```
+
+#### Execution History
+
+```typescript
+// Get execution history
+const history = ai.getExecutionHistory();
+
+// Each entry contains:
+// {
+//   id: 'uuid',
+//   code: 'console.log("hello")',
+//   result: 'hello',
+//   format: 'js',
+//   timestamp: Date
+// }
+```
+
+### Advanced Patterns
+
+#### Data Pipeline Pattern
+
+```typescript
+const ai = new AI('your-api-key');
+
+await ai.ask(`
+  Create a data processing pipeline:
+  1. Load CSV data and store as 'rawData'
+  2. Clean the data (remove nulls) and store as 'cleanData'
+  3. Transform to specific format and store as 'transformedData'
+  4. Generate summary statistics and store as 'stats'
+  5. Create visualization data and store as 'chartData'
+`);
+
+// AI will automatically use results from each previous step
+console.log('Pipeline results:', ai.getResults());
+```
+
+#### Machine Learning Workflow
+
+```typescript
+await ai.ask(`
+  Build a simple ML workflow:
+  1. Generate training data (features + labels) as 'trainData'
+  2. Split into train/test sets as 'trainSet' and 'testSet'
+  3. Train a simple linear model and store coefficients as 'model'
+  4. Make predictions on test set as 'predictions'
+  5. Calculate accuracy metrics as 'metrics'
+`);
+```
+
+#### Multi-step Analysis
+
+```typescript
+await ai.ask(`
+  Analyze website performance:
+  1. Fetch website response time and store as 'responseTime'
+  2. Calculate average over multiple requests as 'avgResponseTime'
+  3. Compare with benchmark (200ms) and store analysis as 'performance'
+  4. Generate recommendations based on results
+`);
+```
+
+### System Context Enhancement
+
+The AI now receives enhanced context automatically:
+
+```
+**🔄 AVAILABLE RESULTS CONTEXT:**
+
+**Current Results State:**
+```json
+{
+  "data": [1, 2, 3, 4, 5],
+  "mean": 3,
+  "sum": 15
+}
+```
+
+**Recent Execution History:**
+1. **calc-uuid-1** (js) - 2024-01-15T10:30:00.000Z
+   Code: `[1,2,3,4,5]`
+   Result: `[1,2,3,4,5]`
+2. **calc-uuid-2** (js) - 2024-01-15T10:30:05.000Z
+   Code: `results['data'].reduce((a,b) => a+b, 0)`
+   Result: `15`
+
+**Important:** You can reference previous results using `results["key"]` in your code.
+```
+
+### Best Practices
+
+1. **Use Descriptive Keys**: Store results with meaningful names
+   ```js
+   results['userAnalytics'] = {...};
+   results['performanceMetrics'] = {...};
+   ```
+
+2. **Build Incrementally**: Each step should use previous results
+   ```js
+   // Step 1
+   results['rawData'] = loadData();
+   
+   // Step 2 (uses Step 1)
+   results['processedData'] = processData(results['rawData']);
+   
+   // Step 3 (uses Step 2)
+   results['analysis'] = analyze(results['processedData']);
+   ```
+
+3. **Store Complex Objects**: Results can store any JSON-serializable data
+   ```js
+   results['config'] = {
+     apiUrl: 'https://api.example.com',
+     timeout: 5000,
+     retries: 3
+   };
+   ```
+
+4. **Use for State Management**: Perfect for maintaining application state
+   ```js
+   // Initialize state
+   results['gameState'] = { level: 1, score: 0, lives: 3 };
+   
+   // Update state
+   results['gameState'].score += 100;
+   ```
+
+### Integration with Streaming
+
+The results system works seamlessly with streaming:
+
+```typescript
+ai.asking('Build calculation chain').subscribe({
+  next: (event) => {
+    if (event.type === 'code_result') {
+      console.log('New result stored:', event.data.result);
+      console.log('Current results:', ai.getResults());
+    }
+  }
+});
+```
+
+This creates a powerful foundation for **AI-driven computation chains** where each step builds intelligently on previous results! 🚀 

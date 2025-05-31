@@ -115,8 +115,18 @@ ${terminalContext}
         let result: any;
 
         if (doItem.operation.startsWith('do/exec/js')) {
+          // Update exec context with current AI results
+          this.engines.exec.updateContext({ 
+            ...this.engines.exec.getContext(), 
+            results: this.results 
+          });
           result = await this.engines.exec.exec(doItem.request);
         } else if (doItem.operation.startsWith('do/exec/tsx')) {
+          // Update execTs context with current AI results
+          this.engines.execTs.updateContext({ 
+            ...this.engines.execTs.getContext(), 
+            results: this.results 
+          });
           result = await this.engines.execTs.exec(doItem.request);
         } else if (doItem.operation.startsWith('do/terminal/')) {
           const shell = doItem.operation.split('/')[2]; // Extract shell type
