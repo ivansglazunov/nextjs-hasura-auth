@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * PWA utilities for Hasyx
  * Handles service worker registration, installation prompts, and PWA features
