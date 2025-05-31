@@ -267,22 +267,22 @@ describe('Schema parser functions', () => {
   it('should get comparison operators for field types', () => {
     const stringOps = getComparisonOperators('String');
     expect(stringOps).toEqual(expect.arrayContaining([
-      expect.objectContaining({ name: '_eq' }),
-      expect.objectContaining({ name: '_like' }),
-      expect.objectContaining({ name: '_ilike' })
+      expect.objectContaining({ name: '_eq', label: 'equals' }),
+      expect.objectContaining({ name: '_like', label: 'like' }),
+      expect.objectContaining({ name: '_ilike', label: 'ilike' })
     ]));
     
     const intOps = getComparisonOperators('Int');
     expect(intOps).toEqual(expect.arrayContaining([
-      expect.objectContaining({ name: '_eq' }),
-      expect.objectContaining({ name: '_gt' }),
-      expect.objectContaining({ name: '_lt' })
+      expect.objectContaining({ name: '_eq', label: 'equals' }),
+      expect.objectContaining({ name: '_gt', label: '>' }),
+      expect.objectContaining({ name: '_lt', label: '<' })
     ]));
     
     const boolOps = getComparisonOperators('Boolean');
     expect(boolOps).toEqual(expect.arrayContaining([
-      expect.objectContaining({ name: '_eq' }),
-      expect.objectContaining({ name: '_ne' })
+      expect.objectContaining({ name: '_eq', label: 'equals' }),
+      expect.objectContaining({ name: '_ne', label: 'not equals' })
     ]));
     expect(boolOps).not.toEqual(expect.arrayContaining([
       expect.objectContaining({ name: '_like' })
