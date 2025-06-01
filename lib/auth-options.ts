@@ -160,7 +160,27 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
       strategy: 'jwt',
     },
     callbacks: {
-      // Remove variable declaration from here
+      // Handle automatic account linking via signIn callback
+      async signIn({ user, account, profile, email, credentials }) {
+        console.log('🔐 SignIn Callback START:', {
+          provider: account?.provider,
+          userId: user?.id,
+          userEmail: user?.email,
+          profileEmail: profile?.email,
+          accountProviderAccountId: account?.providerAccountId
+        });
+        
+        // Allow all credentials logins (internal auth)
+        if (account?.provider === 'credentials') {
+          console.log('✅ SignIn: Credentials login allowed');
+          return true;
+        }
+        
+        // For OAuth providers, always allow sign in
+        // The JWT callback will handle linking/creating accounts
+        console.log('✅ SignIn: OAuth login allowed for provider:', account?.provider);
+        return true;
+      },
 
       async jwt({ token, user, account, profile }): Promise<DefaultJWT> {
         debug('JWT Callback: input', { userId: token.sub, provider: account?.provider });
@@ -199,6 +219,7 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
               // Cannot determine isNewUser directly from this return type assumption
               debug(`JWT Callback: OAuth DB sync completed for ${userId}`); 
             } catch (error) {
+              console.error('JWT Callback: Critical OAuth user sync error:', error);
               debug('JWT Callback: Error during OAuth user sync:', error);
               token.error = 'AccountSyncFailed';
               return token; // Stop on error
@@ -231,6 +252,7 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
             debug(`JWT Callback: Fetched latest DB data for ${userId}. Role: ${latestRole}, Admin: ${isAdmin}, Verified: ${emailVerified}`);
           }
         } catch (fetchError) {
+            console.error('JWT Callback: Critical error fetching latest user data:', fetchError);
             debug('JWT Callback: Error fetching latest user data, claims might be based on older data:', fetchError);
         }
 
@@ -271,6 +293,7 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
             debug('JWT Callback: Generated and stored Hasura accessToken.');
             
         } catch (error) {
+             console.error('JWT Callback: Critical Hasura JWT generation error:', error);
              debug('JWT Callback: Error generating Hasura JWT:', error);
              token.error = 'HasuraJWTGenerationFailed';
              tempTokenForRedirect = null; // Reset if generation failed

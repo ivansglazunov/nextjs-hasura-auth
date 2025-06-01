@@ -3,9 +3,9 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLI
 /**
  * Formats URL with protocol and path
  */
-export const url = (protocol: string, url: string, path: string): string => {
+export const url = (protocol: string, host: string, path: string): string => {
   // Force https for vercel domains
-  if (url.includes('vercel.app')) {
+  if (host.includes('vercel.app')) {
     protocol = 'https';
   }
 
@@ -15,7 +15,7 @@ export const url = (protocol: string, url: string, path: string): string => {
     : protocol.endsWith(':') ? `${protocol}/` : `${protocol}://`;
   
   // Remove any protocol from url if present
-  let cleanUrl = url.replace(/^[a-z]+:\/\//, '');
+  let cleanUrl = host.replace(/^[a-z]+:\/\//, '');
   
   // Remove trailing slashes from url
   cleanUrl = cleanUrl.replace(/\/+$/, '');

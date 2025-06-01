@@ -40,7 +40,11 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
       window.location.hostname === '127.0.0.1'
     );
 
-    const s = typeof window !== 'undefined' &&  window.location.protocol === 'https:';
+    // On server, check if API_URL already contains https protocol
+    // On client, check window.location.protocol
+    const shouldUseHttps = typeof window !== 'undefined' 
+      ? window.location.protocol === 'https:'
+      : API_URL.startsWith('https://');
     
     // Define the base API URL (GraphQL endpoint)
     let apiUrl: string;
@@ -49,11 +53,11 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
     } else if (isLocalhost && url) {
       apiUrl = url.includes('vercel.app') ? toUrl('https', url, '/api/graphql') : toUrl('http', url, '/api/graphql');
     } else { // Production/Preview
-      const protocol = s === true || url?.includes('vercel.app') ? 'https' : 'http';
+      const protocol = shouldUseHttps || url?.includes('vercel.app') ? 'https' : 'http';
       apiUrl = toUrl(protocol, API_URL, '/api/graphql');
     }
     
-    debug(`HasyxProviderCore: Final API URL: ${apiUrl}, isLocalhost: ${isLocalhost}, based on url: ${url}`);
+    debug(`HasyxProviderCore: Final API URL: ${apiUrl}, isLocalhost: ${isLocalhost}, shouldUseHttps: ${shouldUseHttps}, based on url: ${url}`);
     
     return {
       url: apiUrl,
@@ -93,7 +97,13 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
 }
 
 export function HasyxProvider({ children, generate }: { children: React.ReactNode, generate: Generate }) {
-  const authBasePath = url('http', API_URL, '/api/auth');
+  // Use the same logic as HasyxProviderCore for protocol detection
+  const shouldUseHttps = typeof window !== 'undefined' 
+    ? window.location.protocol === 'https:'
+    : API_URL.startsWith('https://');
+  
+  const protocol = shouldUseHttps ? 'https' : 'http';
+  const authBasePath = url(protocol, API_URL, '/api/auth');
 
   return (
     // SessionProvider is needed for signIn/signOut calls

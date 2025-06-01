@@ -510,16 +510,20 @@ export async function proxySOCKET(
 
     client.on('close', (code, reason: Buffer) => {
       const reasonStr = reason.toString();
-      debugGraphql(`👋 [${clientId}] Client disconnected: code=${code} (type: ${typeof code}), reason=${reasonStr}`);
+      // Ensure code is a valid number for WebSocket close codes
+      const validCode = typeof code === 'number' ? code : 1000;
+      debugGraphql(`👋 [${clientId}] Client disconnected: code=${validCode} (type: ${typeof code}), reason=${reasonStr}`);
       debugGraphql(`--- proxySOCKET [${clientId}] End (Client Close) ---`);
-      closeConnections(code, reasonStr);
+      closeConnections(validCode, reasonStr);
     });
 
     hasuraWs.on('close', (code, reason: Buffer) => {
       const reasonStr = reason.toString();
-      debugGraphql(`👋 [${clientId}] Hasura disconnected: code=${code} (type: ${typeof code}), reason=${reasonStr}`);
+      // Ensure code is a valid number for WebSocket close codes
+      const validCode = typeof code === 'number' ? code : 1000;
+      debugGraphql(`👋 [${clientId}] Hasura disconnected: code=${validCode} (type: ${typeof code}), reason=${reasonStr}`);
       debugGraphql(`--- proxySOCKET [${clientId}] End (Hasura Close) ---`);
-      closeConnections(code, reasonStr);
+      closeConnections(validCode, reasonStr);
     });
 
     client.on('error', (error) => {
