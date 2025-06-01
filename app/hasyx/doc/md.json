@@ -748,6 +748,224 @@
       "level": 1
     },
     {
+      "title": "CloudFlare DNS Management",
+      "url": "/hasyx/doc/CLOUDFLARE",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Purpose",
+          "url": "/hasyx/doc/CLOUDFLARE#purpose",
+          "level": 2
+        },
+        {
+          "title": "Core Features",
+          "url": "/hasyx/doc/CLOUDFLARE#core-features",
+          "level": 2
+        },
+        {
+          "title": "DNS Record Management",
+          "url": "/hasyx/doc/CLOUDFLARE#dns-record-management",
+          "level": 3
+        },
+        {
+          "title": "API Integration",
+          "url": "/hasyx/doc/CLOUDFLARE#api-integration",
+          "level": 3
+        },
+        {
+          "title": "Idempotent Operations",
+          "url": "/hasyx/doc/CLOUDFLARE#idempotent-operations",
+          "level": 3
+        },
+        {
+          "title": "Prerequisites and Configuration",
+          "url": "/hasyx/doc/CLOUDFLARE#prerequisites-and-configuration",
+          "level": 2
+        },
+        {
+          "title": "Environment Configuration with Assist",
+          "url": "/hasyx/doc/CLOUDFLARE#environment-configuration-with-assist",
+          "level": 3
+        },
+        {
+          "title": "Manual Environment Configuration",
+          "url": "/hasyx/doc/CLOUDFLARE#manual-environment-configuration",
+          "level": 3
+        },
+        {
+          "title": "Getting CloudFlare Credentials",
+          "url": "/hasyx/doc/CLOUDFLARE#getting-cloudflare-credentials",
+          "level": 3
+        },
+        {
+          "title": "Environment Variables Usage",
+          "url": "/hasyx/doc/CLOUDFLARE#environment-variables-usage",
+          "level": 3
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/CLOUDFLARE#usage",
+          "level": 2
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/CLOUDFLARE#basic-usage",
+          "level": 3
+        },
+        {
+          "title": "Environment-Based Configuration",
+          "url": "/hasyx/doc/CLOUDFLARE#environment-based-configuration",
+          "level": 3
+        },
+        {
+          "title": "Advanced Usage",
+          "url": "/hasyx/doc/CLOUDFLARE#advanced-usage",
+          "level": 3
+        },
+        {
+          "title": "Configuration Options",
+          "url": "/hasyx/doc/CLOUDFLARE#configuration-options",
+          "level": 2
+        },
+        {
+          "title": "CloudflareConfig Interface",
+          "url": "/hasyx/doc/CLOUDFLARE#cloudflareconfig-interface",
+          "level": 3
+        },
+        {
+          "title": "SubdomainDnsConfig Interface",
+          "url": "/hasyx/doc/CLOUDFLARE#subdomaindnsconfig-interface",
+          "level": 3
+        },
+        {
+          "title": "Environment Variables",
+          "url": "/hasyx/doc/CLOUDFLARE#environment-variables",
+          "level": 3
+        },
+        {
+          "title": "Core Methods",
+          "url": "/hasyx/doc/CLOUDFLARE#core-methods",
+          "level": 2
+        },
+        {
+          "title": "DNS Record Information",
+          "url": "/hasyx/doc/CLOUDFLARE#dns-record-information",
+          "level": 3
+        },
+        {
+          "title": "DNS Record Operations",
+          "url": "/hasyx/doc/CLOUDFLARE#dns-record-operations",
+          "level": 3
+        },
+        {
+          "title": "Idempotent Operations",
+          "url": "/hasyx/doc/CLOUDFLARE#idempotent-operations",
+          "level": 3
+        },
+        {
+          "title": "DNS Record Structure",
+          "url": "/hasyx/doc/CLOUDFLARE#dns-record-structure",
+          "level": 2
+        },
+        {
+          "title": "DnsRecord Interface",
+          "url": "/hasyx/doc/CLOUDFLARE#dnsrecord-interface",
+          "level": 3
+        },
+        {
+          "title": "Integration with Other Modules",
+          "url": "/hasyx/doc/CLOUDFLARE#integration-with-other-modules",
+          "level": 2
+        },
+        {
+          "title": "With SSL Management",
+          "url": "/hasyx/doc/CLOUDFLARE#with-ssl-management",
+          "level": 3
+        },
+        {
+          "title": "With Nginx Configuration",
+          "url": "/hasyx/doc/CLOUDFLARE#with-nginx-configuration",
+          "level": 3
+        },
+        {
+          "title": "Complete Subdomain Setup",
+          "url": "/hasyx/doc/CLOUDFLARE#complete-subdomain-setup",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/CLOUDFLARE#error-handling",
+          "level": 2
+        },
+        {
+          "title": "Common Error Scenarios",
+          "url": "/hasyx/doc/CLOUDFLARE#common-error-scenarios",
+          "level": 3
+        },
+        {
+          "title": "Configuration Validation",
+          "url": "/hasyx/doc/CLOUDFLARE#configuration-validation",
+          "level": 3
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/CLOUDFLARE#best-practices",
+          "level": 2
+        },
+        {
+          "title": "1. Use Define/Undefine for Idempotency",
+          "url": "/hasyx/doc/CLOUDFLARE#1-use-defineundefine-for-idempotency",
+          "level": 3
+        },
+        {
+          "title": "2. Configure TTL Appropriately",
+          "url": "/hasyx/doc/CLOUDFLARE#2-configure-ttl-appropriately",
+          "level": 3
+        },
+        {
+          "title": "3. Use Proxied Records Wisely",
+          "url": "/hasyx/doc/CLOUDFLARE#3-use-proxied-records-wisely",
+          "level": 3
+        },
+        {
+          "title": "4. Environment-Based Configuration",
+          "url": "/hasyx/doc/CLOUDFLARE#4-environment-based-configuration",
+          "level": 3
+        },
+        {
+          "title": "Security Considerations",
+          "url": "/hasyx/doc/CLOUDFLARE#security-considerations",
+          "level": 2
+        },
+        {
+          "title": "API Token Security",
+          "url": "/hasyx/doc/CLOUDFLARE#api-token-security",
+          "level": 3
+        },
+        {
+          "title": "DNS Security",
+          "url": "/hasyx/doc/CLOUDFLARE#dns-security",
+          "level": 3
+        },
+        {
+          "title": "Domain Management",
+          "url": "/hasyx/doc/CLOUDFLARE#domain-management",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/CLOUDFLARE#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/CLOUDFLARE#common-issues",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "🏗️ Hasyx Query Constructor",
       "url": "/hasyx/doc/CONSTRUCTOR",
       "collapse": true,
@@ -756,6 +974,21 @@
           "title": "🚀 Quick Start",
           "url": "/hasyx/doc/CONSTRUCTOR#quick-start",
           "level": 2
+        },
+        {
+          "title": "🧩 Component Architecture",
+          "url": "/hasyx/doc/CONSTRUCTOR#component-architecture",
+          "level": 2
+        },
+        {
+          "title": "Core Components",
+          "url": "/hasyx/doc/CONSTRUCTOR#core-components",
+          "level": 3
+        },
+        {
+          "title": "Integration Examples",
+          "url": "/hasyx/doc/CONSTRUCTOR#integration-examples",
+          "level": 3
         },
         {
           "title": "🔍 Interface Overview",
@@ -770,6 +1003,11 @@
         {
           "title": "Right Panel: Multi-View Tabs",
           "url": "/hasyx/doc/CONSTRUCTOR#right-panel-multi-view-tabs",
+          "level": 3
+        },
+        {
+          "title": "Modal Dialog Interface",
+          "url": "/hasyx/doc/CONSTRUCTOR#modal-dialog-interface",
           "level": 3
         },
         {
@@ -1108,6 +1346,41 @@
         {
           "title": "`generateReceipt` Function Stub",
           "url": "/hasyx/doc/CONTRIBUTING#generatereceipt-function-stub",
+          "level": 3
+        },
+        {
+          "title": "DNS and SSL Management",
+          "url": "/hasyx/doc/CONTRIBUTING#dns-and-ssl-management",
+          "level": 2
+        },
+        {
+          "title": "CloudFlare DNS Management (`lib/cloudflare.ts`)",
+          "url": "/hasyx/doc/CONTRIBUTING#cloudflare-dns-management-libcloudflarets",
+          "level": 3
+        },
+        {
+          "title": "SSL Certificate Management (`lib/ssl.ts`)",
+          "url": "/hasyx/doc/CONTRIBUTING#ssl-certificate-management-libsslts",
+          "level": 3
+        },
+        {
+          "title": "Nginx Configuration (`lib/nginx.ts`)",
+          "url": "/hasyx/doc/CONTRIBUTING#nginx-configuration-libnginxts",
+          "level": 3
+        },
+        {
+          "title": "Integrated Subdomain Management (`lib/subdomain.ts`)",
+          "url": "/hasyx/doc/CONTRIBUTING#integrated-subdomain-management-libsubdomaints",
+          "level": 3
+        },
+        {
+          "title": "Configuration and Usage",
+          "url": "/hasyx/doc/CONTRIBUTING#configuration-and-usage",
+          "level": 3
+        },
+        {
+          "title": "Testing Philosophy",
+          "url": "/hasyx/doc/CONTRIBUTING#testing-philosophy",
           "level": 3
         }
       ],
@@ -2419,6 +2692,234 @@
       "level": 1
     },
     {
+      "title": "Nginx Configuration Management",
+      "url": "/hasyx/doc/NGINX",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Purpose",
+          "url": "/hasyx/doc/NGINX#purpose",
+          "level": 2
+        },
+        {
+          "title": "Core Features",
+          "url": "/hasyx/doc/NGINX#core-features",
+          "level": 2
+        },
+        {
+          "title": "Path Auto-Detection",
+          "url": "/hasyx/doc/NGINX#path-auto-detection",
+          "level": 3
+        },
+        {
+          "title": "Site Management",
+          "url": "/hasyx/doc/NGINX#site-management",
+          "level": 3
+        },
+        {
+          "title": "Safety Features",
+          "url": "/hasyx/doc/NGINX#safety-features",
+          "level": 3
+        },
+        {
+          "title": "Prerequisites",
+          "url": "/hasyx/doc/NGINX#prerequisites",
+          "level": 2
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/NGINX#usage",
+          "level": 2
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/NGINX#basic-usage",
+          "level": 3
+        },
+        {
+          "title": "Custom Path Configuration",
+          "url": "/hasyx/doc/NGINX#custom-path-configuration",
+          "level": 3
+        },
+        {
+          "title": "SSL Configuration",
+          "url": "/hasyx/doc/NGINX#ssl-configuration",
+          "level": 3
+        },
+        {
+          "title": "Configuration Options",
+          "url": "/hasyx/doc/NGINX#configuration-options",
+          "level": 2
+        },
+        {
+          "title": "NginxConfig Interface",
+          "url": "/hasyx/doc/NGINX#nginxconfig-interface",
+          "level": 3
+        },
+        {
+          "title": "SiteConfig Interface",
+          "url": "/hasyx/doc/NGINX#siteconfig-interface",
+          "level": 3
+        },
+        {
+          "title": "Core Methods",
+          "url": "/hasyx/doc/NGINX#core-methods",
+          "level": 2
+        },
+        {
+          "title": "Site Information",
+          "url": "/hasyx/doc/NGINX#site-information",
+          "level": 3
+        },
+        {
+          "title": "Site Operations",
+          "url": "/hasyx/doc/NGINX#site-operations",
+          "level": 3
+        },
+        {
+          "title": "Idempotent Operations",
+          "url": "/hasyx/doc/NGINX#idempotent-operations",
+          "level": 3
+        },
+        {
+          "title": "Enable/Disable Operations",
+          "url": "/hasyx/doc/NGINX#enabledisable-operations",
+          "level": 3
+        },
+        {
+          "title": "Configuration Examples",
+          "url": "/hasyx/doc/NGINX#configuration-examples",
+          "level": 2
+        },
+        {
+          "title": "Basic HTTP Reverse Proxy",
+          "url": "/hasyx/doc/NGINX#basic-http-reverse-proxy",
+          "level": 3
+        },
+        {
+          "title": "HTTPS with SSL Certificates",
+          "url": "/hasyx/doc/NGINX#https-with-ssl-certificates",
+          "level": 3
+        },
+        {
+          "title": "Custom Configuration with Multiple Locations",
+          "url": "/hasyx/doc/NGINX#custom-configuration-with-multiple-locations",
+          "level": 3
+        },
+        {
+          "title": "Integration with Other Modules",
+          "url": "/hasyx/doc/NGINX#integration-with-other-modules",
+          "level": 2
+        },
+        {
+          "title": "With SSL Management",
+          "url": "/hasyx/doc/NGINX#with-ssl-management",
+          "level": 3
+        },
+        {
+          "title": "With CloudFlare DNS",
+          "url": "/hasyx/doc/NGINX#with-cloudflare-dns",
+          "level": 3
+        },
+        {
+          "title": "Generated Configuration",
+          "url": "/hasyx/doc/NGINX#generated-configuration",
+          "level": 2
+        },
+        {
+          "title": "HTTP Only Configuration",
+          "url": "/hasyx/doc/NGINX#http-only-configuration",
+          "level": 3
+        },
+        {
+          "title": "HTTPS with Redirect Configuration",
+          "url": "/hasyx/doc/NGINX#https-with-redirect-configuration",
+          "level": 3
+        },
+        {
+          "title": "Path Detection Logic",
+          "url": "/hasyx/doc/NGINX#path-detection-logic",
+          "level": 2
+        },
+        {
+          "title": "Supported Distributions",
+          "url": "/hasyx/doc/NGINX#supported-distributions",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/NGINX#error-handling",
+          "level": 2
+        },
+        {
+          "title": "Common Error Scenarios",
+          "url": "/hasyx/doc/NGINX#common-error-scenarios",
+          "level": 3
+        },
+        {
+          "title": "Configuration Validation",
+          "url": "/hasyx/doc/NGINX#configuration-validation",
+          "level": 3
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/NGINX#best-practices",
+          "level": 2
+        },
+        {
+          "title": "1. Use Define/Undefine for Idempotency",
+          "url": "/hasyx/doc/NGINX#1-use-defineundefine-for-idempotency",
+          "level": 3
+        },
+        {
+          "title": "2. Always Use SSL in Production",
+          "url": "/hasyx/doc/NGINX#2-always-use-ssl-in-production",
+          "level": 3
+        },
+        {
+          "title": "3. Configure Proper Proxy Headers",
+          "url": "/hasyx/doc/NGINX#3-configure-proper-proxy-headers",
+          "level": 3
+        },
+        {
+          "title": "4. Use Custom Configuration for Complex Setups",
+          "url": "/hasyx/doc/NGINX#4-use-custom-configuration-for-complex-setups",
+          "level": 3
+        },
+        {
+          "title": "Security Considerations",
+          "url": "/hasyx/doc/NGINX#security-considerations",
+          "level": 2
+        },
+        {
+          "title": "SSL Configuration",
+          "url": "/hasyx/doc/NGINX#ssl-configuration",
+          "level": 3
+        },
+        {
+          "title": "Proxy Security",
+          "url": "/hasyx/doc/NGINX#proxy-security",
+          "level": 3
+        },
+        {
+          "title": "File Permissions",
+          "url": "/hasyx/doc/NGINX#file-permissions",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/NGINX#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/NGINX#common-issues",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "Web Push Notifications with Firebase Cloud Messaging (FCM) in Hasyx",
       "url": "/hasyx/doc/NOTIFY-FIREBASE",
       "collapse": true,
@@ -3017,6 +3518,219 @@
       "level": 1
     },
     {
+      "title": "SSL Certificate Management",
+      "url": "/hasyx/doc/SSL",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Purpose",
+          "url": "/hasyx/doc/SSL#purpose",
+          "level": 2
+        },
+        {
+          "title": "Core Features",
+          "url": "/hasyx/doc/SSL#core-features",
+          "level": 2
+        },
+        {
+          "title": "Certificate Management",
+          "url": "/hasyx/doc/SSL#certificate-management",
+          "level": 3
+        },
+        {
+          "title": "DNS Integration",
+          "url": "/hasyx/doc/SSL#dns-integration",
+          "level": 3
+        },
+        {
+          "title": "Idempotent Operations",
+          "url": "/hasyx/doc/SSL#idempotent-operations",
+          "level": 3
+        },
+        {
+          "title": "Prerequisites and Configuration",
+          "url": "/hasyx/doc/SSL#prerequisites-and-configuration",
+          "level": 2
+        },
+        {
+          "title": "Environment Configuration with Assist",
+          "url": "/hasyx/doc/SSL#environment-configuration-with-assist",
+          "level": 3
+        },
+        {
+          "title": "Manual Environment Configuration",
+          "url": "/hasyx/doc/SSL#manual-environment-configuration",
+          "level": 3
+        },
+        {
+          "title": "Environment Variables Usage",
+          "url": "/hasyx/doc/SSL#environment-variables-usage",
+          "level": 3
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/SSL#usage",
+          "level": 2
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/SSL#basic-usage",
+          "level": 3
+        },
+        {
+          "title": "Environment-Based Configuration",
+          "url": "/hasyx/doc/SSL#environment-based-configuration",
+          "level": 3
+        },
+        {
+          "title": "Advanced Usage with DNS Waiting",
+          "url": "/hasyx/doc/SSL#advanced-usage-with-dns-waiting",
+          "level": 3
+        },
+        {
+          "title": "Configuration Options",
+          "url": "/hasyx/doc/SSL#configuration-options",
+          "level": 2
+        },
+        {
+          "title": "SSLConfig Interface",
+          "url": "/hasyx/doc/SSL#sslconfig-interface",
+          "level": 3
+        },
+        {
+          "title": "Environment Variables",
+          "url": "/hasyx/doc/SSL#environment-variables",
+          "level": 3
+        },
+        {
+          "title": "Core Methods",
+          "url": "/hasyx/doc/SSL#core-methods",
+          "level": 2
+        },
+        {
+          "title": "Certificate Information",
+          "url": "/hasyx/doc/SSL#certificate-information",
+          "level": 3
+        },
+        {
+          "title": "Certificate Operations",
+          "url": "/hasyx/doc/SSL#certificate-operations",
+          "level": 3
+        },
+        {
+          "title": "Idempotent Operations",
+          "url": "/hasyx/doc/SSL#idempotent-operations",
+          "level": 3
+        },
+        {
+          "title": "DNS and Renewal Operations",
+          "url": "/hasyx/doc/SSL#dns-and-renewal-operations",
+          "level": 3
+        },
+        {
+          "title": "Integration with Other Modules",
+          "url": "/hasyx/doc/SSL#integration-with-other-modules",
+          "level": 2
+        },
+        {
+          "title": "With CloudFlare DNS",
+          "url": "/hasyx/doc/SSL#with-cloudflare-dns",
+          "level": 3
+        },
+        {
+          "title": "With Nginx",
+          "url": "/hasyx/doc/SSL#with-nginx",
+          "level": 3
+        },
+        {
+          "title": "Certificate Information Structure",
+          "url": "/hasyx/doc/SSL#certificate-information-structure",
+          "level": 2
+        },
+        {
+          "title": "CertificateInfo Interface",
+          "url": "/hasyx/doc/SSL#certificateinfo-interface",
+          "level": 3
+        },
+        {
+          "title": "DNSPropagationResult Interface",
+          "url": "/hasyx/doc/SSL#dnspropagationresult-interface",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/SSL#error-handling",
+          "level": 2
+        },
+        {
+          "title": "Common Error Scenarios",
+          "url": "/hasyx/doc/SSL#common-error-scenarios",
+          "level": 3
+        },
+        {
+          "title": "Validation Checks",
+          "url": "/hasyx/doc/SSL#validation-checks",
+          "level": 3
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/SSL#best-practices",
+          "level": 2
+        },
+        {
+          "title": "1. Use Define/Undefine for Idempotency",
+          "url": "/hasyx/doc/SSL#1-use-defineundefine-for-idempotency",
+          "level": 3
+        },
+        {
+          "title": "2. Always Wait for DNS Propagation",
+          "url": "/hasyx/doc/SSL#2-always-wait-for-dns-propagation",
+          "level": 3
+        },
+        {
+          "title": "3. Monitor Certificate Expiration",
+          "url": "/hasyx/doc/SSL#3-monitor-certificate-expiration",
+          "level": 3
+        },
+        {
+          "title": "4. Environment Configuration",
+          "url": "/hasyx/doc/SSL#4-environment-configuration",
+          "level": 3
+        },
+        {
+          "title": "Security Considerations",
+          "url": "/hasyx/doc/SSL#security-considerations",
+          "level": 2
+        },
+        {
+          "title": "Certificate Storage",
+          "url": "/hasyx/doc/SSL#certificate-storage",
+          "level": 3
+        },
+        {
+          "title": "Email Security",
+          "url": "/hasyx/doc/SSL#email-security",
+          "level": 3
+        },
+        {
+          "title": "DNS Security",
+          "url": "/hasyx/doc/SSL#dns-security",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/SSL#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/SSL#common-issues",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "📋 Финальное ТЗ: Проверка соответствия документации реальному стримингу",
       "url": "/hasyx/doc/STREAMING_FINAL_TEST",
       "collapse": true,
@@ -3110,6 +3824,194 @@
           "title": "📝 Итоговый отчет",
           "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
           "level": 2
+        }
+      ],
+      "level": 1
+    },
+    {
+      "title": "Subdomain Management",
+      "url": "/hasyx/doc/SUBDOMAIN",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Purpose",
+          "url": "/hasyx/doc/SUBDOMAIN#purpose",
+          "level": 2
+        },
+        {
+          "title": "Core Features",
+          "url": "/hasyx/doc/SUBDOMAIN#core-features",
+          "level": 2
+        },
+        {
+          "title": "Integrated Workflow",
+          "url": "/hasyx/doc/SUBDOMAIN#integrated-workflow",
+          "level": 3
+        },
+        {
+          "title": "Safety and Reliability",
+          "url": "/hasyx/doc/SUBDOMAIN#safety-and-reliability",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/SUBDOMAIN#error-handling",
+          "level": 3
+        },
+        {
+          "title": "Prerequisites and Configuration",
+          "url": "/hasyx/doc/SUBDOMAIN#prerequisites-and-configuration",
+          "level": 2
+        },
+        {
+          "title": "Environment Configuration with Assist",
+          "url": "/hasyx/doc/SUBDOMAIN#environment-configuration-with-assist",
+          "level": 3
+        },
+        {
+          "title": "Manual Environment Configuration",
+          "url": "/hasyx/doc/SUBDOMAIN#manual-environment-configuration",
+          "level": 3
+        },
+        {
+          "title": "Environment Variables Usage",
+          "url": "/hasyx/doc/SUBDOMAIN#environment-variables-usage",
+          "level": 3
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/SUBDOMAIN#usage",
+          "level": 2
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/SUBDOMAIN#basic-usage",
+          "level": 3
+        },
+        {
+          "title": "Environment-Based Configuration",
+          "url": "/hasyx/doc/SUBDOMAIN#environment-based-configuration",
+          "level": 3
+        },
+        {
+          "title": "Advanced Usage - Multiple Subdomains",
+          "url": "/hasyx/doc/SUBDOMAIN#advanced-usage-multiple-subdomains",
+          "level": 3
+        },
+        {
+          "title": "Configuration Options",
+          "url": "/hasyx/doc/SUBDOMAIN#configuration-options",
+          "level": 2
+        },
+        {
+          "title": "SubdomainConfig Interface",
+          "url": "/hasyx/doc/SUBDOMAIN#subdomainconfig-interface",
+          "level": 3
+        },
+        {
+          "title": "SubdomainManagerConfig Interface",
+          "url": "/hasyx/doc/SUBDOMAIN#subdomainmanagerconfig-interface",
+          "level": 3
+        },
+        {
+          "title": "Environment Variables",
+          "url": "/hasyx/doc/SUBDOMAIN#environment-variables",
+          "level": 3
+        },
+        {
+          "title": "Core Methods",
+          "url": "/hasyx/doc/SUBDOMAIN#core-methods",
+          "level": 2
+        },
+        {
+          "title": "Subdomain Operations",
+          "url": "/hasyx/doc/SUBDOMAIN#subdomain-operations",
+          "level": 3
+        },
+        {
+          "title": "Workflow Details",
+          "url": "/hasyx/doc/SUBDOMAIN#workflow-details",
+          "level": 2
+        },
+        {
+          "title": "Complete Subdomain Creation Process",
+          "url": "/hasyx/doc/SUBDOMAIN#complete-subdomain-creation-process",
+          "level": 3
+        },
+        {
+          "title": "Error Handling and Cleanup",
+          "url": "/hasyx/doc/SUBDOMAIN#error-handling-and-cleanup",
+          "level": 3
+        },
+        {
+          "title": "Integration Examples",
+          "url": "/hasyx/doc/SUBDOMAIN#integration-examples",
+          "level": 2
+        },
+        {
+          "title": "With Express.js Application",
+          "url": "/hasyx/doc/SUBDOMAIN#with-expressjs-application",
+          "level": 3
+        },
+        {
+          "title": "Multi-Service Deployment",
+          "url": "/hasyx/doc/SUBDOMAIN#multi-service-deployment",
+          "level": 3
+        },
+        {
+          "title": "SubdomainStatus Structure",
+          "url": "/hasyx/doc/SUBDOMAIN#subdomainstatus-structure",
+          "level": 2
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/SUBDOMAIN#error-handling",
+          "level": 2
+        },
+        {
+          "title": "Common Error Scenarios",
+          "url": "/hasyx/doc/SUBDOMAIN#common-error-scenarios",
+          "level": 3
+        },
+        {
+          "title": "Configuration Validation",
+          "url": "/hasyx/doc/SUBDOMAIN#configuration-validation",
+          "level": 3
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/SUBDOMAIN#best-practices",
+          "level": 2
+        },
+        {
+          "title": "1. Use Environment Configuration",
+          "url": "/hasyx/doc/SUBDOMAIN#1-use-environment-configuration",
+          "level": 3
+        },
+        {
+          "title": "2. Always Use Define/Undefine",
+          "url": "/hasyx/doc/SUBDOMAIN#2-always-use-defineundefine",
+          "level": 3
+        },
+        {
+          "title": "3. Check Status Before Operations",
+          "url": "/hasyx/doc/SUBDOMAIN#3-check-status-before-operations",
+          "level": 3
+        },
+        {
+          "title": "4. Monitor SSL Expiration",
+          "url": "/hasyx/doc/SUBDOMAIN#4-monitor-ssl-expiration",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/SUBDOMAIN#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/SUBDOMAIN#common-issues",
+          "level": 3
         }
       ],
       "level": 1
@@ -4295,5 +5197,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-01T12:46:50.395Z"
+  "lastUpdated": "2025-06-01T15:53:51.454Z"
 }

@@ -2,12 +2,11 @@
 
 import Debug from '@/lib/debug';
 import { useSubscription } from "hasyx";
-import { Avatar, AvatarFallback, AvatarImage } from "hasyx/components/ui/avatar";
-import { Badge } from "hasyx/components/ui/badge";
-
+import { Button as EntityButton, Card as EntityCard } from 'hasyx/lib/entities';
 import { HasyxConstructorButton } from "hasyx/lib/constructor";
-import React, { useState, useCallback, useMemo } from "react";
+
 import { Cyto, CytoEdge, CytoNode, CytoStyle } from "hasyx/lib/cyto";
+import React, { useState, useCallback, useMemo } from "react";
 
 const debug = Debug('cyto');
 
@@ -20,7 +19,7 @@ const stylesheet = [
       'background-opacity': 0,
       'shape': 'rectangle',
       'width': 150,
-      'height': 80
+      'height': 50
     }
   },
   {
@@ -38,8 +37,10 @@ const stylesheet = [
 export default function Client() {
   const { data: users = [] } = useSubscription({
     table: 'users',
-    returning: ['id', 'image', 'name', 'created_at', 'updated_at', { accounts: { returning: ['id', 'provider'] } }],
+    returning: ['id', 'image', 'name', 'created_at', 'updated_at', { accounts: { returning: ['id', 'provider', '__typename'] } }],
   });
+
+  const [selectedEntity, setSelectedEntity] = useState<any>(null);
 
   const onGraphLoaded = useCallback((cy) => {
     global.cy = cy;
@@ -66,19 +67,27 @@ export default function Client() {
     order_by: undefined
   });
 
+  const handleEntityClick = useCallback((entityData: any) => {
+    setSelectedEntity(entityData);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedEntity(null);
+  }, []);
+
   return (
     <div className="w-full h-full relative">
       <Cyto 
         onLoaded={onGraphLoaded}
         onInsert={onInsert}
         buttons={true}
-        buttonsChildren={<>
+        buttonsChildren={
           <HasyxConstructorButton
             value={queryState}
             onChange={setQueryState}
             defaultTable="users"
           />
-        </>}
+        }
         layout={layoutConfig}
       >
         <CytoStyle stylesheet={stylesheet} />
@@ -95,12 +104,11 @@ export default function Client() {
               },
             }}
           >
-            <div className="w-[50px] h-[50px]">
-              <Avatar className="w-full h-full">
-                <AvatarImage src={user?.image} />
-                <AvatarFallback>{user?.name?.split(' ').map(name => name[0]).join('')}</AvatarFallback>
-              </Avatar>
-            </div>
+            <EntityButton 
+              data={{ ...user, __typename: 'users' }}
+              className="w-auto max-w-[140px]"
+              onClick={() => handleEntityClick({ ...user, __typename: 'users' })}
+            />
           </CytoNode>
           {(user.accounts || []).map((account) => (<React.Fragment key={account.id}>
             <CytoNode element={{
@@ -110,9 +118,11 @@ export default function Client() {
                 label: account.provider,
               },
             }}>
-              <div className="w-[50px] h-[20px]">
-                <Badge variant="outline">{account?.provider}</Badge>
-              </div>
+              <EntityButton 
+                data={{ ...account, __typename: 'accounts' }}
+                className="w-auto max-w-[120px]"
+                onClick={() => handleEntityClick({ ...account, __typename: 'accounts' })}
+              />
             </CytoNode>
             <CytoEdge element={{
               id: `account-edge-${account.id}`,
@@ -125,6 +135,16 @@ export default function Client() {
           </React.Fragment>))}
         </React.Fragment>))}
       </Cyto>
+
+      {/* Modal for entity details */}
+      {selectedEntity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <EntityCard 
+            data={selectedEntity}
+            onClose={handleCloseModal}
+          />
+        </div>
+      )}
     </div>
   );
 }

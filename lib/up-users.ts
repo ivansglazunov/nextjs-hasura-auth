@@ -286,7 +286,7 @@ export async function applyPermissions(hasura: Hasura) {
     operation: 'select',
     role: 'user',
     filter: {},
-    columns: ['id', 'provider', 'user_id']
+    columns: ['id', 'provider', 'user_id', 'created_at', 'updated_at']
   });
 
   // Admin permissions

@@ -236,6 +236,8 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/hasyx/doc/page.tsx': 'app/hasyx/doc/page.tsx',
     'app/hasyx/doc/[filename]/page.tsx': 'app/hasyx/doc/[filename]/page.tsx',
     'components/sidebar/layout.tsx': 'components/sidebar/layout.tsx',
+    'components/entities/default.tsx': 'components/entities/default.tsx',
+    'lib/entities.tsx': 'lib/entities.template',
     'lib/ask.ts': 'lib/ask.template',
     'public/favicon.ico': 'public/favicon.ico',
     'public/logo.svg': 'public/logo.svg',
@@ -292,6 +294,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/hasyx/doc',
     'app/hasyx/_doc/[filename]',
     'components/sidebar',
+    'components/entities',
   ];
 
   debug('Ensuring directories exist:', ensureDirs);
