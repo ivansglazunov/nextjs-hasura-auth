@@ -32,9 +32,10 @@ export function createWebSocketUrl(baseUrl: string): string {
   const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
   
   // Create the appropriate WS URL
-  const wsUrl = baseUrl.replace(/^http/, isSecure ? 'wss' : 'ws');
+  const wsUrl = isSecure ? baseUrl.replace(/^https/, 'wss') : baseUrl.replace(/^http/, 'ws');
   
   debug(`Created WebSocket URL: ${wsUrl} (secure: ${isSecure})`);
+
   return wsUrl;
 }
 

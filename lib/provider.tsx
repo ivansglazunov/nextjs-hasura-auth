@@ -39,6 +39,8 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
       window.location.hostname === 'localhost' || 
       window.location.hostname === '127.0.0.1'
     );
+
+    const s = typeof window !== 'undefined' &&  window.location.protocol === 'https:';
     
     // Define the base API URL (GraphQL endpoint)
     let apiUrl: string;
@@ -47,11 +49,11 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
     } else if (isLocalhost && url) {
       apiUrl = url.includes('vercel.app') ? toUrl('https', url, '/api/graphql') : toUrl('http', url, '/api/graphql');
     } else { // Production/Preview
-      const protocol = url?.includes('vercel.app') ? 'https' : 'http';
+      const protocol = s === true || url?.includes('vercel.app') ? 'https' : 'http';
       apiUrl = toUrl(protocol, API_URL, '/api/graphql');
     }
     
-    debug(`HasyxProviderCore: Final API URL: ${apiUrl}, isLocalhost: ${isLocalhost}`);
+    debug(`HasyxProviderCore: Final API URL: ${apiUrl}, isLocalhost: ${isLocalhost}, based on url: ${url}`);
     
     return {
       url: apiUrl,

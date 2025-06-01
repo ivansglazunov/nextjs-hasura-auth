@@ -307,7 +307,6 @@ export async function proxySOCKET(
         console.error(`❌ [${clientId}] Failed to generate Hasura JWT for anonymous:`, jwtError);
         debugGraphql(`❌ [${clientId}] Failed to generate Hasura JWT for anonymous:`, jwtError.message);
         debugGraphql(`❌ [${clientId}] JWT Error stack:`, jwtError.stack);
-        // Fallback or error closing might depend on requirements, here we close.
         closeConnections(1011, "Anonymous JWT generation failed");
         return;
       }
@@ -316,6 +315,22 @@ export async function proxySOCKET(
 
     debugGraphql(`🔐 [${clientId}] === AUTHENTICATION FLOW END ===`);
     debugGraphql(`📋 [${clientId}] Final headers for Hasura connection:`, Object.keys(headers));
+    
+    // === DEBUG: Log the actual JWT being sent ===
+    if (headers['Authorization']) {
+      try {
+        const jwtToken = headers['Authorization'].replace('Bearer ', '');
+        const [headerB64, payloadB64] = jwtToken.split('.');
+        const payload = JSON.parse(Buffer.from(payloadB64, 'base64').toString());
+        debugGraphql(`🔍 [${clientId}] === JWT PAYLOAD DEBUG ===`);
+        debugGraphql(`🎫 [${clientId}] JWT Subject:`, payload.sub);
+        debugGraphql(`🏷️ [${clientId}] Hasura Claims:`, payload['https://hasura.io/jwt/claims']);
+        debugGraphql(`⏰ [${clientId}] JWT Expires:`, new Date(payload.exp * 1000).toISOString());
+      } catch (jwtParseError: any) {
+        debugGraphql(`❌ [${clientId}] Could not parse JWT for debugging:`, jwtParseError.message);
+      }
+    }
+    
     debugGraphql(`🔗 [${clientId}] Establishing connection to Hasura WS: ${HASURA_WS_ENDPOINT}`);
     
     hasuraWs = new ws(HASURA_WS_ENDPOINT, 'graphql-ws', { headers });
@@ -334,6 +349,31 @@ export async function proxySOCKET(
         const messageStr = message.toString();
         const parsedMessage = JSON.parse(messageStr);
         const type = parsedMessage.type;
+
+        // === DEBUG: Log all incoming client messages ===
+        debugGraphql(`🔍 [${clientId}] === CLIENT MESSAGE DEBUG ===`);
+        debugGraphql(`📥 [${clientId}] Message type: ${type}`);
+        debugGraphql(`📋 [${clientId}] Full message:`, JSON.stringify(parsedMessage, null, 2));
+        
+        // If it's a subscribe message, log the operation details
+        if (type === 'subscribe' && parsedMessage.payload) {
+          const payload = parsedMessage.payload;
+          debugGraphql(`🔍 [${clientId}] === OPERATION ANALYSIS ===`);
+          debugGraphql(`📝 [${clientId}] Query:`, payload.query);
+          debugGraphql(`🏷️ [${clientId}] Variables:`, payload.variables);
+          debugGraphql(`🎯 [${clientId}] Operation Name:`, payload.operationName);
+          
+          // Try to detect operation type from query
+          if (payload.query) {
+            const queryStr = payload.query.toString().trim();
+            const operationType = queryStr.match(/^\s*(query|mutation|subscription)/i);
+            debugGraphql(`🔍 [${clientId}] Detected operation type:`, operationType ? operationType[1] : 'unknown');
+            
+            if (operationType && operationType[1].toLowerCase() === 'query') {
+              debugGraphql(`⚠️ [${clientId}] WARNING: This is a QUERY but being sent as 'subscribe' message type!`);
+            }
+          }
+        }
 
         if (type === 'connection_init') {
           debugGraphql(`🤝 [${clientId}] Received connection_init from client.`);
@@ -365,6 +405,7 @@ export async function proxySOCKET(
 
         if (['start', 'stop', 'subscribe', 'complete'].includes(type)) {
           debugGraphql(`📤 [${clientId}] Forwarding ${type} C -> H`);
+          debugGraphql(`📋 [${clientId}] Message being sent to Hasura:`, JSON.stringify(parsedMessage, null, 2));
           hasuraWs.send(messageStr);
         } else {
           debugGraphql(`❓ [${clientId}] Unknown message type from client: ${type}. Ignoring.`);
@@ -385,8 +426,11 @@ export async function proxySOCKET(
         const parsedMessage = JSON.parse(messageStr);
         const type = parsedMessage.type;
 
-        debugGraphql(`📬 [${clientId}] Received message from Hasura: type=${type}`);
-        
+        // === DEBUG: Log all incoming Hasura messages ===
+        debugGraphql(`🔍 [${clientId}] === HASURA MESSAGE DEBUG ===`);
+        debugGraphql(`📬 [${clientId}] Message type: ${type}`);
+        debugGraphql(`📋 [${clientId}] Full message:`, JSON.stringify(parsedMessage, null, 2));
+
         if (type === 'connection_error') {
           debugGraphql(`❌ [${clientId}] === CONNECTION ERROR FROM HASURA ===`);
           debugGraphql(`📋 [${clientId}] Error payload:`, parsedMessage.payload);
@@ -427,6 +471,21 @@ export async function proxySOCKET(
           return; // Ignore Hasura keep-alive
         }
 
+        // === DEBUG: Special handling for error messages ===
+        if (type === 'error') {
+          debugGraphql(`❌ [${clientId}] === ERROR MESSAGE FROM HASURA ===`);
+          debugGraphql(`📋 [${clientId}] Error details:`, parsedMessage.payload);
+          if (parsedMessage.payload && parsedMessage.payload.errors) {
+            debugGraphql(`🔍 [${clientId}] GraphQL errors:`, parsedMessage.payload.errors);
+            parsedMessage.payload.errors.forEach((error: any, index: number) => {
+              debugGraphql(`❗ [${clientId}] Error ${index + 1}:`, error.message);
+              if (error.extensions) {
+                debugGraphql(`🏷️ [${clientId}] Error extensions:`, error.extensions);
+              }
+            });
+          }
+        }
+
         let messageToSend = messageStr;
         if (type === 'data') {
           debugGraphql(`🔄 [${clientId}] Translating message type 'data' -> 'next'`);
@@ -440,6 +499,7 @@ export async function proxySOCKET(
           debugGraphql(`❓ [${clientId}] Unknown message type from Hasura: ${type}. Forwarding as-is.`);
         }
 
+        debugGraphql(`📤 [${clientId}] Sending to client:`, JSON.stringify(JSON.parse(messageToSend), null, 2));
         client.send(messageToSend);
 
       } catch (err: any) {

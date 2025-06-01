@@ -203,6 +203,18 @@ function getComparisonOperators(fieldType: string): Array<{name: string, label: 
   return baseOperators;
 }
 
+// Utility function to sort fields: physical fields first, then relations
+function sortFieldsByType(fields: FieldInfo[]): FieldInfo[] {
+  const physicalFields = fields.filter(field => !field.isRelation);
+  const relationFields = fields.filter(field => field.isRelation);
+  
+  // Sort each group alphabetically by name
+  physicalFields.sort((a, b) => a.name.localeCompare(b.name));
+  relationFields.sort((a, b) => a.name.localeCompare(b.name));
+  
+  return [...physicalFields, ...relationFields];
+}
+
 // Where Input Component
 function WhereInput({ value, onChange, operator, fieldType }: {
   value: any;
@@ -398,12 +410,15 @@ function ReturningSection({
     )
   );
   
+  // Sort fields: physical fields first, then relations
+  const sortedAvailableFields = sortFieldsByType(availableFields);
+  
   return (
     <div className={level > 0 ? "ml-1 border-l pl-1" : ""}>
       <div className="flex items-center justify-between mb-1">
         <Label className="text-xs font-medium">Returning</Label>
         
-        {availableFields.length > 0 && (
+        {sortedAvailableFields.length > 0 && (
           <Select onValueChange={(fieldName) => {
             const field = fields.find(f => f.name === fieldName);
             if (field) {
@@ -414,7 +429,7 @@ function ReturningSection({
               <Plus className="h-2.5 w-2.5 flex-shrink-0" />
             </SelectTrigger>
             <SelectContent>
-              {availableFields.map(field => (
+              {sortedAvailableFields.map(field => (
                 <SelectItem key={field.name} value={field.name} className="text-xs">
                   {field.name} {field.isRelation && <span className="text-muted-foreground">({field.targetTable})</span>}
                 </SelectItem>
@@ -524,12 +539,15 @@ function WhereSection({
   // Include both regular fields and relations for where conditions
   const availableFields = fields.filter(field => !where[field.name]);
   
+  // Sort fields: physical fields first, then relations
+  const sortedAvailableFields = sortFieldsByType(availableFields);
+  
   return (
     <div className={level > 0 ? "mb-1" : "mb-2"}>
       <div className="flex items-center justify-between mb-1">
         <Label className="text-xs font-medium">Where</Label>
         
-        {availableFields.length > 0 && (
+        {sortedAvailableFields.length > 0 && (
           <Select onValueChange={(fieldName) => {
             addWhereCondition(fieldName);
           }}>
@@ -537,7 +555,7 @@ function WhereSection({
               <Plus className="h-2.5 w-2.5 flex-shrink-0" />
             </SelectTrigger>
             <SelectContent>
-              {availableFields.map(field => (
+              {sortedAvailableFields.map(field => (
                 <SelectItem key={field.name} value={field.name} className="text-xs">
                   {field.name} {field.isRelation && <span className="text-muted-foreground">({field.targetTable})</span>}
                 </SelectItem>
@@ -585,10 +603,18 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users' }: HasyxCons
   );
   
   const handleTableChange = (newTable: string) => {
+    // Get fields for the new table
+    const newTableFields = schema ? getFieldsFromTable(schema, newTable) : [];
+    
+    // Auto-populate returning with all physical fields (non-relation fields)
+    const physicalFields = newTableFields
+      .filter(field => !field.isRelation)
+      .map(field => field.name);
+    
     onChange({
       table: newTable,
       where: {},
-      returning: []
+      returning: physicalFields
     });
   };
   
