@@ -285,7 +285,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/hasyx/payments',
     'app/hasyx/cyto',
     'app/hasyx/doc',
-    'app/hasyx/doc/[filename]',
+    'app/hasyx/_doc/[filename]',
     'components/sidebar',
   ];
 

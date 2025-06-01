@@ -86,11 +86,11 @@ export function getMarkdownTitle(content: string): string {
 }
 
 /**
- * Fetches documentation index from public/doc/index.json
+ * Fetches documentation index from public/_doc/index.json
  */
 export async function getDocumentationIndex(): Promise<DocIndex> {
   try {
-    const response = await fetch('/doc/index.json');
+    const response = await fetch('/_doc/index.json');
     if (!response.ok) {
       throw new Error(`Failed to fetch documentation index: ${response.status}`);
     }
@@ -119,7 +119,7 @@ export async function getMarkdownFiles(): Promise<MarkdownFile[]> {
 export async function createDocNavigation(): Promise<DocSection> {
   try {
     // Try to fetch from static md.json file first
-    const response = await fetch('/doc/md.json');
+    const response = await fetch('/_doc/md.json');
     if (response.ok) {
       const docNavigation: DocNavigation = await response.json();
       return {
@@ -181,7 +181,7 @@ export async function getMarkdownFile(filename: string): Promise<MarkdownFile | 
     }
     
     // Fetch the actual content
-    const response = await fetch(`/doc/${fileInfo.filename}`);
+    const response = await fetch(`/_doc/${fileInfo.filename}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch markdown file: ${response.status}`);
     }

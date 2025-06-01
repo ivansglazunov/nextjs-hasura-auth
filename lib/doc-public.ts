@@ -208,7 +208,7 @@ export function createDocNavigationStructure(markdownFiles: MarkdownFile[]): Sid
 export function buildDocumentation(rootDir: string = process.cwd()) {
   console.log('📚 Building documentation...');
   
-  const publicDocDir = path.join(rootDir, 'public', 'doc');
+  const publicDocDir = path.join(rootDir, 'public', '_doc');
   const appDocDir = path.join(rootDir, 'app', 'hasyx', 'doc');
   
   // Ensure directories exist
@@ -277,7 +277,7 @@ export function buildDocumentation(rootDir: string = process.cwd()) {
     JSON.stringify(docNavigation, null, 2)
   );
   
-  // Also write md.json to public/doc/ for HTTP access
+  // Also write md.json to public/_doc/ for HTTP access
   fs.writeFileSync(
     path.join(publicDocDir, 'md.json'),
     JSON.stringify(docNavigation, null, 2)
@@ -285,7 +285,7 @@ export function buildDocumentation(rootDir: string = process.cwd()) {
   
   console.log(`✅ Documentation built successfully! ${markdownFiles.length} files processed.`);
   console.log(`📄 Navigation structure saved to app/hasyx/doc/md.json`);
-  console.log(`🌐 Navigation structure also available at /doc/md.json`);
+  console.log(`🌐 Navigation structure also available at /_doc/md.json`);
 }
 
 // Run if called directly

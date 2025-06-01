@@ -87,13 +87,13 @@ function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
     tableName.split('_').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('_')
   ];
   
-  let graphqlType = null;
+  let graphqlType: any = null;
   for (const typeName of possibleTypeNames) {
     graphqlType = schema?.data?.__schema?.types?.find((type: any) => type.name === typeName);
     if (graphqlType) break;
   }
   
-  if (!graphqlType || !graphqlType.fields) {
+  if (!graphqlType || !graphqlType?.fields) {
     // Fallback to basic fields for unknown tables, but keep backward compatibility for users
     const commonFields: FieldInfo[] = [
       { name: 'id', type: 'String', isRelation: false },
@@ -135,7 +135,7 @@ function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
     return commonFields;
   }
   
-  return graphqlType.fields.map((field: any) => {
+  return graphqlType?.fields?.map((field: any) => {
     const fieldType = field.type;
     const actualType = fieldType?.ofType || fieldType; // Handle NON_NULL wrappers
     
