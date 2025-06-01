@@ -9,8 +9,10 @@ dotenv.config();
 
 const HASURA_GRAPHQL_URL = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
-const OUTPUT_DIR = path.resolve(process.cwd(), 'public');
-const OUTPUT_PATH = path.join(OUTPUT_DIR, 'hasura-schema.json');
+const PUBLIC_OUTPUT_DIR = path.resolve(process.cwd(), 'public');
+const PUBLIC_OUTPUT_PATH = path.join(PUBLIC_OUTPUT_DIR, 'hasura-schema.json');
+const APP_OUTPUT_DIR = path.resolve(process.cwd(), 'app', 'hasyx');
+const APP_OUTPUT_PATH = path.join(APP_OUTPUT_DIR, 'hasura-schema.json');
 
 const debug = Debug('hasura:schema');
 
@@ -203,25 +205,36 @@ async function fetchSchema() {
 
     const introspectionResult = response.data;
     
-    
+    // Analyze the schema and identify table mappings
     const schemaTypes = introspectionResult.data.__schema.types;
     const tableMappings = identifyTableSchemas(schemaTypes);
     
-    
+    // Add hasyx metadata to the schema
     introspectionResult.hasyx = {
       tableMappings,
       timestamp: new Date().valueOf(),
       version: "1.0.0"
     };
 
-    debug(`💾 Saving schema with table mappings to ${OUTPUT_PATH}...`);
-    fs.ensureDirSync(OUTPUT_DIR);
-
     const jsonContent = JSON.stringify(introspectionResult, null, 2);
-    fs.writeFileSync(OUTPUT_PATH, jsonContent);
 
-    debug(`✅ Schema successfully retrieved and saved to ${OUTPUT_PATH}`);
+    // Ensure directories exist
+    fs.ensureDirSync(PUBLIC_OUTPUT_DIR);
+    fs.ensureDirSync(APP_OUTPUT_DIR);
+
+    // Save schema to public directory (for HTTP access)
+    debug(`💾 Saving schema to public directory: ${PUBLIC_OUTPUT_PATH}...`);
+    fs.writeFileSync(PUBLIC_OUTPUT_PATH, jsonContent);
+
+    // Save schema to app/hasyx directory (for native import)
+    debug(`💾 Saving schema to app directory: ${APP_OUTPUT_PATH}...`);
+    fs.writeFileSync(APP_OUTPUT_PATH, jsonContent);
+
+    debug(`✅ Schema successfully retrieved and saved to both directories`);
     debug(`📊 Table mappings included in schema file (${Object.keys(tableMappings).length} tables identified)`);
+    console.log(`✅ Hasura schema saved to:`);
+    console.log(`   📄 ${PUBLIC_OUTPUT_PATH} (for HTTP access)`);
+    console.log(`   📄 ${APP_OUTPUT_PATH} (for native import)`);
   } catch (error: any) {
     throw new Error('❌ Error retrieving or saving schema:' + (error.response?.data || error.message || error));
   }

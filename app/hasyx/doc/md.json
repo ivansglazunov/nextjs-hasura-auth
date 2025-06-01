@@ -768,128 +768,203 @@
           "level": 3
         },
         {
-          "title": "Right Panel: Multi-View Tabs ✨",
+          "title": "Right Panel: Multi-View Tabs",
           "url": "/hasyx/doc/CONSTRUCTOR#right-panel-multi-view-tabs",
           "level": 3
         },
         {
-          "title": "📖 Practical Usage",
-          "url": "/hasyx/doc/CONSTRUCTOR#practical-usage",
+          "title": "📖 Core Features",
+          "url": "/hasyx/doc/CONSTRUCTOR#core-features",
           "level": 2
         },
         {
-          "title": "Basic Query Building",
-          "url": "/hasyx/doc/CONSTRUCTOR#basic-query-building",
+          "title": "Smart Primary Key Detection",
+          "url": "/hasyx/doc/CONSTRUCTOR#smart-primary-key-detection",
           "level": 3
         },
         {
-          "title": "Real Schema Integration ✅ NEW",
-          "url": "/hasyx/doc/CONSTRUCTOR#real-schema-integration-new",
+          "title": "Primary Key Visual Indicators",
+          "url": "/hasyx/doc/CONSTRUCTOR#primary-key-visual-indicators",
           "level": 3
         },
         {
-          "title": "Page Integration",
-          "url": "/hasyx/doc/CONSTRUCTOR#page-integration",
+          "title": "Auto-populated Physical Fields",
+          "url": "/hasyx/doc/CONSTRUCTOR#auto-populated-physical-fields",
           "level": 3
         },
         {
-          "title": "Tabs Usage Examples",
-          "url": "/hasyx/doc/CONSTRUCTOR#tabs-usage-examples",
+          "title": "Pagination Controls",
+          "url": "/hasyx/doc/CONSTRUCTOR#pagination-controls",
           "level": 3
         },
         {
-          "title": "Integration with Forms",
-          "url": "/hasyx/doc/CONSTRUCTOR#integration-with-forms",
+          "title": "Multi-field Sorting",
+          "url": "/hasyx/doc/CONSTRUCTOR#multi-field-sorting",
           "level": 3
         },
         {
-          "title": "Schema-driven Development ✅ ENHANCED",
-          "url": "/hasyx/doc/CONSTRUCTOR#schema-driven-development-enhanced",
+          "title": "Nested Relations",
+          "url": "/hasyx/doc/CONSTRUCTOR#nested-relations",
           "level": 3
         },
         {
-          "title": "🛣️ Development Roadmap",
-          "url": "/hasyx/doc/CONSTRUCTOR#development-roadmap",
+          "title": "🎛️ Query Builder Sections",
+          "url": "/hasyx/doc/CONSTRUCTOR#query-builder-sections",
           "level": 2
         },
         {
-          "title": "Phase 1: Core Functionality ✅ COMPLETED",
-          "url": "/hasyx/doc/CONSTRUCTOR#phase-1-core-functionality-completed",
+          "title": "Table Selection",
+          "url": "/hasyx/doc/CONSTRUCTOR#table-selection",
           "level": 3
         },
         {
-          "title": "Phase 2: Essential Operations ❌",
-          "url": "/hasyx/doc/CONSTRUCTOR#phase-2-essential-operations",
+          "title": "Where Conditions",
+          "url": "/hasyx/doc/CONSTRUCTOR#where-conditions",
           "level": 3
         },
         {
-          "title": "Phase 3: Advanced Queries ❌",
-          "url": "/hasyx/doc/CONSTRUCTOR#phase-3-advanced-queries",
+          "title": "Pagination Section",
+          "url": "/hasyx/doc/CONSTRUCTOR#pagination-section",
           "level": 3
         },
         {
-          "title": "Phase 4: Mutations ❌",
-          "url": "/hasyx/doc/CONSTRUCTOR#phase-4-mutations",
+          "title": "Order By Section",
+          "url": "/hasyx/doc/CONSTRUCTOR#order-by-section",
           "level": 3
         },
         {
-          "title": "Phase 5: Professional Features ❌",
-          "url": "/hasyx/doc/CONSTRUCTOR#phase-5-professional-features",
+          "title": "Returning Fields",
+          "url": "/hasyx/doc/CONSTRUCTOR#returning-fields",
           "level": 3
         },
         {
-          "title": "Phase 6: Advanced Types ❌",
-          "url": "/hasyx/doc/CONSTRUCTOR#phase-6-advanced-types",
-          "level": 3
-        },
-        {
-          "title": "🎯 Recommended Development Order",
-          "url": "/hasyx/doc/CONSTRUCTOR#recommended-development-order",
+          "title": "📊 Result Tabs",
+          "url": "/hasyx/doc/CONSTRUCTOR#result-tabs",
           "level": 2
         },
         {
-          "title": "Next Priority (Phase 2):",
-          "url": "/hasyx/doc/CONSTRUCTOR#next-priority-phase-2",
+          "title": "`exp` Tab",
+          "url": "/hasyx/doc/CONSTRUCTOR#exp-tab",
           "level": 3
         },
         {
-          "title": "Recent Major Updates ✅:",
-          "url": "/hasyx/doc/CONSTRUCTOR#recent-major-updates",
+          "title": "`gql` Tab",
+          "url": "/hasyx/doc/CONSTRUCTOR#gql-tab",
           "level": 3
         },
         {
-          "title": "Implementation Strategy:",
-          "url": "/hasyx/doc/CONSTRUCTOR#implementation-strategy",
+          "title": "`query` Tab",
+          "url": "/hasyx/doc/CONSTRUCTOR#query-tab",
           "level": 3
         },
         {
-          "title": "🔧 Technical Notes",
-          "url": "/hasyx/doc/CONSTRUCTOR#technical-notes",
+          "title": "`subscription` Tab",
+          "url": "/hasyx/doc/CONSTRUCTOR#subscription-tab",
+          "level": 3
+        },
+        {
+          "title": "🔧 Complete State Interface",
+          "url": "/hasyx/doc/CONSTRUCTOR#complete-state-interface",
           "level": 2
         },
         {
-          "title": "Schema Requirements",
-          "url": "/hasyx/doc/CONSTRUCTOR#schema-requirements",
+          "title": "🎯 Field Type Support",
+          "url": "/hasyx/doc/CONSTRUCTOR#field-type-support",
+          "level": 2
+        },
+        {
+          "title": "String Fields",
+          "url": "/hasyx/doc/CONSTRUCTOR#string-fields",
           "level": 3
         },
         {
-          "title": "Performance ⚡ ENHANCED",
-          "url": "/hasyx/doc/CONSTRUCTOR#performance-enhanced",
+          "title": "Numeric Fields (Int, Float, BigInt)",
+          "url": "/hasyx/doc/CONSTRUCTOR#numeric-fields-int-float-bigint",
           "level": 3
         },
         {
-          "title": "Field Display Fix ✅ MAJOR UPDATE",
-          "url": "/hasyx/doc/CONSTRUCTOR#field-display-fix-major-update",
+          "title": "Boolean Fields",
+          "url": "/hasyx/doc/CONSTRUCTOR#boolean-fields",
           "level": 3
         },
         {
-          "title": "Testing Coverage ✅ ENHANCED",
-          "url": "/hasyx/doc/CONSTRUCTOR#testing-coverage-enhanced",
+          "title": "DateTime Fields",
+          "url": "/hasyx/doc/CONSTRUCTOR#datetime-fields",
           "level": 3
         },
         {
-          "title": "Browser Support",
-          "url": "/hasyx/doc/CONSTRUCTOR#browser-support",
+          "title": "UUID Fields",
+          "url": "/hasyx/doc/CONSTRUCTOR#uuid-fields",
+          "level": 3
+        },
+        {
+          "title": "JSONB Fields",
+          "url": "/hasyx/doc/CONSTRUCTOR#jsonb-fields",
+          "level": 3
+        },
+        {
+          "title": "🚀 Schema Integration",
+          "url": "/hasyx/doc/CONSTRUCTOR#schema-integration",
+          "level": 2
+        },
+        {
+          "title": "Automatic Schema Loading",
+          "url": "/hasyx/doc/CONSTRUCTOR#automatic-schema-loading",
+          "level": 3
+        },
+        {
+          "title": "Field Detection Logic",
+          "url": "/hasyx/doc/CONSTRUCTOR#field-detection-logic",
+          "level": 3
+        },
+        {
+          "title": "Primary Key Detection",
+          "url": "/hasyx/doc/CONSTRUCTOR#primary-key-detection",
+          "level": 3
+        },
+        {
+          "title": "Smart Query Optimization",
+          "url": "/hasyx/doc/CONSTRUCTOR#smart-query-optimization",
+          "level": 3
+        },
+        {
+          "title": "⚡ Performance Features",
+          "url": "/hasyx/doc/CONSTRUCTOR#performance-features",
+          "level": 2
+        },
+        {
+          "title": "Efficient Field Sorting",
+          "url": "/hasyx/doc/CONSTRUCTOR#efficient-field-sorting",
+          "level": 3
+        },
+        {
+          "title": "Smart Auto-population",
+          "url": "/hasyx/doc/CONSTRUCTOR#smart-auto-population",
+          "level": 3
+        },
+        {
+          "title": "Optimized Queries",
+          "url": "/hasyx/doc/CONSTRUCTOR#optimized-queries",
+          "level": 3
+        },
+        {
+          "title": "🎨 UI/UX Design",
+          "url": "/hasyx/doc/CONSTRUCTOR#uiux-design",
+          "level": 2
+        },
+        {
+          "title": "Minimal Inline Design",
+          "url": "/hasyx/doc/CONSTRUCTOR#minimal-inline-design",
+          "level": 3
+        },
+        {
+          "title": "Visual Organization",
+          "url": "/hasyx/doc/CONSTRUCTOR#visual-organization",
+          "level": 3
+        },
+        {
+          "title": "Accessibility",
+          "url": "/hasyx/doc/CONSTRUCTOR#accessibility",
           "level": 3
         }
       ],
@@ -4070,7 +4145,155 @@
         }
       ],
       "level": 1
+    },
+    {
+      "title": "URL Function Enhancement Experiment",
+      "url": "/hasyx/doc/url.experiment",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Objective",
+          "url": "/hasyx/doc/url.experiment#objective",
+          "level": 2
+        },
+        {
+          "title": "Current State Analysis",
+          "url": "/hasyx/doc/url.experiment#current-state-analysis",
+          "level": 2
+        },
+        {
+          "title": "Current Usage Points",
+          "url": "/hasyx/doc/url.experiment#current-usage-points",
+          "level": 3
+        },
+        {
+          "title": "Protocol Construction Issues Found",
+          "url": "/hasyx/doc/url.experiment#protocol-construction-issues-found",
+          "level": 3
+        },
+        {
+          "title": "Requirements",
+          "url": "/hasyx/doc/url.experiment#requirements",
+          "level": 2
+        },
+        {
+          "title": "Protocol Normalization Rules",
+          "url": "/hasyx/doc/url.experiment#protocol-normalization-rules",
+          "level": 3
+        },
+        {
+          "title": "Host Protocol Handling",
+          "url": "/hasyx/doc/url.experiment#host-protocol-handling",
+          "level": 3
+        },
+        {
+          "title": "Environment Detection Logic",
+          "url": "/hasyx/doc/url.experiment#environment-detection-logic",
+          "level": 3
+        },
+        {
+          "title": "Secure Protocol Determination",
+          "url": "/hasyx/doc/url.experiment#secure-protocol-determination",
+          "level": 3
+        },
+        {
+          "title": "Implementation Plan",
+          "url": "/hasyx/doc/url.experiment#implementation-plan",
+          "level": 2
+        },
+        {
+          "title": "✅ Phase 1: Enhanced URL Function - COMPLETED",
+          "url": "/hasyx/doc/url.experiment#phase-1-enhanced-url-function-completed",
+          "level": 3
+        },
+        {
+          "title": "✅ Phase 2: Test Development - COMPLETED",
+          "url": "/hasyx/doc/url.experiment#phase-2-test-development-completed",
+          "level": 3
+        },
+        {
+          "title": "🔄 Phase 3: Codebase Integration - READY TO START",
+          "url": "/hasyx/doc/url.experiment#phase-3-codebase-integration-ready-to-start",
+          "level": 3
+        },
+        {
+          "title": "Test Results Summary",
+          "url": "/hasyx/doc/url.experiment#test-results-summary",
+          "level": 2
+        },
+        {
+          "title": "✅ All Tests Passing (24/24)",
+          "url": "/hasyx/doc/url.experiment#all-tests-passing-2424",
+          "level": 3
+        },
+        {
+          "title": "Key Achievements",
+          "url": "/hasyx/doc/url.experiment#key-achievements",
+          "level": 3
+        },
+        {
+          "title": "Success Criteria",
+          "url": "/hasyx/doc/url.experiment#success-criteria",
+          "level": 2
+        },
+        {
+          "title": "Enhanced Features Implemented",
+          "url": "/hasyx/doc/url.experiment#enhanced-features-implemented",
+          "level": 2
+        },
+        {
+          "title": "1. Protocol Normalization",
+          "url": "/hasyx/doc/url.experiment#1-protocol-normalization",
+          "level": 3
+        },
+        {
+          "title": "2. Environment-Aware Security",
+          "url": "/hasyx/doc/url.experiment#2-environment-aware-security",
+          "level": 3
+        },
+        {
+          "title": "3. Testing Support",
+          "url": "/hasyx/doc/url.experiment#3-testing-support",
+          "level": 3
+        },
+        {
+          "title": "4. Debug Tracing",
+          "url": "/hasyx/doc/url.experiment#4-debug-tracing",
+          "level": 3
+        },
+        {
+          "title": "Next Steps - Phase 3: Codebase Integration",
+          "url": "/hasyx/doc/url.experiment#next-steps-phase-3-codebase-integration",
+          "level": 2
+        },
+        {
+          "title": "Files to Update:",
+          "url": "/hasyx/doc/url.experiment#files-to-update",
+          "level": 3
+        },
+        {
+          "title": "Integration Strategy:",
+          "url": "/hasyx/doc/url.experiment#integration-strategy",
+          "level": 3
+        },
+        {
+          "title": "Post-Implementation Tasks",
+          "url": "/hasyx/doc/url.experiment#post-implementation-tasks",
+          "level": 2
+        },
+        {
+          "title": "Phase 4: Documentation",
+          "url": "/hasyx/doc/url.experiment#phase-4-documentation",
+          "level": 3
+        },
+        {
+          "title": "Phase 5: Codebase Migration",
+          "url": "/hasyx/doc/url.experiment#phase-5-codebase-migration",
+          "level": 3
+        }
+      ],
+      "level": 1
     }
   ],
-  "lastUpdated": "2025-06-01T11:02:05.647Z"
+  "lastUpdated": "2025-06-01T12:46:50.395Z"
 }

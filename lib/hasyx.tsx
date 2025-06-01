@@ -1,7 +1,7 @@
 import { useCreateApolloClient } from './apollo';
 
 import { ThemeProvider } from "hasyx/components/theme-provider";
-import toUrl, { API_URL, url } from 'hasyx/lib/url';
+import { url, API_URL } from 'hasyx/lib/url';
 import { SessionProvider } from "next-auth/react";
 import { useMemo } from "react";
 import isEqual from 'react-fast-compare';

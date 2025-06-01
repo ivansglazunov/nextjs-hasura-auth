@@ -13,15 +13,19 @@ import { Label } from "hasyx/components/ui/label";
 import { Checkbox } from "hasyx/components/ui/checkbox";
 import { Badge } from "hasyx/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "hasyx/components/ui/tabs";
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Search } from 'lucide-react';
 import { Session } from 'next-auth';
 import { useSession } from 'next-auth/react';
+import hasuraSchema from '@/app/hasyx/hasura-schema.json';
 
 // Types
 interface ConstructorState {
   table: string;
   where: Record<string, any>;
   returning: (string | NestedReturning)[];
+  limit?: number;
+  offset?: number;
+  order_by?: Array<{ [field: string]: 'asc' | 'desc' }>;
 }
 
 interface NestedReturning {
@@ -213,6 +217,45 @@ function sortFieldsByType(fields: FieldInfo[]): FieldInfo[] {
   relationFields.sort((a, b) => a.name.localeCompare(b.name));
   
   return [...physicalFields, ...relationFields];
+}
+
+// Utility function to identify primary key field
+function getPrimaryKeyField(fields: FieldInfo[]): string | null {
+  // Look for common primary key field names
+  const primaryKeyNames = ['id', 'uuid', 'pk', '_id'];
+  
+  for (const pkName of primaryKeyNames) {
+    const field = fields.find(f => f.name === pkName && !f.isRelation);
+    if (field) {
+      return field.name;
+    }
+  }
+  
+  return null;
+}
+
+// Utility function to check if where clause should be converted to pk_columns
+function shouldUsePkColumns(where: Record<string, any>, primaryKeyField: string | null): { usePk: boolean; pkValue?: any; remainingWhere: Record<string, any> } {
+  if (!primaryKeyField || !where[primaryKeyField]) {
+    return { usePk: false, remainingWhere: where };
+  }
+  
+  const whereKeys = Object.keys(where);
+  
+  // If only primary key is in where and it's a simple equality check
+  if (whereKeys.length === 1 && whereKeys[0] === primaryKeyField) {
+    const condition = where[primaryKeyField];
+    // Check if it's a simple _eq condition
+    if (condition && typeof condition === 'object' && condition._eq !== undefined) {
+      return { 
+        usePk: true, 
+        pkValue: condition._eq,
+        remainingWhere: {}
+      };
+    }
+  }
+  
+  return { usePk: false, remainingWhere: where };
 }
 
 // Where Input Component
@@ -542,6 +585,9 @@ function WhereSection({
   // Sort fields: physical fields first, then relations
   const sortedAvailableFields = sortFieldsByType(availableFields);
   
+  // Get primary key field
+  const primaryKeyField = getPrimaryKeyField(fields);
+
   return (
     <div className={level > 0 ? "mb-1" : "mb-2"}>
       <div className="flex items-center justify-between mb-1">
@@ -557,7 +603,15 @@ function WhereSection({
             <SelectContent>
               {sortedAvailableFields.map(field => (
                 <SelectItem key={field.name} value={field.name} className="text-xs">
-                  {field.name} {field.isRelation && <span className="text-muted-foreground">({field.targetTable})</span>}
+                  <div className="flex items-center gap-1">
+                    <span>{field.name}</span>
+                    {field.name === primaryKeyField && (
+                      <Badge variant="outline" className="text-xs px-1 py-0 h-3">PK</Badge>
+                    )}
+                    {field.isRelation && (
+                      <span className="text-muted-foreground">({field.targetTable})</span>
+                    )}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -584,17 +638,179 @@ function WhereSection({
   );
 }
 
+// Limit/Offset Section Component
+function LimitOffsetSection({
+  limit,
+  offset,
+  onLimitChange,
+  onOffsetChange
+}: {
+  limit?: number;
+  offset?: number;
+  onLimitChange: (limit: number | undefined) => void;
+  onOffsetChange: (offset: number | undefined) => void;
+}) {
+  return (
+    <div className="mb-2">
+      <Label className="text-xs font-medium mb-1 block">Pagination</Label>
+      <div className="grid grid-cols-2 gap-1">
+        <div className="w-full flex items-center border rounded h-6 bg-background">
+          <div className="px-2 py-1 text-xs font-medium bg-muted/50 flex-shrink-0">
+            Limit
+          </div>
+          <div className="w-px h-4 bg-border"></div>
+          <Input
+            type="number"
+            value={limit || ''}
+            onChange={(e) => {
+              const val = e.target.value === '' ? undefined : Number(e.target.value);
+              onLimitChange(val);
+            }}
+            placeholder="100"
+            className="h-full border-0 rounded-none text-xs bg-transparent focus:bg-transparent px-1"
+            min="0"
+          />
+        </div>
+        
+        <div className="w-full flex items-center border rounded h-6 bg-background">
+          <div className="px-2 py-1 text-xs font-medium bg-muted/50 flex-shrink-0">
+            Offset
+          </div>
+          <div className="w-px h-4 bg-border"></div>
+          <Input
+            type="number"
+            value={offset || ''}
+            onChange={(e) => {
+              const val = e.target.value === '' ? undefined : Number(e.target.value);
+              onOffsetChange(val);
+            }}
+            placeholder="0"
+            className="h-full border-0 rounded-none text-xs bg-transparent focus:bg-transparent px-1"
+            min="0"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Order By Field Component
+function OrderByField({
+  field,
+  direction,
+  onUpdate,
+  onRemove
+}: {
+  field: string;
+  direction: 'asc' | 'desc';
+  onUpdate: (field: string, direction: 'asc' | 'desc') => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="w-full flex items-center border rounded h-6 bg-background">
+      <div className="px-2 py-1 text-xs font-medium bg-muted/50 flex-shrink-0">
+        {field}
+      </div>
+      <div className="w-px h-4 bg-border"></div>
+      <Select value={direction} onValueChange={(dir: 'asc' | 'desc') => onUpdate(field, dir)}>
+        <SelectTrigger className="h-6 border-0 rounded-none px-2 text-xs bg-transparent hover:bg-muted/50 flex-shrink-0 min-w-12 max-h-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="asc" className="text-xs">↑ asc</SelectItem>
+          <SelectItem value="desc" className="text-xs">↓ desc</SelectItem>
+        </SelectContent>
+      </Select>
+      <div className="w-px h-4 bg-border"></div>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={onRemove} 
+        className="h-full w-6 px-0 border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0"
+      >
+        <X className="h-3 w-3" />
+      </Button>
+    </div>
+  );
+}
+
+// Order By Section Component
+function OrderBySection({
+  fields,
+  orderBy,
+  onChange
+}: {
+  fields: FieldInfo[];
+  orderBy?: Array<{ [field: string]: 'asc' | 'desc' }>;
+  onChange: (orderBy: Array<{ [field: string]: 'asc' | 'desc' }> | undefined) => void;
+}) {
+  const addOrderBy = (fieldName: string) => {
+    const newOrderBy = [...(orderBy || []), { [fieldName]: 'asc' as const }];
+    onChange(newOrderBy);
+  };
+  
+  const updateOrderBy = (index: number, field: string, direction: 'asc' | 'desc') => {
+    if (!orderBy) return;
+    const newOrderBy = [...orderBy];
+    newOrderBy[index] = { [field]: direction };
+    onChange(newOrderBy);
+  };
+  
+  const removeOrderBy = (index: number) => {
+    if (!orderBy) return;
+    const newOrderBy = [...orderBy];
+    newOrderBy.splice(index, 1);
+    onChange(newOrderBy.length === 0 ? undefined : newOrderBy);
+  };
+  
+  // Get fields that aren't already used in order_by
+  const usedFields = new Set((orderBy || []).map(order => Object.keys(order)[0]));
+  const availableFields = fields.filter(field => !usedFields.has(field.name));
+  const sortedAvailableFields = sortFieldsByType(availableFields);
+  
+  return (
+    <div className="mb-2">
+      <div className="flex items-center justify-between mb-1">
+        <Label className="text-xs font-medium">Order By</Label>
+        
+        {sortedAvailableFields.length > 0 && (
+          <Select onValueChange={addOrderBy}>
+            <SelectTrigger className="square border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0 [&>svg:nth-child(2)]:hidden">
+              <Plus className="h-2.5 w-2.5 flex-shrink-0" />
+            </SelectTrigger>
+            <SelectContent>
+              {sortedAvailableFields.map(field => (
+                <SelectItem key={field.name} value={field.name} className="text-xs">
+                  {field.name} {field.isRelation && <span className="text-muted-foreground">({field.targetTable})</span>}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+      
+      <div className="space-y-1">
+        {(orderBy || []).map((order, index) => {
+          const field = Object.keys(order)[0];
+          const direction = order[field];
+          return (
+            <OrderByField
+              key={`${field}-${index}`}
+              field={field}
+              direction={direction}
+              onUpdate={(newField, newDirection) => updateOrderBy(index, newField, newDirection)}
+              onRemove={() => removeOrderBy(index)}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // Main HasyxConstructor component
 function HasyxConstructor({ value, onChange, defaultTable = 'users' }: HasyxConstructorProps) {
-  const [schema, setSchema] = useState<any>(null);
-  
-  // Load schema
-  React.useEffect(() => {
-    fetch('/hasura-schema.json')
-      .then(res => res.json())
-      .then(setSchema)
-      .catch(console.error);
-  }, []);
+  const [schema, setSchema] = useState<any>(hasuraSchema);
   
   const tables = useMemo(() => schema ? getTablesFromSchema(schema) : [], [schema]);
   const fields = useMemo(() => 
@@ -607,14 +823,18 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users' }: HasyxCons
     const newTableFields = schema ? getFieldsFromTable(schema, newTable) : [];
     
     // Auto-populate returning with all physical fields (non-relation fields)
+    // Exclude Hasyx system fields
     const physicalFields = newTableFields
-      .filter(field => !field.isRelation)
+      .filter(field => !field.isRelation && !field.name.startsWith('_hasyx_'))
       .map(field => field.name);
     
     onChange({
       table: newTable,
       where: {},
-      returning: physicalFields
+      returning: physicalFields,
+      limit: undefined,
+      offset: undefined,
+      order_by: undefined
     });
   };
   
@@ -624,6 +844,18 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users' }: HasyxCons
   
   const handleReturningChange = (newReturning: (string | NestedReturning)[]) => {
     onChange({ ...value, returning: newReturning });
+  };
+  
+  const handleLimitChange = (limit: number | undefined) => {
+    onChange({ ...value, limit });
+  };
+  
+  const handleOffsetChange = (offset: number | undefined) => {
+    onChange({ ...value, offset });
+  };
+  
+  const handleOrderByChange = (orderBy: Array<{ [field: string]: 'asc' | 'desc' }> | undefined) => {
+    onChange({ ...value, order_by: orderBy });
   };
   
   // Set default table if current table is empty or not in available tables
@@ -666,6 +898,17 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users' }: HasyxCons
             where={value.where}
             onWhereChange={handleWhereChange}
           />
+          <LimitOffsetSection
+            limit={value.limit}
+            offset={value.offset}
+            onLimitChange={handleLimitChange}
+            onOffsetChange={handleOffsetChange}
+          />
+          <OrderBySection
+            fields={fields}
+            orderBy={value.order_by}
+            onChange={handleOrderByChange}
+          />
           <ReturningSection
             fields={fields}
             returning={value.returning}
@@ -680,9 +923,17 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users' }: HasyxCons
 
 // Tab Components
 function ExpTab({ constructorState }: { constructorState: ConstructorState }) {
+  const fields = constructorState.table ? getFieldsFromTable(null, constructorState.table) : [];
+  const primaryKeyField = getPrimaryKeyField(fields);
+  const { usePk, pkValue, remainingWhere } = shouldUsePkColumns(constructorState.where, primaryKeyField);
+  
   const queryOptions = constructorState.table ? {
     table: constructorState.table,
-    where: Object.keys(constructorState.where).length > 0 ? constructorState.where : undefined,
+    ...(usePk ? { pk_columns: { [primaryKeyField!]: pkValue } } : {}),
+    ...(Object.keys(remainingWhere).length > 0 ? { where: remainingWhere } : {}),
+    ...(constructorState.limit ? { limit: constructorState.limit } : {}),
+    ...(constructorState.offset ? { offset: constructorState.offset } : {}),
+    ...(constructorState.order_by && constructorState.order_by.length > 0 ? { order_by: constructorState.order_by } : {}),
     returning: constructorState.returning.length > 0 ? constructorState.returning : ['id']
   } : {
     table: 'users',
@@ -708,10 +959,18 @@ function GqlTab({ constructorState }: { constructorState: ConstructorState }) {
   const queryOptions = useMemo(() => {
     if (!constructorState.table) return null;
     
+    const fields = getFieldsFromTable(null, constructorState.table);
+    const primaryKeyField = getPrimaryKeyField(fields);
+    const { usePk, pkValue, remainingWhere } = shouldUsePkColumns(constructorState.where, primaryKeyField);
+    
     return {
       operation: operationType,
       table: constructorState.table,
-      where: Object.keys(constructorState.where).length > 0 ? constructorState.where : undefined,
+      ...(usePk ? { pk_columns: { [primaryKeyField!]: pkValue } } : {}),
+      ...(Object.keys(remainingWhere).length > 0 ? { where: remainingWhere } : {}),
+      ...(constructorState.limit ? { limit: constructorState.limit } : {}),
+      ...(constructorState.offset ? { offset: constructorState.offset } : {}),
+      ...(constructorState.order_by && constructorState.order_by.length > 0 ? { order_by: constructorState.order_by } : {}),
       returning: constructorState.returning.length > 0 ? constructorState.returning : ['id']
     };
   }, [constructorState, operationType]);
@@ -770,9 +1029,17 @@ function GqlTab({ constructorState }: { constructorState: ConstructorState }) {
 }
 
 function QueryTab({ constructorState }: { constructorState: ConstructorState }) {
+  const fields = constructorState.table ? getFieldsFromTable(null, constructorState.table) : [];
+  const primaryKeyField = getPrimaryKeyField(fields);
+  const { usePk, pkValue, remainingWhere } = shouldUsePkColumns(constructorState.where, primaryKeyField);
+  
   const queryOptions = constructorState.table ? {
     table: constructorState.table,
-    where: Object.keys(constructorState.where).length > 0 ? constructorState.where : undefined,
+    ...(usePk ? { pk_columns: { [primaryKeyField!]: pkValue } } : {}),
+    ...(Object.keys(remainingWhere).length > 0 ? { where: remainingWhere } : {}),
+    ...(constructorState.limit ? { limit: constructorState.limit } : {}),
+    ...(constructorState.offset ? { offset: constructorState.offset } : {}),
+    ...(constructorState.order_by && constructorState.order_by.length > 0 ? { order_by: constructorState.order_by } : {}),
     returning: constructorState.returning.length > 0 ? constructorState.returning : ['id']
   } : {
     table: 'users',
@@ -802,9 +1069,17 @@ function QueryTab({ constructorState }: { constructorState: ConstructorState }) 
 }
 
 function SubscriptionTab({ constructorState }: { constructorState: ConstructorState }) {
+  const fields = constructorState.table ? getFieldsFromTable(null, constructorState.table) : [];
+  const primaryKeyField = getPrimaryKeyField(fields);
+  const { usePk, pkValue, remainingWhere } = shouldUsePkColumns(constructorState.where, primaryKeyField);
+  
   const queryOptions = constructorState.table ? {
     table: constructorState.table,
-    where: Object.keys(constructorState.where).length > 0 ? constructorState.where : undefined,
+    ...(usePk ? { pk_columns: { [primaryKeyField!]: pkValue } } : {}),
+    ...(Object.keys(remainingWhere).length > 0 ? { where: remainingWhere } : {}),
+    ...(constructorState.limit ? { limit: constructorState.limit } : {}),
+    ...(constructorState.offset ? { offset: constructorState.offset } : {}),
+    ...(constructorState.order_by && constructorState.order_by.length > 0 ? { order_by: constructorState.order_by } : {}),
     returning: constructorState.returning.length > 0 ? constructorState.returning : ['id']
   } : {
     table: 'users',
@@ -833,6 +1108,158 @@ function SubscriptionTab({ constructorState }: { constructorState: ConstructorSt
   );
 }
 
+// Results component (right side tabs)
+function HasyxConstructorResults({ constructorState }: { constructorState: ConstructorState }) {
+  return (
+    <div className="h-full">
+      <Tabs defaultValue="exp" className="w-full h-full flex flex-col">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="exp" className="text-xs">exp</TabsTrigger>
+          <TabsTrigger value="gql" className="text-xs">gql</TabsTrigger>
+          <TabsTrigger value="query" className="text-xs">query</TabsTrigger>
+          <TabsTrigger value="subscription" className="text-xs">subscription</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="exp" className="mt-2 flex-1">
+          <ExpTab constructorState={constructorState} />
+        </TabsContent>
+        
+        <TabsContent value="gql" className="mt-2 flex-1">
+          <GqlTab constructorState={constructorState} />
+        </TabsContent>
+        
+        <TabsContent value="query" className="mt-2 flex-1">
+          <QueryTab constructorState={constructorState} />
+        </TabsContent>
+        
+        <TabsContent value="subscription" className="mt-2 flex-1">
+          <SubscriptionTab constructorState={constructorState} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// Columns layout (current layout for constructor page)
+function HasyxConstructorColumns({ 
+  value, 
+  onChange, 
+  defaultTable = 'users' 
+}: {
+  value: ConstructorState;
+  onChange: (value: ConstructorState) => void;
+  defaultTable?: string;
+}) {
+  return (
+    <div className="flex flex-1 h-full">
+      {/* Left side - Constructor */}
+      <div className="flex-1 p-2 border-r overflow-auto">
+        <h2 className="text-base font-semibold mb-2">Query Constructor</h2>
+        <HasyxConstructor 
+          value={value}
+          onChange={onChange}
+          defaultTable={defaultTable}
+        />
+      </div>
+      
+      {/* Right side - Results */}
+      <div className="flex-1 p-2 overflow-auto">
+        <h2 className="text-base font-semibold mb-2">Query Results</h2>
+        <HasyxConstructorResults constructorState={value} />
+      </div>
+    </div>
+  );
+}
+
+// Tabs layout (new layout for floating cards)
+function HasyxConstructorTabs({ 
+  value, 
+  onChange, 
+  defaultTable = 'users' 
+}: {
+  value: ConstructorState;
+  onChange: (value: ConstructorState) => void;
+  defaultTable?: string;
+}) {
+  return (
+    <div className="w-full h-full">
+      <Tabs defaultValue="constructor" className="w-full h-full flex flex-col">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="constructor" className="text-xs">Constructor</TabsTrigger>
+          <TabsTrigger value="results" className="text-xs">Results</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="constructor" className="mt-2 flex-1 overflow-auto">
+          <HasyxConstructor 
+            value={value}
+            onChange={onChange}
+            defaultTable={defaultTable}
+          />
+        </TabsContent>
+        
+        <TabsContent value="results" className="mt-2 flex-1 overflow-auto">
+          <HasyxConstructorResults constructorState={value} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// Button component with modal dialog
+function HasyxConstructorButton({ 
+  value, 
+  onChange, 
+  defaultTable = 'users',
+  icon,
+  size = 'default'
+}: {
+  value: ConstructorState;
+  onChange: (value: ConstructorState) => void;
+  defaultTable?: string;
+  icon?: React.ReactNode;
+  size?: 'sm' | 'default' | 'lg';
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <Button 
+        variant="outline" 
+        size={size}
+        className="square"
+        onClick={() => setIsOpen(true)}
+      >
+        {icon || <Search className="h-4 w-4" />}
+      </Button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <Card className="w-full max-w-6xl h-[80vh] max-h-[800px] relative">
+            <div className="absolute top-2 right-2 z-10">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="square"
+                onClick={() => setIsOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <CardContent className="p-4 h-full">
+              <HasyxConstructorTabs
+                value={value}
+                onChange={onChange}
+                defaultTable={defaultTable}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </>
+  );
+}
+
 interface ConstructorProps {
   serverSession: Session | null;
   sidebarData: SidebarData;
@@ -842,7 +1269,10 @@ export default function Constructor({ serverSession, sidebarData }: ConstructorP
   const [constructorState, setConstructorState] = useState<ConstructorState>({
     table: 'users',
     where: {},
-    returning: []
+    returning: [],
+    limit: undefined,
+    offset: undefined,
+    order_by: undefined
   });
   
   return (
@@ -850,48 +1280,13 @@ export default function Constructor({ serverSession, sidebarData }: ConstructorP
       { title: 'Hasyx', link: '/' },
       { title: 'Constructor', link: '/hasyx/constructor' }
     ]}>
-      <div className="flex flex-1 h-full">
-        {/* Left side - Constructor */}
-        <div className="flex-1 p-2 border-r overflow-auto">
-          <h2 className="text-base font-semibold mb-2">Query Constructor</h2>
-          <HasyxConstructor 
-            value={constructorState}
-            onChange={setConstructorState}
-            defaultTable="users"
-          />
-        </div>
-        
-        {/* Right side - Tabs */}
-        <div className="flex-1 p-2 overflow-auto">
-          <h2 className="text-base font-semibold mb-2">Query Results</h2>
-          <Tabs defaultValue="exp" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="exp" className="text-xs">exp</TabsTrigger>
-              <TabsTrigger value="gql" className="text-xs">gql</TabsTrigger>
-              <TabsTrigger value="query" className="text-xs">query</TabsTrigger>
-              <TabsTrigger value="subscription" className="text-xs">subscription</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="exp" className="mt-2">
-              <ExpTab constructorState={constructorState} />
-            </TabsContent>
-            
-            <TabsContent value="gql" className="mt-2">
-              <GqlTab constructorState={constructorState} />
-            </TabsContent>
-            
-            <TabsContent value="query" className="mt-2">
-              <QueryTab constructorState={constructorState} />
-            </TabsContent>
-            
-            <TabsContent value="subscription" className="mt-2">
-              <SubscriptionTab constructorState={constructorState} />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+      <HasyxConstructorColumns
+        value={constructorState}
+        onChange={setConstructorState}
+        defaultTable="users"
+      />
     </SidebarLayout>
   );
 }
 
-export { HasyxConstructor }; 
+export { HasyxConstructor, HasyxConstructorResults, HasyxConstructorColumns, HasyxConstructorTabs, HasyxConstructorButton }; 

@@ -1,6 +1,6 @@
 # 🏗️ Hasyx Query Constructor
 
-Visual GraphQL query builder for Hasyx with real-time results and multi-view tabs.
+Visual GraphQL query builder for Hasyx with real-time results, smart primary key detection, and comprehensive query options.
 
 ## 🚀 Quick Start
 
@@ -11,7 +11,10 @@ function MyApp() {
   const [query, setQuery] = useState({
     table: 'users',
     where: {},
-    returning: ['id', 'name']
+    returning: ['id', 'name'],
+    limit: 50,
+    offset: 0,
+    order_by: [{ created_at: 'desc' }]
   });
 
   return (
@@ -24,50 +27,199 @@ function MyApp() {
 }
 ```
 
+## 🧩 Component Architecture
+
+Hasyx Constructor provides flexible components for different integration scenarios:
+
+### Core Components
+
+- **`HasyxConstructor`**: Main query builder interface (left panel)
+- **`HasyxConstructorResults`**: Results display with 4 tabs (exp, gql, query, subscription)
+- **`HasyxConstructorColumns`**: Two-column layout for constructor page
+- **`HasyxConstructorTabs`**: Two-tab layout (Constructor | Results) for modal dialogs
+- **`HasyxConstructorButton`**: Button that opens constructor in modal dialog
+
+### Integration Examples
+
+**Standalone Constructor Page (`/hasyx/constructor`):**
+```typescript
+import { HasyxConstructorColumns } from 'hasyx/lib/constructor';
+
+export default function ConstructorPage() {
+  const [state, setState] = useState({...});
+  
+  return (
+    <HasyxConstructorColumns
+      value={state}
+      onChange={setState}
+      defaultTable="users"
+    />
+  );
+}
+```
+
+**Modal Dialog Integration:**
+```typescript
+import { HasyxConstructorButton } from 'hasyx/lib/constructor';
+
+function MyComponent() {
+  const [queryState, setQueryState] = useState({...});
+  
+  return (
+    <div>
+      {/* Your component content */}
+      <HasyxConstructorButton
+        value={queryState}
+        onChange={setQueryState}
+        defaultTable="users"
+        icon={<Search className="h-4 w-4" />}
+        size="sm"
+      />
+    </div>
+  );
+}
+```
+
+**As Toolbar Button (Cyto Integration):**
+```typescript
+import { Cyto } from 'hasyx/lib/cyto';
+import { HasyxConstructorButton } from 'hasyx/lib/constructor';
+
+function CytoPage() {
+  const [queryState, setQueryState] = useState({...});
+  
+  return (
+    <Cyto 
+      buttons={true}
+      buttonsChildren={
+        <HasyxConstructorButton
+          value={queryState}
+          onChange={setQueryState}
+          defaultTable="users"
+        />
+      }
+    >
+      {/* Cyto content */}
+    </Cyto>
+  );
+}
+```
+
 ## 🔍 Interface Overview
 
 The Constructor page (`/hasyx/constructor`) features a **split-view interface**:
 
 ### Left Panel: Query Builder
-- **Table Selection**: Inline with minimal styling
-- **Where Conditions**: Add/remove filters with operator selection
-- **Returning Fields**: Select fields and nested relations
+- **Table Selection**: Inline dropdown with minimal styling
+- **Where Conditions**: Smart primary key detection with PK badges
+- **Pagination**: Limit and offset controls for data paging
+- **Order By**: Multi-field sorting with asc/desc controls
+- **Returning Fields**: Auto-populated physical fields, nested relations support
 - **Real-time Updates**: Changes immediately reflected in right panel
 
-### Right Panel: Multi-View Tabs ✨
-- **`exp`** - Hasyx query options object
-- **`gql`** - Generated GraphQL query with variables
-  - Sub-tabs: `query` ↔ `subscription` toggle
+### Right Panel: Multi-View Tabs
+- **`exp`** - Hasyx query options object with pk_columns optimization
+- **`gql`** - Generated GraphQL query with variables (query/subscription toggle)
 - **`query`** - Live query execution with useQuery
 - **`subscription`** - Live subscription with useSubscription
 
-## 📖 Practical Usage
+### Modal Dialog Interface
+When using `HasyxConstructorButton`, the constructor opens in a responsive modal with:
+- **Two-tab layout**: Constructor | Results
+- **Responsive sizing**: max-w-6xl, h-[80vh]
+- **Backdrop overlay**: Click outside to close
+- **Close button**: X button in top-right corner
 
-### Basic Query Building
+## 📖 Core Features
+
+### Smart Primary Key Detection
+
+The constructor automatically detects primary key fields (`id`, `uuid`, `pk`, `_id`) and provides intelligent optimizations:
 
 ```typescript
-// 1. Table Selection
-const initialState = {
-  table: 'users',        // Select from available tables
-  where: {},             // Empty conditions
-  returning: []          // No fields selected
-};
-
-// 2. Add Where Conditions
-const withConditions = {
+// When WHERE contains only primary key with _eq:
+{
   table: 'users',
-  where: {
-    name: { _eq: 'John' },           // String equality
-    age: { _gt: 18 },                // Number comparison  
-    email: { _ilike: '%@gmail.com' }, // String pattern
-    is_active: { _eq: true }         // Boolean
+  where: { id: { _eq: 'user-123' } },
+  returning: ['id', 'name']
+}
+
+// Automatically converts to optimized pk_columns:
+{
+  table: 'users',
+  pk_columns: { id: 'user-123' },  // ← Optimized for single record lookup
+  returning: ['id', 'name']
+}
+
+// Mixed conditions remain as WHERE:
+{
+  table: 'users',
+  where: { 
+    id: { _eq: 'user-123' },
+    status: { _eq: 'active' }  // ← Additional condition keeps it as WHERE
   },
+  returning: ['id', 'name']
+}
+```
+
+### Primary Key Visual Indicators
+
+In WHERE condition dropdowns, primary key fields are marked with a **PK badge**:
+
+```
+┌─ Add Field ────────────────┐
+│ id [PK]                    │  ← Primary key field with badge
+│ name                       │
+│ email                      │
+│ created_at                 │
+│ accounts (relation)        │
+└────────────────────────────┘
+```
+
+### Auto-populated Physical Fields
+
+When selecting a table, all physical (non-relation) fields are automatically added to returning, excluding Hasyx system fields:
+
+```typescript
+// Automatically included:
+['id', 'name', 'email', 'created_at', 'updated_at', 'status']
+
+// Automatically excluded:
+// - Relation fields: ['accounts', 'notifications']
+// - Hasyx system fields: ['_hasyx_schema_name', '_hasyx_table_name']
+```
+
+### Pagination Controls
+
+```typescript
+const queryWithPagination = {
+  table: 'users',
+  where: { status: { _eq: 'active' } },
+  limit: 20,        // Records per page
+  offset: 40,       // Skip first N records (page 3: offset = pageSize * (page - 1))
   returning: ['id', 'name', 'email']
 };
+```
 
-// 3. Nested Relations Support ✅ NEW
-const withRelations = {
-  table: 'users', 
+### Multi-field Sorting
+
+```typescript
+const queryWithSorting = {
+  table: 'users',
+  where: { status: { _eq: 'active' } },
+  order_by: [
+    { created_at: 'desc' },  // Primary sort: newest first
+    { name: 'asc' }          // Secondary sort: alphabetical
+  ],
+  returning: ['id', 'name', 'created_at']
+};
+```
+
+### Nested Relations
+
+```typescript
+const queryWithRelations = {
+  table: 'users',
   where: { status: { _eq: 'active' } },
   returning: [
     'id', 'name', 'email',
@@ -86,330 +238,210 @@ const withRelations = {
 };
 ```
 
-### Real Schema Integration ✅ NEW
+## 🎛️ Query Builder Sections
 
-```typescript
-// Constructor now automatically extracts ALL fields from schema
-// Previously only showed id, created_at, updated_at for unknown tables
-// Now shows ALL actual fields for ANY table:
+### Table Selection
+- Dropdown of all available tables from schema
+- Auto-populates physical fields on selection
+- Excludes system tables (_mapping, _aggregate, etc.)
 
-// deep_links table: Shows 30+ fields including:
-// _deep, _from, _to, _type, _value, _i, id, created_at, updated_at, etc.
+### Where Conditions
+- Primary key fields marked with **PK badge**
+- Smart pk_columns conversion for single ID lookups
+- Type-aware operators based on field types
+- Visual field organization: physical fields first, then relations
 
-// payments_providers table: Shows 24+ fields including:  
-// config, name, type, user_id, is_active, is_test_mode, id, etc.
-
-// Schema parsing automatically detects:
-// - Scalar fields (for WHERE conditions)
-// - Relation fields (for nested RETURNING)
-// - Field types (determines available operators)
-// - Table mappings (deep.links → deep_links)
+### Pagination Section
+```
+┌─ Pagination ─────────────────┐
+│ Limit: [50    ] Offset: [0  ]│
+└──────────────────────────────┘
 ```
 
-### Page Integration
-
-```typescript
-// app/my-page/page.tsx
-export default function QueryPage() {
-  const [constructorState, setConstructorState] = useState({
-    table: 'users',
-    where: {},
-    returning: []
-  });
-  
-  return (
-    <div className="flex h-screen">
-      {/* Left: Constructor */}
-      <div className="flex-1">
-        <HasyxConstructor 
-          value={constructorState}
-          onChange={setConstructorState}
-          defaultTable="users"
-        />
-      </div>
-      
-      {/* Right: Multi-view Results */}
-      <div className="flex-1">
-        {/* Tabs automatically handle different views */}
-      </div>
-    </div>
-  );
-}
+### Order By Section
+```
+┌─ Order By ───────────────────┐
+│ created_at [↓ desc] [×]      │
+│ name       [↑ asc ] [×]      │
+│ [+ Add Field]                │
+└──────────────────────────────┘
 ```
 
-### Tabs Usage Examples
+### Returning Fields
+- Auto-populated physical fields
+- Manual addition of relations
+- Nested relation building
+- System field exclusion
 
-```typescript
-// exp tab shows:
+## 📊 Result Tabs
+
+### `exp` Tab
+Shows the complete Hasyx query options object:
+
+```json
 {
-  "table": "deep_links",
-  "where": { "_deep": { "_eq": "some-uuid" }, "_from": { "_eq": "from-uuid" } },
-  "returning": ["_deep", "_from", "_to", "_type", "_value", "id"]
+  "table": "users",
+  "pk_columns": { "id": "user-123" },
+  "limit": 20,
+  "offset": 40,
+  "order_by": [{ "created_at": "desc" }],
+  "returning": ["id", "name", "email"]
 }
+```
 
-// gql tab shows:
-query QueryDeepLinks($v1: deep_links_bool_exp) {
-  deep_links(where: $v1) {
-    _deep
-    _from
-    _to
-    _type
-    _value
+### `gql` Tab
+Displays generated GraphQL with sub-tabs for operation type:
+
+**Query:**
+```graphql
+query GetUser($pk: uuid!) {
+  users_by_pk(id: $pk) {
     id
+    name
+    email
   }
 }
-// Variables: { "v1": { "_deep": { "_eq": "some-uuid" } } }
-
-// query tab: Live data from useQuery
-// subscription tab: Streaming data from useSubscription
 ```
 
-### Integration with Forms
-
-```typescript
-function UserFilter() {
-  const [filters, setFilters] = useState({
-    table: 'users',
-    where: {},
-    returning: ['id', 'name', 'email']
-  });
-  
-  // Add programmatic filters
-  const addStatusFilter = (status: string) => {
-    setFilters(prev => ({
-      ...prev,
-      where: {
-        ...prev.where,
-        status: { _eq: status }
-      }
-    }));
-  };
-  
-  return (
-    <div>
-      <button onClick={() => addStatusFilter('active')}>
-        Show Active Users
-      </button>
-      
-      <HasyxConstructor value={filters} onChange={setFilters} />
-      {/* Results automatically update in tabs */}
-    </div>
-  );
-}
+**Variables:**
+```json
+{ "pk": "user-123" }
 ```
 
-### Schema-driven Development ✅ ENHANCED
+### `query` Tab
+Live execution using `useQuery` hook with loading states and error handling.
+
+### `subscription` Tab
+Real-time data streaming using `useSubscription` hook.
+
+## 🔧 Complete State Interface
 
 ```typescript
-// Constructor automatically loads from /public/hasura-schema.json
-// Available tables from hasyx.tableMappings (20+ tables)
-// ALL fields extracted from GraphQL schema automatically
-
-// Field types determine available operators:
-// String fields: _eq, _ne, _like, _ilike, _in, _is_null
-// Number/Int fields: _eq, _ne, _gt, _gte, _lt, _lte, _in, _is_null  
-// Boolean fields: _eq, _ne
-// UUID fields: _eq, _ne, _in, _is_null
-// JSONB fields: _eq, _ne, _is_null
-// DateTime fields: _eq, _ne, _gt, _gte, _lt, _lte, _in, _is_null
-
-// Schema namespace mapping:
-// deep.links → deep_links (GraphQL type: Deep_Links)
-// payments.providers → payments_providers (GraphQL type: Payments_Providers)
-// public.users → users (GraphQL type: Users)
-```
-
-## 🛣️ Development Roadmap
-
-### Phase 1: Core Functionality ✅ COMPLETED
-- ✅ Table selection from schema (hasyx.tableMappings)
-- ✅ Basic where conditions (_eq, _ne, _like, _ilike, _gt, _lt, _in, _is_null)
-- ✅ Field selection (returning)
-- ✅ Type-aware operators
-- ✅ Real-time query execution
-- ✅ Schema integration
-- ✅ UI components (cards, selects, inputs)
-- ✅ **Multi-view tabs system** - exp, gql, query, subscription
-- ✅ **GraphQL generation preview** - See generated queries before execution
-- ✅ **Subscription support** - Real-time data streaming
-- ✅ **Query/Subscription toggle** - Switch operation types in gql tab
-- ✅ **Minimal inline design** - Table selection inline with title
-- ✅ **Plus button field selection** - Add fields via dropdown
-- ✅ **Recursive relations** - Nested query building for relations
-- ✅ **Clean field management** - Remove fields with X button
-- ✅ **Real table filtering** - Only actual tables (no _mapping tables)
-- ✅ **FIXED: Real schema field parsing** - All fields displayed for all tables
-- ✅ **FIXED: Deep links support** - 30+ fields instead of 3
-- ✅ **FIXED: Payments providers support** - 24+ fields instead of 3
-- ✅ **Performance optimized** - 5 tables parsed in ~8ms
-
-### Phase 2: Essential Operations ❌
-- ❌ **Sorting (order_by)** - `{ created_at: 'desc', name: 'asc' }`
-- ❌ **Pagination** - `limit: 10, offset: 20`
-- ❌ **Complex where logic** - `_and`, `_or` operators
-- ❌ **Field search** - filter available fields
-- ❌ **Query validation** - real-time validation feedback
-
-### Phase 3: Advanced Queries ❌
-- ❌ **Advanced nested relations** - More sophisticated relation handling
-- ❌ **Relation filters** - `{ posts: { where: { published: true } } }`
-- ❌ **Aggregations** - `count`, `sum`, `avg`, `max`, `min`
-- ❌ **Distinct queries** - `distinct_on: ['email']`
-- ❌ **Field aliases** - custom field names
-
-### Phase 4: Mutations ❌
-- ❌ **Insert operations** - `operation: 'insert', object: {...}`
-- ❌ **Update operations** - `operation: 'update', _set: {...}`
-- ❌ **Delete operations** - `operation: 'delete'`
-- ❌ **Bulk operations** - multiple objects
-- ❌ **Upsert support** - `on_conflict` handling
-
-### Phase 5: Professional Features ❌
-- ❌ **Query history** - save/load queries
-- ❌ **Query templates** - predefined queries
-- ❌ **Export options** - save as GraphQL/JSON
-- ❌ **Performance** - query optimization hints
-- ❌ **Query sharing** - shareable URLs
-
-### Phase 6: Advanced Types ❌
-- ❌ **JSON/JSONB fields** - object/array inputs
-- ❌ **Enum support** - dropdown for enum values
-- ❌ **Custom scalars** - date pickers, etc.
-- ❌ **Array operations** - array contains, overlaps
-- ❌ **Geographic queries** - spatial operators
-
-## 🎯 Recommended Development Order
-
-### Next Priority (Phase 2):
-1. **Sorting** - Most requested feature
-2. **Pagination** - Essential for large datasets  
-3. **Complex where** - Enables advanced filtering
-4. **Query validation** - Better developer experience
-
-### Recent Major Updates ✅:
-- **🚀 BREAKING: Real Schema Field Parsing** - Complete overhaul of field extraction
-- **🎯 Fixed: Deep Links Support** - Now shows all 30+ deep_links fields 
-- **🎯 Fixed: Payments Providers Support** - Now shows all 24+ payments_providers fields
-- **⚡ Performance: 8ms Schema Parsing** - Optimized for large schemas
-- **🧪 Testing: 35 Passing Tests** - Comprehensive test coverage
-- **🔄 GraphQL Type Mapping** - uuid→UUID, bigint→Int, timestamptz→DateTime, jsonb→JSONB
-- **📋 Schema Namespace Resolution** - Automatic deep.links → deep_links mapping
-- **🎨 Backward Compatibility** - users/accounts/notifications still work as before
-- **Multi-View Tabs System**: Complete redesign of right panel with 4 specialized views
-- **GraphQL Preview**: Real-time GraphQL generation with variables display
-- **Subscription Support**: Live data streaming with useSubscription tab
-- **Operation Type Switching**: Toggle between query/subscription in gql tab
-- **Inline Table Selection**: Space-efficient table picker integrated with title
-- **Unified Field Design**: Where and Returning fields as cohesive blocks with separators
-- **Minimalist Spacing**: Dramatically reduced padding throughout interface
-- **Visual Consistency**: All elements share consistent height and styling
-- **Smart Field Selection**: Context-aware field and relation selection
-- **Recursive Relations**: Full nested query building support
-- **Real Table Filtering**: Clean table list from `hasyx.tableMappings`
-
-### Implementation Strategy:
-```typescript
-// 1. Current ConstructorState ✅ IMPLEMENTED
 interface ConstructorState {
   table: string;
   where: Record<string, any>;
-  returning: (string | NestedReturning)[];  // ✅ Supports nested relations
+  returning: (string | NestedReturning)[];
+  limit?: number;
+  offset?: number;
+  order_by?: Array<{ [field: string]: 'asc' | 'desc' }>;
 }
 
-// 2. Nested Relations Support ✅ COMPLETED
 interface NestedReturning {
   [relationName: string]: {
-    where?: Record<string, any>;         // ✅ Relation filtering
-    returning: (string | NestedReturning)[]; // ✅ Recursive nesting
+    where?: Record<string, any>;
+    returning: (string | NestedReturning)[];
   };
 }
-
-// 3. Real Schema Field Parsing ✅ NEW IMPLEMENTATION
-function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
-  // Find GraphQL type for table (with multiple naming strategies)
-  const possibleTypeNames = [
-    tableName,
-    tableName.toLowerCase(),
-    tableName.charAt(0).toUpperCase() + tableName.slice(1),
-    tableName.split('_').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('_')
-  ];
-  
-  let graphqlType = schema?.data?.__schema?.types?.find((type: any) => 
-    possibleTypeNames.includes(type.name)
-  );
-  
-  if (graphqlType?.fields) {
-    return graphqlType.fields.map((field: any) => ({
-      name: field.name,
-      type: mapGraphQLType(field.type), // uuid→UUID, bigint→Int, etc.
-      isRelation: isRelationType(field.type),
-      targetTable: getTargetTable(field.type)
-    }));
-  }
-  
-  // Fallback for unknown tables
-  return [
-    { name: 'id', type: 'String', isRelation: false },
-    { name: 'created_at', type: 'DateTime', isRelation: false },
-    { name: 'updated_at', type: 'DateTime', isRelation: false }
-  ];
-}
-
-// 4. Tabs System ✅ COMPLETED
-<Tabs defaultValue="exp">
-  <TabsList>
-    <TabsTrigger value="exp">exp</TabsTrigger>      // Hasyx options
-    <TabsTrigger value="gql">gql</TabsTrigger>      // GraphQL + variables
-    <TabsTrigger value="query">query</TabsTrigger>  // useQuery execution
-    <TabsTrigger value="subscription">subscription</TabsTrigger> // useSubscription
-  </TabsList>
-</Tabs>
 ```
 
-## 🔧 Technical Notes
+## 🎯 Field Type Support
 
-### Schema Requirements
-- Hasura schema at `/public/hasura-schema.json`
-- **Real tables from `hasyx.tableMappings`** ✅ 
-- **ALL fields extracted from GraphQL schema** ✅ NEW
-- **Automatic type mapping and relation detection** ✅ NEW
-- Field types determine available operators
+The constructor supports all Hasura field types with appropriate operators:
 
-### Performance ⚡ ENHANCED
-- **Real-time query execution in tabs** ✅ 
-- **Conditional mounting** - Query/Subscription tabs only mount when active
-- **Memoized generation** - GraphQL generation optimized with useMemo
-- **Error handling** - Graceful error display in all tabs
-- **🚀 NEW: 8ms Schema Parsing** - Parse 5 tables with 100+ fields in under 8ms
-- **🚀 NEW: Efficient Field Lookup** - Smart GraphQL type name resolution
+### String Fields
+- Operators: `_eq`, `_ne`, `_like`, `_ilike`, `_in`, `_is_null`
+- UI: Text input, pattern matching support
 
-### Field Display Fix ✅ MAJOR UPDATE
-- **Before**: `deep_links` showed only 3 fields (id, created_at, updated_at)
-- **After**: `deep_links` shows 30+ fields (_deep, _from, _to, _type, _value, _i, etc.)
-- **Before**: `payments_providers` showed only 3 fields 
-- **After**: `payments_providers` shows 24+ fields (config, name, type, user_id, is_active, etc.)
-- **Schema Parser**: Real GraphQL schema parsing instead of hardcoded field lists
-- **Type Mapping**: Automatic uuid→UUID, bigint→Int, timestamptz→DateTime conversion
-- **Relation Detection**: Properly identifies scalar vs relation fields
-- **Namespace Support**: Maps deep.links → deep_links, payments.providers → payments_providers
+### Numeric Fields (Int, Float, BigInt)
+- Operators: `_eq`, `_ne`, `_gt`, `_gte`, `_lt`, `_lte`, `_in`, `_is_null`
+- UI: Number input with validation
 
-### Testing Coverage ✅ ENHANCED
-- ✅ **35 passing tests** (updated after field display fix)
-- ✅ Real schema validation (1.1MB+ schema file)
-- ✅ Component integration tests
-- ✅ Utility function tests
-- ✅ **Tab system testing** ✅ 
-- ✅ **GraphQL generation testing** ✅
-- ✅ **🚀 NEW: Field display fix validation** - Tests for deep_links and payments_providers
-- ✅ **🚀 NEW: Performance testing** - Schema parsing speed validation
-- ✅ **🚀 NEW: Type mapping tests** - GraphQL type conversion validation
+### Boolean Fields
+- Operators: `_eq`, `_ne`
+- UI: True/False dropdown
 
-### Browser Support
-- Modern browsers with ES2020+
-- React 18+ required
-- Next.js 15+ integration
-- **Radix UI Tabs** for accessible tab navigation
+### DateTime Fields
+- Operators: `_eq`, `_ne`, `_gt`, `_gte`, `_lt`, `_lte`, `_in`, `_is_null`
+- UI: Text input for ISO strings
+
+### UUID Fields
+- Operators: `_eq`, `_ne`, `_in`, `_is_null`
+- UI: Text input with UUID validation
+
+### JSONB Fields
+- Operators: `_eq`, `_ne`, `_is_null`
+- UI: Text input for JSON strings
+
+## 🚀 Schema Integration
+
+### Automatic Schema Loading
+- Loads from `/public/hasura-schema.json`
+- Extracts tables from `hasyx.tableMappings`
+- Parses all fields from GraphQL schema types
+
+### Field Detection Logic
+```typescript
+function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
+  // 1. Find GraphQL type with multiple naming strategies
+  const possibleTypeNames = [
+    tableName,
+    tableName.toLowerCase(), 
+    tableName.charAt(0).toUpperCase() + tableName.slice(1),
+    tableName.split('_').map(part => 
+      part.charAt(0).toUpperCase() + part.slice(1)
+    ).join('_')
+  ];
+
+  // 2. Parse fields from GraphQL schema
+  // 3. Map GraphQL types: uuid→UUID, bigint→Int, timestamptz→DateTime
+  // 4. Detect relations vs scalar fields
+  // 5. Exclude Hasyx system fields (_hasyx_*)
+}
+```
+
+### Primary Key Detection
+```typescript
+function getPrimaryKeyField(fields: FieldInfo[]): string | null {
+  // Looks for common primary key names: 'id', 'uuid', 'pk', '_id'
+  // Returns first non-relation field matching these patterns
+}
+```
+
+### Smart Query Optimization
+```typescript
+function shouldUsePkColumns(where: Record<string, any>, primaryKeyField: string | null) {
+  // Converts simple primary key lookups to pk_columns for better performance
+  // Only when: single field, primary key, _eq operator
+}
+```
+
+## ⚡ Performance Features
+
+### Efficient Field Sorting
+- Physical fields listed first (alphabetically)
+- Relation fields listed second (alphabetically) 
+- Consistent ordering across all dropdowns
+
+### Smart Auto-population
+- Only includes relevant physical fields
+- Excludes system fields automatically
+- Excludes relation fields from initial selection
+
+### Optimized Queries
+- Automatic pk_columns conversion for single record lookups
+- Type-safe operator selection
+- Real-time validation feedback
+
+## 🎨 UI/UX Design
+
+### Minimal Inline Design
+- Table selection integrated with section headers
+- Consistent 6px height elements
+- Unified border and spacing system
+- Clean field management with X buttons
+
+### Visual Organization
+- **PK badges** for primary key identification
+- **Type indicators** for relation fields
+- **Consistent icons**: ↑/↓ for sort, + for add, × for remove
+- **Responsive layout**: Works on various screen sizes
+
+### Accessibility
+- Keyboard navigation support
+- Screen reader compatible
+- High contrast visual indicators
+- Consistent focus management
 
 ---
 
-*Constructor is part of the Hasyx ecosystem for GraphQL operations with multi-view real-time results and complete schema field support.* 
+*Constructor provides a complete visual query building experience with smart optimizations, comprehensive field support, and real-time result viewing.* 

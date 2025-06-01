@@ -365,34 +365,31 @@ export const Cyto = memo(function Graph({
       />
       {cytoscape}
       <div
-        className="absolute right-4 top-4 flex flex-col items-end gap-2"
-        style={{
-          pointerEvents: 'none',
-        }}
+        className="absolute right-4 top-4 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto"
       >
         {!!buttons && (
           <>
             <Button
-              style={{ pointerEvents: 'all', width: '3em', height: '3em', padding: 0 }}
+              style={{ width: '3em', height: '3em', padding: 0 }}
               onClick={() => relayout()}
               variant="outline"
             >
               🔄
             </Button>
             <Button
-              style={{ pointerEvents: 'all', width: '3em', height: '3em', padding: 0 }}
+              style={{ width: '3em', height: '3em', padding: 0 }}
               onClick={center}
               variant="outline"
             >
               ⚪
             </Button>
-            <Button
-              style={{ pointerEvents: 'all', width: '3em', height: '3em', padding: 0 }}
+            {/* <Button
+              style={{ width: '3em', height: '3em', padding: 0 }}
               onClick={toggleDrawMode}
               variant={!!eh ? 'default' : 'outline'}
             >
               ✏️
-            </Button>
+            </Button> */}
           </>
         )}
         {buttonsChildren}

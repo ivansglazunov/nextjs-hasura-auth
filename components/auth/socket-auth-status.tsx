@@ -6,7 +6,7 @@ import { Label } from "hasyx/components/ui/label";
 import { Status } from 'hasyx/components/hasyx/status';
 import { CodeBlock } from 'hasyx/components/code-block';
 import Debug from 'hasyx/lib/debug';
-import url from 'hasyx/lib/url';
+import { url } from 'hasyx/lib/url';
 
 const debug = Debug('auth:socket-status');
 
@@ -21,11 +21,9 @@ export function SocketAuthStatus() {
   const ws = useRef<WebSocket | null>(null);
 
   const connectWebSocket = () => {
-    // Build WebSocket URL
-    // IMPORTANT: Use wss:// for HTTPS and ws:// for HTTP
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    // Use current host and port, but path /api/auth
-    const wsUrl = url(protocol, URL, '/api/auth');
+    // Build WebSocket URL using enhanced url function
+    // The url function will automatically determine ws/wss based on environment
+    const wsUrl = url('ws', URL, '/api/auth');
     
     debug(`Attempting to connect WebSocket: ${wsUrl}`);
     setConnectionStatus('connecting');

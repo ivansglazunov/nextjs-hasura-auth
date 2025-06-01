@@ -2,7 +2,7 @@
 
 import { useCreateApolloClient } from './apollo';
 import { ThemeProvider } from "hasyx/components/theme-provider";
-import toUrl, { API_URL, url } from 'hasyx/lib/url';
+import { url, API_URL } from 'hasyx/lib/url';
 import { SessionProvider, useSession as useSessionNextAuth } from "next-auth/react";
 import { useMemo, createContext, useContext, useEffect } from "react";
 import Debug from './debug';
@@ -32,7 +32,7 @@ export const useClient = useHasyx;
 // Re-export useSession from next-auth/react for use throughout the app
 export const useSession = useSessionNextAuth;
 
-function HasyxProviderCore({ url, children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
+function HasyxProviderCore({ url: urlOverride, children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
   const apolloClient = useCreateApolloClient(useMemo(() => {
     // Determine if current domain is localhost
     const isLocalhost = typeof window !== 'undefined' && (
@@ -40,30 +40,26 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
       window.location.hostname === '127.0.0.1'
     );
 
-    // On server, check if API_URL already contains https protocol
-    // On client, check window.location.protocol
-    const shouldUseHttps = typeof window !== 'undefined' 
-      ? window.location.protocol === 'https:'
-      : API_URL.startsWith('https://');
-    
     // Define the base API URL (GraphQL endpoint)
     let apiUrl: string;
-    if (isLocalhost && !url) {
-      apiUrl = toUrl('http', API_URL, '/api/graphql');
-    } else if (isLocalhost && url) {
-      apiUrl = url.includes('vercel.app') ? toUrl('https', url, '/api/graphql') : toUrl('http', url, '/api/graphql');
-    } else { // Production/Preview
-      const protocol = shouldUseHttps || url?.includes('vercel.app') ? 'https' : 'http';
-      apiUrl = toUrl(protocol, API_URL, '/api/graphql');
+    if (isLocalhost && !urlOverride) {
+      // Local development without override - use API_URL with http
+      apiUrl = url('http', API_URL, '/api/graphql');
+    } else if (urlOverride) {
+      // Override URL provided - use it with appropriate protocol
+      apiUrl = url('http', urlOverride, '/api/graphql');
+    } else {
+      // Production/Preview - use API_URL with appropriate protocol  
+      apiUrl = url('http', API_URL, '/api/graphql');
     }
     
-    debug(`HasyxProviderCore: Final API URL: ${apiUrl}, isLocalhost: ${isLocalhost}, shouldUseHttps: ${shouldUseHttps}, based on url: ${url}`);
+    debug(`HasyxProviderCore: Final API URL: ${apiUrl}, isLocalhost: ${isLocalhost}, based on urlOverride: ${urlOverride}`);
     
     return {
       url: apiUrl,
       ws: true // Enable WebSocket support
     };
-  }, [url])); 
+  }, [urlOverride]));
   
   // Keep the generator on Apollo client for compatibility
   apolloClient.hasyxGenerator = generate;
@@ -97,13 +93,8 @@ function HasyxProviderCore({ url, children, generate }: { url?: string, children
 }
 
 export function HasyxProvider({ children, generate }: { children: React.ReactNode, generate: Generate }) {
-  // Use the same logic as HasyxProviderCore for protocol detection
-  const shouldUseHttps = typeof window !== 'undefined' 
-    ? window.location.protocol === 'https:'
-    : API_URL.startsWith('https://');
-  
-  const protocol = shouldUseHttps ? 'https' : 'http';
-  const authBasePath = url(protocol, API_URL, '/api/auth');
+  // Use enhanced url function for auth base path
+  const authBasePath = url('http', API_URL, '/api/auth');
 
   return (
     // SessionProvider is needed for signIn/signOut calls

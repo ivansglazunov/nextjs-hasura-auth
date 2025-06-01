@@ -5,8 +5,9 @@ import { useSubscription } from "hasyx";
 import { Avatar, AvatarFallback, AvatarImage } from "hasyx/components/ui/avatar";
 import { Badge } from "hasyx/components/ui/badge";
 
+import { HasyxConstructorButton } from "hasyx/lib/constructor";
+import React, { useState, useCallback, useMemo } from "react";
 import { Cyto, CytoEdge, CytoNode, CytoStyle } from "hasyx/lib/cyto";
-import React, { useCallback, useMemo } from "react";
 
 const debug = Debug('cyto');
 
@@ -56,12 +57,28 @@ export default function Client() {
     fit: false
   }), []);
 
+  const [queryState, setQueryState] = useState<any>({
+    table: 'users',
+    where: {},
+    returning: [],
+    limit: undefined,
+    offset: undefined,
+    order_by: undefined
+  });
+
   return (
     <div className="w-full h-full relative">
       <Cyto 
         onLoaded={onGraphLoaded}
         onInsert={onInsert}
         buttons={true}
+        buttonsChildren={<>
+          <HasyxConstructorButton
+            value={queryState}
+            onChange={setQueryState}
+            defaultTable="users"
+          />
+        </>}
         layout={layoutConfig}
       >
         <CytoStyle stylesheet={stylesheet} />

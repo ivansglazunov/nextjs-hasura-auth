@@ -27,6 +27,10 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![PWA Support Documentation](https://img.shields.io/badge/PWA%20Support-MD-9cf)](PWA.md)
 [![TBank Payments Documentation](https://img.shields.io/badge/TBank%20Payments-MD-ff69b4)](TBANK.md)
 [![Tinkoff API Base Documentation](https://img.shields.io/badge/Tinkoff%20API-MD-lightpink)](TINKOFF_API.md)
+[![CloudFlare DNS Management Documentation](https://img.shields.io/badge/CloudFlare%20DNS-MD-orange)](CLOUDFLARE.md)
+[![SSL Certificate Management Documentation](https://img.shields.io/badge/SSL%20Certificates-MD-green)](SSL.md)
+[![Nginx Configuration Documentation](https://img.shields.io/badge/Nginx%20Config-MD-blue)](NGINX.md)
+[![Subdomain Management Documentation](https://img.shields.io/badge/Subdomain%20Manager-MD-purple)](SUBDOMAIN.md)
 
 ## Technologies Used
 
@@ -56,6 +60,7 @@ Hasyx takes responsibility for:
 *   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
 *   **Cytoscape Integration:** A powerful set of React components for graph visualizations using Cytoscape.js, allowing for custom HTML rendering within nodes and reactive style updates. See [`CYTO.md`](CYTO.md) for details.
+*   **DNS and SSL Management:** Comprehensive subdomain management with automated HTTPS setup using CloudFlare DNS, Let's Encrypt SSL certificates, and nginx configuration. Features include DNS propagation waiting, automatic certificate renewal, idempotent operations, and complete subdomain lifecycle management. Use `npx hasyx assist dns` to configure CloudFlare API credentials and domain settings. See [`CLOUDFLARE.md`](CLOUDFLARE.md), [`SSL.md`](SSL.md), [`NGINX.md`](NGINX.md), and [`SUBDOMAIN.md`](SUBDOMAIN.md) for details.
 
 Applying best development practices from the listed ecosystems, we have combined these libraries into a single framework for rapid deployment.
 
@@ -144,6 +149,10 @@ Explore the different modules and functionalities of Hasyx:
 *   **[NOTIFY-TELEGRAM-BOT.md](NOTIFY-TELEGRAM-BOT.md):** Details on Telegram Bot integration for notifications.
 *   **[TBANK.md](TBANK.md):** Documentation for TBank payments integration.
 *   **[TINKOFF_API.md](TINKOFF_API.md):** Base documentation for Tinkoff API interactions.
+*   **[CLOUDFLARE.md](CLOUDFLARE.md):** Documentation for CloudFlare DNS management.
+*   **[SSL.md](SSL.md):** Documentation for SSL certificate management.
+*   **[NGINX.md](NGINX.md):** Documentation for Nginx configuration.
+*   **[SUBDOMAIN.md](SUBDOMAIN.md):** Documentation for subdomain management.
 
 ## 🚀 Quick Start
 

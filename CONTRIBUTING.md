@@ -580,3 +580,68 @@ export const tbankAppOptions = {
 ```
 
 Thank you for contributing! 
+
+## DNS and SSL Management
+
+Hasyx includes comprehensive DNS and SSL management modules for automated subdomain creation with HTTPS setup:
+
+### CloudFlare DNS Management (`lib/cloudflare.ts`)
+- **CloudFlare API Integration**: Automated DNS A record management via CloudFlare API
+- **Subdomain Creation/Deletion**: Safe creation and removal of DNS records with idempotent operations
+- **Environment Setup**: Use `npx hasyx assist dns` to configure `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`, and `HASYX_DNS_DOMAIN`
+- **Real Functionality**: All tests use actual CloudFlare API calls (no mocks) to ensure production reliability
+
+### SSL Certificate Management (`lib/ssl.ts`)
+- **Let's Encrypt Integration**: Automated SSL certificate creation using certbot and Let's Encrypt
+- **DNS Propagation Waiting**: Built-in DNS propagation checking before certificate creation
+- **Certificate Lifecycle**: Creation, deletion, renewal, and status monitoring
+- **Environment Setup**: Requires `LETSENCRYPT_EMAIL` configuration via assist command
+
+### Nginx Configuration (`lib/nginx.ts`)
+- **Auto-Detection**: Automatically detects nginx paths across different distributions (Ubuntu/Debian, CentOS/RHEL, FreeBSD, macOS)
+- **SSL Support**: Automatic HTTPS configuration with Let's Encrypt certificates
+- **Reverse Proxy**: Built-in reverse proxy setup with WebSocket support
+- **No Additional Setup**: Works with existing nginx installations without assist configuration
+
+### Integrated Subdomain Management (`lib/subdomain.ts`)
+- **Complete Workflow**: Single-command HTTPS subdomain creation (DNS + SSL + Nginx)
+- **Automatic Cleanup**: Removes partial configurations on failure for safety
+- **Status Monitoring**: Health checking of all subdomain components
+- **Production Ready**: End-to-end subdomain management with proper error handling
+
+### Configuration and Usage
+All DNS/SSL modules follow the project's environment-based configuration pattern:
+
+```typescript
+// Environment variables (configured via npx hasyx assist dns)
+HASYX_DNS_DOMAIN=yourdomain.com
+CLOUDFLARE_API_TOKEN=your_token_here
+CLOUDFLARE_ZONE_ID=your_zone_id_here  
+LETSENCRYPT_EMAIL=admin@yourdomain.com
+
+// Usage example
+import { SubdomainManager } from 'hasyx';
+
+const subdomainManager = new SubdomainManager({
+  domain: process.env.HASYX_DNS_DOMAIN!,
+  cloudflare: {
+    apiToken: process.env.CLOUDFLARE_API_TOKEN!,
+    zoneId: process.env.CLOUDFLARE_ZONE_ID!,
+    domain: process.env.HASYX_DNS_DOMAIN!
+  },
+  ssl: { email: process.env.LETSENCRYPT_EMAIL! },
+  defaultIp: '149.102.136.233'
+});
+
+// Create complete HTTPS subdomain in one command
+await subdomainManager.define('app', { port: 3000 });
+```
+
+### Testing Philosophy
+DNS/SSL modules follow the project's real functionality testing approach:
+- **No Mocks**: All tests use real services (CloudFlare API, certbot, nginx)
+- **Environment Checks**: Tests gracefully skip when required tools/credentials are unavailable
+- **Isolation**: Each test creates and cleans up its own test environment
+- **Production Validation**: Tests validate actual functionality that will work in production
+
+For detailed documentation, see [`CLOUDFLARE.md`](CLOUDFLARE.md), [`SSL.md`](SSL.md), [`NGINX.md`](NGINX.md), and [`SUBDOMAIN.md`](SUBDOMAIN.md). 

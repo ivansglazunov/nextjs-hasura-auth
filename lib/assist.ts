@@ -27,6 +27,7 @@ import { setupVercel } from './assist-vercel';
 import Debug from './debug';
 import { Generator } from './generator';
 import { Hasyx } from './hasyx';
+import { configureDns } from './assist-dns';
 
 // Ensure dotenv is configured only once
 if (require.main === module) {
@@ -71,6 +72,7 @@ interface AssistOptions {
   skipProjectUser?: boolean;
   skipOpenRouter?: boolean;
   skipPg?: boolean;
+  skipDns?: boolean;
 }
 
 // NEW FUNCTION to determine OAuth callback base URL
@@ -151,6 +153,8 @@ async function assist(options: AssistOptions = {}) {
     else debug('Skipping OpenRouter API Key setup');
     if (!options.skipPg) envVars = await configurePg(rl, envPath);
     else debug('Skipping PostgreSQL configuration');
+    if (!options.skipDns) envVars = await configureDns(rl, envPath);
+    else debug('Skipping DNS configuration');
     if (!options.skipVercel) await setupVercel(rl, envPath, envVars);
     else debug('Skipping Vercel setup');
     if (!options.skipSync) await syncEnvironmentVariables(rl, envPath, {});
@@ -262,6 +266,7 @@ if (require.main === module) {
     .option('--skip-project-user', 'Skip setting up project user')
     .option('--skip-openrouter', 'Skip OpenRouter API Key setup')
     .option('--skip-pg', 'Skip PostgreSQL configuration')
+    .option('--skip-dns', 'Skip DNS configuration')
     .action((cmdOptions) => {
       assist(cmdOptions);
     });
