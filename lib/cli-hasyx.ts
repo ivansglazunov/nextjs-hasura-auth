@@ -21,6 +21,9 @@ import { unbuildCommand } from './unbuild';
 import { runTelegramSetupAndCalibration } from './assist';
 import { localCommand } from './local';
 import { vercelCommand } from './vercel';
+import { CloudFlare, CloudflareConfig, DnsRecord } from './cloudflare';
+import { SSL } from './ssl';
+import { Nginx } from './nginx';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
@@ -858,6 +861,225 @@ export const docCommand = (options: any) => {
   }
 };
 
+// Helper function to validate environment variables for subdomain management
+const validateSubdomainEnv = (): { domain: string; cloudflare: CloudflareConfig } => {
+  const missingVars: string[] = [];
+  
+  const domain = process.env.HASYX_DNS_DOMAIN || process.env.DOMAIN;
+  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const zoneId = process.env.CLOUDFLARE_ZONE_ID;
+  
+  if (!domain) missingVars.push('HASYX_DNS_DOMAIN or DOMAIN');
+  if (!apiToken) missingVars.push('CLOUDFLARE_API_TOKEN');
+  if (!zoneId) missingVars.push('CLOUDFLARE_ZONE_ID');
+  
+  if (missingVars.length > 0) {
+    console.error('❌ Missing required environment variables for subdomain management:');
+    missingVars.forEach(variable => {
+      console.error(`   ${variable}`);
+    });
+    console.error('\n💡 To configure these variables, run: npx hasyx assist');
+    process.exit(1);
+  }
+  
+  return {
+    domain: domain!,
+    cloudflare: {
+      apiToken: apiToken!,
+      zoneId: zoneId!,
+      domain: domain!
+    }
+  };
+};
+
+// Subdomain list command
+export const subdomainListCommand = async () => {
+  debug('Executing "subdomain list" command');
+  console.log('🌐 Listing DNS records...');
+  
+  try {
+    const { cloudflare: config } = validateSubdomainEnv();
+    const cloudflare = new CloudFlare(config);
+    
+    const records = await cloudflare.list();
+    
+    if (records.length === 0) {
+      console.log('📭 No DNS records found for this domain.');
+      return;
+    }
+    
+    console.log(`\n📋 Found ${records.length} DNS record(s):`);
+    console.log('═'.repeat(80));
+    
+    for (const record of records) {
+      const subdomain = record.name === config.domain ? '@' : record.name.replace(`.${config.domain}`, '');
+      const proxied = record.proxied ? '🟡 Proxied' : '🔴 Direct';
+      
+      console.log(`🌐 ${subdomain.padEnd(20)} → ${record.content.padEnd(15)} TTL:${record.ttl.toString().padEnd(6)} ${proxied}`);
+    }
+    
+    console.log('═'.repeat(80));
+    debug('Subdomain list command completed successfully');
+  } catch (error) {
+    console.error('❌ Failed to list DNS records:', error);
+    debug(`Subdomain list command error: ${error}`);
+    process.exit(1);
+  }
+};
+
+// Subdomain define command
+export const subdomainDefineCommand = async (subdomain: string, ip: string, port?: string) => {
+  debug(`Executing "subdomain define" command: ${subdomain} -> ${ip}:${port || 'N/A'}`);
+  
+  if (!subdomain) {
+    console.error('❌ Missing required argument: <subdomain>');
+    console.error('Usage: npx hasyx subdomain define <subdomain> <ip> [port]');
+    console.error('Example: npx hasyx subdomain define app1 149.102.136.233 3000');
+    process.exit(1);
+  }
+  
+  if (!ip) {
+    console.error('❌ Missing required argument: <ip>');
+    console.error('Usage: npx hasyx subdomain define <subdomain> <ip> [port]');
+    console.error('Example: npx hasyx subdomain define app1 149.102.136.233 3000');
+    process.exit(1);
+  }
+  
+  // Basic IP validation
+  const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  if (!ipRegex.test(ip)) {
+    console.error('❌ Invalid IP address format');
+    console.error('Example: 149.102.136.233');
+    process.exit(1);
+  }
+  
+  try {
+    const { domain, cloudflare: cfConfig } = validateSubdomainEnv();
+    const fullDomain = `${subdomain}.${domain}`;
+    
+    console.log(`🚀 Creating subdomain: ${fullDomain} → ${ip}${port ? `:${port}` : ''}`);
+    
+    // Initialize services
+    const cloudflare = new CloudFlare(cfConfig);
+    const ssl = new SSL({ email: process.env.LETSENCRYPT_EMAIL });
+    const nginx = new Nginx();
+    
+    // Step 1: Create DNS record
+    console.log('🌐 Creating DNS record...');
+    try {
+      await cloudflare.define(subdomain, { ip, ttl: 300, proxied: false });
+      console.log('✅ DNS record created successfully');
+    } catch (error) {
+      console.error('❌ Failed to create DNS record:', error);
+      process.exit(1);
+    }
+    
+    // Step 2: Wait for DNS propagation and get SSL certificate (if port is provided)
+    if (port) {
+      console.log('⏳ Waiting for DNS propagation...');
+      try {
+        await ssl.wait(fullDomain, ip, 12);
+        console.log('✅ DNS propagated successfully');
+        
+        console.log('🔒 Obtaining SSL certificate...');
+        await ssl.define(fullDomain);
+        console.log('✅ SSL certificate obtained');
+      } catch (error) {
+        console.warn('⚠️ SSL certificate creation failed:', error);
+        console.warn('   You can try to obtain it manually later with: sudo certbot certonly --nginx -d ' + fullDomain);
+      }
+      
+      // Step 3: Create Nginx configuration
+      console.log('⚙️ Creating Nginx configuration...');
+      try {
+        const siteConfig = {
+          serverName: fullDomain,
+          proxyPass: `http://127.0.0.1:${port}`,
+          ssl: true,
+          sslCertificate: `/etc/letsencrypt/live/${fullDomain}/fullchain.pem`,
+          sslCertificateKey: `/etc/letsencrypt/live/${fullDomain}/privkey.pem`
+        };
+        
+        await nginx.define(fullDomain, siteConfig);
+        console.log('✅ Nginx configuration created');
+      } catch (error) {
+        console.warn('⚠️ Nginx configuration failed:', error);
+        console.warn('   You may need to configure Nginx manually');
+      }
+    }
+    
+    console.log(`\n🎉 Subdomain created successfully!`);
+    console.log(`🌐 ${fullDomain} is now available`);
+    if (port) {
+      console.log(`🔗 https://${fullDomain} → http://127.0.0.1:${port}`);
+    }
+    
+    debug('Subdomain define command completed successfully');
+  } catch (error) {
+    console.error('❌ Failed to create subdomain:', error);
+    debug(`Subdomain define command error: ${error}`);
+    process.exit(1);
+  }
+};
+
+// Subdomain undefine command
+export const subdomainUndefineCommand = async (subdomain: string) => {
+  debug(`Executing "subdomain undefine" command: ${subdomain}`);
+  
+  if (!subdomain) {
+    console.error('❌ Missing required argument: <subdomain>');
+    console.error('Usage: npx hasyx subdomain undefine <subdomain>');
+    console.error('Example: npx hasyx subdomain undefine app1');
+    process.exit(1);
+  }
+  
+  try {
+    const { domain, cloudflare: cfConfig } = validateSubdomainEnv();
+    const fullDomain = `${subdomain}.${domain}`;
+    
+    console.log(`🗑️ Removing subdomain: ${fullDomain}`);
+    
+    // Initialize services
+    const cloudflare = new CloudFlare(cfConfig);
+    const ssl = new SSL({ email: process.env.LETSENCRYPT_EMAIL });
+    const nginx = new Nginx();
+    
+    // Step 1: Remove Nginx configuration
+    console.log('⚙️ Removing Nginx configuration...');
+    try {
+      await nginx.undefine(fullDomain);
+      console.log('✅ Nginx configuration removed');
+    } catch (error) {
+      console.warn('⚠️ Nginx configuration removal failed or not found:', error);
+    }
+    
+    // Step 2: Remove SSL certificate
+    console.log('🔒 Removing SSL certificate...');
+    try {
+      await ssl.undefine(fullDomain);
+      console.log('✅ SSL certificate removed');
+    } catch (error) {
+      console.warn('⚠️ SSL certificate removal failed or not found:', error);
+    }
+    
+    // Step 3: Remove DNS record
+    console.log('🌐 Removing DNS record...');
+    try {
+      await cloudflare.undefine(subdomain);
+      console.log('✅ DNS record removed');
+    } catch (error) {
+      console.warn('⚠️ DNS record removal failed or not found:', error);
+    }
+    
+    console.log(`\n🎉 Subdomain ${fullDomain} removed successfully!`);
+    debug('Subdomain undefine command completed successfully');
+  } catch (error) {
+    console.error('❌ Failed to remove subdomain:', error);
+    debug(`Subdomain undefine command error: ${error}`);
+    process.exit(1);
+  }
+};
+
 // Command descriptor functions
 export const initCommandDescribe = (cmd: Command) => {
   return cmd
@@ -974,6 +1196,45 @@ export const tsxCommandDescribe = (cmd: Command) => {
     .option('-e, --eval <script>', 'Evaluate a string of TypeScript code');
 };
 
+export const subdomainCommandDescribe = (cmd: Command) => {
+  const subCmd = cmd
+    .description('Manage DNS records, SSL certificates, and Nginx configurations for subdomains')
+    .addHelpText('after', `
+Examples:
+  npx hasyx subdomain list                              # List all DNS records
+  npx hasyx subdomain define app1 149.102.136.233      # Create DNS record only
+  npx hasyx subdomain define app1 149.102.136.233 3000 # Create full subdomain with SSL and Nginx
+  npx hasyx subdomain undefine app1                     # Remove subdomain completely
+
+Requirements:
+  Environment variables needed:
+    HASYX_DNS_DOMAIN (or DOMAIN)    - Your domain name
+    CLOUDFLARE_API_TOKEN            - CloudFlare API token
+    CLOUDFLARE_ZONE_ID              - CloudFlare Zone ID
+    LETSENCRYPT_EMAIL (optional)    - Email for SSL certificates
+
+  Configure these with: npx hasyx assist
+`);
+
+  // Add subcommands
+  subCmd
+    .command('list')
+    .description('List all DNS records for the domain')
+    .action(subdomainListCommand);
+
+  subCmd
+    .command('define <subdomain> <ip> [port]')
+    .description('Create subdomain with DNS record, SSL certificate (if port provided), and Nginx config')
+    .action(subdomainDefineCommand);
+
+  subCmd
+    .command('undefine <subdomain>')
+    .description('Remove subdomain: delete DNS record, SSL certificate, and Nginx config')
+    .action(subdomainUndefineCommand);
+
+  return subCmd;
+};
+
 // Export all command functions and utilities
 export const setupCommands = (program: Command, packageName: string = 'hasyx') => {
   // Init command
@@ -1056,6 +1317,9 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
 
   // TSX command
   tsxCommandDescribe(program.command('tsx [filePath]')).action(tsxCommand);
+
+  // Subdomain command
+  subdomainCommandDescribe(program.command('subdomain'));
 
   return program;
 }; 

@@ -26,7 +26,8 @@ import {
   vercelCommandDescribe,
   jsCommandDescribe, jsCommand,
   askCommandDescribe, askCommand,
-  tsxCommandDescribe, tsxCommand
+  tsxCommandDescribe, tsxCommand,
+  subdomainCommandDescribe
 } from 'hasyx/lib/cli-hasyx';
 
 console.log(`${pckg.name}@${pckg.version}`);
@@ -111,6 +112,8 @@ vercelCommandDescribe(program.command('vercel')).action(async () => {
 jsCommandDescribe(program.command('js [filePath]')).action(jsCommand);
 askCommandDescribe(program.command('ask')).action(askCommand);
 tsxCommandDescribe(program.command('tsx [filePath]')).action(tsxCommand);
+
+subdomainCommandDescribe(program.command('subdomain'));
 
 debug('Parsing CLI arguments...');
 program.parse(process.argv);
