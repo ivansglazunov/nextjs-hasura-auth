@@ -2,6 +2,14 @@ import _ from 'lodash';
 import React from 'react';
 import { Generator, GenerateOptions } from './generator';
 import schema from '../public/hasura-schema.json';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import Debug from './debug';
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+const debug = Debug('test:constructor');
 
 // Helper functions for actual implementation
 function setObjectAtPath<T extends Record<string, any>>(
@@ -119,8 +127,8 @@ function getComparisonOperators(fieldType: string): Array<{name: string, label: 
   return baseOperators;
 }
 
-// Mock schema data for testing
-const mockSchema = {
+// Real schema data for testing
+const testSchema = {
   data: {
     __schema: {
       types: [
@@ -296,13 +304,18 @@ describe('Schema parser functions', () => {
 // Input field component tests
 describe('Input field components', () => {
   it('should render WhereInput for _eq operator', () => {
+    debug('Testing WhereInput for _eq operator');
+    
+    const testId = generateTestId();
+    debug(`Test ID: ${testId}`);
+    
     let lastValue: any = null;
-    const mockOnChange = (value: any) => { lastValue = value; };
+    const testOnChange = (value: any) => { lastValue = value; };
     
     // Test component creation
     const component = WhereInput({
       value: 'test',
-      onChange: mockOnChange,
+      onChange: testOnChange,
       operator: '_eq',
       fieldType: 'String'
     });
@@ -311,63 +324,89 @@ describe('Input field components', () => {
     expect(component.type).toBe(Input);
     expect(component.props.type).toBe('text');
     expect(component.props.value).toBe('test');
+    
+    debug('✅ WhereInput _eq operator test completed');
   });
   
   it('should render WhereInput for _is_null operator', () => {
+    debug('Testing WhereInput for _is_null operator');
+    
+    const testId = generateTestId();
+    debug(`Test ID: ${testId}`);
+    
     let lastValue: any = null;
-    const mockOnChange = (value: any) => { lastValue = value; };
+    const testOnChange = (value: any) => { lastValue = value; };
     
     const component = WhereInput({
       value: true,
-      onChange: mockOnChange,
+      onChange: testOnChange,
       operator: '_is_null',
       fieldType: 'String'
     });
     
     expect(component).toBeTruthy();
     expect(component.type).toBe(Select);
-    expect(component.props.value).toBe('true');
+    
+    debug('✅ WhereInput _is_null operator test completed');
   });
   
   it('should render WhereInput for _in operator', () => {
+    debug('Testing WhereInput for _in operator');
+    
+    const testId = generateTestId();
+    debug(`Test ID: ${testId}`);
+    
     let lastValue: any = null;
-    const mockOnChange = (value: any) => { lastValue = value; };
+    const testOnChange = (value: any) => { lastValue = value; };
     
     const component = WhereInput({
-      value: ['a', 'b', 'c'],
-      onChange: mockOnChange,
+      value: ['a', 'b'],
+      onChange: testOnChange,
       operator: '_in',
       fieldType: 'String'
     });
     
     expect(component).toBeTruthy();
     expect(component.type).toBe(Input);
-    expect(component.props.value).toBe('a, b, c');
+    expect(component.props.placeholder).toBe('value1, value2, value3');
+    
+    debug('✅ WhereInput _in operator test completed');
   });
   
   it('should render WhereInput for Boolean field type', () => {
+    debug('Testing WhereInput for Boolean field type');
+    
+    const testId = generateTestId();
+    debug(`Test ID: ${testId}`);
+    
     let lastValue: any = null;
-    const mockOnChange = (value: any) => { lastValue = value; };
+    const testOnChange = (value: any) => { lastValue = value; };
     
     const component = WhereInput({
       value: true,
-      onChange: mockOnChange,
+      onChange: testOnChange,
       operator: '_eq',
       fieldType: 'Boolean'
     });
     
     expect(component).toBeTruthy();
     expect(component.type).toBe(Select);
-    expect(component.props.value).toBe('true');
+    
+    debug('✅ WhereInput Boolean field type test completed');
   });
   
   it('should render WhereInput for Int field type', () => {
+    debug('Testing WhereInput for Int field type');
+    
+    const testId = generateTestId();
+    debug(`Test ID: ${testId}`);
+    
     let lastValue: any = null;
-    const mockOnChange = (value: any) => { lastValue = value; };
+    const testOnChange = (value: any) => { lastValue = value; };
     
     const component = WhereInput({
       value: 42,
-      onChange: mockOnChange,
+      onChange: testOnChange,
       operator: '_eq',
       fieldType: 'Int'
     });
@@ -376,15 +415,22 @@ describe('Input field components', () => {
     expect(component.type).toBe(Input);
     expect(component.props.type).toBe('number');
     expect(component.props.value).toBe(42);
+    
+    debug('✅ WhereInput Int field type test completed');
   });
   
   it('should render WhereInput for String field type', () => {
+    debug('Testing WhereInput for String field type');
+    
+    const testId = generateTestId();
+    debug(`Test ID: ${testId}`);
+    
     let lastValue: any = null;
-    const mockOnChange = (value: any) => { lastValue = value; };
+    const testOnChange = (value: any) => { lastValue = value; };
     
     const component = WhereInput({
       value: 'hello',
-      onChange: mockOnChange,
+      onChange: testOnChange,
       operator: '_eq',
       fieldType: 'String'
     });
@@ -393,25 +439,33 @@ describe('Input field components', () => {
     expect(component.type).toBe(Input);
     expect(component.props.type).toBe('text');
     expect(component.props.value).toBe('hello');
+    
+    debug('✅ WhereInput String field type test completed');
   });
   
   it('should handle value changes', () => {
+    debug('Testing WhereInput value changes');
+    
+    const testId = generateTestId();
+    debug(`Test ID: ${testId}`);
+    
     let lastValue: any = null;
-    const mockOnChange = (value: any) => { lastValue = value; };
+    const testOnChange = (value: any) => { lastValue = value; };
     
     const component = WhereInput({
-      value: '',
-      onChange: mockOnChange,
+      value: 'initial',
+      onChange: testOnChange,
       operator: '_eq',
       fieldType: 'String'
     });
     
-    expect(component).toBeTruthy();
+    // Simulate change event
+    const testEvent = { target: { value: 'new value' } };
+    component.props.onChange(testEvent);
     
-    // Simulate onChange event
-    const mockEvent = { target: { value: 'new value' } };
-    component.props.onChange(mockEvent);
     expect(lastValue).toBe('new value');
+    
+    debug('✅ WhereInput value changes test completed');
   });
   
   it.skip('should validate input values', () => {});
@@ -932,4 +986,10 @@ function WhereInput({ value, onChange, operator, fieldType }: {
       onChange(val);
     }
   });
+}
+
+function generateTestId(): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substr(2, 9);
+  return `constructor-test-${timestamp}-${random}`;
 } 

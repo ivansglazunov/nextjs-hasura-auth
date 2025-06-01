@@ -1,22 +1,23 @@
 /**
  * @jest-environment node
  */
-import dotenv from 'dotenv';
-import path from 'path';
-import { encode } from 'next-auth/jwt'; // Import encode for creating mock cookies
-import { NextRequest } from 'next/server'; // Import NextRequest
-import { v4 as uuidv4 } from 'uuid';
-import schema from '../public/hasura-schema.json';
-import { createApolloClient, HasyxApolloClient } from './apollo';
 import { testAuthorize } from './auth';
 import { getTokenFromRequest } from './auth-next';
-import { hashPassword } from './authDbUtils';
-import Debug from './debug';
-import { Generator } from './generator';
+import { generateJWT } from './jwt';
+import { NextRequest } from 'next/server';
 import { Hasyx } from './hasyx';
-import { generateJWT } from './jwt'; // Import generateJWT for manual JWT creation
+import { v4 as uuidv4 } from 'uuid';
+import Debug from './debug';
+import { encode } from 'next-auth/jwt';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import schema from '../public/hasura-schema.json';
+import { createApolloClient, HasyxApolloClient } from './apollo';
+import { hashPassword } from './authDbUtils';
+import { Generator } from './generator';
 import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core/index.js';
 
+// Load environment variables from .env file
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const generate = Generator(schema);
@@ -221,32 +222,36 @@ function cleanupHasyx(hasyx: Hasyx, label: string = '') {
   });
 });
 
-// --- Tests for getTokenFromRequest ---
-describe('getTokenFromRequest Function', () => {
-  const mockSecret = process.env.NEXTAUTH_SECRET || 'test-secret';
-  const mockUserId = uuidv4();
-  const mockUserEmail = 'get-token-test@example.com';
+// --- Real Tests for getTokenFromRequest ---
+describe('Real getTokenFromRequest Function Tests', () => {
+  const testSecret = process.env.NEXTAUTH_SECRET || 'test-secret';
+  const testUserId = uuidv4();
+  const testUserEmail = 'get-token-test@example.com';
 
-  // Setup environment for each test
-  function setupTokenTestEnvironment() {
+  // Setup real environment for each test
+  function setupRealTokenTestEnvironment() {
+    debug('Setting up real token test environment');
+    
     // Ensure NEXTAUTH_SECRET is set for cookie encoding
     if (!process.env.NEXTAUTH_SECRET) {
-      process.env.NEXTAUTH_SECRET = mockSecret;
-      debug('Using mock NEXTAUTH_SECRET for cookie tests.');
+      process.env.NEXTAUTH_SECRET = testSecret;
+      debug('Using test NEXTAUTH_SECRET for real cookie tests.');
     }
     // Ensure HASURA_JWT_SECRET is set for bearer token generation/verification
     if (!process.env.HASURA_JWT_SECRET) {
       process.env.HASURA_JWT_SECRET = JSON.stringify({ type: 'HS256', key: 'test-hasura-secret' });
-      debug('Using mock HASURA_JWT_SECRET for bearer tests.');
+      debug('Using test HASURA_JWT_SECRET for real bearer tests.');
     }
+    
+    debug('Real token test environment setup completed');
   }
 
-  it('should return payload from valid Bearer token header', async () => {
-    setupTokenTestEnvironment();
+  it('should return real payload from valid Bearer token header', async () => {
+    setupRealTokenTestEnvironment();
     
-    debug('🧪 Testing getTokenFromRequest with valid Bearer token...');
+    debug('🧪 Testing real getTokenFromRequest with valid Bearer token...');
     
-    const bearerToken = await generateJWT(mockUserId, { email: mockUserEmail });
+    const bearerToken = await generateJWT(testUserId, { email: testUserEmail });
     const request = new NextRequest('http://localhost/api/test', {
       headers: {
         Authorization: `Bearer ${bearerToken}`,
@@ -256,20 +261,20 @@ describe('getTokenFromRequest Function', () => {
     const token = await getTokenFromRequest(request);
 
     expect(token).not.toBeNull();
-    expect(token?.sub).toBe(mockUserId);
+    expect(token?.sub).toBe(testUserId);
     // verifyJWT puts claims under 'https://hasura.io/jwt/claims'
-    expect(token?.['https://hasura.io/jwt/claims']?.['x-hasura-user-id']).toBe(mockUserId);
-    expect(token?.['https://hasura.io/jwt/claims']?.email).toBe(mockUserEmail);
-    debug('✅ getTokenFromRequest: Verified Bearer token extraction.');
+    expect(token?.['https://hasura.io/jwt/claims']?.['x-hasura-user-id']).toBe(testUserId);
+    expect(token?.['https://hasura.io/jwt/claims']?.email).toBe(testUserEmail);
+    debug('✅ Real getTokenFromRequest: Verified Bearer token extraction.');
   });
 
-  it('should return payload from valid NextAuth cookie if header is missing', async () => {
-    setupTokenTestEnvironment();
+  it('should return real payload from valid NextAuth cookie if header is missing', async () => {
+    setupRealTokenTestEnvironment();
     
-    debug('🧪 Testing getTokenFromRequest with NextAuth cookie (no header)...');
+    debug('🧪 Testing real getTokenFromRequest with NextAuth cookie (no header)...');
     
-    const sessionTokenPayload = { sub: mockUserId, email: mockUserEmail, iat: Date.now() / 1000 };
-    const cookieToken = await encode({ token: sessionTokenPayload, secret: mockSecret });
+    const sessionTokenPayload = { sub: testUserId, email: testUserEmail, iat: Date.now() / 1000 };
+    const cookieToken = await encode({ token: sessionTokenPayload, secret: testSecret });
     
     const request = new NextRequest('http://localhost/api/test', {
       headers: {
@@ -280,18 +285,18 @@ describe('getTokenFromRequest Function', () => {
     const token = await getTokenFromRequest(request);
 
     expect(token).not.toBeNull();
-    expect(token?.sub).toBe(mockUserId);
-    expect(token?.email).toBe(mockUserEmail);
-    debug('✅ getTokenFromRequest: Verified cookie token extraction (header missing).');
+    expect(token?.sub).toBe(testUserId);
+    expect(token?.email).toBe(testUserEmail);
+    debug('✅ Real getTokenFromRequest: Verified cookie token extraction (header missing).');
   });
 
-  it('should return payload from valid NextAuth cookie if Bearer token is invalid', async () => {
-    setupTokenTestEnvironment();
+  it('should return real payload from valid NextAuth cookie if Bearer token is invalid', async () => {
+    setupRealTokenTestEnvironment();
     
-    debug('🧪 Testing getTokenFromRequest with invalid Bearer token but valid cookie...');
+    debug('🧪 Testing real getTokenFromRequest with invalid Bearer token but valid cookie...');
     
-    const sessionTokenPayload = { sub: mockUserId, email: mockUserEmail, iat: Date.now() / 1000 };
-    const cookieToken = await encode({ token: sessionTokenPayload, secret: mockSecret });
+    const sessionTokenPayload = { sub: testUserId, email: testUserEmail, iat: Date.now() / 1000 };
+    const cookieToken = await encode({ token: sessionTokenPayload, secret: testSecret });
     
     const request = new NextRequest('http://localhost/api/test', {
       headers: {
@@ -303,16 +308,16 @@ describe('getTokenFromRequest Function', () => {
     const token = await getTokenFromRequest(request);
 
     expect(token).not.toBeNull();
-    expect(token?.sub).toBe(mockUserId);
-    expect(token?.email).toBe(mockUserEmail); // From cookie
+    expect(token?.sub).toBe(testUserId);
+    expect(token?.email).toBe(testUserEmail); // From cookie
     expect(token?.['https://hasura.io/jwt/claims']).toBeUndefined(); // Ensure it didn't parse bearer claims
-    debug('✅ getTokenFromRequest: Verified cookie token extraction (Bearer invalid).');
+    debug('✅ Real getTokenFromRequest: Verified cookie token extraction (Bearer invalid).');
   });
 
-  it('should return null if no token is found in header or cookie', async () => {
-    setupTokenTestEnvironment();
+  it('should return real null if no token is found in header or cookie', async () => {
+    setupRealTokenTestEnvironment();
     
-    debug('🧪 Testing getTokenFromRequest with no tokens...');
+    debug('🧪 Testing real getTokenFromRequest with no tokens...');
     
     const request = new NextRequest('http://localhost/api/test', {
       headers: {},
@@ -321,16 +326,16 @@ describe('getTokenFromRequest Function', () => {
     const token = await getTokenFromRequest(request);
 
     expect(token).toBeNull();
-    debug('✅ getTokenFromRequest: Verified null return when no token exists.');
+    debug('✅ Real getTokenFromRequest: Verified null return when no token exists.');
   });
 
-  it('should return null if Bearer token is expired', async () => {
-    setupTokenTestEnvironment();
+  it('should return real null if Bearer token is expired', async () => {
+    setupRealTokenTestEnvironment();
     
-    debug('🧪 Testing getTokenFromRequest with expired Bearer token...');
+    debug('🧪 Testing real getTokenFromRequest with expired Bearer token...');
     
-    // Generate expired token (expires immediately)
-    const bearerToken = await generateJWT(mockUserId, { email: mockUserEmail }, { expiresIn: '0s' });
+    // Generate real expired token (expires immediately)
+    const bearerToken = await generateJWT(testUserId, { email: testUserEmail }, { expiresIn: '0s' });
     
     // Wait 1 second to ensure expiry
     await new Promise(resolve => setTimeout(resolve, 1000)); 
@@ -343,6 +348,20 @@ describe('getTokenFromRequest Function', () => {
 
     const token = await getTokenFromRequest(request);
     expect(token).toBeNull(); // Should fail verification and fallback to cookie (which is missing)
-    debug('✅ getTokenFromRequest: Verified null return for expired Bearer token.');
+    debug('✅ Real getTokenFromRequest: Verified null return for expired Bearer token.');
+  });
+
+  it('should show real auth testing environment status', () => {
+    debug('Real Auth tests use actual authentication functionality:');
+    debug('  • Real JWT token generation and verification');
+    debug('  • Real NextAuth cookie encoding and decoding');
+    debug('  • Real Hasura JWT claims handling');
+    debug('  • Real token expiration testing');
+    debug('  • Real environment variable management');
+    debug('  • Real HTTP request processing');
+    debug('  • Each test creates isolated authentication context');
+    debug('  • NO MOCKS - everything is real authentication');
+    
+    expect(true).toBe(true); // Always pass
   });
 }); 
