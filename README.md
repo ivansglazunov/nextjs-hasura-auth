@@ -570,6 +570,69 @@ The CLI automatically loads environment variables from the `.env` file in your p
 
 ---
 
+### `subdomain` 🌐
+
+**Complete Subdomain Management with DNS, SSL, and Nginx**
+
+Manage DNS records, SSL certificates, and Nginx configurations for subdomains with automated HTTPS setup using CloudFlare DNS, Let's Encrypt SSL certificates, and nginx configuration.
+
+```bash
+# Show help with all subcommands and examples
+npx hasyx subdomain --help
+
+# List all DNS records for your domain
+npx hasyx subdomain list
+
+# Create subdomain with DNS record only
+npx hasyx subdomain define app1 149.102.136.233
+
+# Create full subdomain with DNS, SSL certificate, and Nginx configuration
+npx hasyx subdomain define app1 149.102.136.233 3000
+
+# Remove subdomain completely (DNS, SSL, and Nginx)
+npx hasyx subdomain undefine app1
+```
+
+**🎯 Available Subcommands:**
+- `list` - List all DNS records for the domain
+- `define <subdomain> <ip> [port]` - Create subdomain with optional SSL and Nginx
+- `undefine <subdomain>` - Remove subdomain completely
+
+**🔧 Requirements:**
+The following environment variables are required:
+- `HASYX_DNS_DOMAIN` (or `DOMAIN`) - Your domain name
+- `CLOUDFLARE_API_TOKEN` - CloudFlare API token with Zone:Edit permissions
+- `CLOUDFLARE_ZONE_ID` - CloudFlare Zone ID for your domain
+- `LETSENCRYPT_EMAIL` (optional) - Email for SSL certificates
+
+Configure these variables using:
+```bash
+npx hasyx assist
+```
+
+**✨ Features:**
+- **DNS Management:** Automatic A record creation via CloudFlare API
+- **SSL Certificates:** Let's Encrypt certificates with automatic renewal
+- **Nginx Configuration:** Reverse proxy setup with HTTPS redirect
+- **DNS Propagation:** Automatic waiting for DNS changes
+- **IP Validation:** Built-in IP address format validation
+- **Idempotent Operations:** Safe to run multiple times
+
+**Example Workflow:**
+```bash
+# 1. List existing DNS records
+npx hasyx subdomain list
+
+# 2. Create a subdomain for your API server
+npx hasyx subdomain define api 149.102.136.233 8080
+
+# 3. Result: https://api.yourdomain.com → http://127.0.0.1:8080
+```
+
+See **[SUBDOMAIN.md](SUBDOMAIN.md)** for complete documentation, **[CLOUDFLARE.md](CLOUDFLARE.md)** for DNS management details, **[SSL.md](SSL.md)** for certificate management, and **[NGINX.md](NGINX.md)** for web server configuration.
+
+---
+
 ### `ask` 🤖
 
 **AI Assistant with Real-time Progress Indicators**

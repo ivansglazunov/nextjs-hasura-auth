@@ -24,6 +24,80 @@ The `SubdomainManager` class provides comprehensive subdomain management that:
 
 </details>
 
+## CLI Command 🌐
+
+The easiest way to manage subdomains is through the CLI command:
+
+```bash
+# Show help with all subcommands and examples
+npx hasyx subdomain --help
+
+# List all DNS records for your domain
+npx hasyx subdomain list
+
+# Create subdomain with DNS record only
+npx hasyx subdomain define app1 149.102.136.233
+
+# Create full subdomain with DNS, SSL certificate, and Nginx configuration
+npx hasyx subdomain define app1 149.102.136.233 3000
+
+# Remove subdomain completely (DNS, SSL, and Nginx)
+npx hasyx subdomain undefine app1
+```
+
+### CLI Subcommands
+
+**`list`** - List all DNS records for the domain
+```bash
+npx hasyx subdomain list
+# Output:
+# 📋 Found 3 DNS record(s):
+# ════════════════════════════════════════════════════════════════════════════════
+# 🌐 @                    → 149.102.136.233   TTL:300    🔴 Direct
+# 🌐 api                  → 149.102.136.233   TTL:300    🔴 Direct  
+# 🌐 app                  → 149.102.136.233   TTL:300    🔴 Direct
+# ════════════════════════════════════════════════════════════════════════════════
+```
+
+**`define <subdomain> <ip> [port]`** - Create subdomain with optional SSL and Nginx
+```bash
+# DNS record only
+npx hasyx subdomain define api 149.102.136.233
+
+# Full HTTPS setup with reverse proxy
+npx hasyx subdomain define api 149.102.136.233 8080
+# Result: https://api.yourdomain.com → http://127.0.0.1:8080
+```
+
+**`undefine <subdomain>`** - Remove subdomain completely
+```bash
+npx hasyx subdomain undefine api
+# Removes: DNS record, SSL certificate, and Nginx configuration
+```
+
+### CLI Environment Requirements
+
+The CLI command requires these environment variables:
+- `HASYX_DNS_DOMAIN` (or `DOMAIN`) - Your domain name
+- `CLOUDFLARE_API_TOKEN` - CloudFlare API token with Zone:Edit permissions
+- `CLOUDFLARE_ZONE_ID` - CloudFlare Zone ID for your domain
+- `LETSENCRYPT_EMAIL` (optional) - Email for SSL certificates
+
+Configure all variables using:
+```bash
+npx hasyx assist
+```
+
+If environment variables are missing, the CLI will show:
+```bash
+❌ Missing required environment variables for subdomain management:
+   HASYX_DNS_DOMAIN or DOMAIN
+   CLOUDFLARE_API_TOKEN
+   CLOUDFLARE_ZONE_ID
+
+💡 To configure these variables, run: npx hasyx assist
+```
+
 ## Core Features
 
 ### Integrated Workflow
