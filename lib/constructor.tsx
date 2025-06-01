@@ -78,44 +78,92 @@ function getTablesFromSchema(schema: any): string[] {
 }
 
 function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
-  // Mock implementation for now - in real implementation we'd parse the schema types
-  const commonFields: FieldInfo[] = [
-    { name: 'id', type: 'String', isRelation: false },
-    { name: 'created_at', type: 'DateTime', isRelation: false },
-    { name: 'updated_at', type: 'DateTime', isRelation: false }
+  // Find the corresponding GraphQL type for this table
+  // First try exact match, then try with capitalization
+  const possibleTypeNames = [
+    tableName,
+    tableName.toLowerCase(),
+    tableName.charAt(0).toUpperCase() + tableName.slice(1),
+    tableName.split('_').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('_')
   ];
   
-  if (tableName === 'users') {
-    return [
-      ...commonFields,
-      { name: 'name', type: 'String', isRelation: false },
-      { name: 'email', type: 'String', isRelation: false },
-      { name: 'accounts', type: 'Account', isRelation: true, targetTable: 'accounts' },
-      { name: 'notifications', type: 'Notification', isRelation: true, targetTable: 'notifications' }
-    ];
+  let graphqlType = null;
+  for (const typeName of possibleTypeNames) {
+    graphqlType = schema?.data?.__schema?.types?.find((type: any) => type.name === typeName);
+    if (graphqlType) break;
   }
   
-  if (tableName === 'accounts') {
-    return [
-      ...commonFields,
-      { name: 'provider', type: 'String', isRelation: false },
-      { name: 'provider_id', type: 'String', isRelation: false },
-      { name: 'user_id', type: 'String', isRelation: false },
-      { name: 'user', type: 'User', isRelation: true, targetTable: 'users' }
+  if (!graphqlType || !graphqlType.fields) {
+    // Fallback to basic fields for unknown tables, but keep backward compatibility for users
+    const commonFields: FieldInfo[] = [
+      { name: 'id', type: 'String', isRelation: false },
+      { name: 'created_at', type: 'DateTime', isRelation: false },
+      { name: 'updated_at', type: 'DateTime', isRelation: false }
     ];
+    
+    // Maintain backward compatibility for users table
+    if (tableName === 'users') {
+      return [
+        ...commonFields,
+        { name: 'name', type: 'String', isRelation: false },
+        { name: 'email', type: 'String', isRelation: false },
+        { name: 'accounts', type: 'Account', isRelation: true, targetTable: 'accounts' },
+        { name: 'notifications', type: 'Notification', isRelation: true, targetTable: 'notifications' }
+      ];
+    }
+    
+    if (tableName === 'accounts') {
+      return [
+        ...commonFields,
+        { name: 'provider', type: 'String', isRelation: false },
+        { name: 'provider_id', type: 'String', isRelation: false },
+        { name: 'user_id', type: 'String', isRelation: false },
+        { name: 'user', type: 'User', isRelation: true, targetTable: 'users' }
+      ];
+    }
+    
+    if (tableName === 'notifications') {
+      return [
+        ...commonFields,
+        { name: 'title', type: 'String', isRelation: false },
+        { name: 'message', type: 'String', isRelation: false },
+        { name: 'user_id', type: 'String', isRelation: false },
+        { name: 'user', type: 'User', isRelation: true, targetTable: 'users' }
+      ];
+    }
+    
+    return commonFields;
   }
   
-  if (tableName === 'notifications') {
-    return [
-      ...commonFields,
-      { name: 'title', type: 'String', isRelation: false },
-      { name: 'message', type: 'String', isRelation: false },
-      { name: 'user_id', type: 'String', isRelation: false },
-      { name: 'user', type: 'User', isRelation: true, targetTable: 'users' }
-    ];
-  }
-  
-  return commonFields;
+  return graphqlType.fields.map((field: any) => {
+    const fieldType = field.type;
+    const actualType = fieldType?.ofType || fieldType; // Handle NON_NULL wrappers
+    
+    // Determine if this is a relation
+    const isRelation = actualType?.kind === 'OBJECT' || actualType?.kind === 'LIST';
+    
+    // Get the type name for display
+    let typeName = 'String'; // default
+    if (actualType?.name) {
+      typeName = actualType.name;
+    } else if (actualType?.ofType?.name) {
+      typeName = actualType.ofType.name;
+    }
+    
+    // Map GraphQL types to simplified types
+    if (typeName === 'uuid') typeName = 'UUID';
+    if (typeName === 'bigint') typeName = 'Int';
+    if (typeName === 'timestamptz') typeName = 'DateTime';
+    if (typeName === 'jsonb') typeName = 'JSONB';
+    if (typeName === 'boolean') typeName = 'Boolean';
+    
+    return {
+      name: field.name,
+      type: typeName,
+      isRelation,
+      targetTable: isRelation ? actualType?.name : undefined
+    };
+  });
 }
 
 function getComparisonOperators(fieldType: string): Array<{name: string, label: string}> {

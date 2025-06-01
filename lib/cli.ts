@@ -27,7 +27,7 @@ import {
   jsCommandDescribe, jsCommand,
   askCommandDescribe, askCommand,
   tsxCommandDescribe, tsxCommand
-} from './cli-hasyx';
+} from 'hasyx/lib/cli-hasyx';
 
 console.log(`${pckg.name}@${pckg.version}`);
 

@@ -621,52 +621,6 @@ describe('ConstructorWhereField component', () => {
   });
 });
 
-// Main constructor component tests
-describe('HasyxConstructor Component', () => {
-  it.skip('should render with basic props', () => {});
-  it.skip('should handle table selection', () => {});
-  it.skip('should handle where condition changes', () => {});
-  it.skip('should handle returning field changes', () => {});
-  it.skip('should call onChange when state changes', () => {});
-  it.skip('should integrate with useQuery', () => {});
-  it.skip('should handle schema parsing errors', () => {});
-  it.skip('should handle complex nested queries', () => {});
-});
-
-// Full page component tests
-describe('Constructor page component', () => {
-  it.skip('should render SidebarLayout', () => {});
-  it.skip('should render breadcrumb navigation', () => {});
-  it.skip('should render left side constructor', () => {});
-  it.skip('should render right side results', () => {});
-  it.skip('should use default constructor state', () => {});
-  it.skip('should call useQuery with constructor state', () => {});
-  it.skip('should display loading state', () => {});
-  it.skip('should display error state', () => {});
-  it.skip('should display query results as JSON', () => {});
-});
-
-// Integration tests
-describe('Constructor integration', () => {
-  it.skip('should update query when table changes', () => {});
-  it.skip('should update query when where conditions change', () => {});
-  it.skip('should update query when returning fields change', () => {});
-  it.skip('should handle complex where conditions', () => {});
-  it.skip('should handle multiple where conditions', () => {});
-  it.skip('should handle nested object relations', () => {});
-  it.skip('should handle array relations', () => {});
-  it.skip('should validate generated GraphQL queries', () => {});
-});
-
-// Real functionality tests (without mocks)
-describe('Constructor with real data', () => {
-  it.skip('should work with actual Hasura schema', () => {});
-  it.skip('should generate valid GraphQL queries', () => {});
-  it.skip('should execute queries against real database', () => {});
-  it.skip('should handle different data types correctly', () => {});
-  it.skip('should handle complex nested queries', () => {});
-});
-
 describe('Constructor Query Generation with Real Schema', () => {
   const generate = Generator(schema);
   

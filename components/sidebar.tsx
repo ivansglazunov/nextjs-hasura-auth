@@ -188,13 +188,13 @@ export function Sidebar({ data }: { data: SidebarData }) {
 
   // Recursive function to render sidebar items
   const renderSidebarItems = (items: SidebarItem[]) => {
-    return items.map((item) => {
+    return items.map((item, i) => {
       const isCurrentSection = isPathInSection(item);
       const isCollapsed = item.collapse && collapsedSections.has(item.title);
       const shouldShowContent = !item.collapse || !isCollapsed;
       
       return (
-        <SidebarGroup key={item.title}>
+        <SidebarGroup key={`${item.title}-${i}`}>
           <SidebarGroupLabel 
             className={item.collapse ? "cursor-pointer flex items-center justify-between hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md px-2 py-1 transition-colors" : ""}
             onClick={item.collapse ? () => toggleSection(item.title) : undefined}
@@ -209,7 +209,7 @@ export function Sidebar({ data }: { data: SidebarData }) {
           {shouldShowContent && (
             <SidebarGroupContent>
               <SidebarMenu>
-                {item?.items?.map((subItem) => {
+                {item?.items?.map((subItem, i) => {
                   // Check if this subItem is collapsible
                   if (subItem.collapse) {
                     // This is a collapsible document - render it as a collapsible section
@@ -217,7 +217,7 @@ export function Sidebar({ data }: { data: SidebarData }) {
                     const shouldShowSubContent = !isSubItemCollapsed;
                     
                     return (
-                      <SidebarMenuItem key={subItem.title}>
+                      <SidebarMenuItem key={`${subItem.title}-${i}`}>
                         <SidebarMenuButton 
                           asChild={!subItem.collapse}
                           isActive={isPathInSection(subItem)}
@@ -239,7 +239,7 @@ export function Sidebar({ data }: { data: SidebarData }) {
                         {/* Render sub-items if they exist and section is not collapsed */}
                         {shouldShowSubContent && subItem.items && subItem.items.length > 0 && (
                           <SidebarMenuSub>
-                            {subItem.items.map((subSubItem) => {
+                            {subItem.items.map((subSubItem, i) => {
                               // Better active state detection for sub-items (headings)
                               const isSubSubItemActive = subSubItem.url === pathname || 
                                                         pathname.includes(subSubItem.url) ||
@@ -254,7 +254,7 @@ export function Sidebar({ data }: { data: SidebarData }) {
                                                 headingLevel === 6 ? 'pl-16' : 'pl-4';
                               
                               return (
-                                <SidebarMenuSubItem key={subSubItem.title}>
+                                <SidebarMenuSubItem key={`${subSubItem.title}-${i}`}>
                                   <SidebarMenuSubButton 
                                     asChild
                                     isActive={isSubSubItemActive}
@@ -276,14 +276,14 @@ export function Sidebar({ data }: { data: SidebarData }) {
                                           (pathname.startsWith("/hasyx/doc/") && subItem.url.includes(pathname.split("#")[0]));
                     
                     return (
-                      <SidebarMenuItem key={subItem.title}>
+                      <SidebarMenuItem key={`${subItem.title}-${i}`}>
                         <SidebarMenuButton asChild isActive={isSubItemActive}>
                           <a href={subItem.url} className="sidebar-sub-text-truncate" title={subItem.title}>{subItem.title}</a>
                         </SidebarMenuButton>
                         {/* Render sub-items if they exist */}
                         {subItem.items && subItem.items.length > 0 && (
                           <SidebarMenuSub>
-                            {subItem.items.map((subSubItem) => {
+                            {subItem.items.map((subSubItem, i) => {
                               // Better active state detection for sub-items (headings)
                               const isSubSubItemActive = subSubItem.url === pathname || 
                                                         pathname.includes(subSubItem.url) ||
@@ -298,7 +298,7 @@ export function Sidebar({ data }: { data: SidebarData }) {
                                                 headingLevel === 6 ? 'pl-16' : 'pl-4';
                               
                               return (
-                                <SidebarMenuSubItem key={subSubItem.title}>
+                                <SidebarMenuSubItem key={`${subSubItem.title}-${i}`}>
                                   <SidebarMenuSubButton 
                                     asChild
                                     isActive={isSubSubItemActive}

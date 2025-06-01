@@ -8795,82 +8795,62 @@
       "level": 1
     },
     {
-      "title": "Hasyx Query Constructor Development Plan",
+      "title": "Constructor Field Display Fix Experiment",
       "url": "/hasyx/doc/constructor.experiment",
       "collapse": true,
       "items": [
         {
-          "title": "ПРАВИЛА",
+          "title": "ПРАВИЛА ТЕСТИРОВАНИЯ",
           "url": "/hasyx/doc/constructor.experiment#",
           "level": 2
         },
         {
-          "title": "Ограниченный список файлов для разработки",
+          "title": "Проблема",
           "url": "/hasyx/doc/constructor.experiment#",
           "level": 2
         },
         {
-          "title": "План разработки",
+          "title": "Анализ проблемы",
           "url": "/hasyx/doc/constructor.experiment#",
           "level": 2
         },
         {
-          "title": "Этап 1: Подготовка инфраструктуры",
+          "title": "План исправления",
+          "url": "/hasyx/doc/constructor.experiment#",
+          "level": 2
+        },
+        {
+          "title": "✅ Задача 1: Анализ схемы и извлечение структуры типов",
           "url": "/hasyx/doc/constructor.experiment#1",
           "level": 3
         },
         {
-          "title": "Этап 2: Базовые утилиты и типы",
+          "title": "✅ Задача 2: Реализация парсера полей из схемы",
           "url": "/hasyx/doc/constructor.experiment#2",
           "level": 3
         },
         {
-          "title": "Этап 3: Input Field компоненты",
-          "url": "/hasyx/doc/constructor.experiment#3-input-field",
+          "title": "✅ Задача 3: Интеграция парсера в конструктор",
+          "url": "/hasyx/doc/constructor.experiment#3",
           "level": 3
         },
         {
-          "title": "Этап 4: Where компоненты",
-          "url": "/hasyx/doc/constructor.experiment#4-where",
+          "title": "✅ Задача 4: Поддержка схем (schema.table → schema_table)",
+          "url": "/hasyx/doc/constructor.experiment#4-schematable-schema-table",
           "level": 3
         },
         {
-          "title": "Этап 5: Returning компоненты",
-          "url": "/hasyx/doc/constructor.experiment#5-returning",
+          "title": "✅ Задача 5: Тестирование и валидация",
+          "url": "/hasyx/doc/constructor.experiment#5",
           "level": 3
         },
         {
-          "title": "Этап 6: Основные компоненты конструктора",
-          "url": "/hasyx/doc/constructor.experiment#6",
-          "level": 3
-        },
-        {
-          "title": "Этап 7: Интеграция и страница",
-          "url": "/hasyx/doc/constructor.experiment#7",
-          "level": 3
-        },
-        {
-          "title": "Этап 8: Рефакторинг и оптимизация",
-          "url": "/hasyx/doc/constructor.experiment#8",
-          "level": 3
-        },
-        {
-          "title": "Структура файлов",
+          "title": "Итоговые результаты",
           "url": "/hasyx/doc/constructor.experiment#",
           "level": 2
         },
         {
-          "title": "Основные типы",
-          "url": "/hasyx/doc/constructor.experiment#",
-          "level": 2
-        },
-        {
-          "title": "Ключевые функции",
-          "url": "/hasyx/doc/constructor.experiment#",
-          "level": 2
-        },
-        {
-          "title": "Приоритеты для тестирования",
+          "title": "Код изменения",
           "url": "/hasyx/doc/constructor.experiment#",
           "level": 2
         }
@@ -9265,5 +9245,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-05-31T19:26:58.090Z"
+  "lastUpdated": "2025-05-31T23:56:24.312Z"
 }
