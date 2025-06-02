@@ -172,6 +172,17 @@ export async function calibrateTelegramBot(rl: readline.Interface, envPath: stri
     console.log(`\n💡 Bot ${botName} calibrated. Ensure your application implements the ${webhookUrl} endpoint.`);
     console.log(`   Make sure to handle "message" and "callback_query" updates accordingly.`);
 
+    // GitHub Actions Integration Information
+    console.log(`\n🚀 GitHub Actions Integration Available:`);
+    console.log(`   Set these secrets in your GitHub repository settings for automated commit notifications:`);
+    console.log(`   • TELEGRAM_BOT_TOKEN - Your bot token (configured above)`);
+    console.log(`   • OPENROUTER_API_KEY - For AI-generated commit summaries`);
+    console.log(`   • TELEGRAM_ADMIN_CHAT_ID - Optional admin notifications`);
+    console.log(`   • TELEGRAM_CHANNEL_ID - Optional channel announcements`);
+    console.log(`   • GITHUB_TELEGRAM_BOT - Control notifications (1=enabled, 2=test mode)`);
+    console.log(`   \n   The GitHub Actions workflow is automatically created with 'npx hasyx init'.`);
+    console.log(`   See TELEGRAM_BOT.md for full setup documentation.`);
+
   } catch (error) {
     console.error('❌ Error during bot calibration:', error);
   }

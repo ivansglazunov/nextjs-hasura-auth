@@ -1,0 +1,88 @@
+name: Telegram Notifications
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  wait-for-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for other workflows to complete
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.sha;
+            
+            console.log(`Waiting for workflows to complete for commit: ${sha}`);
+            
+            // Define the workflows we want to wait for
+            const targetWorkflows = ['test', 'npm-publish', 'Deploy Next.js site to Pages'];
+            
+            // Wait up to 30 minutes (1800 seconds)
+            const maxWaitTime = 1800;
+            const checkInterval = 30;
+            let elapsed = 0;
+            
+            while (elapsed < maxWaitTime) {
+              // Get all workflow runs for this commit
+              const { data: workflowRuns } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                head_sha: sha,
+                per_page: 100
+              });
+              
+              // Filter to target workflows
+              const targetRuns = workflowRuns.workflow_runs.filter(run => 
+                targetWorkflows.includes(run.name) && run.head_sha === sha
+              );
+              
+              console.log(`Found ${targetRuns.length} target workflow runs`);
+              
+              // Check if all target workflows are complete
+              const incompleteRuns = targetRuns.filter(run => 
+                run.status !== 'completed'
+              );
+              
+              if (incompleteRuns.length === 0 && targetRuns.length > 0) {
+                console.log('All target workflows completed!');
+                break;
+              }
+              
+              console.log(`${incompleteRuns.length} workflows still running. Waiting...`);
+              await new Promise(resolve => setTimeout(resolve, checkInterval * 1000));
+              elapsed += checkInterval;
+            }
+            
+            if (elapsed >= maxWaitTime) {
+              console.log('Timeout reached, proceeding anyway');
+            }
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: wait-for-workflows
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Send Telegram Notification
+        run: npx tsx lib/github-telegram-bot.ts
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TELEGRAM_BOT: ${{ secrets.GITHUB_TELEGRAM_BOT || '1' }}

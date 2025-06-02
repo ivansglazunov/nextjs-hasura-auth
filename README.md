@@ -24,6 +24,7 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![Notifications System Documentation](https://img.shields.io/badge/Notify%20System-MD-blueviolet)](NOTIFY.md)
 [![Firebase Notifications Documentation](https://img.shields.io/badge/Notify%20Firebase-MD-gold)](NOTIFY-FIREBASE.md)
 [![Telegram Bot Notifications Documentation](https://img.shields.io/badge/Notify%20Telegram%20Bot-MD-skyblue)](NOTIFY-TELEGRAM-BOT.md)
+[![GitHub Telegram Bot Integration Documentation](https://img.shields.io/badge/GitHub%20Telegram%20Bot-MD-brightgreen)](TELEGRAM_BOT.md)
 [![PWA Support Documentation](https://img.shields.io/badge/PWA%20Support-MD-9cf)](PWA.md)
 [![TBank Payments Documentation](https://img.shields.io/badge/TBank%20Payments-MD-ff69b4)](TBANK.md)
 [![Tinkoff API Base Documentation](https://img.shields.io/badge/Tinkoff%20API-MD-lightpink)](TINKOFF_API.md)
@@ -58,6 +59,7 @@ Hasyx takes responsibility for:
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   **Server-side Debug Logging:** Built-in `debug()` method for database logging when `HASYX_DEBUG=1` is enabled, storing structured debug data in a dedicated `debug` table for monitoring and troubleshooting production systems.
 *   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
+*   **GitHub → Telegram Bot Integration:** Automated CI/CD notifications via Telegram bot with AI-generated commit summaries. Waits for all workflows (test, build, deploy) to complete, then sends rich Russian-language messages to bot users with commit details, test results, deployment URLs, and project context. Configurable via `GITHUB_TELEGRAM_BOT` environment variable. See [`TELEGRAM_BOT.md`](TELEGRAM_BOT.md) for setup and configuration details.
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
 *   **Cytoscape Integration:** A powerful set of React components for graph visualizations using Cytoscape.js, allowing for custom HTML rendering within nodes and reactive style updates. See [`CYTO.md`](CYTO.md) for details.
 *   **DNS and SSL Management:** Comprehensive subdomain management with automated HTTPS setup using CloudFlare DNS, Let's Encrypt SSL certificates, and nginx configuration. Features include DNS propagation waiting, automatic certificate renewal, idempotent operations, and complete subdomain lifecycle management. Use `npx hasyx assist dns` to configure CloudFlare API credentials and domain settings. See [`CLOUDFLARE.md`](CLOUDFLARE.md), [`SSL.md`](SSL.md), [`NGINX.md`](NGINX.md), and [`SUBDOMAIN.md`](SUBDOMAIN.md) for details.
@@ -147,6 +149,7 @@ Explore the different modules and functionalities of Hasyx:
 *   **[NOTIFY.md](NOTIFY.md):** Overview of the notifications system.
 *   **[NOTIFY-FIREBASE.md](NOTIFY-FIREBASE.md):** Specifics on Firebase Cloud Messaging for push notifications.
 *   **[NOTIFY-TELEGRAM-BOT.md](NOTIFY-TELEGRAM-BOT.md):** Details on Telegram Bot integration for notifications.
+*   **[TELEGRAM_BOT.md](TELEGRAM_BOT.md):** GitHub Actions → Telegram Bot integration for automated CI/CD notifications with AI-generated commit summaries.
 *   **[TBANK.md](TBANK.md):** Documentation for TBank payments integration.
 *   **[TINKOFF_API.md](TINKOFF_API.md):** Base documentation for Tinkoff API interactions.
 *   **[CLOUDFLARE.md](CLOUDFLARE.md):** Documentation for CloudFlare DNS management.

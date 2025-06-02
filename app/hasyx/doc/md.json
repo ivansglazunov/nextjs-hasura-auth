@@ -768,6 +768,11 @@
           "level": 3
         },
         {
+          "title": "SSL Integration Support",
+          "url": "/hasyx/doc/CLOUDFLARE#ssl-integration-support",
+          "level": 3
+        },
+        {
           "title": "API Integration",
           "url": "/hasyx/doc/CLOUDFLARE#api-integration",
           "level": 3
@@ -860,6 +865,11 @@
         {
           "title": "Idempotent Operations",
           "url": "/hasyx/doc/CLOUDFLARE#idempotent-operations",
+          "level": 3
+        },
+        {
+          "title": "SSL Integration Methods",
+          "url": "/hasyx/doc/CLOUDFLARE#ssl-integration-methods",
           "level": 3
         },
         {
@@ -3543,6 +3553,11 @@
           "level": 3
         },
         {
+          "title": "Wildcard SSL Support",
+          "url": "/hasyx/doc/SSL#wildcard-ssl-support",
+          "level": 3
+        },
+        {
           "title": "DNS Integration",
           "url": "/hasyx/doc/SSL#dns-integration",
           "level": 3
@@ -3556,6 +3571,11 @@
           "title": "Prerequisites and Configuration",
           "url": "/hasyx/doc/SSL#prerequisites-and-configuration",
           "level": 2
+        },
+        {
+          "title": "System Requirements",
+          "url": "/hasyx/doc/SSL#system-requirements",
+          "level": 3
         },
         {
           "title": "Environment Configuration with Assist",
@@ -3578,8 +3598,13 @@
           "level": 2
         },
         {
-          "title": "Basic Usage",
-          "url": "/hasyx/doc/SSL#basic-usage",
+          "title": "Basic Individual Certificate Usage",
+          "url": "/hasyx/doc/SSL#basic-individual-certificate-usage",
+          "level": 3
+        },
+        {
+          "title": "Wildcard Certificate Usage",
+          "url": "/hasyx/doc/SSL#wildcard-certificate-usage",
           "level": 3
         },
         {
@@ -3600,6 +3625,11 @@
         {
           "title": "SSLConfig Interface",
           "url": "/hasyx/doc/SSL#sslconfig-interface",
+          "level": 3
+        },
+        {
+          "title": "WildcardCertificateInfo Interface",
+          "url": "/hasyx/doc/SSL#wildcardcertificateinfo-interface",
           "level": 3
         },
         {
@@ -3630,6 +3660,11 @@
         {
           "title": "DNS and Renewal Operations",
           "url": "/hasyx/doc/SSL#dns-and-renewal-operations",
+          "level": 3
+        },
+        {
+          "title": "Helper Methods",
+          "url": "/hasyx/doc/SSL#helper-methods",
           "level": 3
         },
         {
@@ -3869,6 +3904,16 @@
           "level": 3
         },
         {
+          "title": "Wildcard SSL Optimization",
+          "url": "/hasyx/doc/SUBDOMAIN#wildcard-ssl-optimization",
+          "level": 3
+        },
+        {
+          "title": "Compatibility & Migration",
+          "url": "/hasyx/doc/SUBDOMAIN#compatibility-migration",
+          "level": 3
+        },
+        {
           "title": "Safety and Reliability",
           "url": "/hasyx/doc/SUBDOMAIN#safety-and-reliability",
           "level": 3
@@ -3914,8 +3959,8 @@
           "level": 3
         },
         {
-          "title": "Advanced Usage - Multiple Subdomains",
-          "url": "/hasyx/doc/SUBDOMAIN#advanced-usage-multiple-subdomains",
+          "title": "Advanced Usage - Wildcard SSL Benefits",
+          "url": "/hasyx/doc/SUBDOMAIN#advanced-usage-wildcard-ssl-benefits",
           "level": 3
         },
         {
@@ -5666,5 +5711,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-02T16:14:43.576Z"
+  "lastUpdated": "2025-06-02T18:46:44.405Z"
 }

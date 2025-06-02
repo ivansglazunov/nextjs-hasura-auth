@@ -212,6 +212,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     '.github/workflows/npm-publish.yml': '.github/workflows/npm-publish.yml',
     '.github/workflows/test.yml': '.github/workflows/test.yml',
     '.github/workflows/nextjs.yml': '.github/workflows/nextjs.yml',
+    '.github/workflows/telegram-notifications.yml': '.github/workflows/telegram-notifications.yml',
     'app/api/auth/[...nextauth]/route.ts': 'app/api/auth/[...nextauth]/route.ts',
     'app/options.ts': 'app/options.ts',
     'app/api/auth/verify/route.ts': 'app/api/auth/verify/route.ts',
