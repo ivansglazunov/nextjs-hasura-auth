@@ -19,6 +19,15 @@ const CLOUDFLARE_ZONE_ID = process.env.CLOUDFLARE_ZONE_ID;
 const LETSENCRYPT_EMAIL = process.env.LETSENCRYPT_EMAIL || 'admin@deep.foundation';
 const SERVER_IP = process.env.HASYX_SERVER_IP || '149.102.136.233';
 
+// Environment availability check for subdomain functionality
+const isEnvAvailable = Boolean(
+  process.env.CLOUDFLARE_API_TOKEN &&
+  process.env.CLOUDFLARE_ZONE_ID &&
+  process.env.HASYX_DNS_DOMAIN &&
+  process.env.LETSENCRYPT_EMAIL &&
+  process.env.HASYX_SERVER_IP
+);
+
 function generateTestSubdomain(): string {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substr(2, 9);
@@ -50,18 +59,21 @@ describe('[DEBUG] Environment Check for Real SubdomainManager Tests', () => {
   it('should verify required environment variables', () => {
     debug('Checking environment variables for real tests');
     
-    if (!CLOUDFLARE_TOKEN) {
-      debug('CLOUDFLARE_API_TOKEN not set - skipping real CloudFlare tests');
-    }
-    if (!CLOUDFLARE_ZONE_ID) {
-      debug('CLOUDFLARE_ZONE_ID not set - skipping real CloudFlare tests');
-    }
-    
     debug(`TEST_DOMAIN: ${TEST_DOMAIN}`);
     debug(`LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}`);
     debug(`SERVER_IP: ${SERVER_IP}`);
     debug(`CloudFlare token available: ${!!CLOUDFLARE_TOKEN}`);
     debug(`CloudFlare zone ID available: ${!!CLOUDFLARE_ZONE_ID}`);
+    debug(`Environment available: ${isEnvAvailable}`);
+    
+    if (!isEnvAvailable) {
+      debug('Missing environment variables:');
+      if (!process.env.CLOUDFLARE_API_TOKEN) debug('  - CLOUDFLARE_API_TOKEN');
+      if (!process.env.CLOUDFLARE_ZONE_ID) debug('  - CLOUDFLARE_ZONE_ID');
+      if (!process.env.HASYX_DNS_DOMAIN) debug('  - HASYX_DNS_DOMAIN');
+      if (!process.env.LETSENCRYPT_EMAIL) debug('  - LETSENCRYPT_EMAIL');
+      if (!process.env.HASYX_SERVER_IP) debug('  - HASYX_SERVER_IP');
+    }
   });
 
   it('should check system dependencies', () => {
@@ -82,7 +94,7 @@ describe('[DEBUG] Environment Check for Real SubdomainManager Tests', () => {
   });
 });
 
-describe('Real SubdomainManager Tests', () => {
+(isEnvAvailable ? describe : describe.skip)('Real SubdomainManager Tests', () => {
   
   it('should create real subdomain with DNS record only (without SSL/Nginx)', async () => {
     if (!CLOUDFLARE_TOKEN || !CLOUDFLARE_ZONE_ID) {

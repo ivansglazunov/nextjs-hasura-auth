@@ -15,6 +15,15 @@ const TEST_DOMAIN = process.env.HASYX_DNS_DOMAIN || 'deep.foundation';
 const LETSENCRYPT_EMAIL = process.env.LETSENCRYPT_EMAIL || 'admin@deep.foundation';
 const SERVER_IP = process.env.HASYX_SERVER_IP || '149.102.136.233';
 
+// Environment availability check for subdomain functionality
+const isEnvAvailable = Boolean(
+  process.env.CLOUDFLARE_API_TOKEN &&
+  process.env.CLOUDFLARE_ZONE_ID &&
+  process.env.HASYX_DNS_DOMAIN &&
+  process.env.LETSENCRYPT_EMAIL &&
+  process.env.HASYX_SERVER_IP
+);
+
 // Environment availability checks
 function checkSystemDependency(command: string, name: string): boolean {
   try {
@@ -79,6 +88,16 @@ describe('[DEBUG] Real SSL Environment Check', () => {
     debug(`TEST_DOMAIN: ${TEST_DOMAIN}`);
     debug(`LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}`);
     debug(`SERVER_IP: ${SERVER_IP}`);
+    debug(`Environment available: ${isEnvAvailable}`);
+    
+    if (!isEnvAvailable) {
+      debug('Missing environment variables:');
+      if (!process.env.CLOUDFLARE_API_TOKEN) debug('  - CLOUDFLARE_API_TOKEN');
+      if (!process.env.CLOUDFLARE_ZONE_ID) debug('  - CLOUDFLARE_ZONE_ID');
+      if (!process.env.HASYX_DNS_DOMAIN) debug('  - HASYX_DNS_DOMAIN');
+      if (!process.env.LETSENCRYPT_EMAIL) debug('  - LETSENCRYPT_EMAIL');
+      if (!process.env.HASYX_SERVER_IP) debug('  - HASYX_SERVER_IP');
+    }
     
     expect(TEST_DOMAIN).toBeTruthy();
     expect(LETSENCRYPT_EMAIL).toBeTruthy();
@@ -86,7 +105,7 @@ describe('[DEBUG] Real SSL Environment Check', () => {
   });
 });
 
-describe('Real SSL Class Tests', () => {
+(isEnvAvailable ? describe : describe.skip)('Real SSL Class Tests', () => {
   
   it('should create real SSL instance with proper configuration', () => {
     const testDomain = generateTestDomain();

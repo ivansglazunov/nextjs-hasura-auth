@@ -16,7 +16,8 @@ const isEnvAvailable = Boolean(
   process.env.HASYX_DNS_DOMAIN &&
   process.env.CLOUDFLARE_API_TOKEN &&
   process.env.CLOUDFLARE_ZONE_ID &&
-  process.env.LETSENCRYPT_EMAIL
+  process.env.LETSENCRYPT_EMAIL &&
+  process.env.HASYX_SERVER_IP
 );
 
 describe('DEBUG: Wstunnel Environment Check', () => {
@@ -25,7 +26,8 @@ describe('DEBUG: Wstunnel Environment Check', () => {
       'HASYX_DNS_DOMAIN',
       'CLOUDFLARE_API_TOKEN', 
       'CLOUDFLARE_ZONE_ID',
-      'LETSENCRYPT_EMAIL'
+      'LETSENCRYPT_EMAIL',
+      'HASYX_SERVER_IP'
     ];
 
     debug(`Environment check: ${isEnvAvailable ? 'available' : 'missing variables'}`);
@@ -44,6 +46,7 @@ describe('DEBUG: Wstunnel Environment Check', () => {
       debug('  CLOUDFLARE_API_TOKEN=your_api_token');
       debug('  CLOUDFLARE_ZONE_ID=your_zone_id');
       debug('  LETSENCRYPT_EMAIL=your_email');
+      debug('  HASYX_SERVER_IP=your_server_ip');
     }
     
     debug('Environment variables status displayed');
@@ -231,7 +234,7 @@ describe('Wstunnel Core Tests (No Environment Required)', () => {
   });
 });
 
-(isEnvAvailable ? describe : describe.skip)('Wstunnel Integration Tests (Real Environment)', () => {
+(isEnvAvailable ? describe : describe.skip)('Real Wstunnel Integration Tests', () => {
   let testServer: WstunnelTestClient | null = null;
 
   beforeEach(() => {

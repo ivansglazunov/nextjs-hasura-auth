@@ -410,8 +410,8 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
     }
   };
   
-  // Build context for AI with strict instructions
-  const contextPrompt = `Create a Telegram notification message for a GitHub commit. 
+  // Build context for AI with strict instructions for joyful progress celebration
+  const contextPrompt = `Create a joyful, celebratory Telegram notification message for a GitHub commit that radiates happiness about the progress made!
 
 **IMPORTANT**: Return ONLY the final Telegram message content. Do not include any explanatory text, comments, or meta-discussion. Do not say "Here's the message" or "How's this?" - just return the pure message content.
 
@@ -420,7 +420,7 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
 - Version: ${pckg.version}
 - Description: ${(pckg as any).description || 'No description'}
 
-**Commit Details:**
+**Commit Details (Focus on what was ACCOMPLISHED):**
 - SHA: ${commitInfo.sha}
 - Short SHA: ${commitInfo.shortSha}
 - Author: ${commitInfo.author} (${commitInfo.authorEmail})
@@ -436,7 +436,7 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
 - Publishing: ${workflowStatus.publish} ${getStatusEmoji(workflowStatus.publish)}
 - Deployment: ${workflowStatus.deploy} ${getStatusEmoji(workflowStatus.deploy)}
 
-**Detailed Results:**
+**Progress Summary:**
 - Total Workflows: ${workflowStatus.details.summary.totalWorkflows}
 - Successful: ${workflowStatus.details.summary.successfulWorkflows}
 - Failed: ${workflowStatus.details.summary.failedWorkflows}
@@ -447,7 +447,7 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
 
 **Test Failures:** ${workflowStatus.details.summary.testFailures.length > 0 ? 
   workflowStatus.details.summary.testFailures.map(f => `${f.stepName} in ${f.workflowName}`).join(', ') : 
-  'None'}
+  'None - все тесты прошли успешно! 🎉'}
 
 **Publish Results:** ${workflowStatus.details.publishResults ? 
   `${workflowStatus.details.publishResults.conclusion} in "${workflowStatus.details.publishResults.name}" (${workflowStatus.details.publishResults.duration}s)` : 
@@ -464,27 +464,44 @@ ${workflowStatus.details.workflows.map(w =>
   `- ${w.name}: ${w.conclusion} ${getStatusEmoji(w.conclusion)} (${w.duration}s)`
 ).join('\n')}
 
-Create a comprehensive, informative Telegram message in Russian that includes:
-1. Project name and version with emoji
-2. Commit author and description of changes
-3. Detailed workflow results with specific status for each workflow
-4. Test results and any failures
-5. Publishing and deployment status
-6. Links to commit and deployment if available
-7. Statistics about changes
+Create a celebratory, enthusiastic Telegram message in Russian that:
 
-Use Telegram Markdown formatting (*bold*, \`code\`, [links](url)). 
-Make the message informative but readable. 
-Include emojis for visual clarity.
-Keep it under 1500 characters.
+🎯 **ГЛАВНАЯ ЦЕЛЬ**: Радоваться прогрессу и достижениям! Делай акцент на том, что было СДЕЛАНО и ДОСТИГНУТО!
 
-Analyze the overall state:
-- If tests failed, mention what failed and duration
-- If publishing failed, note the publishing issues  
-- If deployment succeeded, highlight the success
-- Include any important durations or performance notes
+✨ **СТИЛЬ**:
+- Используй радостные эмодзи (🎉, 🚀, ✨, 🔥, 💪, 🌟, 🎯, 🏆)
+- Выражай восторг от прогресса
+- Подчеркивай положительные изменения
+- Даже если есть проблемы, фокусируйся на том, что получилось
 
-Return ONLY the message content without any additional text.`;
+🎊 **СТРУКТУРА СООБЩЕНИЯ**:
+1. Радостное начало с названием проекта и версией
+2. Восторженное описание того, что сделал автор (на основе commit message)
+3. Празднование результатов workflow с акцентом на успехи
+4. Статистика изменений как показатель активной работы
+5. Ссылки для удобства
+6. Воодушевляющее заключение
+
+🎨 **ОСОБЕННОСТИ**:
+- Если тесты прошли: "Все тесты зеленые! 🟢"
+- Если есть failures: "Работаем над улучшениями! 💪"
+- Если deployment успешен: "Код уже в продакшене! 🚀"
+- Если много изменений: "Продуктивный коммит! 📈"
+- Всегда радуйся прогрессу!
+
+💭 **АНАЛИЗ ПРОГРЕССА** (что радует в этом коммите):
+- Обрати внимание на commit message и расскажи, какие улучшения сделаны
+- Подчеркни важность изменений для проекта
+- Покажи, что каждый коммит - это шаг вперед
+- Выражай гордость за работу команды
+
+Формат: Telegram Markdown (*bold*, \`code\`, [links](url))
+Длина: до 1500 символов
+Язык: Русский с техническими терминами
+
+Помни: это не просто уведомление, это ПРАЗДНОВАНИЕ прогресса! 🎉
+
+Return ONLY the joyful message content without any additional text.`;
 
   console.log(`🧠 Sending context to AI for message generation...`);
   const aiResponse = await ask.ask(contextPrompt);

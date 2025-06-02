@@ -10,6 +10,15 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const debug = Debug('test:nginx');
 
+// Environment availability check for subdomain functionality
+const isEnvAvailable = Boolean(
+  process.env.CLOUDFLARE_API_TOKEN &&
+  process.env.CLOUDFLARE_ZONE_ID &&
+  process.env.HASYX_DNS_DOMAIN &&
+  process.env.LETSENCRYPT_EMAIL &&
+  process.env.HASYX_SERVER_IP
+);
+
 // Environment availability check
 function checkNginxAvailable(): boolean {
   try {
@@ -65,6 +74,16 @@ describe('[DEBUG] Real Nginx Environment Check', () => {
     const isNginxAvailable = checkNginxAvailable();
     
     debug(`Nginx availability check: ${isNginxAvailable ? 'available' : 'missing'}`);
+    debug(`Environment available: ${isEnvAvailable}`);
+    
+    if (!isEnvAvailable) {
+      debug('Missing environment variables:');
+      if (!process.env.CLOUDFLARE_API_TOKEN) debug('  - CLOUDFLARE_API_TOKEN');
+      if (!process.env.CLOUDFLARE_ZONE_ID) debug('  - CLOUDFLARE_ZONE_ID');
+      if (!process.env.HASYX_DNS_DOMAIN) debug('  - HASYX_DNS_DOMAIN');
+      if (!process.env.LETSENCRYPT_EMAIL) debug('  - LETSENCRYPT_EMAIL');
+      if (!process.env.HASYX_SERVER_IP) debug('  - HASYX_SERVER_IP');
+    }
     
     if (!isNginxAvailable) {
       debug('Nginx is not installed. To enable full nginx testing:');
@@ -96,7 +115,7 @@ describe('[DEBUG] Real Nginx Environment Check', () => {
   });
 });
 
-describe('Real Nginx Class Tests', () => {
+(isEnvAvailable ? describe : describe.skip)('Real Nginx Class Tests', () => {
   
   it('should create real nginx instance with custom test paths', async () => {
     const env = await createTestEnvironment();

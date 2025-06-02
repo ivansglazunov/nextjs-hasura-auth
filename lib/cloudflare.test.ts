@@ -12,7 +12,9 @@ const debug = Debug('test:cloudflare');
 const isEnvAvailable = Boolean(
   process.env.CLOUDFLARE_API_TOKEN &&
   process.env.CLOUDFLARE_ZONE_ID &&
-  process.env.HASYX_DNS_DOMAIN
+  process.env.HASYX_DNS_DOMAIN &&
+  process.env.LETSENCRYPT_EMAIL &&
+  process.env.HASYX_SERVER_IP
 );
 
 const getCloudflareConfig = (): CloudflareConfig => ({
@@ -34,12 +36,16 @@ describe('[DEBUG] Real CloudFlare Environment Check', () => {
     debug(`  CLOUDFLARE_API_TOKEN: ${process.env.CLOUDFLARE_API_TOKEN ? 'set' : 'missing'}`);
     debug(`  CLOUDFLARE_ZONE_ID: ${process.env.CLOUDFLARE_ZONE_ID ? 'set' : 'missing'}`);
     debug(`  HASYX_DNS_DOMAIN: ${process.env.HASYX_DNS_DOMAIN ? 'set' : 'missing'}`);
+    debug(`  LETSENCRYPT_EMAIL: ${process.env.LETSENCRYPT_EMAIL ? 'set' : 'missing'}`);
+    debug(`  HASYX_SERVER_IP: ${process.env.HASYX_SERVER_IP ? 'set' : 'missing'}`);
     
     if (!isEnvAvailable) {
       debug('To run real CloudFlare tests, set these environment variables:');
       debug('  CLOUDFLARE_API_TOKEN=your_api_token');
       debug('  CLOUDFLARE_ZONE_ID=your_zone_id');
       debug('  HASYX_DNS_DOMAIN=your_domain');
+      debug('  LETSENCRYPT_EMAIL=your_email');
+      debug('  HASYX_SERVER_IP=your_server_ip');
     }
     
     expect(typeof isEnvAvailable).toBe('boolean');
@@ -67,7 +73,7 @@ describe('[DEBUG] Real CloudFlare Environment Check', () => {
   });
 });
 
-describe('Real CloudFlare API Tests', () => {
+(isEnvAvailable ? describe : describe.skip)('Real CloudFlare API Tests', () => {
   
   it('should create and retrieve real DNS record', async () => {
     if (!isEnvAvailable) {
