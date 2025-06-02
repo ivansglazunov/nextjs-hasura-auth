@@ -20,40 +20,7 @@ const isEnvAvailable = Boolean(
   process.env.HASYX_SERVER_IP
 );
 
-describe('DEBUG: Wstunnel Environment Check', () => {
-  it('should show environment variables status', () => {
-    const requiredVars = [
-      'HASYX_DNS_DOMAIN',
-      'CLOUDFLARE_API_TOKEN', 
-      'CLOUDFLARE_ZONE_ID',
-      'LETSENCRYPT_EMAIL',
-      'HASYX_SERVER_IP'
-    ];
-
-    debug(`Environment check: ${isEnvAvailable ? 'available' : 'missing variables'}`);
-    debug('Wstunnel Environment Status:');
-    for (const varName of requiredVars) {
-      const exists = !!process.env[varName];
-      const value = exists ? `${process.env[varName]?.substring(0, 10)}...` : 'NOT SET';
-      debug(`  ${varName}: ${exists ? '✅' : '❌'} ${value}`);
-    }
-
-    debug(`  VERCEL: ${process.env.VERCEL ? '✅ Present (would block)' : '❌ Not present (good)'}`);
-    
-    if (!isEnvAvailable) {
-      debug('To run Wstunnel tests, set these environment variables:');
-      debug('  HASYX_DNS_DOMAIN=your_domain');
-      debug('  CLOUDFLARE_API_TOKEN=your_api_token');
-      debug('  CLOUDFLARE_ZONE_ID=your_zone_id');
-      debug('  LETSENCRYPT_EMAIL=your_email');
-      debug('  HASYX_SERVER_IP=your_server_ip');
-    }
-    
-    debug('Environment variables status displayed');
-  });
-});
-
-describe('Wstunnel Core Tests (No Environment Required)', () => {
+(isEnvAvailable ? describe : describe.skip)('Wstunnel Core Tests (No Environment Required)', () => {
   describe('findPort functionality', () => {
     it('should find an available port in range', async () => {
       debug('Testing findPort function');

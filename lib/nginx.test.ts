@@ -69,52 +69,6 @@ async function createTestEnvironment() {
   };
 }
 
-describe('[DEBUG] Real Nginx Environment Check', () => {
-  it('should verify nginx system dependency availability', () => {
-    const isNginxAvailable = checkNginxAvailable();
-    
-    debug(`Nginx availability check: ${isNginxAvailable ? 'available' : 'missing'}`);
-    debug(`Environment available: ${isEnvAvailable}`);
-    
-    if (!isEnvAvailable) {
-      debug('Missing environment variables:');
-      if (!process.env.CLOUDFLARE_API_TOKEN) debug('  - CLOUDFLARE_API_TOKEN');
-      if (!process.env.CLOUDFLARE_ZONE_ID) debug('  - CLOUDFLARE_ZONE_ID');
-      if (!process.env.HASYX_DNS_DOMAIN) debug('  - HASYX_DNS_DOMAIN');
-      if (!process.env.LETSENCRYPT_EMAIL) debug('  - LETSENCRYPT_EMAIL');
-      if (!process.env.HASYX_SERVER_IP) debug('  - HASYX_SERVER_IP');
-    }
-    
-    if (!isNginxAvailable) {
-      debug('Nginx is not installed. To enable full nginx testing:');
-      debug('  Ubuntu/Debian: sudo apt install nginx');
-      debug('  CentOS/RHEL: sudo yum install nginx');
-      debug('  macOS: brew install nginx');
-    }
-    
-    // Test should pass regardless - we test what we can
-    expect(typeof isNginxAvailable).toBe('boolean');
-  });
-
-  it('should check nginx configuration syntax if available', () => {
-    const isNginxAvailable = checkNginxAvailable();
-    
-    if (isNginxAvailable) {
-      try {
-        execSync('nginx -t', { stdio: 'pipe' });
-        debug('nginx configuration syntax test passed');
-      } catch (error) {
-        debug(`nginx configuration syntax test failed: ${error}`);
-        // Not critical for our tests
-      }
-    } else {
-      debug('Skipping nginx syntax test - nginx not available');
-    }
-    
-    expect(true).toBe(true); // Always pass
-  });
-});
-
 (isEnvAvailable ? describe : describe.skip)('Real Nginx Class Tests', () => {
   
   it('should create real nginx instance with custom test paths', async () => {

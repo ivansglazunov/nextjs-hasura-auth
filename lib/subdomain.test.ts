@@ -55,45 +55,6 @@ async function waitForDNSPropagation(domain: string, expectedIp: string, maxAtte
   return false;
 }
 
-describe('[DEBUG] Environment Check for Real SubdomainManager Tests', () => {
-  it('should verify required environment variables', () => {
-    debug('Checking environment variables for real tests');
-    
-    debug(`TEST_DOMAIN: ${TEST_DOMAIN}`);
-    debug(`LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}`);
-    debug(`SERVER_IP: ${SERVER_IP}`);
-    debug(`CloudFlare token available: ${!!CLOUDFLARE_TOKEN}`);
-    debug(`CloudFlare zone ID available: ${!!CLOUDFLARE_ZONE_ID}`);
-    debug(`Environment available: ${isEnvAvailable}`);
-    
-    if (!isEnvAvailable) {
-      debug('Missing environment variables:');
-      if (!process.env.CLOUDFLARE_API_TOKEN) debug('  - CLOUDFLARE_API_TOKEN');
-      if (!process.env.CLOUDFLARE_ZONE_ID) debug('  - CLOUDFLARE_ZONE_ID');
-      if (!process.env.HASYX_DNS_DOMAIN) debug('  - HASYX_DNS_DOMAIN');
-      if (!process.env.LETSENCRYPT_EMAIL) debug('  - LETSENCRYPT_EMAIL');
-      if (!process.env.HASYX_SERVER_IP) debug('  - HASYX_SERVER_IP');
-    }
-  });
-
-  it('should check system dependencies', () => {
-    const checkCommand = (cmd: string, name: string) => {
-      try {
-        execSync(`which ${cmd}`, { stdio: 'pipe' });
-        debug(`${name} is available`);
-        return true;
-      } catch (error) {
-        debug(`${name} is NOT available - some tests may be skipped`);
-        return false;
-      }
-    };
-
-    checkCommand('dig', 'dig (DNS lookup)');
-    checkCommand('certbot', 'certbot (Let\'s Encrypt)');
-    checkCommand('nginx', 'nginx');
-  });
-});
-
 (isEnvAvailable ? describe : describe.skip)('Real SubdomainManager Tests', () => {
   
   it('should create real subdomain with DNS record only (without SSL/Nginx)', async () => {

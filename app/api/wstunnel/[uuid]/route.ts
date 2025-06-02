@@ -6,13 +6,12 @@ const debug = Debug('api:wstunnel');
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { uuid: string } }
+  { params }: { params: Promise<{ uuid: string }> }
 ): Promise<NextResponse> {
-  debug(`Received POST request to /api/wstunnel/${params.uuid}`);
+  const { uuid } = await params;
+  debug(`Received POST request to /api/wstunnel/${uuid}`);
   
   try {
-    const { uuid } = params;
-    
     if (!uuid) {
       debug('Missing UUID parameter');
       return NextResponse.json(

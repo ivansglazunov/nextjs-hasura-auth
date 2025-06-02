@@ -415,15 +415,22 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
 
 **IMPORTANT**: Return ONLY the final Telegram message content. Do not include any explanatory text, comments, or meta-discussion. Do not say "Here's the message" or "How's this?" - just return the pure message content.
 
+**STRICT REQUIREMENTS**:
+- DO NOT mention who made the commit (no author name or email)
+- ALWAYS include clear, strict reporting of workflow statuses
+- For failed tests/builds/publishes: be explicit about failures but maintain positive tone
+- If any MD files are mentioned in commit message, provide direct GitHub links: https://github.com/ivansglazunov/hasyx/blob/main/lib/FILENAME.md
+
 **Project Information:**
 - Name: ${pckg.name}
 - Version: ${pckg.version}
 - Description: ${(pckg as any).description || 'No description'}
+- Repository: ${(pckg as any).repository?.url || 'Repository URL not available'}
+- Homepage: ${(pckg as any).homepage || 'Homepage not available'}
 
 **Commit Details (Focus on what was ACCOMPLISHED):**
 - SHA: ${commitInfo.sha}
 - Short SHA: ${commitInfo.shortSha}
-- Author: ${commitInfo.author} (${commitInfo.authorEmail})
 - Message: ${commitInfo.message}
 - Timestamp: ${commitInfo.timestamp}
 - Files Changed: ${commitInfo.filesChanged}
@@ -431,10 +438,10 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
 - Lines Deleted: ${commitInfo.deletions}
 - URL: ${commitInfo.url}
 
-**Workflow Status Overview:**
-- Tests: ${workflowStatus.test} ${getStatusEmoji(workflowStatus.test)}
-- Publishing: ${workflowStatus.publish} ${getStatusEmoji(workflowStatus.publish)}
-- Deployment: ${workflowStatus.deploy} ${getStatusEmoji(workflowStatus.deploy)}
+**STRICT WORKFLOW STATUS REPORTING - MANDATORY:**
+- Tests: ${workflowStatus.test} ${getStatusEmoji(workflowStatus.test)} (REQUIRED: explicitly state "PASSED" or "FAILED")
+- Build/Publishing: ${workflowStatus.publish} ${getStatusEmoji(workflowStatus.publish)} (REQUIRED: explicitly state "PASSED" or "FAILED")
+- Deployment: ${workflowStatus.deploy} ${getStatusEmoji(workflowStatus.deploy)} (REQUIRED: explicitly state "PASSED" or "FAILED")
 
 **Progress Summary:**
 - Total Workflows: ${workflowStatus.details.summary.totalWorkflows}
@@ -473,27 +480,36 @@ Create a celebratory, enthusiastic Telegram message in Russian that:
 - Выражай восторг от прогресса
 - Подчеркивай положительные изменения
 - Даже если есть проблемы, фокусируйся на том, что получилось
+- НЕ УПОМИНАЙ автора коммита (имя или email)
 
 🎊 **СТРУКТУРА СООБЩЕНИЯ**:
 1. Радостное начало с названием проекта и версией
-2. Восторженное описание того, что сделал автор (на основе commit message)
-3. Празднование результатов workflow с акцентом на успехи
+2. Восторженное описание изменений (на основе commit message)
+3. СТРОГОЕ празднование результатов workflow:
+   - "✅ Тесты ПРОШЛИ!" или "❌ Тесты УПАЛИ!"
+   - "✅ Сборка ПРОШЛА!" или "❌ Сборка УПАЛА!"
+   - "✅ Публикация ПРОШЛА!" или "❌ Публикация УПАЛА!"
+   - "✅ Деплой ПРОШЁЛ!" или "❌ Деплой УПАЛ!"
 4. Статистика изменений как показатель активной работы
-5. Ссылки для удобства
+5. Ссылки на репозиторий и официальный сайт с документацией
 6. Воодушевляющее заключение
 
-🎨 **ОСОБЕННОСТИ**:
+🎨 **ОСОБЕННОСТИ СТРОГОГО REPORTING**:
 - Если тесты прошли: "Все тесты зеленые! 🟢"
-- Если есть failures: "Работаем над улучшениями! 💪"
+- Если тесты упали: "Тесты упали, но мы их починим! 💪"
 - Если deployment успешен: "Код уже в продакшене! 🚀"
 - Если много изменений: "Продуктивный коммит! 📈"
-- Всегда радуйся прогрессу!
+- Всегда четко указывай статус: ПРОШЛИ/УПАЛИ
 
 💭 **АНАЛИЗ ПРОГРЕССА** (что радует в этом коммите):
 - Обрати внимание на commit message и расскажи, какие улучшения сделаны
 - Подчеркни важность изменений для проекта
 - Покажи, что каждый коммит - это шаг вперед
-- Выражай гордость за работу команды
+- Выражай гордость за работу команды (БЕЗ упоминания конкретных людей)
+
+**ОБЯЗАТЕЛЬНЫЕ ССЫЛКИ В КОНЦЕ**:
+🔗 Репозиторий: ${(pckg as any).repository?.url || 'https://github.com/ivansglazunov/hasyx.git'}
+📚 Документация: ${(pckg as any).homepage || 'https://hasyx.deep.foundation/'}
 
 Формат: Telegram Markdown (*bold*, \`code\`, [links](url))
 Длина: до 1500 символов

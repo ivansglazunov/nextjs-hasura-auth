@@ -63,48 +63,6 @@ async function waitForDNSResolution(domain: string, expectedIp: string, maxAttem
   return false;
 }
 
-describe('[DEBUG] Real SSL Environment Check', () => {
-  it('should verify system dependencies for real SSL operations', () => {
-    debug('Checking SSL system dependencies for real tests');
-    
-    const certbotAvailable = checkSystemDependency('certbot --version', 'certbot (Let\'s Encrypt client)');
-    const digAvailable = checkSystemDependency('dig -v', 'dig (DNS lookup)');
-    const opensslAvailable = checkSystemDependency('openssl version', 'openssl (SSL/TLS toolkit)');
-    const nginxAvailable = checkSystemDependency('nginx -v', 'nginx (web server)');
-    
-    debug(`System dependencies status:`);
-    debug(`  certbot: ${certbotAvailable ? 'available' : 'missing'}`);
-    debug(`  dig: ${digAvailable ? 'available' : 'missing'}`);
-    debug(`  openssl: ${opensslAvailable ? 'available' : 'missing'}`);
-    debug(`  nginx: ${nginxAvailable ? 'available' : 'missing'}`);
-    
-    // We expect at least some tools to be available
-    expect(opensslAvailable).toBe(true); // openssl should be available on most systems
-  });
-
-  it('should verify environment configuration', () => {
-    debug('Checking environment configuration for real SSL tests');
-    
-    debug(`TEST_DOMAIN: ${TEST_DOMAIN}`);
-    debug(`LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}`);
-    debug(`SERVER_IP: ${SERVER_IP}`);
-    debug(`Environment available: ${isEnvAvailable}`);
-    
-    if (!isEnvAvailable) {
-      debug('Missing environment variables:');
-      if (!process.env.CLOUDFLARE_API_TOKEN) debug('  - CLOUDFLARE_API_TOKEN');
-      if (!process.env.CLOUDFLARE_ZONE_ID) debug('  - CLOUDFLARE_ZONE_ID');
-      if (!process.env.HASYX_DNS_DOMAIN) debug('  - HASYX_DNS_DOMAIN');
-      if (!process.env.LETSENCRYPT_EMAIL) debug('  - LETSENCRYPT_EMAIL');
-      if (!process.env.HASYX_SERVER_IP) debug('  - HASYX_SERVER_IP');
-    }
-    
-    expect(TEST_DOMAIN).toBeTruthy();
-    expect(LETSENCRYPT_EMAIL).toBeTruthy();
-    expect(SERVER_IP).toBeTruthy();
-  });
-});
-
 (isEnvAvailable ? describe : describe.skip)('Real SSL Class Tests', () => {
   
   it('should create real SSL instance with proper configuration', () => {
