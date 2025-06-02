@@ -96,7 +96,8 @@ describe('Real SSL Class Tests', () => {
       
       // Create real SSL instance
       const ssl = new SSL({
-        email: LETSENCRYPT_EMAIL
+        email: LETSENCRYPT_EMAIL,
+        staging: true // Use staging environment for tests
       });
       
       expect(ssl).toBeInstanceOf(SSL);
@@ -126,7 +127,8 @@ describe('Real SSL Class Tests', () => {
       debug(`Testing real certificate existence check for: ${testDomain}`);
       
       const ssl = new SSL({
-        email: LETSENCRYPT_EMAIL
+        email: LETSENCRYPT_EMAIL,
+        staging: true // Use staging environment for tests
       });
       
       // Check non-existing certificate
@@ -153,7 +155,8 @@ describe('Real SSL Class Tests', () => {
       debug(`Testing real DNS propagation check for: ${testDomain}`);
       
       const ssl = new SSL({
-        email: LETSENCRYPT_EMAIL
+        email: LETSENCRYPT_EMAIL,
+        staging: true // Use staging environment for tests
       });
       
       // Test DNS propagation check (this domain won't resolve, but we test the mechanism)
@@ -178,7 +181,8 @@ describe('Real SSL Class Tests', () => {
       debug(`Testing real certificate validation for: ${testDomain}`);
       
       const ssl = new SSL({
-        email: LETSENCRYPT_EMAIL
+        email: LETSENCRYPT_EMAIL,
+        staging: true // Use staging environment for tests
       });
       
       // Check certificate status (should return exists: false for non-existent cert)
@@ -206,7 +210,8 @@ describe('Real SSL Class Tests', () => {
       }
       
       const ssl = new SSL({
-        email: LETSENCRYPT_EMAIL
+        email: LETSENCRYPT_EMAIL,
+        staging: true // Use staging environment for tests
       });
       
       // Note: We would need the domain to actually point to this server for real certificate creation
@@ -252,7 +257,8 @@ describe('Real SSL Class Tests', () => {
       debug(`Testing real SSL certificate file operations for: ${testDomain}`);
       
       const ssl = new SSL({
-        email: LETSENCRYPT_EMAIL
+        email: LETSENCRYPT_EMAIL,
+        staging: true // Use staging environment for tests
       });
       
       // Test path generation
@@ -282,7 +288,7 @@ describe('Real SSL Class Tests', () => {
       debug(`Testing real SSL configuration validation for: ${testDomain}`);
       
       // Test with missing email
-      const sslNoEmail = new SSL({ email: '' });
+      const sslNoEmail = new SSL({ email: '', staging: true });
       
       await expect(sslNoEmail.create(testDomain))
         .rejects.toThrow('Email is required for certificate creation');
@@ -291,7 +297,8 @@ describe('Real SSL Class Tests', () => {
       
       // Test with valid configuration
       const sslValid = new SSL({
-        email: LETSENCRYPT_EMAIL
+        email: LETSENCRYPT_EMAIL,
+        staging: true // Use staging environment for tests
       });
       
       expect(sslValid.defaultEmail).toBe(LETSENCRYPT_EMAIL);

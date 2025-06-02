@@ -9,7 +9,6 @@ export interface SSLConfig {
   email?: string;
   webroot?: string;
   certbotPath?: string;
-  staging?: boolean;
 }
 
 export interface CertificateInfo {
@@ -17,20 +16,6 @@ export interface CertificateInfo {
   domain?: string;
   expiresAt?: Date;
   daysLeft?: number;
-  path?: {
-    certificate: string;
-    privateKey: string;
-    fullchain: string;
-  };
-}
-
-export interface WildcardCertificateInfo {
-  domain: string;
-  wildcardDomain: string;
-  exists: boolean;
-  expiresAt?: Date;
-  daysLeft?: number;
-  coversSubdomain: (subdomain: string) => boolean;
   path?: {
     certificate: string;
     privateKey: string;
@@ -50,7 +35,6 @@ export class SSL {
   public defaultEmail: string;
   public certbotPath: string;
   public letsencryptPath: string;
-  public staging: boolean;
 
   constructor(config?: SSLConfig) {
     debug('Initializing SSL manager');
@@ -58,9 +42,8 @@ export class SSL {
     this.defaultEmail = config?.email || process.env.LETSENCRYPT_EMAIL || '';
     this.certbotPath = config?.certbotPath || 'certbot';
     this.letsencryptPath = '/etc/letsencrypt/live';
-    this.staging = config?.staging || false;
     
-    debug(`SSL manager initialized with email: ${this.defaultEmail ? 'set' : 'not set'}, staging: ${this.staging}`);
+    debug(`SSL manager initialized with email: ${this.defaultEmail ? 'set' : 'not set'}`);
   }
 
   public validateCertbotAvailable(): void {
@@ -69,15 +52,6 @@ export class SSL {
       debug('Certbot is available');
     } catch (error) {
       throw new Error(`Certbot is not available. Please install certbot first: ${error}`);
-    }
-  }
-
-  public validateCertbotDnsCloudflareAvailable(): void {
-    try {
-      execSync(`${this.certbotPath} plugins | grep dns-cloudflare`, { stdio: 'pipe' });
-      debug('Certbot DNS Cloudflare plugin is available');
-    } catch (error) {
-      throw new Error(`Certbot DNS Cloudflare plugin is not available. Please install certbot-dns-cloudflare first: ${error}`);
     }
   }
 
@@ -112,103 +86,6 @@ export class SSL {
     }
   }
 
-  public wildcardCovers(subdomain: string, domain: string): boolean {
-    const fullSubdomain = `${subdomain}.${domain}`;
-    const parts = fullSubdomain.split('.');
-    const domainParts = domain.split('.');
-    
-    return parts.length === domainParts.length + 1;
-  }
-
-  /**
-   * Create wildcard SSL certificate for domain using DNS-01 validation
-   * Requires Cloudflare credentials file
-   */
-  async createWildcard(domain: string, credentialsPath: string, email?: string): Promise<void> {
-    debug(`Creating wildcard SSL certificate for: *.${domain}`);
-    
-    this.validateCertbotAvailable();
-    this.validateCertbotDnsCloudflareAvailable();
-    
-    const certificateEmail = email || this.defaultEmail;
-    if (!certificateEmail) {
-      throw new Error('Email is required for SSL certificate creation. Provide via parameter or LETSENCRYPT_EMAIL env variable.');
-    }
-
-    if (!fs.existsSync(credentialsPath)) {
-      throw new Error(`Cloudflare credentials file not found: ${credentialsPath}`);
-    }
-
-    if (this.checkCertificateExists(`*.${domain}`) || this.checkCertificateExists(domain)) {
-      throw new Error(`Wildcard certificate for ${domain} already exists`);
-    }
-
-    try {
-      const certbotCommand = [
-        this.certbotPath,
-        'certonly',
-        '--dns-cloudflare',
-        '--dns-cloudflare-credentials', credentialsPath,
-        this.staging ? '--staging' : '',
-        '--non-interactive',
-        '--agree-tos',
-        '--email', certificateEmail,
-        '-d', domain,
-        '-d', `*.${domain}`
-      ].filter(Boolean).join(' ');
-
-      debug(`Running certbot wildcard command: ${certbotCommand}`);
-      execSync(certbotCommand, { 
-        stdio: 'inherit',
-        timeout: 180000
-      });
-      
-      debug(`Wildcard SSL certificate created successfully for *.${domain}`);
-    } catch (error) {
-      debug(`Error creating wildcard SSL certificate for ${domain}: ${error}`);
-      throw new Error(`Failed to create wildcard SSL certificate: ${error}`);
-    }
-  }
-
-  /**
-   * Get wildcard certificate information
-   * Returns null if wildcard certificate doesn't exist
-   */
-  async getWildcard(domain: string): Promise<WildcardCertificateInfo | null> {
-    debug(`Getting wildcard certificate info for: *.${domain}`);
-    
-    let certDomain = domain;
-    if (!this.checkCertificateExists(domain) && this.checkCertificateExists(`*.${domain}`)) {
-      certDomain = `*.${domain}`;
-    } else if (!this.checkCertificateExists(domain)) {
-      debug(`Wildcard certificate for ${domain} does not exist`);
-      return null;
-    }
-
-    try {
-      const paths = this.getCertificatePaths(certDomain);
-      const certInfo = this.parseCertificateInfo(paths.certificate);
-      const now = new Date();
-      const daysLeft = Math.ceil((certInfo.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-      const wildcardInfo: WildcardCertificateInfo = {
-        domain,
-        wildcardDomain: `*.${domain}`,
-        exists: true,
-        expiresAt: certInfo.expiresAt,
-        daysLeft,
-        coversSubdomain: (subdomain: string) => this.wildcardCovers(subdomain, domain),
-        path: paths
-      };
-
-      debug(`Wildcard certificate info for ${domain}: expires ${certInfo.expiresAt}, ${daysLeft} days left`);
-      return wildcardInfo;
-    } catch (error) {
-      debug(`Error getting wildcard certificate info for ${domain}: ${error}`);
-      throw new Error(`Failed to get wildcard certificate information: ${error}`);
-    }
-  }
-
   public waitForDnsPropagation(domain: string, expectedIp: string, maxAttempts: number = 12): Promise<DNSPropagationResult> {
     return new Promise(async (resolve, reject) => {
       debug(`Waiting for DNS propagation: ${domain} → ${expectedIp}`);
@@ -232,7 +109,7 @@ export class SSL {
           debug(`DNS not yet propagated (${attempt}/${maxAttempts}): ${domain} → ${result || 'no result'}`);
           
           if (attempt < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
           }
         } catch (error) {
           debug(`DNS lookup failed (${attempt}/${maxAttempts}): ${error}`);
@@ -304,18 +181,14 @@ export class SSL {
         this.certbotPath,
         'certonly',
         '--nginx',
-        this.staging ? '--staging' : '',
         '--non-interactive',
         '--agree-tos',
         '--email', certificateEmail,
         '-d', domain
-      ].filter(Boolean).join(' ');
+      ].join(' ');
 
       debug(`Running certbot command: ${certbotCommand}`);
-      execSync(certbotCommand, { 
-        stdio: 'inherit',
-        timeout: 90000
-      });
+      execSync(certbotCommand, { stdio: 'inherit' });
       
       debug(`SSL certificate created successfully for ${domain}`);
     } catch (error) {
@@ -382,6 +255,7 @@ export class SSL {
       await this.delete(domain);
     } catch (error) {
       debug(`Certificate ${domain} does not exist or already deleted`);
+      // Do not throw error - this is expected behavior for undefine
     }
   }
 
@@ -447,4 +321,4 @@ export class SSL {
       throw new Error(`Failed to renew SSL certificate: ${error}`);
     }
   }
-}
+} 

@@ -1,4 +1,6 @@
 import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 import Debug from './debug';
 
 const debug = Debug('cloudflare');
@@ -89,6 +91,97 @@ export class CloudFlare {
       return this.domain;
     }
     return `${subdomain}.${this.domain}`;
+  }
+
+  /**
+   * Generate Cloudflare credentials file for certbot-dns-cloudflare
+   * Returns path to the created credentials file
+   */
+  generateCredentialsFile(): string {
+    debug('Generating Cloudflare credentials file for certbot');
+    
+    const credContent = `# Cloudflare API token for certbot-dns-cloudflare
+dns_cloudflare_api_token = ${this.apiToken}
+`;
+    
+    const credPath = '/tmp/cloudflare-certbot.ini';
+    
+    try {
+      fs.writeFileSync(credPath, credContent, { mode: 0o600 });
+      debug(`Credentials file created: ${credPath}`);
+      return credPath;
+    } catch (error) {
+      debug(`Error creating credentials file: ${error}`);
+      throw new Error(`Failed to create Cloudflare credentials file: ${error}`);
+    }
+  }
+
+  /**
+   * Create TXT record for ACME challenge (DNS-01 validation)
+   * Used for wildcard certificate validation
+   */
+  async createAcmeChallenge(token: string): Promise<DnsRecord> {
+    const challengeName = `_acme-challenge.${this.domain}`;
+    debug(`Creating ACME challenge TXT record: ${challengeName} → ${token}`);
+
+    try {
+      const response = await this.makeRequest<CloudflareResponse>(
+        'POST',
+        `/zones/${this.zoneId}/dns_records`,
+        {
+          type: 'TXT',
+          name: challengeName,
+          content: token,
+          ttl: 120 // Short TTL for quick propagation
+        }
+      );
+
+      const record = response.result as DnsRecord;
+      debug(`ACME challenge record created: ${record.id}`);
+      return record;
+    } catch (error) {
+      debug(`Error creating ACME challenge record: ${error}`);
+      throw new Error(`Failed to create ACME challenge record: ${error}`);
+    }
+  }
+
+  /**
+   * Delete ACME challenge TXT records
+   * Cleanup after wildcard certificate validation
+   */
+  async deleteAcmeChallenge(): Promise<void> {
+    const challengeName = `_acme-challenge.${this.domain}`;
+    debug(`Deleting ACME challenge TXT records for: ${challengeName}`);
+
+    try {
+      // Find all TXT records for _acme-challenge
+      const response = await this.makeRequest<CloudflareResponse>(
+        'GET',
+        `/zones/${this.zoneId}/dns_records?name=${challengeName}&type=TXT`
+      );
+
+      const records = Array.isArray(response.result) ? response.result : [];
+      debug(`Found ${records.length} ACME challenge records to delete`);
+
+      // Delete each record
+      for (const record of records) {
+        try {
+          await this.makeRequest(
+            'DELETE',
+            `/zones/${this.zoneId}/dns_records/${record.id}`
+          );
+          debug(`Deleted ACME challenge record: ${record.id}`);
+        } catch (error) {
+          debug(`Error deleting ACME challenge record ${record.id}: ${error}`);
+          // Continue with other records even if one fails
+        }
+      }
+
+      debug(`ACME challenge cleanup completed`);
+    } catch (error) {
+      debug(`Error during ACME challenge cleanup: ${error}`);
+      // Don't throw error - cleanup is best effort
+    }
   }
 
   /**
@@ -207,7 +300,7 @@ export class CloudFlare {
         'DELETE',
         `/zones/${this.zoneId}/dns_records/${existing.id}`
       );
-
+      
       debug(`Successfully deleted DNS record: ${existing.id}`);
     } catch (error) {
       debug(`Error deleting DNS record for ${fullDomain}: ${error}`);
@@ -220,17 +313,14 @@ export class CloudFlare {
    * Does not throw errors for non-existing records
    */
   async define(subdomain: string, config: SubdomainDnsConfig): Promise<DnsRecord> {
-    const fullDomain = this.getFullDomain(subdomain);
-    debug(`Defining DNS record for: ${fullDomain} → ${config.ip}`);
-
+    debug(`Defining DNS record for: ${subdomain}`);
+    
     try {
-      // Try to delete existing record without throwing error
       await this.undefine(subdomain);
     } catch (error) {
-      debug(`No existing record to delete for ${fullDomain}`);
+      debug(`No existing DNS record to delete for ${subdomain}`);
     }
 
-    // Create new record
     return await this.create(subdomain, config);
   }
 
@@ -239,14 +329,12 @@ export class CloudFlare {
    * Does not throw errors for non-existing records
    */
   async undefine(subdomain: string): Promise<void> {
-    const fullDomain = this.getFullDomain(subdomain);
-    debug(`Undefining DNS record for: ${fullDomain}`);
-
+    debug(`Undefining DNS record for: ${subdomain}`);
+    
     try {
       await this.delete(subdomain);
     } catch (error) {
-      debug(`Record ${fullDomain} does not exist or already deleted`);
-      // Do not throw error - this is expected behavior for undefine
+      debug(`DNS record ${subdomain} does not exist or already deleted`);
     }
   }
 } 

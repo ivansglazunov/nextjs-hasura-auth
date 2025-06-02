@@ -1,7 +1,8 @@
 import Debug from './debug';
 import { CloudFlare } from './cloudflare';
-import { SSL } from './ssl';
+import { SSL, WildcardCertificateInfo } from './ssl';
 import { Nginx } from './nginx';
+import * as fs from 'fs';
 
 const debug = Debug('subdomain');
 
@@ -9,6 +10,7 @@ export interface SubdomainManagerConfig {
   nginx: Nginx;
   ssl: SSL;
   cloudflare: CloudFlare;
+  useWildcardSSL?: boolean; // New option to enable wildcard SSL
 }
 
 export interface SubdomainConfig {
@@ -34,6 +36,7 @@ export interface SubdomainInfo {
     exists: boolean;
     expiresAt?: Date;
     daysLeft?: number;
+    isWildcard?: boolean; // New field to indicate wildcard usage
   };
   nginxStatus: {
     exists: boolean;
@@ -48,6 +51,8 @@ export class SubdomainManager {
   public ssl: SSL;
   public cloudflare: CloudFlare;
   public domain: string;
+  public useWildcardSSL: boolean;
+  private wildcardCertInfo: WildcardCertificateInfo | null = null;
 
   constructor(config: SubdomainManagerConfig) {
     debug('Initializing SubdomainManager');
@@ -55,11 +60,12 @@ export class SubdomainManager {
     this.nginx = config.nginx;
     this.ssl = config.ssl;
     this.cloudflare = config.cloudflare;
+    this.useWildcardSSL = config.useWildcardSSL ?? true; // Default to wildcard SSL
     
     // Extract domain from CloudFlare instance
     this.domain = (this.cloudflare as any).domain;
     
-    debug(`SubdomainManager initialized for domain: ${this.domain}`);
+    debug(`SubdomainManager initialized for domain: ${this.domain}, wildcard SSL: ${this.useWildcardSSL}`);
   }
 
   public getFullDomain(subdomain: string): string {
@@ -85,6 +91,50 @@ export class SubdomainManager {
     }
   }
 
+  /**
+   * Initialize wildcard SSL certificate (called once)
+   * Creates or verifies wildcard certificate for the domain
+   */
+  async initializeWildcardSSL(): Promise<void> {
+    if (!this.useWildcardSSL) {
+      debug('Wildcard SSL disabled, skipping initialization');
+      return;
+    }
+    
+    debug('Initializing wildcard SSL certificate');
+    
+    // Check if wildcard certificate already exists
+    this.wildcardCertInfo = await this.ssl.getWildcard(this.domain);
+    
+    if (!this.wildcardCertInfo || (this.wildcardCertInfo.daysLeft && this.wildcardCertInfo.daysLeft < 30)) {
+      debug('Creating new wildcard certificate');
+      
+      // Generate Cloudflare credentials file
+      const credPath = this.cloudflare.generateCredentialsFile();
+      
+      try {
+        await this.ssl.createWildcard(this.domain, credPath);
+        this.wildcardCertInfo = await this.ssl.getWildcard(this.domain);
+        
+        debug(`Wildcard certificate created successfully: ${this.wildcardCertInfo?.wildcardDomain}`);
+      } finally {
+        // Clean up credentials file
+        try {
+          fs.unlinkSync(credPath);
+          debug('Credentials file cleaned up');
+        } catch (error) {
+          debug(`Warning: Could not delete credentials file: ${error}`);
+        }
+      }
+    } else {
+      debug(`Wildcard certificate already exists, expires in ${this.wildcardCertInfo.daysLeft} days`);
+    }
+    
+    if (!this.wildcardCertInfo) {
+      throw new Error('Failed to initialize wildcard SSL certificate');
+    }
+  }
+
   public async getSubdomainInfo(subdomain: string): Promise<SubdomainInfo> {
     const fullDomain = this.getFullDomain(subdomain);
     debug(`Getting subdomain info for: ${subdomain} (${fullDomain})`);
@@ -98,13 +148,34 @@ export class SubdomainManager {
       proxied: cloudflareRecord?.proxied
     };
 
-    // Check SSL status
-    const sslInfo = await this.ssl.check(fullDomain);
-    const sslStatus = {
-      exists: sslInfo.exists,
-      expiresAt: sslInfo.expiresAt,
-      daysLeft: sslInfo.daysLeft
+    // Check SSL status (wildcard or individual)
+    let sslStatus = {
+      exists: false,
+      expiresAt: undefined as Date | undefined,
+      daysLeft: undefined as number | undefined,
+      isWildcard: false
     };
+
+    if (this.useWildcardSSL && this.wildcardCertInfo) {
+      // Check if wildcard covers this subdomain
+      if (this.wildcardCertInfo.coversSubdomain(subdomain)) {
+        sslStatus = {
+          exists: true,
+          expiresAt: this.wildcardCertInfo.expiresAt,
+          daysLeft: this.wildcardCertInfo.daysLeft,
+          isWildcard: true
+        };
+      }
+    } else {
+      // Check individual certificate
+      const sslInfo = await this.ssl.check(fullDomain);
+      sslStatus = {
+        exists: sslInfo.exists,
+        expiresAt: sslInfo.expiresAt,
+        daysLeft: sslInfo.daysLeft,
+        isWildcard: false
+      };
+    }
 
     // Check Nginx status
     const nginxConfig = await this.nginx.get(fullDomain);
@@ -167,10 +238,10 @@ export class SubdomainManager {
 
   /**
    * Define complete subdomain with CloudFlare DNS, SSL certificate, and Nginx proxy
-   * This is the main method for creating fully functional subdomains
+   * NEW: Uses wildcard SSL instead of individual certificates
    */
   async define(subdomain: string, config: SubdomainConfig): Promise<SubdomainInfo> {
-    debug(`Defining complete subdomain: ${subdomain}`);
+    debug(`Defining subdomain with wildcard SSL: ${subdomain}`);
     
     this.validateSubdomainName(subdomain);
     
@@ -178,6 +249,14 @@ export class SubdomainManager {
     let progress = 'Starting';
 
     try {
+      // Step 0: Ensure wildcard SSL certificate is ready
+      if (this.useWildcardSSL) {
+        progress = 'Initializing wildcard SSL';
+        debug(`${progress} for domain: ${this.domain}`);
+        await this.initializeWildcardSSL();
+        debug(`Wildcard SSL ready for ${this.domain}`);
+      }
+
       // Step 1: Create CloudFlare DNS record
       progress = 'Creating DNS record';
       debug(`${progress} for ${fullDomain} → ${config.ip}`);
@@ -197,25 +276,46 @@ export class SubdomainManager {
       await this.ssl.wait(fullDomain, config.ip);
       debug(`DNS propagation completed for ${fullDomain}`);
 
-      // Step 3: Create SSL certificate
-      progress = 'Creating SSL certificate';
-      debug(`${progress} for ${fullDomain}`);
-      
-      await this.ssl.define(fullDomain, config.email);
-      debug(`SSL certificate created successfully for ${fullDomain}`);
+      // Step 3: SKIP individual SSL creation - use wildcard!
+      if (this.useWildcardSSL) {
+        progress = 'Using wildcard SSL certificate';
+        debug(`${progress} for ${fullDomain}`);
+        
+        if (!this.wildcardCertInfo) {
+          throw new Error('Wildcard certificate not available');
+        }
+        
+        debug(`Using wildcard certificate ${this.wildcardCertInfo.wildcardDomain} for ${fullDomain}`);
+      } else {
+        // Fallback to individual SSL certificate
+        progress = 'Creating individual SSL certificate';
+        debug(`${progress} for ${fullDomain}`);
+        
+        await this.ssl.define(fullDomain, config.email);
+        debug(`Individual SSL certificate created for ${fullDomain}`);
+      }
 
       // Step 4: Create Nginx configuration with SSL
       progress = 'Creating Nginx configuration';
       debug(`${progress} for ${fullDomain}`);
       
-      const sslInfo = await this.ssl.check(fullDomain);
+      let sslCertPath, sslKeyPath;
+      
+      if (this.useWildcardSSL && this.wildcardCertInfo) {
+        sslCertPath = this.wildcardCertInfo.path?.fullchain;
+        sslKeyPath = this.wildcardCertInfo.path?.privateKey;
+      } else {
+        const sslInfo = await this.ssl.check(fullDomain);
+        sslCertPath = sslInfo.path?.fullchain;
+        sslKeyPath = sslInfo.path?.privateKey;
+      }
       
       await this.nginx.define(fullDomain, {
         serverName: fullDomain,
         proxyPass: `http://127.0.0.1:${config.port}`,
         ssl: true,
-        sslCertificate: sslInfo.path?.fullchain,
-        sslCertificateKey: sslInfo.path?.privateKey
+        sslCertificate: sslCertPath,
+        sslCertificateKey: sslKeyPath
       });
       
       debug(`Nginx configuration created successfully for ${fullDomain}`);
@@ -234,6 +334,9 @@ export class SubdomainManager {
       console.log(`🎉 Subdomain ${fullDomain} created successfully!`);
       console.log(`🌐 Available at: https://${fullDomain}`);
       console.log(`🔗 Proxies to: http://127.0.0.1:${config.port}`);
+      if (this.useWildcardSSL) {
+        console.log(`🔒 Using wildcard SSL certificate: ${this.wildcardCertInfo?.wildcardDomain}`);
+      }
       
       return finalInfo;
       
@@ -255,10 +358,10 @@ export class SubdomainManager {
 
   /**
    * Undefine complete subdomain by removing all components
-   * Does not throw errors for non-existing components
+   * NEW: Preserves wildcard SSL certificate (shared resource)
    */
   async undefine(subdomain: string): Promise<void> {
-    debug(`Undefining complete subdomain: ${subdomain}`);
+    debug(`Undefining subdomain (preserving wildcard SSL): ${subdomain}`);
     
     const fullDomain = this.getFullDomain(subdomain);
     const errors: string[] = [];
@@ -273,14 +376,18 @@ export class SubdomainManager {
       errors.push(`Nginx: ${error}`);
     }
 
-    // Step 2: Remove SSL certificate
-    try {
-      debug(`Removing SSL certificate for ${fullDomain}`);
-      await this.ssl.undefine(fullDomain);
-      debug(`SSL certificate removed for ${fullDomain}`);
-    } catch (error) {
-      debug(`Error removing SSL certificate: ${error}`);
-      errors.push(`SSL: ${error}`);
+    // Step 2: Remove individual SSL certificate ONLY if not using wildcard
+    if (!this.useWildcardSSL) {
+      try {
+        debug(`Removing individual SSL certificate for ${fullDomain}`);
+        await this.ssl.undefine(fullDomain);
+        debug(`Individual SSL certificate removed for ${fullDomain}`);
+      } catch (error) {
+        debug(`Error removing individual SSL certificate: ${error}`);
+        errors.push(`SSL: ${error}`);
+      }
+    } else {
+      debug(`Preserving wildcard SSL certificate for ${this.domain}`);
     }
 
     // Step 3: Remove CloudFlare DNS record
@@ -309,6 +416,9 @@ export class SubdomainManager {
     } else {
       debug(`Subdomain ${subdomain} undefined successfully`);
       console.log(`✅ Subdomain ${fullDomain} removed successfully`);
+      if (this.useWildcardSSL) {
+        console.log(`🔒 Wildcard SSL certificate preserved for other subdomains`);
+      }
     }
   }
 

@@ -161,7 +161,8 @@ describe('Real SubdomainManager Tests', () => {
 
       // Create real SSL instance
       const ssl = new SSL({
-        email: LETSENCRYPT_EMAIL
+        email: LETSENCRYPT_EMAIL,
+        staging: true // Use staging environment for tests
       });
 
       // Check if certificate already exists
@@ -261,7 +262,8 @@ describe('Real SubdomainManager Tests', () => {
       });
 
       const ssl = new SSL({
-        email: LETSENCRYPT_EMAIL
+        email: LETSENCRYPT_EMAIL,
+        staging: true // Use staging environment for tests
       });
 
       const nginx = new Nginx();
