@@ -107,13 +107,22 @@ import { Nginx } from 'hasyx';
 
 const nginx = new Nginx();
 
-// Create HTTPS site with SSL certificates
+// Create HTTPS site with individual SSL certificates
 await nginx.create('secure.example.com', {
   serverName: 'secure.example.com',
   ssl: true,
   sslCertificate: '/etc/letsencrypt/live/secure.example.com/fullchain.pem',
   sslCertificateKey: '/etc/letsencrypt/live/secure.example.com/privkey.pem',
   proxyPass: 'http://localhost:3000'
+});
+
+// Create HTTPS site with wildcard SSL certificates
+await nginx.create('app.example.com', {
+  serverName: 'app.example.com',
+  ssl: true,
+  sslCertificate: '/etc/letsencrypt/live/example.com/fullchain.pem',  // Wildcard cert
+  sslCertificateKey: '/etc/letsencrypt/live/example.com/privkey.pem', // Wildcard key
+  proxyPass: 'http://localhost:4000'
 });
 ```
 

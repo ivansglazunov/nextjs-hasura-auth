@@ -3510,6 +3510,11 @@
           "level": 3
         },
         {
+          "title": "`subdomain` 🌐",
+          "url": "/hasyx/doc/README#subdomain",
+          "level": 3
+        },
+        {
           "title": "`ask` 🤖",
           "url": "/hasyx/doc/README#ask",
           "level": 3
@@ -3837,6 +3842,21 @@
           "title": "Purpose",
           "url": "/hasyx/doc/SUBDOMAIN#purpose",
           "level": 2
+        },
+        {
+          "title": "CLI Command 🌐",
+          "url": "/hasyx/doc/SUBDOMAIN#cli-command",
+          "level": 2
+        },
+        {
+          "title": "CLI Subcommands",
+          "url": "/hasyx/doc/SUBDOMAIN#cli-subcommands",
+          "level": 3
+        },
+        {
+          "title": "CLI Environment Requirements",
+          "url": "/hasyx/doc/SUBDOMAIN#cli-environment-requirements",
+          "level": 3
         },
         {
           "title": "Core Features",
@@ -4973,6 +4993,184 @@
       "level": 1
     },
     {
+      "title": "Wstunnel Integration",
+      "url": "/hasyx/doc/WSTUNNEL",
+      "collapse": true,
+      "items": [
+        {
+          "title": "⚠️ КРИТИЧЕСКИ ВАЖНО: Системные требования",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Обязательная установка wstunnel binary",
+          "url": "/hasyx/doc/WSTUNNEL#wstunnel-binary",
+          "level": 3
+        },
+        {
+          "title": "Обзор",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Архитектура",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Компоненты",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "1. API Endpoint",
+          "url": "/hasyx/doc/WSTUNNEL#1-api-endpoint",
+          "level": 3
+        },
+        {
+          "title": "2. Основная логика",
+          "url": "/hasyx/doc/WSTUNNEL#2",
+          "level": 3
+        },
+        {
+          "title": "3. Утилиты",
+          "url": "/hasyx/doc/WSTUNNEL#3",
+          "level": 3
+        },
+        {
+          "title": "Переменные окружения",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Использование",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Программный API",
+          "url": "/hasyx/doc/WSTUNNEL#api",
+          "level": 3
+        },
+        {
+          "title": "HTTP API",
+          "url": "/hasyx/doc/WSTUNNEL#http-api",
+          "level": 3
+        },
+        {
+          "title": "Тестовый клиент",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Безопасность",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Vercel Protection",
+          "url": "/hasyx/doc/WSTUNNEL#vercel-protection",
+          "level": 3
+        },
+        {
+          "title": "Изоляция процессов",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Тестирование",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Запуск тестов",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Структура тестов",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Условное выполнение",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Требования системы",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Обязательные зависимости",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Проверка зависимостей",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Примеры интеграции",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Express.js приложение",
+          "url": "/hasyx/doc/WSTUNNEL#expressjs",
+          "level": 3
+        },
+        {
+          "title": "Next.js API Route",
+          "url": "/hasyx/doc/WSTUNNEL#nextjs-api-route",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/WSTUNNEL#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Частые проблемы",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Логирование",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Производительность",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 2
+        },
+        {
+          "title": "Лимиты",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Мониторинг",
+          "url": "/hasyx/doc/WSTUNNEL#",
+          "level": 3
+        },
+        {
+          "title": "Changelog",
+          "url": "/hasyx/doc/WSTUNNEL#changelog",
+          "level": 2
+        },
+        {
+          "title": "v1.0.0 (2025-01-XX)",
+          "url": "/hasyx/doc/WSTUNNEL#v100-2025-01-xx",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "Sidebar Components",
       "url": "/hasyx/doc/README",
       "collapse": true,
@@ -5043,6 +5241,277 @@
         {
           "title": "Migration Guide",
           "url": "/hasyx/doc/README#migration-guide",
+          "level": 2
+        }
+      ],
+      "level": 1
+    },
+    {
+      "title": "NO MOCK EXPERIMENT - ОТЧЕТ О СОСТОЯНИИ ТЕСТОВ",
+      "url": "/hasyx/doc/nomock.experiment",
+      "collapse": true,
+      "items": [
+        {
+          "title": "🎯 РЕЗУЛЬТАТЫ ЭКСПЕРИМЕНТА: ПОЛНОЕ УДАЛЕНИЕ МОКОВ",
+          "url": "/hasyx/doc/nomock.experiment#",
+          "level": 2
+        },
+        {
+          "title": "📊 СВОДНАЯ СТАТИСТИКА",
+          "url": "/hasyx/doc/nomock.experiment#",
+          "level": 2
+        },
+        {
+          "title": "🔍 ДЕТАЛЬНЫЙ АНАЛИЗ ПО ФАЙЛАМ",
+          "url": "/hasyx/doc/nomock.experiment#",
+          "level": 2
+        },
+        {
+          "title": "1. lib/subdomain.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#1-libsubdomaintestts",
+          "level": 3
+        },
+        {
+          "title": "2. lib/ssl.test.ts ⚠️ ПРОБЛЕМЫ",
+          "url": "/hasyx/doc/nomock.experiment#2-libssltestts",
+          "level": 3
+        },
+        {
+          "title": "3. lib/nginx.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#3-libnginxtestts",
+          "level": 3
+        },
+        {
+          "title": "4. lib/cloudflare.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#4-libcloudflaretestts",
+          "level": 3
+        },
+        {
+          "title": "5. lib/ai.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#5-libaitestts",
+          "level": 3
+        },
+        {
+          "title": "6. lib/graphql-proxy.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#6-libgraphql-proxytestts",
+          "level": 3
+        },
+        {
+          "title": "7. lib/exec.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#7-libexectestts",
+          "level": 3
+        },
+        {
+          "title": "8. lib/hid.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#8-libhidtestts",
+          "level": 3
+        },
+        {
+          "title": "9. lib/auth.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#9-libauthtestts",
+          "level": 3
+        },
+        {
+          "title": "10. lib/ask.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#10-libasktestts",
+          "level": 3
+        },
+        {
+          "title": "11. lib/pwa.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#11-libpwatestts",
+          "level": 3
+        },
+        {
+          "title": "12. lib/constructor.test.ts ✅ ОТЛИЧНО",
+          "url": "/hasyx/doc/nomock.experiment#12-libconstructortestts",
+          "level": 3
+        },
+        {
+          "title": "🏆 КЛЮЧЕВЫЕ ДОСТИЖЕНИЯ",
+          "url": "/hasyx/doc/nomock.experiment#",
+          "level": 2
+        },
+        {
+          "title": "1. ПОЛНОЕ УДАЛЕНИЕ МОКОВ",
+          "url": "/hasyx/doc/nomock.experiment#1",
+          "level": 3
+        },
+        {
+          "title": "2. РЕАЛЬНЫЕ ИНТЕГРАЦИИ",
+          "url": "/hasyx/doc/nomock.experiment#2",
+          "level": 3
+        },
+        {
+          "title": "3. АРХИТЕКТУРА ТЕСТОВ",
+          "url": "/hasyx/doc/nomock.experiment#3",
+          "level": 3
+        },
+        {
+          "title": "📈 ПРОИЗВОДИТЕЛЬНОСТЬ",
+          "url": "/hasyx/doc/nomock.experiment#",
+          "level": 2
+        },
+        {
+          "title": "🎯 ВЫВОДЫ",
+          "url": "/hasyx/doc/nomock.experiment#",
+          "level": 2
+        }
+      ],
+      "level": 1
+    },
+    {
+      "title": "Overtime Test Analysis Report",
+      "url": "/hasyx/doc/overtime.experiment",
+      "collapse": true,
+      "items": [
+        {
+          "title": "✅ **FINAL RESULTS: ALL HANGING ISSUES RESOLVED**",
+          "url": "/hasyx/doc/overtime.experiment#final-results-all-hanging-issues-resolved",
+          "level": 2
+        },
+        {
+          "title": "**Before Implementation:**",
+          "url": "/hasyx/doc/overtime.experiment#before-implementation",
+          "level": 3
+        },
+        {
+          "title": "**After Implementation:**",
+          "url": "/hasyx/doc/overtime.experiment#after-implementation",
+          "level": 3
+        },
+        {
+          "title": "Test File: `lib/wstunnel.test.ts`",
+          "url": "/hasyx/doc/overtime.experiment#test-file-libwstunneltestts",
+          "level": 2
+        },
+        {
+          "title": "Problem Analysis:",
+          "url": "/hasyx/doc/overtime.experiment#problem-analysis",
+          "level": 3
+        },
+        {
+          "title": "Debug Evidence:",
+          "url": "/hasyx/doc/overtime.experiment#debug-evidence",
+          "level": 3
+        },
+        {
+          "title": "Rate Limiting Research:",
+          "url": "/hasyx/doc/overtime.experiment#rate-limiting-research",
+          "level": 3
+        },
+        {
+          "title": "✅ **SOLUTION IMPLEMENTED:**",
+          "url": "/hasyx/doc/overtime.experiment#solution-implemented",
+          "level": 3
+        },
+        {
+          "title": "Test File: `lib/subdomain.test.ts`",
+          "url": "/hasyx/doc/overtime.experiment#test-file-libsubdomaintestts",
+          "level": 2
+        },
+        {
+          "title": "Problem Analysis:",
+          "url": "/hasyx/doc/overtime.experiment#problem-analysis",
+          "level": 3
+        },
+        {
+          "title": "✅ **SOLUTION WORKING:**",
+          "url": "/hasyx/doc/overtime.experiment#solution-working",
+          "level": 3
+        },
+        {
+          "title": "Rate Limiting Impact:",
+          "url": "/hasyx/doc/overtime.experiment#rate-limiting-impact",
+          "level": 3
+        },
+        {
+          "title": "Test File: `lib/ssl.test.ts`",
+          "url": "/hasyx/doc/overtime.experiment#test-file-libssltestts",
+          "level": 2
+        },
+        {
+          "title": "Test File: `lib/subscription-debug.test.ts`",
+          "url": "/hasyx/doc/overtime.experiment#test-file-libsubscription-debugtestts",
+          "level": 2
+        },
+        {
+          "title": "🚀 **COMPLETE SOLUTION IMPLEMENTED**",
+          "url": "/hasyx/doc/overtime.experiment#complete-solution-implemented",
+          "level": 2
+        },
+        {
+          "title": "**Phase 1: SSL Module Enhancement** ✅",
+          "url": "/hasyx/doc/overtime.experiment#phase-1-ssl-module-enhancement",
+          "level": 3
+        },
+        {
+          "title": "**Phase 2: CloudFlare Module Enhancement** ✅",
+          "url": "/hasyx/doc/overtime.experiment#phase-2-cloudflare-module-enhancement",
+          "level": 3
+        },
+        {
+          "title": "**Phase 3: SubdomainManager Complete Refactor** ✅",
+          "url": "/hasyx/doc/overtime.experiment#phase-3-subdomainmanager-complete-refactor",
+          "level": 3
+        },
+        {
+          "title": "**Phase 4: Test Environment Updates** ✅",
+          "url": "/hasyx/doc/overtime.experiment#phase-4-test-environment-updates",
+          "level": 3
+        },
+        {
+          "title": "📊 **SOLUTION SUMMARY**",
+          "url": "/hasyx/doc/overtime.experiment#solution-summary",
+          "level": 2
+        },
+        {
+          "title": "**Problem Solved:**",
+          "url": "/hasyx/doc/overtime.experiment#problem-solved",
+          "level": 3
+        },
+        {
+          "title": "**Architecture Change:**",
+          "url": "/hasyx/doc/overtime.experiment#architecture-change",
+          "level": 3
+        },
+        {
+          "title": "**Rate Limit Impact:**",
+          "url": "/hasyx/doc/overtime.experiment#rate-limit-impact",
+          "level": 3
+        },
+        {
+          "title": "**Test Reliability:**",
+          "url": "/hasyx/doc/overtime.experiment#test-reliability",
+          "level": 3
+        },
+        {
+          "title": "**Performance:**",
+          "url": "/hasyx/doc/overtime.experiment#performance",
+          "level": 3
+        },
+        {
+          "title": "🎯 **VERIFICATION RESULTS**",
+          "url": "/hasyx/doc/overtime.experiment#verification-results",
+          "level": 2
+        },
+        {
+          "title": "**Test Execution Times:**",
+          "url": "/hasyx/doc/overtime.experiment#test-execution-times",
+          "level": 3
+        },
+        {
+          "title": "**All Tests Complete Successfully:**",
+          "url": "/hasyx/doc/overtime.experiment#all-tests-complete-successfully",
+          "level": 3
+        },
+        {
+          "title": "**Expected Production Benefits:**",
+          "url": "/hasyx/doc/overtime.experiment#expected-production-benefits",
+          "level": 3
+        },
+        {
+          "title": "🏆 **MISSION ACCOMPLISHED**",
+          "url": "/hasyx/doc/overtime.experiment#mission-accomplished",
           "level": 2
         }
       ],
@@ -5197,5 +5666,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-01T15:53:51.454Z"
+  "lastUpdated": "2025-06-02T16:14:43.576Z"
 }

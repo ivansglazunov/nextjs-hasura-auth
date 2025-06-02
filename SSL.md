@@ -2,12 +2,13 @@
 
 SSL Certificate Management (`SSL.md`)
 
-This document describes the `SSL` class and related utilities provided in `lib/ssl.ts`, which enable automated SSL certificate management using Let's Encrypt and certbot.
+This document describes the `SSL` class and related utilities provided in `lib/ssl.ts`, which enable automated SSL certificate management using Let's Encrypt and certbot with support for both individual and wildcard certificates.
 
 ## Purpose
 
 The `SSL` class provides comprehensive SSL certificate management that:
 - Automatically creates SSL certificates using Let's Encrypt via certbot
+- **Supports wildcard certificates** using DNS-01 validation with CloudFlare
 - Manages certificate lifecycle (creation, deletion, renewal)
 - Provides DNS propagation waiting functionality
 - Supports both define/undefine patterns for idempotent operations
@@ -20,7 +21,8 @@ The `SSL` class provides comprehensive SSL certificate management that:
 
 * `SSL`: Main class for SSL certificate management
 * `SSLConfig`: Interface for SSL configuration options
-* `CertificateInfo`: Interface describing certificate information and status
+* `CertificateInfo`: Interface describing individual certificate information and status
+* `WildcardCertificateInfo`: Interface describing wildcard certificate information and coverage
 * `DNSPropagationResult`: Interface for DNS propagation check results
 
 </details>
@@ -28,10 +30,17 @@ The `SSL` class provides comprehensive SSL certificate management that:
 ## Core Features
 
 ### Certificate Management
-- **Creation**: Automated SSL certificate creation using Let's Encrypt
-- **Deletion**: Safe certificate removal with validation
-- **Renewal**: Automatic certificate renewal based on expiration date
+- **Individual Certificates**: Standard SSL certificates for specific domains
+- **Wildcard Certificates**: Covers all subdomains under a domain (*.example.com)
+- **DNS-01 Validation**: Uses CloudFlare DNS API for domain validation
+- **Automatic Renewal**: Certificate renewal based on expiration date
 - **Status Checking**: Certificate existence and expiration monitoring
+
+### Wildcard SSL Support
+- **DNS-01 Challenge**: Automatic CloudFlare DNS challenge creation/cleanup
+- **Subdomain Coverage**: Wildcard certificates cover unlimited subdomains
+- **Rate Limit Friendly**: Reduces Let's Encrypt rate limit usage
+- **Production Ready**: Suitable for high-scale subdomain management
 
 ### DNS Integration
 - **Propagation Waiting**: Automatic DNS propagation checking before certificate creation
@@ -47,9 +56,23 @@ The `SSL` class provides comprehensive SSL certificate management that:
 Before using the SSL module, you must configure the environment:
 
 1. **Install certbot**: The system must have certbot installed
-2. **Configure email**: Set `LETSENCRYPT_EMAIL` environment variable
-3. **Setup nginx**: Ensure nginx is properly configured for SSL challenges
-4. **DNS management**: Domain must be properly configured and propagated
+2. **Install certbot-dns-cloudflare**: Required for wildcard certificate DNS-01 validation
+3. **Configure email**: Set `LETSENCRYPT_EMAIL` environment variable
+4. **CloudFlare API access**: Required for DNS-01 challenges (wildcard certificates)
+5. **Setup nginx**: Ensure nginx is properly configured for SSL
+
+### System Requirements
+
+```bash
+# Ubuntu/Debian
+sudo apt install certbot python3-certbot-dns-cloudflare
+
+# CentOS/RHEL
+sudo yum install certbot python3-certbot-dns-cloudflare
+
+# Or via pip
+pip install certbot-dns-cloudflare
+```
 
 ### Environment Configuration with Assist
 
@@ -61,8 +84,9 @@ npx hasyx assist dns
 
 This will prompt you to configure:
 - `LETSENCRYPT_EMAIL`: Email address for Let's Encrypt notifications
+- `CLOUDFLARE_API_TOKEN`: API token for DNS-01 challenges (wildcard certificates)
+- `CLOUDFLARE_ZONE_ID`: Zone ID for DNS management
 - Domain configuration for subdomain management
-- Optional CloudFlare integration
 
 **Example assist session:**
 ```bash
@@ -79,6 +103,15 @@ Enter your DNS domain (e.g., example.com): yourdomain.com
 Enter LetsEncrypt email for SSL certificates: admin@yourdomain.com
 ✅ SSL email configuration completed
 
+☁️ Cloudflare Configuration (Required for Wildcard SSL)
+========================================================
+
+Enter Cloudflare API Token: your_api_token_here
+✅ Cloudflare API Token configured
+
+Enter Cloudflare Zone ID: your_zone_id_here
+✅ Cloudflare Zone ID configured
+
 💾 Configuration saved to .env file
 ```
 
@@ -89,6 +122,10 @@ Alternatively, set environment variables manually:
 ```bash
 # Required for SSL certificate creation
 LETSENCRYPT_EMAIL=admin@yourdomain.com
+
+# Required for wildcard certificates (DNS-01 validation)
+CLOUDFLARE_API_TOKEN=your_api_token_here
+CLOUDFLARE_ZONE_ID=your_zone_id_here
 
 # Optional domain for subdomain management
 HASYX_DNS_DOMAIN=yourdomain.com
@@ -114,13 +151,14 @@ if (!process.env.LETSENCRYPT_EMAIL) {
 // Alternative: Explicit configuration
 const ssl = new SSL({
   email: process.env.LETSENCRYPT_EMAIL || 'admin@yourdomain.com',
-  certbotPath: process.env.CERTBOT_PATH || 'certbot'
+  certbotPath: process.env.CERTBOT_PATH || 'certbot',
+  staging: false // Set to true for testing
 });
 ```
 
 ## Usage
 
-### Basic Usage
+### Basic Individual Certificate Usage
 
 ```typescript
 import { SSL } from 'hasyx';
@@ -128,13 +166,46 @@ import { SSL } from 'hasyx';
 // Create SSL manager instance (uses environment variables)
 const ssl = new SSL();
 
-// Create SSL certificate for domain
+// Create SSL certificate for specific domain
 await ssl.create('app.yourdomain.com');
 
 // Check certificate status
 const info = await ssl.get('app.yourdomain.com');
 console.log(`Certificate expires: ${info?.expiresAt}`);
 console.log(`Days remaining: ${info?.daysLeft}`);
+```
+
+### Wildcard Certificate Usage
+
+```typescript
+import { SSL, CloudFlare } from 'hasyx';
+
+const ssl = new SSL();
+
+// Set up CloudFlare for DNS-01 validation
+const cloudflare = new CloudFlare({
+  apiToken: process.env.CLOUDFLARE_API_TOKEN!,
+  zoneId: process.env.CLOUDFLARE_ZONE_ID!,
+  domain: 'yourdomain.com'
+});
+
+// Generate CloudFlare credentials file for certbot
+const credentialsPath = cloudflare.generateCredentialsFile();
+
+try {
+  // Create wildcard certificate for *.yourdomain.com
+  await ssl.createWildcard('yourdomain.com', credentialsPath);
+  
+  // Get wildcard certificate information
+  const wildcardInfo = await ssl.getWildcard('yourdomain.com');
+  console.log(`Wildcard domain: ${wildcardInfo?.wildcardDomain}`);
+  console.log(`Covers subdomains: ${wildcardInfo?.coversSubdomain('app')}`);
+  console.log(`Days remaining: ${wildcardInfo?.daysLeft}`);
+  
+} finally {
+  // Clean up credentials file
+  fs.unlinkSync(credentialsPath);
+}
 ```
 
 ### Environment-Based Configuration
@@ -145,7 +216,8 @@ import { SSL } from 'hasyx';
 // Environment variables configuration
 const ssl = new SSL({
   email: process.env.LETSENCRYPT_EMAIL, // From assist or manual setup
-  certbotPath: process.env.CERTBOT_PATH || 'certbot'
+  certbotPath: process.env.CERTBOT_PATH || 'certbot',
+  staging: process.env.NODE_ENV !== 'production' // Use staging for development
 });
 
 // Validate configuration
@@ -186,6 +258,25 @@ interface SSLConfig {
   email?: string;          // Email for Let's Encrypt (or use LETSENCRYPT_EMAIL env)
   webroot?: string;        // Web root path for challenges (optional)
   certbotPath?: string;    // Path to certbot binary (default: 'certbot')
+  staging?: boolean;       // Use Let's Encrypt staging environment for testing
+}
+```
+
+### WildcardCertificateInfo Interface
+
+```typescript
+interface WildcardCertificateInfo {
+  domain: string;                                    // Base domain (example.com)
+  wildcardDomain: string;                           // Wildcard domain (*.example.com)
+  exists: boolean;                                  // Certificate exists
+  expiresAt?: Date;                                // Expiration date
+  daysLeft?: number;                               // Days until expiration
+  coversSubdomain: (subdomain: string) => boolean; // Check if subdomain is covered
+  path?: {                                         // Certificate file paths
+    certificate: string;
+    privateKey: string;
+    fullchain: string;
+  };
 }
 ```
 
@@ -194,6 +285,10 @@ interface SSLConfig {
 ```bash
 # Required
 LETSENCRYPT_EMAIL=admin@yourdomain.com
+
+# Required for wildcard certificates
+CLOUDFLARE_API_TOKEN=your_api_token_here
+CLOUDFLARE_ZONE_ID=your_zone_id_here
 
 # Optional
 CERTBOT_PATH=/usr/bin/certbot
@@ -215,6 +310,21 @@ if (info) {
   console.log(`Certificate path: ${info.path?.certificate}`);
 } else {
   console.log('Certificate does not exist');
+}
+```
+
+#### `getWildcard(domain: string): Promise<WildcardCertificateInfo | null>`
+Returns wildcard certificate information or null if wildcard certificate doesn't exist.
+
+```typescript
+const wildcardInfo = await ssl.getWildcard('yourdomain.com');
+if (wildcardInfo) {
+  console.log(`Wildcard domain: ${wildcardInfo.wildcardDomain}`);
+  console.log(`Covers subdomains: ${wildcardInfo.coversSubdomain('app')}`);
+  console.log(`Expires: ${wildcardInfo.expiresAt}, Days left: ${wildcardInfo.daysLeft}`);
+  console.log(`Certificate path: ${wildcardInfo.path?.fullchain}`);
+} else {
+  console.log('Wildcard certificate does not exist');
 }
 ```
 
@@ -240,6 +350,31 @@ try {
   console.log('Certificate created successfully');
 } catch (error) {
   console.error('Certificate creation failed:', error);
+}
+```
+
+#### `createWildcard(domain: string, credentialsPath: string, email?: string): Promise<void>`
+Creates wildcard SSL certificate for domain using DNS-01 validation. Requires CloudFlare credentials file.
+
+```typescript
+import { CloudFlare } from 'hasyx';
+
+const cloudflare = new CloudFlare({
+  apiToken: process.env.CLOUDFLARE_API_TOKEN!,
+  zoneId: process.env.CLOUDFLARE_ZONE_ID!,
+  domain: 'yourdomain.com'
+});
+
+const credentialsPath = cloudflare.generateCredentialsFile();
+
+try {
+  await ssl.createWildcard('yourdomain.com', credentialsPath, 'admin@yourdomain.com');
+  console.log('Wildcard certificate created successfully');
+} catch (error) {
+  console.error('Wildcard certificate creation failed:', error);
+} finally {
+  // Clean up credentials file
+  fs.unlinkSync(credentialsPath);
 }
 ```
 
@@ -305,6 +440,47 @@ if (renewed) {
 
 // Custom renewal threshold (10 days)
 const renewed = await ssl.renew('app.yourdomain.com', 10);
+```
+
+### Helper Methods
+
+#### `wildcardCovers(subdomain: string, domain: string): boolean`
+Checks if a subdomain is covered by a wildcard certificate for the given domain.
+
+```typescript
+const ssl = new SSL();
+
+// Check if wildcard *.yourdomain.com covers app.yourdomain.com
+const covers = ssl.wildcardCovers('app', 'yourdomain.com');
+console.log(`Wildcard covers app: ${covers}`); // true
+
+// Check if wildcard *.yourdomain.com covers deep.app.yourdomain.com  
+const coversDeep = ssl.wildcardCovers('deep.app', 'yourdomain.com');
+console.log(`Wildcard covers deep.app: ${coversDeep}`); // false (too deep)
+```
+
+#### `validateCertbotAvailable(): void`
+Validates that certbot is available on the system.
+
+```typescript
+try {
+  ssl.validateCertbotAvailable();
+  console.log('Certbot is available');
+} catch (error) {
+  console.error('Certbot not available:', error);
+}
+```
+
+#### `validateCertbotDnsCloudflareAvailable(): void`
+Validates that certbot-dns-cloudflare plugin is available (required for wildcard certificates).
+
+```typescript
+try {
+  ssl.validateCertbotDnsCloudflareAvailable();
+  console.log('Certbot DNS CloudFlare plugin is available');
+} catch (error) {
+  console.error('Certbot DNS CloudFlare plugin not available:', error);
+}
 ```
 
 ## Integration with Other Modules

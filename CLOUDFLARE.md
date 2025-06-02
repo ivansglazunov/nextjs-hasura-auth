@@ -34,6 +34,11 @@ The `CloudFlare` class provides comprehensive DNS management that:
 - **Listing**: Retrieve all DNS records for a domain
 - **Querying**: Get specific DNS records by subdomain name
 
+### SSL Integration Support
+- **ACME Challenge Support**: Create and delete TXT records for DNS-01 validation
+- **Wildcard SSL Integration**: Automatic challenge record management for wildcard certificates
+- **Credentials File Generation**: Creates certbot-dns-cloudflare compatible credentials
+
 ### API Integration
 - **Authentication**: Secure API token-based authentication
 - **Error Handling**: Comprehensive CloudFlare API error processing
@@ -338,9 +343,43 @@ console.log('DNS record is now defined');
 Ensures DNS record doesn't exist (deletes if exists, succeeds if missing).
 
 ```typescript
-// Safe operation - won't fail if record doesn't exist
+// Safe operation - won't fail if DNS record doesn't exist
 await cloudflare.undefine('app');
 console.log('DNS record is now undefined');
+```
+
+### SSL Integration Methods
+
+#### `generateCredentialsFile(): string`
+Creates CloudFlare credentials file for certbot-dns-cloudflare plugin. Returns path to created file.
+
+```typescript
+const credentialsPath = cloudflare.generateCredentialsFile();
+console.log(`Credentials file created: ${credentialsPath}`);
+
+// Use with SSL wildcard certificate creation
+await ssl.createWildcard('yourdomain.com', credentialsPath);
+
+// Clean up after use
+fs.unlinkSync(credentialsPath);
+```
+
+#### `createAcmeChallenge(token: string): Promise<DnsRecord>`
+Creates TXT record for ACME DNS-01 challenge validation (used internally by SSL module).
+
+```typescript
+// Used internally by SSL module for wildcard certificate validation
+const challengeRecord = await cloudflare.createAcmeChallenge('challenge_token_here');
+console.log(`ACME challenge created: ${challengeRecord.id}`);
+```
+
+#### `deleteAcmeChallenge(): Promise<void>`
+Deletes all ACME challenge TXT records for the domain (cleanup after certificate creation).
+
+```typescript
+// Used internally by SSL module for cleanup after wildcard certificate validation
+await cloudflare.deleteAcmeChallenge();
+console.log('ACME challenge records cleaned up');
 ```
 
 ## DNS Record Structure

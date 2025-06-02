@@ -92,6 +92,71 @@ export class SubdomainManager {
   }
 
   /**
+   * FULL CLEANUP - Remove subdomain from BOTH legacy and new mechanics
+   * This ensures complete compatibility and no orphaned SSL certificates
+   */
+  async fullCleanup(subdomain: string): Promise<void> {
+    const fullDomain = this.getFullDomain(subdomain);
+    debug(`Performing FULL CLEANUP for subdomain: ${subdomain} (${fullDomain})`);
+    
+    const errors: string[] = [];
+
+    // Step 1: Remove Nginx configuration (common for both mechanics)
+    try {
+      debug(`Removing Nginx configuration for ${fullDomain}`);
+      await this.nginx.undefine(fullDomain);
+      debug(`✅ Nginx configuration removed for ${fullDomain}`);
+    } catch (error) {
+      debug(`Nginx removal error (safe to ignore): ${error}`);
+      errors.push(`Nginx: ${error}`);
+    }
+
+    // Step 2: Remove INDIVIDUAL SSL certificate (legacy mechanic)
+    try {
+      debug(`Removing individual SSL certificate for ${fullDomain}`);
+      await this.ssl.undefine(fullDomain);
+      debug(`✅ Individual SSL certificate removed for ${fullDomain}`);
+    } catch (error) {
+      debug(`Individual SSL removal error (safe to ignore): ${error}`);
+      errors.push(`Individual SSL: ${error}`);
+    }
+
+    // Step 3: Check and preserve/clean wildcard SSL based on usage
+    if (this.useWildcardSSL) {
+      debug(`Preserving wildcard SSL certificate for ${this.domain} (shared resource)`);
+    } else {
+      // If not using wildcard SSL, we could clean it up, but it's safer to preserve
+      debug(`Wildcard SSL preserved (other subdomains might use it)`);
+    }
+
+    // Step 4: Remove DNS record (common for both mechanics)
+    try {
+      debug(`Removing DNS record for ${fullDomain}`);
+      await this.cloudflare.undefine(subdomain);
+      debug(`✅ DNS record removed for ${fullDomain}`);
+    } catch (error) {
+      debug(`DNS removal error (safe to ignore): ${error}`);
+      errors.push(`DNS: ${error}`);
+    }
+
+    // Step 5: Reinitialize nginx to ensure clean state
+    try {
+      debug(`Reinitializing nginx after full cleanup`);
+      await this.reinitializeNginx();
+      debug(`✅ Nginx reinitialized after full cleanup`);
+    } catch (error) {
+      debug(`Nginx reload error: ${error}`);
+      errors.push(`Nginx reload: ${error}`);
+    }
+
+    if (errors.length > 0) {
+      debug(`Full cleanup completed with warnings: ${errors.join(', ')}`);
+    } else {
+      debug(`✅ Full cleanup completed successfully for ${subdomain}`);
+    }
+  }
+
+  /**
    * Initialize wildcard SSL certificate (called once)
    * Creates or verifies wildcard certificate for the domain
    */
@@ -237,11 +302,11 @@ export class SubdomainManager {
   }
 
   /**
-   * Define complete subdomain with CloudFlare DNS, SSL certificate, and Nginx proxy
-   * NEW: Uses wildcard SSL instead of individual certificates
+   * Define complete subdomain with FULL COMPATIBILITY
+   * NEW: Performs full cleanup of BOTH mechanics before creation
    */
   async define(subdomain: string, config: SubdomainConfig): Promise<SubdomainInfo> {
-    debug(`Defining subdomain with wildcard SSL: ${subdomain}`);
+    debug(`Defining subdomain with FULL COMPATIBILITY: ${subdomain}`);
     
     this.validateSubdomainName(subdomain);
     
@@ -249,15 +314,21 @@ export class SubdomainManager {
     let progress = 'Starting';
 
     try {
-      // Step 0: Ensure wildcard SSL certificate is ready
+      // Step 0: FULL CLEANUP - Remove any existing configuration from BOTH mechanics
+      progress = 'Performing full cleanup';
+      debug(`${progress} for ${fullDomain}`);
+      await this.fullCleanup(subdomain);
+      debug(`✅ Full cleanup completed for ${fullDomain}`);
+
+      // Step 1: Ensure wildcard SSL certificate is ready
       if (this.useWildcardSSL) {
         progress = 'Initializing wildcard SSL';
         debug(`${progress} for domain: ${this.domain}`);
         await this.initializeWildcardSSL();
-        debug(`Wildcard SSL ready for ${this.domain}`);
+        debug(`✅ Wildcard SSL ready for ${this.domain}`);
       }
 
-      // Step 1: Create CloudFlare DNS record
+      // Step 2: Create CloudFlare DNS record
       progress = 'Creating DNS record';
       debug(`${progress} for ${fullDomain} → ${config.ip}`);
       
@@ -267,16 +338,16 @@ export class SubdomainManager {
         proxied: config.proxied || false
       });
       
-      debug(`DNS record created successfully for ${fullDomain}`);
+      debug(`✅ DNS record created successfully for ${fullDomain}`);
 
-      // Step 2: Wait for DNS propagation
+      // Step 3: Wait for DNS propagation
       progress = 'Waiting for DNS propagation';
       debug(`${progress} for ${fullDomain}`);
       
       await this.ssl.wait(fullDomain, config.ip);
-      debug(`DNS propagation completed for ${fullDomain}`);
+      debug(`✅ DNS propagation completed for ${fullDomain}`);
 
-      // Step 3: SKIP individual SSL creation - use wildcard!
+      // Step 4: SSL certificate setup
       if (this.useWildcardSSL) {
         progress = 'Using wildcard SSL certificate';
         debug(`${progress} for ${fullDomain}`);
@@ -285,17 +356,17 @@ export class SubdomainManager {
           throw new Error('Wildcard certificate not available');
         }
         
-        debug(`Using wildcard certificate ${this.wildcardCertInfo.wildcardDomain} for ${fullDomain}`);
+        debug(`✅ Using wildcard certificate ${this.wildcardCertInfo.wildcardDomain} for ${fullDomain}`);
       } else {
         // Fallback to individual SSL certificate
         progress = 'Creating individual SSL certificate';
         debug(`${progress} for ${fullDomain}`);
         
         await this.ssl.define(fullDomain, config.email);
-        debug(`Individual SSL certificate created for ${fullDomain}`);
+        debug(`✅ Individual SSL certificate created for ${fullDomain}`);
       }
 
-      // Step 4: Create Nginx configuration with SSL
+      // Step 5: Create Nginx configuration with SSL
       progress = 'Creating Nginx configuration';
       debug(`${progress} for ${fullDomain}`);
       
@@ -318,25 +389,26 @@ export class SubdomainManager {
         sslCertificateKey: sslKeyPath
       });
       
-      debug(`Nginx configuration created successfully for ${fullDomain}`);
+      debug(`✅ Nginx configuration created successfully for ${fullDomain}`);
 
-      // Step 5: Reinitialize nginx to guarantee activation
+      // Step 6: Reinitialize nginx to guarantee activation
       progress = 'Reinitializing nginx';
       debug(`${progress} for ${fullDomain}`);
       
       await this.reinitializeNginx();
-      debug(`Nginx reinitialized for ${fullDomain}`);
+      debug(`✅ Nginx reinitialized for ${fullDomain}`);
 
       // Return final subdomain information
       const finalInfo = await this.getSubdomainInfo(subdomain);
       
-      debug(`Subdomain ${subdomain} defined successfully. Fully active: ${finalInfo.fullyActive}`);
+      debug(`✅ Subdomain ${subdomain} defined successfully. Fully active: ${finalInfo.fullyActive}`);
       console.log(`🎉 Subdomain ${fullDomain} created successfully!`);
       console.log(`🌐 Available at: https://${fullDomain}`);
       console.log(`🔗 Proxies to: http://127.0.0.1:${config.port}`);
       if (this.useWildcardSSL) {
         console.log(`🔒 Using wildcard SSL certificate: ${this.wildcardCertInfo?.wildcardDomain}`);
       }
+      console.log(`♻️ Full compatibility: cleaned both legacy and new mechanics`);
       
       return finalInfo;
       
@@ -347,7 +419,7 @@ export class SubdomainManager {
       // Attempt cleanup on failure
       try {
         debug(`Attempting cleanup for failed subdomain: ${subdomain}`);
-        await this.undefine(subdomain);
+        await this.fullCleanup(subdomain);
       } catch (cleanupError) {
         debug(`Cleanup failed: ${cleanupError}`);
       }
@@ -357,68 +429,22 @@ export class SubdomainManager {
   }
 
   /**
-   * Undefine complete subdomain by removing all components
-   * NEW: Preserves wildcard SSL certificate (shared resource)
+   * Undefine complete subdomain with FULL COMPATIBILITY
+   * NEW: Performs full cleanup of BOTH mechanics
    */
   async undefine(subdomain: string): Promise<void> {
-    debug(`Undefining subdomain (preserving wildcard SSL): ${subdomain}`);
+    debug(`Undefining subdomain with FULL COMPATIBILITY: ${subdomain}`);
     
     const fullDomain = this.getFullDomain(subdomain);
-    const errors: string[] = [];
-
-    // Step 1: Remove Nginx configuration (disable first if needed)
-    try {
-      debug(`Removing Nginx configuration for ${fullDomain}`);
-      await this.nginx.undefine(fullDomain);
-      debug(`Nginx configuration removed for ${fullDomain}`);
-    } catch (error) {
-      debug(`Error removing Nginx configuration: ${error}`);
-      errors.push(`Nginx: ${error}`);
-    }
-
-    // Step 2: Remove individual SSL certificate ONLY if not using wildcard
-    if (!this.useWildcardSSL) {
-      try {
-        debug(`Removing individual SSL certificate for ${fullDomain}`);
-        await this.ssl.undefine(fullDomain);
-        debug(`Individual SSL certificate removed for ${fullDomain}`);
-      } catch (error) {
-        debug(`Error removing individual SSL certificate: ${error}`);
-        errors.push(`SSL: ${error}`);
-      }
-    } else {
-      debug(`Preserving wildcard SSL certificate for ${this.domain}`);
-    }
-
-    // Step 3: Remove CloudFlare DNS record
-    try {
-      debug(`Removing DNS record for ${fullDomain}`);
-      await this.cloudflare.undefine(subdomain);
-      debug(`DNS record removed for ${fullDomain}`);
-    } catch (error) {
-      debug(`Error removing DNS record: ${error}`);
-      errors.push(`DNS: ${error}`);
-    }
-
-    // Step 4: Reinitialize nginx to ensure clean state
-    try {
-      debug(`Reinitializing nginx after subdomain removal`);
-      await this.reinitializeNginx();
-      debug(`Nginx reinitialized after removal`);
-    } catch (error) {
-      debug(`Error reinitializing nginx: ${error}`);
-      errors.push(`Nginx reload: ${error}`);
-    }
-
-    if (errors.length > 0) {
-      debug(`Subdomain undefine completed with some errors: ${errors.join(', ')}`);
-      console.warn(`⚠️ Subdomain ${fullDomain} removed with some warnings: ${errors.join(', ')}`);
-    } else {
-      debug(`Subdomain ${subdomain} undefined successfully`);
-      console.log(`✅ Subdomain ${fullDomain} removed successfully`);
-      if (this.useWildcardSSL) {
-        console.log(`🔒 Wildcard SSL certificate preserved for other subdomains`);
-      }
+    
+    // Perform full cleanup of BOTH mechanics
+    await this.fullCleanup(subdomain);
+    
+    debug(`✅ Subdomain ${subdomain} undefined successfully with full compatibility`);
+    console.log(`✅ Subdomain ${fullDomain} removed successfully`);
+    console.log(`♻️ Full compatibility: cleaned both legacy and new mechanics`);
+    if (this.useWildcardSSL) {
+      console.log(`🔒 Wildcard SSL certificate preserved for other subdomains`);
     }
   }
 

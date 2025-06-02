@@ -103,8 +103,20 @@ If environment variables are missing, the CLI will show:
 ### Integrated Workflow
 - **DNS Management**: Automatic CloudFlare DNS record creation
 - **SSL Certificates**: Let's Encrypt certificate generation with DNS propagation waiting
+- **Wildcard SSL Support**: Efficient wildcard certificates for unlimited subdomains
 - **Nginx Configuration**: Automatic nginx site configuration with SSL
 - **Complete HTTPS Setup**: End-to-end HTTPS subdomain creation
+
+### Wildcard SSL Optimization
+- **Shared Certificates**: Single wildcard certificate covers all subdomains
+- **Rate Limit Friendly**: Reduces Let's Encrypt certificate requests
+- **DNS-01 Validation**: Uses CloudFlare API for domain validation
+- **Automatic Management**: Wildcard certificate creation and renewal
+
+### Compatibility & Migration
+- **Full Cleanup Support**: Removes both legacy individual and new wildcard certificates
+- **Backward Compatibility**: Handles existing individual certificate setups
+- **Safe Migration**: Automatic cleanup prevents SSL conflicts
 
 ### Safety and Reliability
 - **DNS Propagation Waiting**: Ensures DNS is ready before SSL certificate creation
@@ -235,106 +247,133 @@ console.log(`SubdomainManager configured for domain: ${process.env.HASYX_DNS_DOM
 ### Basic Usage
 
 ```typescript
-import { SubdomainManager } from 'hasyx';
+import { SubdomainManager, CloudFlare, SSL, Nginx } from 'hasyx';
 
-// Create subdomain manager instance (uses environment variables)
+// Create SubdomainManager with wildcard SSL support (default)
 const subdomainManager = new SubdomainManager({
-  domain: process.env.HASYX_DNS_DOMAIN!,
-  cloudflare: {
+  nginx: new Nginx(),
+  ssl: new SSL({ email: process.env.LETSENCRYPT_EMAIL }),
+  cloudflare: new CloudFlare({
     apiToken: process.env.CLOUDFLARE_API_TOKEN!,
     zoneId: process.env.CLOUDFLARE_ZONE_ID!,
     domain: process.env.HASYX_DNS_DOMAIN!
-  },
-  ssl: {
-    email: process.env.LETSENCRYPT_EMAIL!
-  },
-  defaultIp: '149.102.136.233'
+  }),
+  useWildcardSSL: true // Default: uses efficient wildcard certificates
 });
 
-// Create complete HTTPS subdomain
+// Create subdomain with HTTPS using wildcard certificate
 await subdomainManager.define('app', {
-  port: 3000,
-  ip: '149.102.136.233'
+  ip: '149.102.136.233',
+  port: 3000
 });
 
-console.log('✅ Subdomain created: https://app.yourdomain.com');
+// Check subdomain status
+const info = await subdomainManager.getSubdomainInfo('app');
+console.log(`HTTPS subdomain: https://${info.fullDomain}`);
+console.log(`SSL type: ${info.sslStatus.isWildcard ? 'Wildcard' : 'Individual'}`);
+console.log(`SSL expires: ${info.sslStatus.expiresAt}, Days left: ${info.sslStatus.daysLeft}`);
 ```
 
 ### Environment-Based Configuration
 
 ```typescript
-import { SubdomainManager } from 'hasyx';
+import { SubdomainManager, CloudFlare, SSL, Nginx } from 'hasyx';
 
-// Environment-based configuration helper
-function createSubdomainManager() {
+// Verify environment variables are configured
+function validateEnvironment() {
   const requiredVars = {
-    domain: process.env.HASYX_DNS_DOMAIN,
+    domain: process.env.HASYX_DNS_DOMAIN || process.env.DOMAIN,
     apiToken: process.env.CLOUDFLARE_API_TOKEN,
     zoneId: process.env.CLOUDFLARE_ZONE_ID,
     email: process.env.LETSENCRYPT_EMAIL
   };
 
-  // Validate configuration
-  for (const [key, value] of Object.entries(requiredVars)) {
-    if (!value) {
-      throw new Error(`Environment variable for ${key} not configured. Run: npx hasyx assist dns`);
-    }
+  const missing = Object.entries(requiredVars)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
+  if (missing.length > 0) {
+    console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+    console.log('💡 Run: npx hasyx assist dns');
+    process.exit(1);
   }
 
+  return requiredVars;
+}
+
+function createSubdomainManager() {
+  const requiredVars = validateEnvironment();
+  
   return new SubdomainManager({
-    domain: requiredVars.domain!,
-    cloudflare: {
+    nginx: new Nginx(),
+    ssl: new SSL({ 
+      email: requiredVars.email!,
+      staging: process.env.NODE_ENV !== 'production' // Use staging for development
+    }),
+    cloudflare: new CloudFlare({
       apiToken: requiredVars.apiToken!,
       zoneId: requiredVars.zoneId!,
       domain: requiredVars.domain!
-    },
-    ssl: {
-      email: requiredVars.email!
-    },
-    defaultIp: process.env.SERVER_IP || '149.102.136.233'
+    }),
+    useWildcardSSL: true // Enable efficient wildcard SSL certificates
   });
 }
 
 const subdomainManager = createSubdomainManager();
-console.log('SubdomainManager ready for use');
+console.log('SubdomainManager ready with wildcard SSL support');
 ```
 
-### Advanced Usage - Multiple Subdomains
+### Advanced Usage - Wildcard SSL Benefits
 
 ```typescript
 import { SubdomainManager } from 'hasyx';
 
 const subdomainManager = new SubdomainManager({
-  domain: process.env.HASYX_DNS_DOMAIN!,
-  cloudflare: {
+  nginx: new Nginx(),
+  ssl: new SSL({ email: process.env.LETSENCRYPT_EMAIL }),
+  cloudflare: new CloudFlare({
     apiToken: process.env.CLOUDFLARE_API_TOKEN!,
     zoneId: process.env.CLOUDFLARE_ZONE_ID!,
     domain: process.env.HASYX_DNS_DOMAIN!
-  },
-  ssl: { email: process.env.LETSENCRYPT_EMAIL! },
-  defaultIp: '149.102.136.233'
+  }),
+  useWildcardSSL: true // Single wildcard certificate covers all subdomains
 });
 
-// Create multiple subdomains with different configurations
+// Create multiple subdomains efficiently - they all share the same wildcard certificate
 const subdomains = [
   { name: 'app', port: 3000, description: 'Main application' },
   { name: 'api', port: 4000, description: 'API backend' },
   { name: 'admin', port: 5000, description: 'Admin panel' },
-  { name: 'docs', port: 6000, description: 'Documentation' }
+  { name: 'docs', port: 6000, description: 'Documentation' },
+  { name: 'staging', port: 7000, description: 'Staging environment' },
+  { name: 'dev', port: 8000, description: 'Development environment' }
 ];
 
-for (const subdomain of subdomains) {
-  console.log(`Creating ${subdomain.description}: ${subdomain.name}.${process.env.HASYX_DNS_DOMAIN}`);
+console.log('🌟 Creating subdomains with wildcard SSL (efficient & fast)');
+
+// First subdomain will create the wildcard certificate (takes 1-2 minutes)
+console.log('Creating first subdomain (will generate wildcard certificate)...');
+await subdomainManager.define(subdomains[0].name, {
+  ip: '149.102.136.233',
+  port: subdomains[0].port
+});
+console.log(`✅ ${subdomains[0].description}: https://${subdomains[0].name}.${process.env.HASYX_DNS_DOMAIN}`);
+
+// Subsequent subdomains reuse the wildcard certificate (very fast)
+console.log('Creating remaining subdomains (reusing wildcard certificate)...');
+for (let i = 1; i < subdomains.length; i++) {
+  const subdomain = subdomains[i];
   
   await subdomainManager.define(subdomain.name, {
-    port: subdomain.port,
-    ip: '149.102.136.233'
+    ip: '149.102.136.233',
+    port: subdomain.port
   });
   
-  console.log(`✅ ${subdomain.description} ready: https://${subdomain.name}.${process.env.HASYX_DNS_DOMAIN}`);
+  console.log(`✅ ${subdomain.description}: https://${subdomain.name}.${process.env.HASYX_DNS_DOMAIN}`);
 }
 
-console.log('🎉 All subdomains created successfully!');
+console.log('🎉 All subdomains created with shared wildcard SSL certificate!');
+console.log('💡 Benefits: Fast creation, reduced Let\'s Encrypt rate limits, easy management');
 ```
 
 ## Configuration Options

@@ -26,7 +26,10 @@ export class WstunnelTestClient {
   constructor(config: TestClientConfig = {}) {
     this.uuid = config.uuid || process.env.UUID || uuidv4();
     this.port = config.port || parseInt(process.env.PORT || '0');
-    this.wstunnelUrl = config.wstunnelUrl || process.env.WSTUNNEL || 'http://localhost:3000/api/wstunnel';
+    
+    // Use PORT environment variable for server URL (default 3003 from .env)
+    const serverPort = process.env.PORT || '3003';
+    this.wstunnelUrl = config.wstunnelUrl || process.env.WSTUNNEL || `http://localhost:${serverPort}/api/wstunnel`;
     this.autoRegister = config.autoRegister !== false; // Default to true
     
     debug(`WstunnelTestClient initialized with UUID: ${this.uuid}, Port: ${this.port}, WSTUNNEL: ${this.wstunnelUrl}`);
