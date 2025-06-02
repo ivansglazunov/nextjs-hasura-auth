@@ -57,6 +57,8 @@ components/**/*.ts
 components/**/*.tsx
 !components/*.d.ts
 !components/**/*.d.ts
+!components/*.d.tsx
+!components/**/*.d.ts
 hooks/*.ts
 hooks/*.tsx
 !hooks/*.d.ts

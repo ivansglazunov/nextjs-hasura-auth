@@ -38,16 +38,6 @@ const config: NextConfig = {
   skipTrailingSlashRedirect: isBuildingForClient,
   skipMiddlewareUrlNormalize: isBuildingForClient,
 
-  // Add allowedDevOrigins for development to prevent cross-origin warnings
-  allowedDevOrigins: [
-    'hasyx.deep.foundation',
-    'https://hasyx.deep.foundation',
-    '149.102.136.233:3000',
-    'http://149.102.136.233:3000',
-    'localhost:3000',
-    'http://localhost:3000'
-  ],
-
   typescript: {
     ignoreBuildErrors: isBuildingForClient,
   },
