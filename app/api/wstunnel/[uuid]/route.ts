@@ -8,12 +8,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { uuid: string } }
 ): Promise<NextResponse> {
-  // Await params before using its properties (Next.js requirement)
-  const { uuid } = await params;
-  
-  debug(`Received POST request to /api/wstunnel/${uuid}`);
+  debug(`Received POST request to /api/wstunnel/${params.uuid}`);
   
   try {
+    const { uuid } = params;
+    
     if (!uuid) {
       debug('Missing UUID parameter');
       return NextResponse.json(

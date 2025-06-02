@@ -10,7 +10,9 @@ import Debug from './debug';
 
 const debug = Debug('test:github-telegram-bot');
 
-describe('GitHub Telegram Bot Tests', () => {
+const isEnvAvailable = process.env.GITHUB_SHA && process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_ADMIN_CHAT_ID && process.env.TELEGRAM_CHANNEL_ID && process.env.GITHUB_TOKEN && process.env.OPENROUTER_API_KEY && process.env.GITHUB_TELEGRAM_BOT;
+
+(isEnvAvailable ? describe : describe.skip)('GitHub Telegram Bot Tests', () => {
   
   describe('Implementation Tests', () => {
     it('should extract repository URL from package.json', () => {
