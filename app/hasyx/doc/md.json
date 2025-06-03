@@ -1392,6 +1392,16 @@
           "title": "Testing Philosophy",
           "url": "/hasyx/doc/CONTRIBUTING#testing-philosophy",
           "level": 3
+        },
+        {
+          "title": "Testing",
+          "url": "/hasyx/doc/CONTRIBUTING#testing",
+          "level": 2
+        },
+        {
+          "title": "Adding Tests for New Features (e.g., Database Operators)",
+          "url": "/hasyx/doc/CONTRIBUTING#adding-tests-for-new-features-eg-database-operators",
+          "level": 3
         }
       ],
       "level": 1
@@ -2074,6 +2084,11 @@
           "level": 2
         },
         {
+          "title": "JSONB Operations",
+          "url": "/hasyx/doc/GENERATOR#jsonb-operations",
+          "level": 3
+        },
+        {
           "title": "1. Advanced Nested Query (Appending to Defaults)",
           "url": "/hasyx/doc/GENERATOR#1-advanced-nested-query-appending-to-defaults",
           "level": 3
@@ -2191,6 +2206,11 @@
         {
           "title": "24. Top-level Aggregate Query with Nodes",
           "url": "/hasyx/doc/GENERATOR#24-top-level-aggregate-query-with-nodes",
+          "level": 3
+        },
+        {
+          "title": "25. Upsert (Insert with `on_conflict`)",
+          "url": "/hasyx/doc/GENERATOR#25-upsert-insert-with-on-conflict",
           "level": 3
         },
         {
@@ -5982,5 +6002,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-02T23:28:51.732Z"
+  "lastUpdated": "2025-06-03T23:39:58.524Z"
 }
