@@ -238,6 +238,129 @@ export class Hasyx {
   }
 
   /**
+   * Executes an upsert operation (INSERT with ON CONFLICT DO UPDATE or fallback to INSERT then UPDATE).
+   * @param options - Options for generating the upsert, including `on_conflict` and optional `role`.
+   * @returns Promise resolving with the upserted record data.
+   * @throws ApolloError if the operation fails.
+   */
+  async upsert<TData = any>(options: ClientMethodOptions): Promise<TData> {
+    const { role, on_conflict, ...genOptions } = options;
+    debug('Executing upsert with options:', genOptions, 'on_conflict:', on_conflict, 'Role:', role);
+
+    // First, try native upsert with ON CONFLICT
+    try {
+      const generated: GenerateResult = this.generate({ ...genOptions, on_conflict, operation: 'insert' });
+      const result: FetchResult<any> = await this.apolloClient.mutate({
+        mutation: generated.query,
+        variables: generated.variables,
+        context: role ? { role } : undefined,
+        fetchPolicy: 'no-cache',
+      });
+
+      if (result.errors) {
+        debug('GraphQL errors during native upsert:', result.errors);
+        throw new ApolloError({ graphQLErrors: result.errors });
+      }
+
+      const rawData = result.data ?? {};
+      debug('Native upsert successful, raw data:', rawData);
+
+      const isBulkInsert = !generated.queryName.endsWith('_one') && ('affected_rows' in rawData || 'returning' in rawData);
+      if (isBulkInsert) {
+        debug('Upsert identified as bulk, returning full data object.');
+        return rawData as TData;
+      } else {
+        const extractedData = rawData?.[generated.queryName] ?? null;
+        debug('Upsert identified as single, returning extracted data:', extractedData);
+        return extractedData as TData;
+      }
+    } catch (error: any) {
+      // Check if this is a uniqueness violation that suggests we need fallback approach
+      const isUniqueViolation = error?.message?.includes('Uniqueness violation') ||
+                               error?.message?.includes('duplicate key value') ||
+                               error?.graphQLErrors?.some((e: any) => 
+                                 e?.message?.includes('Uniqueness violation') ||
+                                 e?.message?.includes('duplicate key value') ||
+                                 e?.extensions?.code === 'constraint-violation'
+                               );
+
+      if (isUniqueViolation) {
+        debug('Native upsert failed with uniqueness violation, attempting fallback upsert approach');
+        
+        // Fallback: Try UPDATE first, then INSERT if not found
+        try {
+          // Ensure we have object data to work with
+          if (!genOptions.object) {
+            throw new Error('Cannot perform upsert without object data');
+          }
+
+          // Prepare update data
+          const updateData: any = { ...genOptions.object };
+          delete updateData.id; // Remove ID from update data
+
+          // Try UPDATE first
+          let updateOptions: any;
+          if (genOptions.object.id) {
+            // Use by_pk update if we have an ID
+            updateOptions = {
+              ...genOptions,
+              pk_columns: { id: genOptions.object.id },
+              _set: updateData,
+              object: undefined // Remove object for update operation
+            };
+          } else {
+            // Use where-based update
+            const whereClause: any = {};
+            if (on_conflict?.constraint === '_links_pkey' && genOptions.object.id) {
+              whereClause.id = { _eq: genOptions.object.id };
+            } else {
+              // Build where clause from object fields for the constraint
+              Object.keys(genOptions.object).forEach(key => {
+                if (genOptions.object![key] !== undefined) {
+                  whereClause[key] = { _eq: genOptions.object![key] };
+                }
+              });
+            }
+            
+            updateOptions = {
+              ...genOptions,
+              where: whereClause,
+              _set: updateData,
+              object: undefined // Remove object for update operation
+            };
+          }
+
+          const updateResult = await this.update<TData>(updateOptions);
+          
+          // Check if update actually affected any rows
+          if (updateResult) {
+            debug('Fallback upsert: UPDATE successful');
+            return updateResult;
+          } else {
+            debug('Fallback upsert: UPDATE affected 0 rows, trying INSERT');
+            // If no rows were updated, try INSERT
+            return await this.insert<TData>(genOptions);
+          }
+        } catch (updateError: any) {
+          debug('Fallback upsert: UPDATE failed, trying INSERT:', updateError?.message);
+          // If UPDATE fails, try INSERT
+          try {
+            return await this.insert<TData>(genOptions);
+          } catch (insertError: any) {
+            debug('Fallback upsert: Both UPDATE and INSERT failed');
+            // If both fail, throw the original upsert error
+            throw error;
+          }
+        }
+      } else {
+        // Re-throw non-uniqueness errors
+        debug('Error during upsert (not uniqueness violation):', error);
+        throw error;
+      }
+    }
+  }
+
+  /**
    * Initiates a GraphQL subscription or sets up polling as a fallback when WebSockets are disabled.
    * @param options - Options for generating the subscription, including an optional `role` and `pollingInterval`.
    * @returns An Observable for the subscription results, emitting the unwrapped data directly.
