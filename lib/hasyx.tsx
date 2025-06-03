@@ -5,7 +5,7 @@ import { url, API_URL } from 'hasyx/lib/url';
 import { SessionProvider } from "next-auth/react";
 import { useMemo } from "react";
 import isEqual from 'react-fast-compare';
-import { Generate, GenerateOptions, GenerateResult, OnConflictOptions } from "./generator";
+import { Generate, GenerateOptions, GenerateResult } from "./generator";
 import { Hasura } from './hasura';
 
 import { ApolloError, FetchResult, Observable, OperationVariables, ApolloQueryResult } from '@apollo/client/core';
@@ -532,52 +532,6 @@ export class Hasyx {
         debug('Debug insert skipped: Not in admin context (no admin secret found in Hasyx options).');
       }
       return undefined;
-    }
-  }
-
-  /**
-   * Executes a GraphQL upsert (insert with on_conflict) mutation.
-   * @param options - Options for generating the mutation, including `on_conflict` clause, and an optional `role`.
-   * @returns Promise resolving with the mutation result data. For single operations (e.g., `insert_table_one`), returns the upserted object. For bulk operations, returns the full `{ affected_rows, returning }` object.
-   * @throws ApolloError if the mutation fails or returns GraphQL errors.
-   */
-  async upsert<TData = any>(options: ClientMethodOptions & { on_conflict: OnConflictOptions }): Promise<TData> {
-    const { role, ...genOptions } = options;
-    debug('Executing upsert with options:', genOptions, 'Role:', role);
-    // Operation is still 'insert' for the generator, on_conflict handles the upsert logic
-    const generated: GenerateResult = this.generate({ ...genOptions, operation: 'insert' });
-    try {
-      const result: FetchResult<any> = await this.apolloClient.mutate({
-        mutation: generated.query,
-        variables: generated.variables,
-        context: role ? { role } : undefined,
-        fetchPolicy: 'no-cache',
-      });
-
-      if (result.errors) {
-        debug('GraphQL errors during upsert:', result.errors);
-        throw new ApolloError({ graphQLErrors: result.errors });
-      }
-      const rawData = result.data ?? {};
-      debug('Upsert successful, raw data:', rawData);
-
-      // Upserts (like inserts) can be single or bulk based on the underlying operation name
-      const isBulkOperation = !generated.queryName.endsWith('_one') && (Object.prototype.hasOwnProperty.call(rawData[generated.queryName], 'affected_rows') || Object.prototype.hasOwnProperty.call(rawData[generated.queryName], 'returning'));
-      
-      // Hasura's upsert (insert with on_conflict) for insert_table (non _one) returns affected_rows and returning.
-      // For insert_table_one with on_conflict, it returns the object directly.
-      if (generated.queryName.endsWith('_one')) {
-        const extractedData = rawData?.[generated.queryName] ?? null;
-        debug('Upsert identified as single (_one), returning extracted data:', extractedData);
-        return extractedData as TData;
-      } else {
-        // This typically means it was a bulk-style insert_table, which for upsert will have affected_rows/returning
-        debug('Upsert identified as potentially bulk, returning full data object from queryName:', rawData?.[generated.queryName]);
-        return rawData?.[generated.queryName] as TData; 
-      }
-    } catch (error) {
-      debug('Error during upsert:', error);
-      throw error;
     }
   }
 } type ClientGeneratorOptions = Omit<GenerateOptions, 'operation'>;

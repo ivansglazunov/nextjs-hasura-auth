@@ -123,6 +123,8 @@ async function assist(options: AssistOptions = {}) {
   const projectName = path.basename(process.cwd());
   let envVars = parseEnvFile(envPath);
 
+  console.log(`📁 Working directory: ${projectName} (${process.cwd()})`);
+
   try {
     if (!options.skipAuth) await checkGitHubAuth(rl);
     else debug('Skipping GitHub auth check');

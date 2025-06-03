@@ -20,14 +20,34 @@ export async function checkGitHubAuth(rl: readline.Interface): Promise<void> {
     const authStatusResult = spawn.sync('gh', ['auth', 'status'], { stdio: 'pipe', encoding: 'utf-8' });
     if (authStatusResult.status !== 0) {
       console.log('❌ You are not authenticated with GitHub. Please login:');
-      const shouldLogin = await askYesNo(rl, 'Do you want to login now?', false);
-      if (shouldLogin) {
-        const loginResult = spawn.sync('gh', ['auth', 'login'], { stdio: 'inherit' });
-        if (loginResult.error || loginResult.status !== 0) { console.error('❌ GitHub login failed.'); process.exit(1); }
-        console.log('✅ Successfully authenticated with GitHub.');
-      } else { console.log('❌ GitHub authentication is required.'); process.exit(1); }
-    } else { console.log('✅ Already authenticated with GitHub.'); }
-  } catch (error) { console.error('❌ Error checking GitHub authentication:', error); process.exit(1); }
+      console.log('\n📋 To authenticate with GitHub, please run the following command in a separate terminal:');
+      console.log('   gh auth login');
+      console.log('\n🔗 Or use a web browser authentication:');
+      console.log('   gh auth login --web');
+      console.log('\n⚠️ After authentication, please run this command again.');
+      console.log('\nPress Enter after you have completed GitHub authentication...');
+      
+      // Wait for user to press Enter
+      await new Promise<void>((resolve) => {
+        rl.question('', () => {
+          resolve();
+        });
+      });
+      
+      // Check again after user indicates they have authenticated
+      const recheckResult = spawn.sync('gh', ['auth', 'status'], { stdio: 'pipe', encoding: 'utf-8' });
+      if (recheckResult.status !== 0) {
+        console.error('❌ GitHub authentication still not detected. Please ensure you have completed authentication.');
+        process.exit(1);
+      }
+      console.log('✅ GitHub authentication verified successfully!');
+    } else { 
+      console.log('✅ Already authenticated with GitHub.'); 
+    }
+  } catch (error) { 
+    console.error('❌ Error checking GitHub authentication:', error); 
+    process.exit(1); 
+  }
 }
 
 export async function setupRepository(rl: readline.Interface): Promise<void> {
