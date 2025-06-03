@@ -7,7 +7,7 @@ import * as UsersEntity from 'hasyx/components/entities/users';
 import * as AccountsEntity from 'hasyx/components/entities/accounts';
 import * as PaymentProvidersEntity from 'hasyx/components/entities/payments_providers';
 import * as PaymentSubscriptionsEntity from 'hasyx/components/entities/payments_subscriptions';
-import * as DefaultEntity from '@/components/entities/default';
+import * as DefaultEntity from 'hasyx/components/entities/default';
 
 interface EntityData {
   id?: string;

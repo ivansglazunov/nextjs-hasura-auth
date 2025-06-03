@@ -128,6 +128,7 @@ export class Hasyx {
         mutation: generated.query,
         variables: generated.variables,
         context: role ? { role } : undefined,
+        fetchPolicy: 'no-cache',
       });
 
       if (result.errors) {
@@ -169,6 +170,7 @@ export class Hasyx {
         mutation: generated.query,
         variables: generated.variables,
         context: role ? { role } : undefined,
+        fetchPolicy: 'no-cache',
       });
 
       if (result.errors) {
@@ -209,6 +211,7 @@ export class Hasyx {
         mutation: generated.query,
         variables: generated.variables,
         context: role ? { role } : undefined,
+        fetchPolicy: 'no-cache',
       });
 
       if (result.errors) {
@@ -395,6 +398,7 @@ export class Hasyx {
         query: generated.query,
         variables: generated.variables as TVariables,
         context: role ? { role } : undefined,
+        fetchPolicy: 'no-cache',
       }).subscribe({
         next: (result: FetchResult<any>) => {
           debug(`Hasyx.subscribe: WS subscription next callback received data`);

@@ -385,7 +385,8 @@ export class Hasura {
       args: {
         source: 'default',
         schema,
-        name: table
+        name: table,
+        cascade: true  // Force cascade to remove dependencies
       }
     });
   }
@@ -582,10 +583,10 @@ export class Hasura {
 
     debug(`🗑️ Deleting table ${schema}.${table}`);
     
-    // Untrack table first
+    // Untrack table first with cascade
     await this.untrackTable({ schema, table });
     
-    // Drop table if exists
+    // Drop table if exists with CASCADE
     await this.sql(`DROP TABLE IF EXISTS "${schema}"."${table}" CASCADE;`);
     debug(`✅ Deleted table ${schema}.${table}`);
     
@@ -1010,7 +1011,9 @@ export class Hasura {
     
     debug(`🗑️ Deleting view ${schema}.${name}`);
     
+    // Untrack view with cascade first
     await this.untrackView({ schema, name });
+    // Drop view with CASCADE to handle dependencies
     await this.sql(`DROP VIEW IF EXISTS "${schema}"."${name}" CASCADE;`);
     
     return { success: true };
@@ -1041,7 +1044,8 @@ export class Hasura {
       args: {
         source: 'default',
         schema,
-        name
+        name,
+        cascade: true  // Force cascade to remove dependencies
       }
     });
   }
@@ -1414,17 +1418,34 @@ export class Hasura {
     
     debug(`🗑️ Deleting schema ${schema} ${cascade ? 'with CASCADE' : ''}`);
     
-    // First untrack all tables in the schema
+    // First untrack all tables and views in the schema with cascade
     try {
       const tables = await this.tables({ schema });
       for (const table of tables) {
         await this.untrackTable({ schema, table });
       }
+      
+      // Also check for views and untrack them
+      const views = await this.sql(`
+        SELECT table_name 
+        FROM information_schema.views 
+        WHERE table_schema = '${schema}'
+        ORDER BY table_name;
+      `);
+      
+      if (views.result && views.result.length > 1) {
+        for (let i = 1; i < views.result.length; i++) {
+          const viewName = views.result[i][0];
+          if (viewName) {
+            await this.untrackView({ schema, name: viewName });
+          }
+        }
+      }
     } catch (error) {
-      debug(`Warning: Could not untrack tables in schema ${schema}: ${error}`);
+      debug(`Warning: Could not untrack all objects in schema ${schema}: ${error}`);
     }
     
-    // Drop schema
+    // Drop schema with CASCADE to force removal of all dependencies
     const cascadeClause = cascade ? 'CASCADE' : 'RESTRICT';
     await this.sql(`DROP SCHEMA IF EXISTS "${schema}" ${cascadeClause};`);
     

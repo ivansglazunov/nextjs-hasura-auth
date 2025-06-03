@@ -39,7 +39,7 @@ export interface ApolloOptions {
 export interface HasyxApolloClient extends ApolloClient<any> {
   Provider: React.ComponentType<{ children: React.ReactNode }>;
   _options: ApolloOptions;
-  hasyxGenerator: Generate;
+  hasyxGenerator: Generate; 
   graphqlWsClient?: GraphQLWSClientInstance; 
   terminate?: () => void; 
 }

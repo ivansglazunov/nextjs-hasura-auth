@@ -18,7 +18,7 @@ import schema from '../public/hasura-schema.json'; // Import the schema
 const generate = Generator(schema);
 
 // --- Test Configuration --- 
-const PROXY_GRAPHQL_URL = 'http://localhost:3000/api/graphql'; // Assuming default Next.js port
+const PROXY_GRAPHQL_URL = `http://localhost:${process.env.PORT}/api/graphql`; // Assuming default Next.js port
 const HASURA_URL = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
 const ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET;
 

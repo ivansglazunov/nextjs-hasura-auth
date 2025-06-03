@@ -2406,21 +2406,6 @@
           "title": "React Hooks Usage",
           "url": "/hasyx/doc/HASYX#react-hooks-usage",
           "level": 2
-        },
-        {
-          "title": "In your .env file",
-          "url": "/hasyx/doc/HASYX#in-your-env-file",
-          "level": 1
-        },
-        {
-          "title": "Run the debug migration (included in standard Hasyx migrations)",
-          "url": "/hasyx/doc/HASYX#run-the-debug-migration-included-in-standard-hasyx-migrations",
-          "level": 1
-        },
-        {
-          "title": "Filter by specific debug types",
-          "url": "/hasyx/doc/HASYX#filter-by-specific-debug-types",
-          "level": 1
         }
       ],
       "level": 1
@@ -5997,5 +5982,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-02T21:25:38.356Z"
+  "lastUpdated": "2025-06-02T23:28:51.732Z"
 }
