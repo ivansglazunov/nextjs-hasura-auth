@@ -198,6 +198,7 @@ export function Generator(schema: any): Generate { // We take the __schema objec
         queryArgs.push(`${argName}: $${varName}`);
         variables[varName] = value;
          const gqlType = getGqlTypeFromSchema(argDefinition.type);
+        debug(`[generator] addArgument: name=$${varName}, type=${gqlType}, value=`, value);
           // Check if var already exists before pushing
           if (!varParts.some(p => p.startsWith(`$${varName}:`))) {
         varParts.push(`$${varName}: ${gqlType}`);

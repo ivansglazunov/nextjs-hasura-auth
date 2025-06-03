@@ -109,6 +109,51 @@ The `generate` function accepts an object with the following properties:
 *   [23. Aggregate Functions with Column Specifications](#23-aggregate-functions-with-column-specifications)
 *   [24. Top-level Aggregate Query with Nodes](#24-top-level-aggregate-query-with-nodes)
 
+### JSONB Operations
+
+The generator supports querying JSONB columns using Hasura's JSONB operators (e.g., `_contains`, `_has_key`, `_has_keys_all`, `_has_keys_any`) within the `where` clause. This functionality relies on your `hasura-schema.json` correctly defining these operators and associated types (like `jsonb_comparison_exp` and the `jsonb` scalar type) for your JSONB columns.
+
+**Example: Querying with `_contains` on a JSONB column named `metadata`:**
+
+```typescript
+const options: GenerateOptions = {
+  operation: 'query',
+  table: 'my_table',
+  where: {
+    metadata: { 
+      _contains: { "project_id": "alpha" }
+    }
+  },
+  returning: ['id', 'name', 'metadata']
+};
+const result = generate(options);
+```
+
+This would generate a query similar to:
+
+```graphql
+query QueryMyTable($v1: my_table_bool_exp) {
+  my_table(where: $v1) {
+    id
+    name
+    metadata
+  }
+}
+```
+
+With variables:
+
+```json
+{
+  "v1": {
+    "metadata": { 
+      "_contains": { "project_id": "alpha" }
+    }
+  }
+}
+```
+
+Ensure your Hasura schema introspection (`npx hasyx schema`) correctly captures the necessary JSONB comparison expressions for your tables.
 
 ### 1. Advanced Nested Query (Appending to Defaults)
 
@@ -153,6 +198,38 @@ query QueryUsers($v1: users_bool_exp, $v2: github_accounts_bool_exp, $v3: Int) {
     created_at
     updated_at
     # Appended relation (using alias) with parameters:
+    accounts: github_accounts(where: $v2, limit: $v3) {
+      id
+      provider
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": { "id": { "_eq": "user-for-test-13" } },
+  "v2": { "provider": { "_eq": "github" } },
+  "v3": 5
+}
+```
+</details>
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+query QueryUsers($v1: users_bool_exp, $v2: github_accounts_bool_exp, $v3: Int) {
+  users(where: $v1) {
+    id
+    name
+    email
+    created_at
+    updated_at
     accounts: github_accounts(where: $v2, limit: $v3) {
       id
       provider

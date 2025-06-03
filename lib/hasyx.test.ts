@@ -319,3 +319,141 @@ function cleanupHasyx(hasyx: Hasyx, label: string = '') {
     }, 30000);
   });
 });
+
+// New describe block for JSONB operations tests
+describe('Hasyx JSONB Operations Tests', () => {
+  let adminHasyx: Hasyx;
+  const testIdBase = uuidv4(); // Base for unique IDs in this test run
+  const testData = {
+    test_key: `test_value_${testIdBase}`,
+    another_key: 12345,
+    nested: {
+      foo: "bar"
+    }
+  };
+  let debugEntryId: string | null = null;
+
+  beforeAll(async () => {
+    adminHasyx = createAdminHasyx();
+    try {
+      const result = await adminHasyx.insert<{ id: string }>({
+        table: 'debug',
+        object: { value: testData },
+        returning: ['id']
+      });
+      if (result && result.id) {
+        debugEntryId = result.id;
+        debug(`[test:hasyx:jsonb] Created debug entry for JSONB tests: ${debugEntryId} with data:`, testData);
+      } else {
+        console.error('[test:hasyx:jsonb] Failed to create debug entry. Result:', result);
+        throw new Error('Failed to create debug entry for JSONB tests.');
+      }
+    } catch (e: any) {
+      debug(`[test:hasyx:jsonb] Error in beforeAll: ${e.message}`, e);
+      console.error('[test:hasyx:jsonb] Error in beforeAll creating debug entry:', e);
+      throw e; 
+    }
+  }, 15000); // Increased timeout for beforeAll
+
+  afterAll(async () => {
+    if (debugEntryId && adminHasyx) {
+      try {
+        await adminHasyx.delete({
+          table: 'debug',
+          pk_columns: { id: debugEntryId }
+        });
+        debug(`[test:hasyx:jsonb] Cleaned up debug entry: ${debugEntryId}`);
+      } catch (e: any) {
+        debug(`[test:hasyx:jsonb] Error cleaning up debug entry ${debugEntryId}: ${e.message}`);
+      }
+    }
+    cleanupHasyx(adminHasyx, 'JSONB tests');
+  }, 15000); // Increased timeout for afterAll
+
+  it('should select data using JSONB _contains operator', async () => {
+    if (!debugEntryId) throw new Error("debugEntryId is null, beforeAll likely failed.");
+    debug(`[test:hasyx:jsonb] Testing _contains with entry ID: ${debugEntryId}`);
+    
+    const results = await adminHasyx.select<any[]>({
+      table: 'debug',
+      where: {
+        value: { _contains: { test_key: testData.test_key } } 
+      },
+      returning: ['id', 'value']
+    });
+    
+    debug(`[test:hasyx:jsonb] _contains select result (matching):`, results);
+    expect(results).toBeDefined();
+    expect(Array.isArray(results)).toBe(true);
+    
+    const foundEntry = results.find(r => r.id === debugEntryId);
+    expect(foundEntry).toBeDefined();
+    if (foundEntry) {
+        expect(foundEntry.value).toEqual(testData);
+    }
+    
+    const nonMatchingResults = await adminHasyx.select<any[]>({
+        table: 'debug',
+        where: { value: { _contains: { non_existent_key: "blah" } } },
+        returning: ['id']
+    });
+    debug(`[test:hasyx:jsonb] _contains select result (non-matching):`, nonMatchingResults);
+    const nonMatchingFoundEntry = nonMatchingResults.find(r => r.id === debugEntryId);
+    expect(nonMatchingFoundEntry).toBeUndefined();
+  }, 15000);
+
+  it('should select data using JSONB _has_key operator', async () => {
+    if (!debugEntryId) throw new Error("debugEntryId is null, beforeAll likely failed.");
+    debug(`[test:hasyx:jsonb] Testing _has_key with entry ID: ${debugEntryId}`);
+
+    const results = await adminHasyx.select<any[]>({
+      table: 'debug',
+      where: {
+        value: { _has_key: "another_key" }
+      },
+      returning: ['id', 'value']
+    });
+
+    debug(`[test:hasyx:jsonb] _has_key select result (matching):`, results);
+    expect(results).toBeDefined();
+    expect(Array.isArray(results)).toBe(true);
+    const foundEntry = results.find(r => r.id === debugEntryId);
+    expect(foundEntry).toBeDefined();
+    if (foundEntry) {
+        expect(foundEntry.value).toEqual(testData);
+    }
+    
+     const nonMatchingResults = await adminHasyx.select<any[]>({
+        table: 'debug',
+        where: { value: { _has_key: "non_existent_key_string" } },
+        returning: ['id']
+    });
+    debug(`[test:hasyx:jsonb] _has_key select result (non-matching):`, nonMatchingResults);
+    const nonMatchingFoundEntry = nonMatchingResults.find(r => r.id === debugEntryId);
+    expect(nonMatchingFoundEntry).toBeUndefined();
+  }, 15000);
+  
+  it('should select data using JSONB _has_keys_all operator', async () => {
+    if (!debugEntryId) throw new Error("debugEntryId is null, beforeAll likely failed.");
+    const results = await adminHasyx.select<any[]>({
+      table: 'debug',
+      where: { value: { _has_keys_all: ["test_key", "another_key"] } },
+      returning: ['id']
+    });
+    debug(`[test:hasyx:jsonb] _has_keys_all select result:`, results);
+    const foundEntry = results.find(r => r.id === debugEntryId);
+    expect(foundEntry).toBeDefined();
+  }, 15000);
+
+  it('should select data using JSONB _has_keys_any operator', async () => {
+    if (!debugEntryId) throw new Error("debugEntryId is null, beforeAll likely failed.");
+    const results = await adminHasyx.select<any[]>({
+      table: 'debug',
+      where: { value: { _has_keys_any: ["test_key", "non_existent_for_any"] } },
+      returning: ['id']
+    });
+    debug(`[test:hasyx:jsonb] _has_keys_any select result:`, results);
+    const foundEntry = results.find(r => r.id === debugEntryId);
+    expect(foundEntry).toBeDefined();
+  }, 15000);
+});

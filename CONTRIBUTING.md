@@ -645,3 +645,31 @@ DNS/SSL modules follow the project's real functionality testing approach:
 - **Production Validation**: Tests validate actual functionality that will work in production
 
 For detailed documentation, see [`CLOUDFLARE.md`](CLOUDFLARE.md), [`SSL.md`](SSL.md), [`NGINX.md`](NGINX.md), and [`SUBDOMAIN.md`](SUBDOMAIN.md). 
+
+## Testing
+
+### Adding Tests for New Features (e.g., Database Operators)
+
+When adding support for new database features, data types, or specific operators (e.g., JSONB operators), it is crucial to provide comprehensive testing and documentation.
+
+1.  **Unit Tests (`generator.test.ts`):
+    *   Add specific unit tests to `generator.test.ts` to verify that the query generator (`lib/generator.ts`) correctly produces the expected GraphQL query strings and variables for the new feature.
+    *   These tests should cover various use cases and edge cases for the operator(s) or data type(s) in question.
+    *   Ensure these tests are based on the `hasura-schema.json` and that expected types (e.g., `jsonb_comparison_exp`) are correctly referenced.
+
+2.  **Integration Tests (`hasyx.test.ts`):
+    *   Add integration tests to `hasyx.test.ts` to validate the end-to-end functionality with a live Hasura instance.
+    *   These tests should use the `Hasyx` class methods (e.g., `hasyx.select()`, `hasyx.insert()`) to interact with the database.
+    *   If applicable, create temporary test data within a `beforeAll` or `beforeEach` block and clean it up in an `afterAll` or `afterEach` block.
+    *   For example, when testing JSONB operators, the integration tests for `hasyx.select` should target a table with a JSONB column (like the `debug` table) and verify that the operators (`_contains`, `_has_key`, etc.) filter data as expected.
+
+3.  **Documentation (`GENERATOR.md`, `HASYX.md`, etc.):
+    *   Document the new feature in `GENERATOR.md`, explaining how to use the relevant options in `GenerateOptions` to utilize the feature.
+    *   Provide clear examples in `HASYX.md` showing how to use the feature with both the `Hasyx` class methods and the React hooks (`useQuery`, `useSelect`, etc.).
+    *   All examples in documentation must be based on successfully tested scenarios.
+
+4.  **Debugging Aids:
+    *   Utilize the existing `debug` utility (e.g., `DEBUG="hasyx*" npm test ...`) to trace execution flow during testing and development.
+    *   If adding new complex logic, consider adding relevant debug statements to aid in future troubleshooting.
+
+By following these steps, we ensure that new Hasyx features are robust, well-documented, and maintainable. 

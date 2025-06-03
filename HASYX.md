@@ -732,6 +732,84 @@ function UserContentDashboard() {
 }
 ```
 
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
 #### Aggregation Queries
 
 Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
@@ -953,323 +1031,4294 @@ function AnalyticsComponent() {
 
 These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
 
-### Available Hooks
+#### Querying JSONB Data
 
-*   `useClient(providedClient?: ApolloClient<any> | null): Hasyx`: Hook to get an instance of the `Hasyx` class.
-*   `useSession()`: Re-exported from NextAuth for consistency. Returns session data and status.
-*   `useQuery(generateOptions: HasyxMethodOptions, hookOptions?: QueryHookOptions): QueryResult`: Core query hook.
-*   `useSubscription(generateOptions: HasyxMethodOptions, hookOptions?: SubscriptionHookOptions): SubscriptionResult`: Core subscription hook. Falls back to polling-based implementation if WebSockets are disabled (`NEXT_PUBLIC_WS=0`).
-*   `useMutation(generateOptions: HasyxMethodOptions & { operation: GenerateOperation }, hookOptions?: MutationHookOptions): [mutateFn, MutationResult]`: Core mutation hook (requires `operation` in `generateOptions`).
-*   **Aliases:**
-    *   `useSelect`: Alias for `useQuery`.
-    *   `useSubscribe`: Alias for `useSubscription`.
-    *   ~~`useInsert`~~, ~~`useUpdate`~~, ~~`useDelete`~~: *These aliases are NOT currently implemented. Use `useMutation` or `useClient` instead.* 
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
 
-**Hook Arguments:**
-
-1.  `generateOptions`: An object matching `Omit<GenerateOptions, 'operation'>` (for `useQuery`/`useSubscription` and aliases) or `GenerateOptions` (for `useMutation`). Defines *what* data to operate on. Assumed type is `HasyxMethodOptions`.
-2.  `hookOptions` (Optional): An object containing:
-    *   `role?: string`: The Hasura role to use for the request.
-    *   `pollingInterval?: number`: For subscriptions, the interval in milliseconds between polling requests when WebSockets are disabled. Defaults to 1000ms.
-    *   Any other valid options for the underlying Apollo hook (`useQuery`, `useSubscription`, `useMutation`), like `variables`, `skip`, `onCompleted`, `onError`, `fetchPolicy`, etc. *except* `query`, `mutation`, or `context` (which are handled internally).
-
-## Important Considerations
-
-*   **ApolloProvider:** Hooks rely on `ApolloProvider` in the component tree.
-*   **User Management:** The Hasyx instance automatically syncs user data with NextAuth sessions. Access current user via `hasyx.user` and user ID via `hasyx.userId`. Always import `useSession` from 'hasyx' instead of 'next-auth/react' for consistency.
-*   **Generator Options:** Refer to `GENERATOR.md` for details on `GenerateOptions`.
-*   **Role Setting:** 
-    *   The `role` passed in options is added to the Apollo operation's `context`. The `roleLink` configured in `lib/apollo.tsx` reads this context to set the `X-Hasura-Role` header for HTTP requests. WebSocket role handling is typically managed at connection time.
-    *   **Understanding Roles (`user` vs `me`):** 
-        *   A standard role like `'user'` defines a general set of permissions for logged-in users.
-        *   The special role `'me'` is commonly used in Hasura permissions that depend on the `X-Hasura-User-Id` session variable. This allows you to define rules like "users can only select/update/delete *their own* records". Passing `{ role: 'me' }` tells Hasura to evaluate these specific user-ID-based permissions.
-        *   Always ensure your Hasura permissions are configured correctly for the roles you intend to use (`user`, `me`, `admin`, `anonymous`, etc.).
-*   **Dependencies:** Depends on `@apollo/client`, `react`, `lib/generator`, `lib/debug`, `react-fast-compare`, and `ts-essentials`.
-*   **Memoization (Hooks):** Hooks memoize generated queries based on `generateOptions`. Ensure this object is stable between renders if needed (e.g., use `React.useMemo`).
-*   **Subscription Cleanup:** Apollo Client's `useSubscription` hook handles WebSocket cleanup automatically on unmount. For polling-based subscriptions, timeouts are properly cleared on unmount.
-*   **WebSocket Fallback:** 
-    *   Set `NEXT_PUBLIC_WS=0` in your environment variables to enable the polling-based subscription fallback.
-    *   This is particularly useful for serverless environments like Vercel where WebSockets might not be supported.
-    *   The polling mechanism uses deep equality checks (`react-fast-compare`) to ensure subscribers only receive updates when data has actually changed.
-*   **Class Method Return Values:** Methods like `select`, `insert`, `update`, `delete` now return the *unwrapped* data where applicable (e.g., `User[]` or `User` object). For bulk mutations or aggregate queries, they return the standard Hasura response structure (`{ affected_rows, returning }` or `{ aggregate, nodes }`). Ensure the generic `TData` type matches the expected return value.
-*   **Hook Return Values:** Hooks (`useQuery`, `useSubscription`, etc.) return the standard Apollo Client result objects with the added benefit of automatically unwrapped data. Like the class methods, the hooks extract data from the nested Hasura structure, so you directly get the data without needing to access it via the query name (e.g., you get `result.data` instead of `result.data.users`). Only aggregate queries preserve the full structure. This consistent behavior makes it easier to switch between class methods and hooks. 
-
-### Debug Logging
-
-The Hasyx class provides a `debug()` method for server-side debug logging to the database. This method inserts debug entries into a dedicated `debug` table for monitoring and troubleshooting.
-
-#### Debug Method
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
 
 ```typescript
-debug(value: any): Promise<any> | undefined
-```
-
-**Description:** Inserts a debug log entry if `HASYX_DEBUG` is enabled and admin secret is present. This method is intended for server-side admin use only.
-
-**Parameters:**
-- `value: any` - The JSONB value to log (objects, arrays, strings, numbers, etc.)
-
-**Returns:** 
-- `Promise<any>` - The result of the insert operation if executed
-- `undefined` - If debug logging is disabled or not in admin context
-
-**Conditions for Execution:**
-1. `HASYX_DEBUG` environment variable must be set to `1` or any truthy value
-2. The Hasyx instance must have an admin secret (admin context)
-
-#### Environment Setup
-
-**Enable Debug Logging:**
-```bash
-# In your .env file
-HASYX_DEBUG=1
-```
-
-**Database Migration:**
-Debug logging requires the `debug` table to exist in your database. This is automatically created by the Hasyx debug migration:
-
-```bash
-# Run the debug migration (included in standard Hasyx migrations)
-npx hasyx migrate
-```
-
-#### Usage Examples
-
-**Basic Debug Logging:**
-```typescript
-import { createApolloClient } from 'hasyx/lib/apollo';
-import { Hasyx } from 'hasyx/lib/hasyx';
-import { Generator } from 'hasyx/lib/generator';
-import schema from '@/public/hasura-schema.json';
-
-// Create admin client for debug logging
-const adminClient = createApolloClient({
-  url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
-  secret: process.env.HASURA_ADMIN_SECRET!, // Required for debug logging
-});
-
-const hasyx = new Hasyx(adminClient, Generator(schema));
-
-// Simple debug logging
-async function debugExample() {
-  // Log a simple message
-  await hasyx.debug({ message: 'User login attempt', userId: '123' });
-  
-  // Log complex objects
-  await hasyx.debug({
-    action: 'payment_processing',
-    paymentData: {
-      amount: 99.99,
-      currency: 'USD',
-      provider: 'stripe'
-    },
-    timestamp: new Date().toISOString(),
-    metadata: { ip: '192.168.1.1', userAgent: 'Mozilla/5.0...' }
-  });
-  
-  // Log error information
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
   try {
-    // Some operation that might fail
-    await riskyOperation();
-  } catch (error) {
-    await hasyx.debug({
-      error: 'Operation failed',
-      details: error.message,
-      stack: error.stack,
-      context: { userId: 'user123', action: 'riskyOperation' }
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
     });
-    throw error;
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
   }
 }
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
 ```
 
-**API Route Debug Logging:**
+**Example using `useSelect` hook with `_contains`:**
+
 ```typescript
-// app/api/webhook/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { Hasyx } from 'hasyx';
-
-export async function POST(request: NextRequest) {
-  const adminHasyx = createAdminHasyx();
-  
-  try {
-    const payload = await request.json();
-    
-    // Log incoming webhook
-    await adminHasyx.debug({
-      type: 'webhook_received',
-      payload,
-      headers: Object.fromEntries(request.headers),
-      timestamp: Date.now()
-    });
-    
-    // Process webhook...
-    const result = await processWebhook(payload);
-    
-    // Log successful processing
-    await adminHasyx.debug({
-      type: 'webhook_processed',
-      success: true,
-      result,
-      processingTime: Date.now() - startTime
-    });
-    
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    // Log error with context
-    await adminHasyx.debug({
-      type: 'webhook_error',
-      error: error.message,
-      stack: error.stack,
-      requestId: request.headers.get('x-request-id')
-    });
-    
-    return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
-  }
-}
-```
-
-**Event Handler Debug Logging:**
-```typescript
-// app/api/events/users/route.ts
-import { hasyxEvent, HasuraEventPayload } from 'hasyx/lib/events';
-
-export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
-  const adminHasyx = createAdminHasyx();
-  
-  // Log event processing
-  await adminHasyx.debug({
-    event_type: 'hasura_event',
-    operation: payload.event.op,
-    table: `${payload.table.schema}.${payload.table.name}`,
-    trigger: payload.trigger.name,
-    data_summary: {
-      has_old: !!payload.event.data.old,
-      has_new: !!payload.event.data.new,
-      new_id: payload.event.data.new?.id
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
     },
-    delivery_info: payload.delivery_info
-  });
-  
-  if (payload.event.op === 'INSERT') {
-    const newUser = payload.event.data.new;
-    
-    // Log user registration
-    await adminHasyx.debug({
-      action: 'user_registered',
-      user_id: newUser.id,
-      email: newUser.email,
-      registration_method: newUser.provider || 'email',
-      has_verified_email: !!newUser.email_verified
-    });
-    
-    // Send welcome email, etc.
-  }
-  
-  return { success: true };
-});
-```
-
-#### Debug Table Structure
-
-The debug table has the following structure:
-
-```sql
-CREATE TABLE debug (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000,
-  updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000,
-  value JSONB, -- Your debug data stored here
-  _hasyx_schema_name TEXT,
-  _hasyx_table_name TEXT
-);
-```
-
-#### Querying Debug Logs
-
-**Via Hasura Console:**
-1. Go to Hasura Console → Data → debug table
-2. Browse entries or run GraphQL queries
-
-**Via GraphQL:**
-```graphql
-query GetRecentDebugLogs {
-  debug(
-    order_by: { created_at: desc }
-    limit: 50
-  ) {
-    id
-    created_at
-    value
-  }
-}
-
-# Filter by specific debug types
-query GetErrorLogs {
-  debug(
-    where: {
-      value: { _contains: { type: "webhook_error" } }
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
     }
-    order_by: { created_at: desc }
-  ) {
-    id
-    created_at
-    value
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
   }
 }
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
 ```
 
-**Via Hasyx Client:**
+**Example using `useSelect` hook with `_contains`:**
+
 ```typescript
-// Get recent debug logs
-const logs = await hasyx.select({
-  table: 'debug',
-  order_by: [{ created_at: 'desc' }],
-  limit: 100,
-  returning: ['id', 'created_at', 'value']
-});
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
 
-// Filter by debug type
-const errorLogs = await hasyx.select({
-  table: 'debug',
-  where: {
-    value: { _contains: { type: 'error' } }
-  },
-  order_by: [{ created_at: 'desc' }],
-  returning: ['id', 'created_at', 'value']
-});
-```
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
 
-#### Best Practices
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
 
-1. **Enable Only When Needed:** Debug logging creates database entries, so only enable `HASYX_DEBUG=1` when actively debugging
-2. **Structure Your Logs:** Use consistent structure in debug objects for easier querying
-3. **Include Context:** Always include relevant context like user IDs, request IDs, timestamps
-4. **Clean Up Regularly:** Consider implementing log rotation to prevent the debug table from growing too large
-5. **Sensitive Data:** Avoid logging sensitive information like passwords, tokens, or personal data
-6. **Performance Impact:** Debug logging involves database writes, so use judiciously in high-traffic scenarios
-
-#### Security Considerations
-
-- Debug logging only works with admin-level Hasyx instances (requires `HASURA_ADMIN_SECRET`)
-- Debug logs are stored in your database and accessible via GraphQL queries
-- Ensure proper access controls on the debug table in production
-- Consider who has access to debug logs as they may contain sensitive operational data
-
-#### Troubleshooting Debug Logging
-
-**Debug Logging Not Working:**
-1. Check `HASYX_DEBUG=1` is set in environment
-2. Verify Hasyx instance has admin secret configured
-3. Ensure debug table exists (run migrations)
-4. Check database permissions
-
-**Debug Method Returns Undefined:**
-```typescript
-const result = await hasyx.debug({ test: 'value' });
-if (result === undefined) {
-  console.log('Debug logging is disabled or not in admin context');
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
 }
 ```
 
-This debug functionality is particularly useful for monitoring production systems, troubleshooting issues, and understanding application behavior in server-side contexts. 
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created_at}</p>
+      <p>Latest User: {data?.users_aggregate?.aggregate?.max?.created_at}</p>
+    </div>
+  );
+}
+
+// Nested aggregation - get aggregate data for related entities
+function UserDashboardWithAggregates() {
+  const { data } = useQuery(
+    {
+      table: 'users',
+      where: { is_active: { _eq: true } },
+      returning: [
+        'id',
+        'name',
+        'email',
+        {
+          posts_aggregate: {
+            where: { published: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { view_count: true },
+              max: { view_count: true }
+            }
+          }
+        },
+        {
+          comments_aggregate: {
+            aggregate: {
+              count: ['*']
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  return (
+    <div>
+      {data?.map(user => (
+        <div key={user.id}>
+          <h3>{user.name}</h3>
+          <p>Email: {user.email}</p>
+          <p>Published Posts: {user.posts_aggregate?.aggregate?.count}</p>
+          <p>Average Views: {user.posts_aggregate?.aggregate?.avg?.view_count?.toFixed(1)}</p>
+          <p>Best Post Views: {user.posts_aggregate?.aggregate?.max?.view_count}</p>
+          <p>Total Comments: {user.comments_aggregate?.aggregate?.count}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Combined aggregation with actual data
+function TournamentDashboard() {
+  const { data, loading } = useSelect(
+    {
+      table: 'tournaments',
+      where: { status: { _in: ['active', 'completed'] } },
+      returning: [
+        'id',
+        'name',
+        'status',
+        'type',
+        {
+          games_aggregate: {
+            aggregate: { count: ['*'] }
+          }
+        },
+        {
+          games: {
+            where: { status: { _eq: 'finished' } },
+            limit: 5,
+            order_by: [{ created_at: 'desc' }],
+            returning: ['id', 'result', 'created_at']
+          }
+        },
+        {
+          participants_aggregate: {
+            where: { active: { _eq: true } },
+            aggregate: {
+              count: ['*'],
+              avg: { rating: true },
+              max: { rating: true }
+            }
+          }
+        }
+      ]
+    },
+    { role: 'user' }
+  );
+
+  if (loading) return <div>Loading tournament data...</div>;
+
+  return (
+    <div>
+      {data?.map(tournament => (
+        <div key={tournament.id}>
+          <h2>{tournament.name}</h2>
+          <p>Status: {tournament.status}</p>
+          <p>Total Games: {tournament.games_aggregate?.aggregate?.count}</p>
+          <p>Active Players: {tournament.participants_aggregate?.aggregate?.count}</p>
+          <p>Avg Rating: {tournament.participants_aggregate?.aggregate?.avg?.rating?.toFixed(0)}</p>
+          <p>Top Rating: {tournament.participants_aggregate?.aggregate?.max?.rating}</p>
+          
+          <h3>Recent Games</h3>
+          {tournament.games?.map(game => (
+            <div key={game.id}>
+              <span>{game.result} - {new Date(game.created_at).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Using useClient for complex aggregation logic
+function AnalyticsComponent() {
+  const client = useClient();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplexStats = async () => {
+    setLoading(true);
+    try {
+      // Multiple aggregate queries
+      const [userStats, postStats, commentStats] = await Promise.all([
+        client.select({
+          table: 'users',
+          aggregate: {
+            count: true,
+            max: { created_at: true },
+            min: { created_at: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'posts',
+          where: { published: { _eq: true } },
+          aggregate: {
+            count: true,
+            sum: { view_count: true },
+            avg: { view_count: true }
+          },
+          role: 'admin'
+        }),
+        client.select({
+          table: 'comments',
+          where: { created_at: { _gte: '2024-01-01' } },
+          aggregate: {
+            count: true
+          },
+          role: 'admin'
+        })
+      ]);
+
+      setStats({
+        users: userStats.users_aggregate?.aggregate,
+        posts: postStats.posts_aggregate?.aggregate,
+        comments: commentStats.comments_aggregate?.aggregate
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplexStats();
+  }, []);
+
+  if (loading) return <div>Computing analytics...</div>;
+
+  return (
+    <div>
+      <h2>Platform Analytics</h2>
+      {stats && (
+        <div>
+          <div>Total Users: {stats.users?.count}</div>
+          <div>Published Posts: {stats.posts?.count}</div>
+          <div>Total Views: {stats.posts?.sum?.view_count?.toLocaleString()}</div>
+          <div>Average Views per Post: {stats.posts?.avg?.view_count?.toFixed(1)}</div>
+          <div>Comments This Year: {stats.comments?.count}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+These examples showcase the flexibility and power of the Hasyx hooks when working with complex data requirements. Each example demonstrates different capabilities that match the full functionality available in the underlying `Generator` function.
+
+#### Querying JSONB Data
+
+Hasyx supports querying JSONB columns using Hasura's standard JSONB operators within the `where` clause. This functionality depends on your `hasura-schema.json` correctly defining these operators and the `jsonb_comparison_exp` for your JSONB fields. Refer to `GENERATOR.md` for more details on how the generator handles these.
+
+**Example using `client.select()` with `_contains` on a `debug` table's `value` (JSONB) column:**
+
+```typescript
+async function findDebugEntriesByValue(client: HasyxClient, searchTerm: string) {
+  try {
+    const entries = await client.select({
+      table: 'debug',
+      where: {
+        value: { _contains: { message: searchTerm } }
+        // Example for checking a top-level key:
+        // value: { _has_key: "specific_key" }
+      },
+      returning: ['id', 'value', 'created_at']
+    });
+    console.log('Debug entries found:', entries);
+    return entries;
+  } catch (error) {
+    console.error('Failed to fetch debug entries:', error);
+  }
+}
+
+// To use it (assuming you have a HasyxClient instance):
+// const client = useClient(); // or new Hasyx(...)
+// findDebugEntriesByValue(client, "user_login_attempt"); 
+```
+
+**Example using `useSelect` hook with `_contains`:**
+
+```typescript
+function DebugLogViewer({ searchTerm }: { searchTerm: string }) {
+  const { loading, error, data } = useSelect(
+    { // Generator Options
+      table: 'debug',
+      where: {
+        value: { _contains: { event_type: searchTerm } }
+      },
+      returning: ['id', 'value', 'created_at'],
+      order_by: [{ created_at: 'desc' }],
+      limit: 20
+    },
+    { // Hook Options
+      role: 'admin', // Assuming admin role is needed to view debug logs
+      skip: !searchTerm
+    }
+  );
+
+  if (loading) return <p>Loading debug logs...</p>;
+  if (error) return <p>Error loading logs: {error.message}</p>;
+
+  // The 'data' here is the array of debug entries
+  const debugEntries = data;
+
+  return (
+    <div>
+      <h2>Debug Logs Containing: "{searchTerm}"</h2>
+      {debugEntries && debugEntries.length > 0 ? (
+        <ul>
+          {debugEntries.map((entry: any) => (
+            <li key={entry.id}>
+              <p><strong>ID:</strong> {entry.id} (at {new Date(entry.created_at * 1000).toLocaleString()})</p>
+              <pre>{JSON.stringify(entry.value, null, 2)}</pre>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No debug entries found matching your criteria.</p>
+      )}
+    </div>
+  );
+}
+```
+
+These examples demonstrate querying JSONB data. You can use other JSONB operators like `_has_key`, `_has_keys_all`, `_has_keys_any` in a similar fashion within the `where` clause. Ensure that your Hasura permissions allow the specified role to perform these selections and access the JSONB column.
+
+#### Aggregation Queries
+
+Hasyx provides full support for GraphQL aggregation operations, allowing you to efficiently compute statistics directly in the database. This is particularly useful for dashboards, analytics, and performance optimization.
+
+```typescript
+// Basic aggregate query - top level aggregation
+function UserStatistics() {
+  const { data, loading } = useSelect(
+    {
+      table: 'users',
+      where: { created_at: { _gte: '2024-01-01' } },
+      aggregate: {
+        count: true,
+        max: { created_at: true },
+        min: { created_at: true }
+      }
+    },
+    { role: 'admin' }
+  );
+
+  if (loading) return <div>Loading statistics...</div>;
+  
+  return (
+    <div>
+      <h2>User Statistics for 2024</h2>
+      <p>Total Users: {data?.users_aggregate?.aggregate?.count}</p>
+      <p>First User: {data?.users_aggregate?.aggregate?.min?.created

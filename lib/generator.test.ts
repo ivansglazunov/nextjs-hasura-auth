@@ -1377,3 +1377,131 @@ describe('Aggregate Field Tests', () => {
   });
 
 });
+
+// Add new describe block for JSONB operator tests
+describe('JSONB Operator Tests', () => {
+  it('Test JSONB_01: Should generate a query with JSONB _contains operator', () => {
+    debug('\n📝 Test JSONB_01: Query with _contains');
+    const options: GenerateOptions = {
+      operation: 'query',
+      table: 'debug', // Assuming 'debug' table has a jsonb column named 'value'
+      where: { value: { _contains: { test_key: "test_value" } } },
+      returning: ['id', 'value']
+    };
+    const result = generate(options);
+
+    // Expected query assuming 'debug_bool_exp' and 'jsonb_comparison_exp' are in the schema
+    const expectedQuery = `
+      query QueryDebug($v1: debug_bool_exp) {
+        debug(where: $v1) {
+          id
+          value
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: {
+        value: { _contains: { test_key: "test_value" } }
+      }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    expect(result.queryName).toBe('debug');
+    debug('✅ Query with JSONB _contains passed');
+  });
+
+  it('Test JSONB_02: Should generate a query with JSONB _has_key operator', () => {
+    debug('\n📝 Test JSONB_02: Query with _has_key');
+    const options: GenerateOptions = {
+      operation: 'query',
+      table: 'debug',
+      where: { value: { _has_key: "my_key" } },
+      returning: ['id', 'value']
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      query QueryDebug($v1: debug_bool_exp) {
+        debug(where: $v1) {
+          id
+          value
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: {
+        value: { _has_key: "my_key" }
+      }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    expect(result.queryName).toBe('debug');
+    debug('✅ Query with JSONB _has_key passed');
+  });
+
+  it('Test JSONB_03: Should generate a query with JSONB _has_keys_all operator', () => {
+    debug('\n📝 Test JSONB_03: Query with _has_keys_all');
+    const options: GenerateOptions = {
+      operation: 'query',
+      table: 'debug',
+      where: { value: { _has_keys_all: ["key1", "key2"] } },
+      returning: ['id', 'value']
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      query QueryDebug($v1: debug_bool_exp) {
+        debug(where: $v1) {
+          id
+          value
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: {
+        value: { _has_keys_all: ["key1", "key2"] }
+      }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    expect(result.queryName).toBe('debug');
+    debug('✅ Query with JSONB _has_keys_all passed');
+  });
+
+  it('Test JSONB_04: Should generate a query with JSONB _has_keys_any operator', () => {
+    debug('\n📝 Test JSONB_04: Query with _has_keys_any');
+    const options: GenerateOptions = {
+      operation: 'query',
+      table: 'debug',
+      where: { value: { _has_keys_any: ["key1", "key3"] } },
+      returning: ['id', 'value']
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      query QueryDebug($v1: debug_bool_exp) {
+        debug(where: $v1) {
+          id
+          value
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: {
+        value: { _has_keys_any: ["key1", "key3"] }
+      }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    expect(result.queryName).toBe('debug');
+    debug('✅ Query with JSONB _has_keys_any passed');
+  });
+});
