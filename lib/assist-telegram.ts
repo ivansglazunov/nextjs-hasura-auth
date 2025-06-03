@@ -137,12 +137,28 @@ export async function calibrateTelegramBot(rl: readline.Interface, envPath: stri
   }
 
   const botName = envVars.TELEGRAM_BOT_NAME || 'UnknownBot';
-  const baseWebAppUrl = envVars.NEXT_PUBLIC_MAIN_URL || envVars.VERCEL_URL || envVars.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const webhookUrl = `${baseWebAppUrl}/api/telegram_bot`; // Corrected path for Hasyx default
+  
+  // Determine suggested webhook URL
+  const baseWebAppUrlSuggestion = envVars.NEXT_PUBLIC_BASE_URL || envVars.NEXT_PUBLIC_MAIN_URL || envVars.VERCEL_URL || 'http://localhost:3000';
+  const suggestedWebhookUrl = `${baseWebAppUrlSuggestion}/api/telegram_bot`;
+
+  let webhookUrl = suggestedWebhookUrl; // Default to suggested
+
+  if (await askYesNo(rl, `Do you want to set/reset the Telegram webhook? (Recommended: ${suggestedWebhookUrl})`, true)) {
+    const customUrl = await askForInput(rl, `Enter webhook URL (press Enter to use '${suggestedWebhookUrl}')`, suggestedWebhookUrl);
+    if (customUrl && customUrl.trim() !== '') {
+      webhookUrl = customUrl.trim();
+    }
+    console.log(`Using webhook URL: ${webhookUrl}`);
+  } else {
+    console.log('⏭️ Skipping webhook configuration.');
+    // If skipping webhook, maybe we should skip other parts or ask? For now, let's proceed with other settings.
+  }
+  
   const menuButton = {
     type: 'web_app',
     text: `Open ${projectName}`,
-    web_app: { url: baseWebAppUrl },
+    web_app: { url: baseWebAppUrlSuggestion },
   };
   const commands = [
     { command: 'start', description: 'Start interacting with the bot' },
@@ -169,18 +185,18 @@ export async function calibrateTelegramBot(rl: readline.Interface, envPath: stri
     if (commandsResult.ok) console.log('✅ Commands set.');
     else console.error('❌ Failed to set commands:', commandsResult.description);
 
-    console.log(`\n💡 Bot ${botName} calibrated. Ensure your application implements the ${webhookUrl} endpoint.`);
+    console.log(`\\n💡 Bot ${botName} calibrated. Ensure your application implements the ${webhookUrl} endpoint.`);
     console.log(`   Make sure to handle "message" and "callback_query" updates accordingly.`);
 
     // GitHub Actions Integration Information
-    console.log(`\n🚀 GitHub Actions Integration Available:`);
+    console.log(`\\n🚀 GitHub Actions Integration Available:`);
     console.log(`   Set these secrets in your GitHub repository settings for automated commit notifications:`);
     console.log(`   • TELEGRAM_BOT_TOKEN - Your bot token (configured above)`);
     console.log(`   • OPENROUTER_API_KEY - For AI-generated commit summaries`);
     console.log(`   • TELEGRAM_ADMIN_CHAT_ID - Optional admin notifications`);
     console.log(`   • TELEGRAM_CHANNEL_ID - Optional channel announcements`);
     console.log(`   • GITHUB_TELEGRAM_BOT - Control notifications (1=enabled, 2=test mode)`);
-    console.log(`   \n   The GitHub Actions workflow is automatically created with 'npx hasyx init'.`);
+    console.log(`   \\n   The GitHub Actions workflow is automatically created with 'npx hasyx init'.`);
     console.log(`   See TELEGRAM_BOT.md for full setup documentation.`);
 
   } catch (error) {
