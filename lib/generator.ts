@@ -8,6 +8,12 @@ export type GenerateOperation = 'query' | 'subscription' | 'insert' | 'update' |
 
 export type Generate = (opts: GenerateOptions) => GenerateResult;
 
+export interface OnConflictOptions {
+  constraint: string; // Constraint name, e.g., 'users_pkey' or 'users_email_key'
+  update_columns: string[]; // Columns to update on conflict, e.g., ['name', 'last_seen']
+  where?: Record<string, any>; // Optional condition for the update
+}
+
 export interface GenerateOptions {
   operation: GenerateOperation;
   table: string; // For now we'll keep it as string, we'll type it in the next step
@@ -26,6 +32,7 @@ export interface GenerateOptions {
   fragments?: string[];
   variables?: Record<string, any>; // Keep flexible for now
   varCounter?: number;
+  on_conflict?: OnConflictOptions; // Added for upsert
 }
 
 export interface GenerateResult {
@@ -113,6 +120,7 @@ export function Generator(schema: any): Generate { // We take the __schema objec
     const aggregate = opts.aggregate || undefined;
     const fragments = opts.fragments || [];
     const distinctOn = opts.distinct_on || undefined; // Get distinct_on
+    const onConflict = opts.on_conflict || undefined; // Get on_conflict for upsert
     
     // --- IMPROVED: Smart query name resolution ---
     let queryName: string = table;
@@ -278,7 +286,10 @@ export function Generator(schema: any): Generate { // We take the __schema objec
              // --- End handle distinct_on ---
         } else if (opts[argName as keyof GenerateOptions] !== undefined) {
              // Handle general arguments like limit, offset, where, order_by
-             value = opts[argName as keyof GenerateOptions];
+             // But skip on_conflict here as it's handled separately for the mutation field
+             if (argName !== 'on_conflict') {
+               value = opts[argName as keyof GenerateOptions];
+             }
         }
 
         // Add argument if value is defined and it wasn't handled specifically above (like distinct_on)
@@ -288,6 +299,26 @@ export function Generator(schema: any): Generate { // We take the __schema objec
     });
     // --- End Top Level Argument Processing ---
 
+    // --- Handle on_conflict for insert operations ---
+    if (onConflict && operation === 'insert') {
+      const onConflictArgDef = queryInfo.args?.find((a: any) => a.name === 'on_conflict');
+      if (onConflictArgDef) {
+        const onConflictVariablePayload: Record<string, any> = {
+          constraint: onConflict.constraint, // This should ideally be an enum value from schema
+          update_columns: onConflict.update_columns, // This should ideally be an array of enum values
+        };
+        if (onConflict.where) {
+          // We need to create a nested variable for the 'where' inside on_conflict
+          // This assumes the 'where' inside on_conflict has a specific type, let's find it.
+          // For now, we pass it directly. A more robust solution would be to find the input type for this where.
+          onConflictVariablePayload.where = onConflict.where;
+        }
+        addArgument('on_conflict', onConflictVariablePayload, onConflictArgDef);
+      } else {
+        debug(`[generator] 'on_conflict' provided in options, but field "${queryName}" does not accept it according to the schema.`);
+      }
+    }
+    // --- End on_conflict handling ---
 
     // --- Returning Field Processing (REWORKED) ---
     const returningFields: string[] = [];

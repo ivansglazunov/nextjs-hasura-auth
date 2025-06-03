@@ -1505,3 +1505,208 @@ describe('JSONB Operator Tests', () => {
     debug('✅ Query with JSONB _has_keys_any passed');
   });
 });
+
+describe('Upsert Operation Tests', () => {
+  it('Test U1: Should generate an upsert mutation (update on conflict)', () => {
+    debug('\n📝 Test U1: Upsert mutation - update on conflict');
+    const options: GenerateOptions = {
+        operation: 'insert',
+        table: 'users',
+        objects: [{
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'New Or Updated User',
+          email: 'upsert@example.com'
+        }],
+        on_conflict: {
+          constraint: 'users_pkey', // Assuming 'users_pkey' is the primary key constraint
+          update_columns: ['name', 'email']
+        },
+        returning: [
+          'id',
+          'name',
+          'email'
+        ]
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      mutation MutationInsertUsers($v1: [users_insert_input!]!, $v2: users_on_conflict) {
+        insert_users(objects: $v1, on_conflict: $v2) {
+          affected_rows
+          returning {
+            id
+            name
+            email
+          }
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: [{
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        name: 'New Or Updated User',
+        email: 'upsert@example.com'
+      }],
+      v2: {
+        constraint: 'users_pkey',
+        update_columns: ['name', 'email']
+      }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    debug('✅ Upsert mutation (update) passed');
+  });
+
+  it('Test U2: Should generate an upsert mutation (ignore on conflict)', () => {
+    debug('\n📝 Test U2: Upsert mutation - ignore on conflict');
+    const options: GenerateOptions = {
+        operation: 'insert',
+        table: 'users',
+        objects: [{
+          email: 'ignore@example.com',
+          name: 'Potentially Ignored User'
+        }],
+        on_conflict: {
+          constraint: 'users_email_key', // Assuming unique constraint on email
+          update_columns: [] // Empty array means DO NOTHING
+        },
+        returning: [
+          'id',
+          'name',
+          'email'
+        ]
+    };
+    const result = generate(options);
+
+    const expectedQuery = `
+      mutation MutationInsertUsers($v1: [users_insert_input!]!, $v2: users_on_conflict) {
+        insert_users(objects: $v1, on_conflict: $v2) {
+          affected_rows
+          returning {
+            id
+            name
+            email
+          }
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: [{
+        email: 'ignore@example.com',
+        name: 'Potentially Ignored User'
+      }],
+      v2: {
+        constraint: 'users_email_key',
+        update_columns: []
+      }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    debug('✅ Upsert mutation (ignore) passed');
+  });
+
+  it('Test U3: Should generate an upsert mutation with on_conflict.where condition', () => {
+    debug('\n📝 Test U3: Upsert mutation - with on_conflict.where');
+    const options: GenerateOptions = {
+        operation: 'insert',
+        table: 'users',
+        objects: [{
+          id: '123e4567-e89b-12d3-a456-426614174001',
+          name: 'Conditionally Updated User',
+          email: 'cond-upsert@example.com',
+          is_active: true
+        }],
+        on_conflict: {
+          constraint: 'users_pkey',
+          update_columns: ['name', 'is_active'],
+          where: { is_active: { _eq: false } } // Only update if user was inactive
+        },
+        returning: ['id', 'name', 'email', 'is_active']
+    };
+    const result = generate(options);
+
+    // The type for $v2 (users_on_conflict!) should ideally reflect that its 'where' argument
+    // would be of type 'users_bool_exp'. This is a simplification for the test.
+    const expectedQuery = `
+      mutation MutationInsertUsers($v1: [users_insert_input!]!, $v2: users_on_conflict) {
+        insert_users(objects: $v1, on_conflict: $v2) {
+          affected_rows
+          returning {
+            id
+            name
+            email
+            is_active
+          }
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: [{
+        id: '123e4567-e89b-12d3-a456-426614174001',
+        name: 'Conditionally Updated User',
+        email: 'cond-upsert@example.com',
+        is_active: true
+      }],
+      v2: {
+        constraint: 'users_pkey',
+        update_columns: ['name', 'is_active'],
+        where: { is_active: { _eq: false } }
+      }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    debug('✅ Upsert mutation (on_conflict.where) passed');
+  });
+
+  it('Test U4: Should generate an upsert_one mutation (update on conflict)', () => {
+    debug('\n📝 Test U4: Upsert single (_one) mutation - update on conflict');
+    const options: GenerateOptions = {
+        operation: 'insert',
+        table: 'users', // Base table name, generator will find insert_users_one
+        object: {
+          id: 'single-upsert-id',
+          name: 'Single Upsert User',
+          email: 'single-upsert@example.com'
+        },
+        on_conflict: {
+          constraint: 'users_pkey',
+          update_columns: ['name', 'email']
+        },
+        returning: ['id', 'name', 'email']
+    };
+    const result = generate(options);
+
+    // Assuming schema has users_on_conflict type for the on_conflict argument of insert_users_one
+    const expectedQuery = `
+      mutation MutationInsertUsersOne($v1: users_insert_input!, $v2: users_on_conflict) {
+        insert_users_one(object: $v1, on_conflict: $v2) {
+            id
+            name
+            email
+        }
+      }
+    `;
+
+    const expectedVariables = {
+      v1: {
+        id: 'single-upsert-id',
+        name: 'Single Upsert User',
+        email: 'single-upsert@example.com'
+      },
+      v2: {
+        constraint: 'users_pkey',
+        update_columns: ['name', 'email']
+      }
+    };
+
+    expect(normalizeString(result.queryString)).toBe(normalizeString(expectedQuery));
+    expect(result.variables).toEqual(expectedVariables);
+    debug('✅ Upsert single (_one) mutation passed');
+  });
+});

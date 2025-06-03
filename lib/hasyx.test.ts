@@ -82,6 +82,8 @@ function cleanupHasyx(hasyx: Hasyx, label: string = '') {
   }
 }
 
+// Original logic: Skip if JEST_LOCAL is '1' (truthy numeric string), otherwise run.
+// This means tests run if JEST_LOCAL is '0' or undefined.
 (!!+(process?.env?.JEST_LOCAL || '') ? describe.skip : describe)('Hasyx Integration Tests', () => {
   
   describe('Hasyx Class HTTP Tests', () => {
@@ -318,6 +320,123 @@ function cleanupHasyx(hasyx: Hasyx, label: string = '') {
       }
     }, 30000);
   });
+
+  // Moved and refactored Upsert test
+  it('should perform a full upsert cycle: upsert (insert) -> select -> upsert (update) -> select -> delete -> select', async () => {
+    const adminHasyx = createAdminHasyx();
+    const uniqueEmail = `full-upsert-cycle-${uuidv4()}@example.com`;
+    const initialName = 'Initial Name for Upsert Cycle';
+    const updatedName = 'Updated Name via Upsert Cycle';
+    let userId: string | null = null;
+
+    try {
+      // 1. UPSERT (acting as INSERT for a new user)
+      debug(`[test:hasyx:full-upsert] 1. Upserting (insert) new user with email: ${uniqueEmail}`);
+      const insertedUser = await adminHasyx.upsert<{ id: string; name: string; email: string }>({
+        table: 'users',
+        object: {
+          email: uniqueEmail,
+          name: initialName,
+          password: await hashPassword('password123'),
+          hasura_role: 'user',
+        },
+        on_conflict: {
+          constraint: 'users_email_key', // Using email key for the initial insert via upsert
+          update_columns: ['name', 'password', 'updated_at', 'hasura_role'] // Should not be hit on first insert
+        },
+        returning: ['id', 'name', 'email']
+      });
+      expect(insertedUser).toBeDefined();
+      expect(insertedUser.id).toBeTruthy();
+      expect(insertedUser.name).toBe(initialName);
+      expect(insertedUser.email).toBe(uniqueEmail);
+      userId = insertedUser.id;
+      debug(`[test:hasyx:full-upsert]   User upserted (inserted) with ID: ${userId}, Name: ${insertedUser.name}`);
+
+      // 2. SELECT to verify initial insert
+      debug(`[test:hasyx:full-upsert] 2. Selecting user ID: ${userId} to verify initial upsert (insert)`);
+      let selectedUser = await adminHasyx.select<{ id: string; name: string; email: string; hasura_role: string } | null>({
+        table: 'users',
+        pk_columns: { id: userId },
+        returning: ['id', 'name', 'email']
+      });
+      expect(selectedUser).toBeDefined();
+      expect(selectedUser!.id).toBe(userId);
+      expect(selectedUser!.name).toBe(initialName);
+      expect(selectedUser!.email).toBe(uniqueEmail);
+      debug(`[test:hasyx:full-upsert]   User selected post-insert. Name: ${selectedUser!.name}`);
+
+      // 3. UPSERT (acting as UPDATE for the existing user)
+      debug(`[test:hasyx:full-upsert] 3. Upserting (update) user ID: ${userId} to change name to: ${updatedName}`);
+      const updatedUser = await adminHasyx.upsert<{ id: string; name: string; email: string }>({
+        table: 'users',
+        object: { 
+          id: userId, // Important to target the existing user by PK for constraint to hit
+          email: uniqueEmail, 
+          name: updatedName,
+          password: await hashPassword('newpassword123'), 
+          hasura_role: 'user_updated', 
+        },
+        on_conflict: {
+          constraint: 'users_pkey', // Using primary key for the update part of upsert
+          update_columns: ['name', 'password', 'updated_at', 'hasura_role']
+        },
+        returning: ['id', 'name', 'email']
+      });
+      expect(updatedUser).toBeDefined();
+      expect(updatedUser.id).toBe(userId);
+      expect(updatedUser.name).toBe(updatedName);
+      expect(updatedUser.email).toBe(uniqueEmail);
+      debug(`[test:hasyx:full-upsert]   User upserted (updated). Name: ${updatedUser.name}`);
+
+      // 4. SELECT to verify update
+      debug(`[test:hasyx:full-upsert] 4. Selecting user ID: ${userId} to verify upsert (update)`);
+      selectedUser = await adminHasyx.select<{ id: string; name: string; email: string; hasura_role: string } | null>({
+        table: 'users',
+        pk_columns: { id: userId },
+        returning: ['id', 'name', 'email', 'hasura_role']
+      });
+      expect(selectedUser).toBeDefined();
+      expect(selectedUser!.id).toBe(userId);
+      expect(selectedUser!.name).toBe(updatedName);
+      expect(selectedUser!.email).toBe(uniqueEmail);
+      expect(selectedUser!.hasura_role).toBe('user_updated');
+      debug(`[test:hasyx:full-upsert]   User selected post-update. Name: ${selectedUser!.name}, Role: ${selectedUser!.hasura_role}`);
+
+      // 5. DELETE
+      debug(`[test:hasyx:full-upsert] 5. Deleting user ID: ${userId}`);
+      const deletedUserReturn = await adminHasyx.delete<{ id: string }>({
+        table: 'users',
+        pk_columns: { id: userId },
+        returning: ['id']
+      });
+      expect(deletedUserReturn).toBeDefined();
+      expect(deletedUserReturn.id).toBe(userId);
+      const tempUserIdForFinalCheck = userId; 
+      userId = null; 
+      debug(`[test:hasyx:full-upsert]   User deleted.`);
+      
+      // 6. SELECT to verify delete
+      debug(`[test:hasyx:full-upsert] 6. Selecting user ID (post-delete) to verify deletion`);
+      const selectedAfterDelete = await adminHasyx.select<{ id: string } | null>({
+          table: 'users',
+          pk_columns: { id: tempUserIdForFinalCheck }, 
+          returning: ['id']
+      });
+      expect(selectedAfterDelete).toBeNull();
+      debug(`[test:hasyx:full-upsert]   User selection after delete returned null as expected.`);
+
+    } catch (error) {
+      debug('[test:hasyx:full-upsert] ❌ Error during full upsert cycle test:', error);
+      throw error; 
+    } finally {
+      if (userId) { 
+        debug(`[test:hasyx:full-upsert] 🧹 Cleaning up user ID: ${userId} due to test ending or error.`);
+        await cleanupTestUser(adminHasyx, userId);
+      }
+      cleanupHasyx(adminHasyx, 'Full Upsert Cycle Test');
+    }
+  }, 30000); // Increased timeout for multiple DB operations
 });
 
 // New describe block for JSONB operations tests

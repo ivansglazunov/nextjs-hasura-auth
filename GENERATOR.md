@@ -76,6 +76,15 @@ The `generate` function accepts an object with the following properties:
     *   Type: `number`
 *   `distinct_on`: (Optional) For `query` and `subscription` operations. An array of column names (strings or ideally the generated `Enum_select_column` type) to retrieve unique rows based on these columns. Requires `order_by` to include the distinct columns first.
     *   Type: `string[] | ReadonlyArray<string>`
+*   `on_conflict`: (Optional) For `insert` operations, to enable `upsert` behavior.
+    *   Type: `OnConflictOptions` (Interface defined in `generator.ts` alongside `GenerateOptions`)
+    *   `OnConflictOptions` contains:
+        *   `constraint`: (Required) The name of the unique or primary key constraint (e.g., `users_pkey`, `users_email_key`).
+            *   Type: `string` (Ideally, this should be an enum value from your Hasura schema's constraint names for the table).
+        *   `update_columns`: (Required) An array of column names to update if the constraint is violated. An empty array `[]` means "do nothing" on conflict.
+            *   Type: `string[]` (Ideally, an array of enum values from your Hasura schema's update column names for the table).
+        *   `where`: (Optional) A Hasura-style boolean expression object. If provided, the update will only occur if this condition is met for the conflicting row.
+            *   Type: `Record<string, any>`
 </details>
 
 ## Examples
@@ -108,6 +117,7 @@ The `generate` function accepts an object with the following properties:
 *   [22. Combined Aggregate with Regular Data](#22-combined-aggregate-with-regular-data)
 *   [23. Aggregate Functions with Column Specifications](#23-aggregate-functions-with-column-specifications)
 *   [24. Top-level Aggregate Query with Nodes](#24-top-level-aggregate-query-with-nodes)
+*   [25. Upsert (Insert with `on_conflict`)](#25-upsert-insert-with-on_conflict)
 
 ### JSONB Operations
 
@@ -1483,6 +1493,98 @@ query QueryUsersAggregate($v1: users_bool_exp) {
 }
 ```
 </details>
+
+### 25. Upsert (Insert with `on_conflict`)
+
+This example demonstrates how to perform an "upsert" operation. If a row with a conflicting `email` already exists, its `name` and `last_login_at` fields will be updated. Otherwise, a new row will be inserted.
+
+```typescript
+// Assuming OnConflictOptions is imported or defined as:
+// interface OnConflictOptions {
+//   constraint: string;
+//   update_columns: string[];
+//   where?: Record<string, any>;
+// }
+
+const options: GenerateOptions = {
+  operation: 'insert', // Upsert is an insert operation with an on_conflict clause
+  table: 'users',
+  objects: [{ 
+    email: 'test@example.com', 
+    name: 'Test User Updated Name', 
+    last_login_at: new Date().toISOString() 
+    // Ensure all other required fields for 'users' insert are provided
+  }],
+  on_conflict: {
+    constraint: 'users_email_key', // Name of the unique constraint on the 'email' column
+    update_columns: ['name', 'last_login_at'], // Columns to update on conflict
+    // where: { status: {_eq: 'active'} } // Optional: only upsert if conflicting row is active
+  },
+  returning: ['id', 'email', 'name', 'last_login_at']
+};
+const result = generate(options);
+```
+
+<details>
+<summary>Generated `queryString`</summary>
+
+```graphql
+mutation MutationInsertUsers($v1: [users_insert_input!]!, $v2: users_on_conflict) {
+  insert_users(
+    objects: $v1,
+    on_conflict: $v2
+  ) {
+    affected_rows
+    returning {
+      id
+      email
+      name
+      last_login_at
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary>Generated `variables`</summary>
+
+```json
+{
+  "v1": [{ 
+    "email": "test@example.com", 
+    "name": "Test User Updated Name", 
+    "last_login_at": "2024-..." // Current ISO string
+    // ... other required fields ...
+  }],
+  "v2": {
+    "constraint": "users_email_key",
+    "update_columns": ["name", "last_login_at"]
+    // "where": { "status": {"_eq": "active"} }
+  }
+}
+```
+</details>
+
+**To ignore on conflict (DO NOTHING):**
+
+Set `update_columns: []` in the `on_conflict` options.
+
+```typescript
+const options: GenerateOptions = {
+  operation: 'insert',
+  table: 'users',
+  objects: [{ email: 'test@example.com', name: 'Possibly New User' }],
+  on_conflict: {
+    constraint: 'users_email_key',
+    update_columns: [] // Empty array means do nothing on conflict
+  },
+  returning: ['id', 'email', 'name']
+};
+```
+
+This will attempt to insert. If a user with `test@example.com` already exists, the mutation will effectively be ignored for that object, and `affected_rows` might be 0 if no other objects in the `objects` array were inserted.
+
 
 ## Advanced Aggregation Patterns
 
