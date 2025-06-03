@@ -15,6 +15,7 @@ import schema from '../public/hasura-schema.json';
 import { createApolloClient, HasyxApolloClient } from './apollo';
 import { hashPassword } from './authDbUtils';
 import { Generator } from './generator';
+import Axios from 'axios';
 import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core/index.js';
 
 // Load environment variables from .env file
@@ -131,7 +132,7 @@ function cleanupHasyx(hasyx: Hasyx, label: string = '') {
       debug('JWT generated successfully');
 
       // Create Axios instance with the JWT
-      const axios = require('axios').create({
+      const axios = Axios.create({
         headers: {
           'Authorization': `Bearer ${jwt}`,
           'Content-Type': 'application/json',

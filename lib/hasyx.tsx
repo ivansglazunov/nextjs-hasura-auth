@@ -328,61 +328,6 @@ export class Hasyx {
     debug('Creating WebSocket-based subscription Observable');
     
     return new Observable<TData>(observer => {
-      let lastEmitTime = 0;
-      let pendingData: TData | null = null;
-      let emitTimeoutId: NodeJS.Timeout | null = null;
-      const resolvedInterval = typeof options.pollingInterval === 'number' ?
-        options.pollingInterval : DEFAULT_POLLING_INTERVAL;
-      const minEmitInterval = resolvedInterval;
-
-      debug(`[Hasyx.subscribe/WS] Effective minEmitInterval: ${minEmitInterval}ms (options.pollingInterval: ${options.pollingInterval}, DEFAULT_POLLING_INTERVAL: ${DEFAULT_POLLING_INTERVAL})`);
-      const throttledEmit = (data: TData) => {
-        const now = Date.now();
-        const timeSinceLastEmit = now - lastEmitTime;
-        debug(`[throttledEmit] Called. Now: ${now}, LastEmit: ${lastEmitTime}, SinceLast: ${timeSinceLastEmit}, MinInterval: ${minEmitInterval}, PendingData: ${JSON.stringify(pendingData)}, EmitTimeoutId: ${emitTimeoutId}`);
-
-        pendingData = data;
-        debug(`[throttledEmit] Set pendingData to: ${JSON.stringify(pendingData)}`);
-
-        if (timeSinceLastEmit >= minEmitInterval) {
-          debug(`[throttledEmit] Condition 1 MET (timeSinceLastEmit >= minEmitInterval). Emitting immediately.`);
-          lastEmitTime = now;
-          observer.next(pendingData);
-          debug(`[throttledEmit] Emitted. New LastEmit: ${lastEmitTime}. Data: ${JSON.stringify(pendingData)}`);
-          pendingData = null;
-
-          if (emitTimeoutId) {
-            debug(`[throttledEmit] Clearing existing timeout ID: ${emitTimeoutId}`);
-            clearTimeout(emitTimeoutId);
-            emitTimeoutId = null;
-          }
-        }
-        else if (!emitTimeoutId) {
-          debug(`[throttledEmit] Condition 2 MET (!emitTimeoutId). Scheduling delayed emit.`);
-          const delay = minEmitInterval - timeSinceLastEmit;
-          debug(`[throttledEmit] Delay calculated: ${delay}ms. Current pending data: ${JSON.stringify(pendingData)}`);
-
-          emitTimeoutId = setTimeout(() => {
-            debug(`[throttledEmit] setTimeout EXECUTING. Current pendingData: ${JSON.stringify(pendingData)}. Old TimeoutId: ${emitTimeoutId}`);
-            if (pendingData !== null) {
-              debug(`[throttledEmit] setTimeout: pendingData is NOT null. Emitting.`);
-              lastEmitTime = Date.now();
-              observer.next(pendingData);
-              debug(`[throttledEmit] setTimeout: Emitted. New LastEmit: ${lastEmitTime}. Data: ${JSON.stringify(pendingData)}`);
-              pendingData = null;
-            } else {
-              debug(`[throttledEmit] setTimeout: pendingData IS NULL. Not emitting.`);
-            }
-            emitTimeoutId = null;
-            debug(`[throttledEmit] setTimeout: Cleared emitTimeoutId.`);
-          }, delay);
-          // Allow process to exit even if this timeout is pending
-          emitTimeoutId.unref?.();
-          debug(`[throttledEmit] Scheduled timeout ID: ${emitTimeoutId}`);
-        } else {
-          debug(`[throttledEmit] Condition 3: ELSE (timeSinceLastEmit < minEmitInterval AND emitTimeoutId is SET). Doing nothing but pendingData updated.`);
-        }
-      };
       debug(`Hasyx.subscribe: Calling apolloClient.subscribe with WebSocket mode, url: ${this.apolloClient._options?.url}, ws: ${this.apolloClient._options?.ws}`);
       if (process.env.NODE_ENV === 'test') {
         debug('======= TEST ENVIRONMENT DETECTED =======');
@@ -439,7 +384,7 @@ export class Hasyx {
             }
           }
           debug('Subscription processing extracted data:', JSON.stringify(extractedData));
-          throttledEmit(extractedData);
+          observer.next(extractedData);
         },
         error: (error: any) => {
           debug('Subscription error:', error);
@@ -455,11 +400,6 @@ export class Hasyx {
       });
       return () => {
         debug('Unsubscribing from Apollo subscription.');
-
-        if (emitTimeoutId) {
-          clearTimeout(emitTimeoutId);
-          emitTimeoutId = null;
-        }
         apolloSubscription.unsubscribe();
       };
     });
