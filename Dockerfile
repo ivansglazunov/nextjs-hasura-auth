@@ -3,6 +3,16 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Build-time arguments with placeholder values (not embedded in final image)
+ARG NEXT_PUBLIC_HASURA_GRAPHQL_URL="https://placeholder-hasura-url.com/v1/graphql"
+ARG NEXTAUTH_SECRET="placeholder-nextauth-secret-for-build-only"
+ARG NEXTAUTH_URL="http://localhost:3000"
+
+# Set environment variables for build process only
+ENV NEXT_PUBLIC_HASURA_GRAPHQL_URL=$NEXT_PUBLIC_HASURA_GRAPHQL_URL
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
+
 # Copy package files and install all dependencies (including dev)
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps
@@ -36,7 +46,7 @@ USER nextjs
 # Always expose port 3000 internally
 EXPOSE 3000
 
-# Set default environment variables
+# Set default environment variables (will be overridden by runtime env vars)
 ENV PORT=3000
 ENV NODE_ENV=production
 ENV HOSTNAME="0.0.0.0"

@@ -89,6 +89,22 @@ Hasyx automatically creates optimized Dockerfile with multi-stage build.
 
 Hasyx creates `.github/workflows/docker-publish.yml` for automatic image publishing:
 
+### Security & Environment Variables
+**Build-time vs Runtime Variables:**
+- **Build-time**: Uses placeholder/dummy values for required variables (not embedded in image)
+- **Runtime**: Real sensitive values passed only when container starts
+
+**Required Variables for Build:**
+- `NEXT_PUBLIC_HASURA_GRAPHQL_URL` - placeholder used during build
+- `NEXTAUTH_SECRET` - placeholder used during build  
+- `NEXTAUTH_URL` - placeholder used during build
+
+**Security Benefits:**
+- No real secrets embedded in Docker image
+- Image can be shared safely
+- Secrets only exist in running containers
+- Each deployment uses own environment variables
+
 ### Setup GitHub Secrets
 1. Go to Settings → Secrets and variables → Actions
 2. Add secrets:

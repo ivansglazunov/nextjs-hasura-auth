@@ -292,15 +292,20 @@ export async function defineContainer(port?: string): Promise<void> {
   const projectName = getProjectName(process.cwd());
   const containerName = `${projectName}-${actualPort}`;
   const watchtowerName = `${projectName}-watchtower-${actualPort}`;
-  const imageName = `${projectName}:latest`;
+  
+  // Read environment variables from .env file to get Docker username
+  const envPath = path.resolve('.env');
+  const envVars = parseEnvFile(envPath);
+  
+  // Construct image name with Docker Hub username if available
+  let imageName = `${projectName}:latest`;
+  if (envVars.DOCKER_USERNAME) {
+    imageName = `${envVars.DOCKER_USERNAME}/${projectName}:latest`;
+  }
   
   console.log(`🚀 Creating container: ${containerName}`);
   console.log(`   Image: ${imageName}`);
   console.log(`   External Port: ${actualPort} -> Internal Port: 3000`);
-  
-  // Read environment variables from .env file
-  const envPath = path.resolve('.env');
-  const envVars = parseEnvFile(envPath);
   
   // Prepare environment variables for Docker
   const dockerEnvArgs: string[] = [];
