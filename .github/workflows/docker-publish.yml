@@ -72,12 +72,6 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        build-args: |
-          NODE_ENV=production
-          PORT=3000
-          NEXT_PUBLIC_HASURA_GRAPHQL_URL=https://placeholder-hasura-url.com/v1/graphql
-          NEXTAUTH_SECRET=placeholder-nextauth-secret-for-build-only
-          NEXTAUTH_URL=http://localhost:3000
 
     - name: Update Docker Hub description
       if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

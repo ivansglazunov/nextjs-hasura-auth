@@ -224,6 +224,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/api/graphql/route.ts': 'app/api/graphql/route.ts',
     'app/api/events/[name]/route.ts': 'app/api/events/[name]/route.ts',
     'app/api/telegram_bot/route.ts': 'app/api/telegram_bot/route.ts',
+    'app/api/health/route.ts': 'app/api/health/route.ts',
   };
 
   // Files to create if not exists (or force replace if --reinit)
@@ -293,6 +294,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'events',
     'lib',
     'app/api/telegram_bot',
+    'app/api/health',
     'app/hasyx/diagnostics',
     'app/hasyx/aframe',
     'app/hasyx/payments',

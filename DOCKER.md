@@ -89,6 +89,11 @@ Hasyx automatically creates optimized Dockerfile with multi-stage build.
 
 Hasyx creates `.github/workflows/docker-publish.yml` for automatic image publishing:
 
+### Architecture Support
+- **Multi-platform builds**: Supports both AMD64 and ARM64 architectures
+- **Native dependencies**: Automatically handles compilation for `bufferutil`, `sharp`, and other native modules
+- **Build tools**: Includes Python, GCC, and other necessary tools for native compilation
+
 ### Security & Environment Variables
 **Build-time vs Runtime Variables:**
 - **Build-time**: Uses placeholder/dummy values for required variables (not embedded in image)
@@ -115,6 +120,31 @@ Hasyx creates `.github/workflows/docker-publish.yml` for automatic image publish
 - **Push to main/master** → publish with `latest` tag
 - **Push tag v*** → publish with semantic versioning
 - **Pull Request** → build only, no publishing
+
+### Troubleshooting Build Issues
+
+**Native Dependencies on ARM64:**
+The Dockerfile now includes necessary build tools:
+```dockerfile
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    make \
+    g++ \
+    libc6-compat \
+    vips-dev
+```
+
+**Common Build Errors:**
+- `gyp ERR! find Python` → Fixed by installing python3 in Alpine
+- `ENOTEMPTY: directory not empty` → Fixed with better npm cache handling
+- `bufferutil` compilation errors → Fixed with proper build tools installation
+
+**Build Performance:**
+- Uses `.dockerignore` to exclude unnecessary files
+- Multi-stage build to reduce final image size
+- Build cache optimization with GitHub Actions cache
+- Parallel builds for multiple architectures
 
 ## 🛠️ Usage Examples
 
