@@ -5,7 +5,7 @@ import spawn from 'cross-spawn';
 import Debug from './debug';
 import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './events';
 import { buildDocumentation } from './doc-public';
-import assist from './assist';
+import * as assist from './assist';
 import { printMarkdown } from './markdown-terminal';
 import dotenv from 'dotenv';
 import { buildClient } from './build-client';
@@ -25,6 +25,9 @@ import { CloudFlare, CloudflareConfig, DnsRecord } from './cloudflare';
 import { SSL } from './ssl';
 import { Nginx } from './nginx';
 import { configureDocker, listContainers, defineContainer, undefineContainer, showContainerLogs, showContainerEnv } from './assist-docker';
+
+export {
+  assetsCommand, eventsCommand, unbuildCommand, assist, localCommand, vercelCommand };
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
@@ -1501,7 +1504,7 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
 
   // Assist command
   assistCommandDescribe(program.command('assist')).action((options) => {
-    assist(options);
+    assist.default(options);
   });
 
   // Telegram command

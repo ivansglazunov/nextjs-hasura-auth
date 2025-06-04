@@ -28,7 +28,13 @@ import {
   askCommandDescribe, askCommand,
   tsxCommandDescribe, tsxCommand,
   subdomainCommandDescribe,
-  dockerCommandDescribe
+  dockerCommandDescribe,
+  assetsCommand,
+  eventsCommand,
+  unbuildCommand,
+  assist,
+  localCommand,
+  vercelCommand,
 } from 'hasyx/lib/cli-hasyx';
 
 console.log(`${pckg.name}@${pckg.version}`);
@@ -72,41 +78,34 @@ docCommandDescribe(program.command('doc')).action(docCommand);
 
 // Commands that use dynamic imports
 assetsCommandDescribe(program.command('assets')).action(async () => {
-  const { assetsCommand } = await import('./assets');
   await assetsCommand();
 });
 
 eventsCommandDescribe(program.command('events')).action(async (options) => {
-  const { eventsCommand } = await import('./events-cli');
   await eventsCommand(options);
 });
 
 unbuildCommandDescribe(program.command('unbuild')).action(async () => {
-  const { unbuildCommand } = await import('./unbuild');
   await unbuildCommand();
 });
 
 assistCommandDescribe(program.command('assist')).action(async (options) => {
-  const assist = (await import('./assist')).default;
-  assist(options);
+  assist.default(options);
 });
 
 telegramCommandDescribe(program.command('telegram')).action(async (options) => {
-  const assistModule = await import('./assist'); 
-  if (!assistModule.runTelegramSetupAndCalibration) {
+  if (!assist.runTelegramSetupAndCalibration) {
       console.error('FATAL: runTelegramSetupAndCalibration function not found in assist module. Build might be corrupted or export is missing.');
       process.exit(1);
   }
-  assistModule.runTelegramSetupAndCalibration(options);
+  assist.runTelegramSetupAndCalibration(options);
 });
 
 localCommandDescribe(program.command('local')).action(async () => {
-  const { localCommand } = await import('./local');
   localCommand();
 });
 
 vercelCommandDescribe(program.command('vercel')).action(async () => {
-  const { vercelCommand } = await import('./vercel');
   vercelCommand();
 });
 
