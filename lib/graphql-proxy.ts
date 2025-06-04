@@ -232,7 +232,7 @@ export async function proxySOCKET(
     }
     if (hasuraWs && (hasuraWs.readyState === WebSocket.OPEN || hasuraWs.readyState === WebSocket.CONNECTING)) {
       debug('close', { closeCode, closeReason });
-      hasuraWs70.close(closeCode, closeReason);
+      hasuraWs.close(closeCode, closeReason);
     }
     debug(`[${clientId}] Connections closed.`);
   };
