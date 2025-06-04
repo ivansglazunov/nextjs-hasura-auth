@@ -1530,6 +1530,11 @@
           "level": 2
         },
         {
+          "title": "Architecture Support",
+          "url": "/hasyx/doc/DOCKER#architecture-support",
+          "level": 3
+        },
+        {
           "title": "Security & Environment Variables",
           "url": "/hasyx/doc/DOCKER#security-environment-variables",
           "level": 3
@@ -1542,6 +1547,11 @@
         {
           "title": "Automatic Publishing",
           "url": "/hasyx/doc/DOCKER#automatic-publishing",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting Build Issues",
+          "url": "/hasyx/doc/DOCKER#troubleshooting-build-issues",
           "level": 3
         },
         {
@@ -6155,5 +6165,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-04T17:00:43.958Z"
+  "lastUpdated": "2025-06-04T19:48:57.827Z"
 }
