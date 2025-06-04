@@ -27,7 +27,8 @@ import {
   jsCommandDescribe, jsCommand,
   askCommandDescribe, askCommand,
   tsxCommandDescribe, tsxCommand,
-  subdomainCommandDescribe
+  subdomainCommandDescribe,
+  dockerCommandDescribe
 } from 'hasyx/lib/cli-hasyx';
 
 console.log(`${pckg.name}@${pckg.version}`);
@@ -114,6 +115,8 @@ askCommandDescribe(program.command('ask')).action(askCommand);
 tsxCommandDescribe(program.command('tsx [filePath]')).action(tsxCommand);
 
 subdomainCommandDescribe(program.command('subdomain'));
+
+dockerCommandDescribe(program.command('docker'));
 
 debug('Parsing CLI arguments...');
 program.parse(process.argv);

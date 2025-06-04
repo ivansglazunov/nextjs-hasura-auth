@@ -24,6 +24,7 @@ import { vercelCommand } from './vercel';
 import { CloudFlare, CloudflareConfig, DnsRecord } from './cloudflare';
 import { SSL } from './ssl';
 import { Nginx } from './nginx';
+import { configureDocker, listContainers, defineContainer, undefineContainer, showContainerLogs, showContainerEnv } from './assist-docker';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
@@ -1081,6 +1082,155 @@ export const subdomainUndefineCommand = async (subdomain: string) => {
   }
 };
 
+// Docker list command
+export const dockerListCommand = async () => {
+  debug('Executing "docker ls" command');
+  console.log('🐳 Listing Docker containers...');
+  
+  try {
+    // Check Docker installation first
+    const dockerResult = spawn.sync('docker', ['--version'], { encoding: 'utf-8' });
+    if (dockerResult.status !== 0) {
+      console.error('❌ Docker is not installed or not running');
+      console.error('💡 Install Docker: https://docs.docker.com/engine/install/');
+      process.exit(1);
+    }
+    
+    const containers = await listContainers();
+    
+    if (containers.length === 0) {
+      console.log('📭 No containers found for this project.');
+      return;
+    }
+    
+    console.log(`\n📋 Found ${containers.length} container(s):`);
+    console.log('═'.repeat(80));
+    
+    for (const container of containers) {
+      const portDisplay = container.port ? `:${container.port}` : '';
+      console.log(`🐳 ${container.name.padEnd(30)} ${container.status.padEnd(20)} ${portDisplay}`);
+      console.log(`   ${container.image}`);
+    }
+    
+    console.log('═'.repeat(80));
+    debug('Docker list command completed successfully');
+  } catch (error) {
+    console.error('❌ Failed to list containers:', error);
+    debug(`Docker list command error: ${error}`);
+    process.exit(1);
+  }
+};
+
+// Docker define command  
+export const dockerDefineCommand = async (port?: string) => {
+  debug(`Executing "docker define" command with port: ${port || 'default'}`);
+  
+  try {
+    // Check Docker installation first
+    const dockerResult = spawn.sync('docker', ['--version'], { encoding: 'utf-8' });
+    if (dockerResult.status !== 0) {
+      console.error('❌ Docker is not installed or not running');
+      console.error('💡 Install Docker: https://docs.docker.com/engine/install/');
+      process.exit(1);
+    }
+    
+    await defineContainer(port);
+    debug('Docker define command completed successfully');
+  } catch (error) {
+    console.error('❌ Failed to create container:', error);
+    debug(`Docker define command error: ${error}`);
+    process.exit(1);
+  }
+};
+
+// Docker undefine command
+export const dockerUndefineCommand = async (port: string) => {
+  debug(`Executing "docker undefine" command with port: ${port}`);
+  
+  if (!port) {
+    console.error('❌ Missing required argument: <port>');
+    console.error('Usage: npx hasyx docker undefine <port>');
+    console.error('Example: npx hasyx docker undefine 3000');
+    process.exit(1);
+  }
+  
+  try {
+    // Check Docker installation first
+    const dockerResult = spawn.sync('docker', ['--version'], { encoding: 'utf-8' });
+    if (dockerResult.status !== 0) {
+      console.error('❌ Docker is not installed or not running');
+      console.error('💡 Install Docker: https://docs.docker.com/engine/install/');
+      process.exit(1);
+    }
+    
+    await undefineContainer(port);
+    debug('Docker undefine command completed successfully');
+  } catch (error) {
+    console.error('❌ Failed to remove container:', error);
+    debug(`Docker undefine command error: ${error}`);
+    process.exit(1);
+  }
+};
+
+// Docker logs command
+export const dockerLogsCommand = async (port: string, options: { tail?: string } = {}) => {
+  debug(`Executing "docker logs" command for port: ${port}`);
+  
+  if (!port) {
+    console.error('❌ Missing required argument: <port>');
+    console.error('Usage: npx hasyx docker logs <port> [--tail <lines>]');
+    console.error('Example: npx hasyx docker logs 3000 --tail 50');
+    process.exit(1);
+  }
+  
+  try {
+    // Check Docker installation first
+    const dockerResult = spawn.sync('docker', ['--version'], { encoding: 'utf-8' });
+    if (dockerResult.status !== 0) {
+      console.error('❌ Docker is not installed or not running');
+      console.error('💡 Install Docker: https://docs.docker.com/engine/install/');
+      process.exit(1);
+    }
+    
+    const tail = options.tail ? parseInt(options.tail, 10) : 100;
+    await showContainerLogs(port, tail);
+    debug('Docker logs command completed successfully');
+  } catch (error) {
+    console.error('❌ Failed to show container logs:', error);
+    debug(`Docker logs command error: ${error}`);
+    process.exit(1);
+  }
+};
+
+// Docker env command
+export const dockerEnvCommand = async (port: string) => {
+  debug(`Executing "docker env" command for port: ${port}`);
+  
+  if (!port) {
+    console.error('❌ Missing required argument: <port>');
+    console.error('Usage: npx hasyx docker env <port>');
+    console.error('Example: npx hasyx docker env 3000');
+    process.exit(1);
+  }
+  
+  try {
+    // Check Docker installation first
+    const dockerResult = spawn.sync('docker', ['--version'], { encoding: 'utf-8' });
+    if (dockerResult.status !== 0) {
+      console.error('❌ Docker is not installed or not running');
+      console.error('💡 Install Docker: https://docs.docker.com/engine/install/');
+      process.exit(1);
+    }
+    
+    await showContainerEnv(port);
+    debug('Docker env command completed successfully');
+  } catch (error) {
+    console.error('❌ Failed to show container environment:', error);
+    debug(`Docker env command error: ${error}`);
+    process.exit(1);
+  }
+};
+
 // Command descriptor functions
 export const initCommandDescribe = (cmd: Command) => {
   return cmd
@@ -1236,6 +1386,69 @@ Requirements:
   return subCmd;
 };
 
+export const dockerCommandDescribe = (cmd: Command) => {
+  const subCmd = cmd
+    .description('Manage Docker containers with automatic updates via Watchtower')
+    .addHelpText('after', `
+Examples:
+  npx hasyx docker ls              # List running containers for this project
+  npx hasyx docker define          # Create container on default port (from env PORT or 3000)
+  npx hasyx docker define 8080     # Create container on port 8080
+  npx hasyx docker undefine 8080   # Remove container and watchtower on port 8080
+  npx hasyx docker logs 8080       # Show container logs
+  npx hasyx docker logs 8080 --tail 50  # Show last 50 log lines
+  npx hasyx docker env 8080        # Show container environment variables
+
+Requirements:
+  • Docker must be installed and running
+  • Project must have package.json with name field
+  • Optional: docker_container_name field in package.json overrides name
+  • Optional: PORT environment variable for default port
+  • .env file will be read and passed to containers (except PORT)
+
+The docker define command will:
+  1. Read all environment variables from .env file
+  2. Create a Watchtower container for automatic updates
+  3. Create and start your application container with env vars
+  4. Set up port mapping (external:3000 - internal port is always 3000)
+  5. Enable container restart policies
+
+Container naming convention:
+  • Main container: <project-name>-<port>
+  • Watchtower: <project-name>-watchtower-<port>
+  • Image name: <project-name>:latest
+`);
+
+  // Add subcommands
+  subCmd
+    .command('ls')
+    .description('List running containers for this project')
+    .action(dockerListCommand);
+
+  subCmd
+    .command('define [port]')
+    .description('Create and start container with Watchtower (port optional, uses env PORT or 3000)')
+    .action(dockerDefineCommand);
+
+  subCmd
+    .command('undefine <port>')
+    .description('Stop and remove container and its Watchtower')
+    .action(dockerUndefineCommand);
+
+  subCmd
+    .command('logs <port>')
+    .description('Show container logs')
+    .option('--tail <lines>', 'Number of lines to show from the end', '100')
+    .action(dockerLogsCommand);
+
+  subCmd
+    .command('env <port>')
+    .description('Show container environment variables (sensitive values masked)')
+    .action(dockerEnvCommand);
+
+  return subCmd;
+};
+
 // Export all command functions and utilities
 export const setupCommands = (program: Command, packageName: string = 'hasyx') => {
   // Init command
@@ -1321,6 +1534,9 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
 
   // Subdomain command
   subdomainCommandDescribe(program.command('subdomain'));
+
+  // Docker command
+  dockerCommandDescribe(program.command('docker'));
 
   return program;
 }; 

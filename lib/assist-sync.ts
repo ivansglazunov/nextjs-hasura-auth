@@ -207,6 +207,7 @@ export async function syncEnvironmentVariables(rl: readline.Interface, envPath: 
         const excludedKeys = (baseEnvForGithub.GITHUB_SECRETS_EXCLUDE || '').split(',').map(k => k.trim()).filter(Boolean);
         excludedKeys.push('GITHUB_TOKEN', 'VERCEL_TOKEN', 'NPM_TOKEN');
         excludedKeys.push('VERCEL_TEAM_ID', 'VERCEL_PROJECT_NAME', 'GITHUB_SECRETS_EXCLUDE');
+        // DOCKER_USERNAME and DOCKER_PASSWORD should be synced to GitHub for CI/CD
         // OPENROUTER_API_KEY should NOT be in excludedKeys by default if we want to sync it.
         debug('GitHub Actions secrets excluded keys:', excludedKeys);
         

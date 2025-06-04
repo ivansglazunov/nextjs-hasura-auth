@@ -28,6 +28,7 @@ import Debug from './debug';
 import { Generator } from './generator';
 import { Hasyx } from './hasyx';
 import { configureDns } from './assist-dns';
+import { configureDocker } from './assist-docker';
 
 // Ensure dotenv is configured only once
 if (require.main === module) {
@@ -73,6 +74,7 @@ interface AssistOptions {
   skipOpenRouter?: boolean;
   skipPg?: boolean;
   skipDns?: boolean;
+  skipDocker?: boolean;
 }
 
 // NEW FUNCTION to determine OAuth callback base URL
@@ -157,6 +159,8 @@ async function assist(options: AssistOptions = {}) {
     else debug('Skipping PostgreSQL configuration');
     if (!options.skipDns) envVars = await configureDns(rl, envPath);
     else debug('Skipping DNS configuration');
+    if (!options.skipDocker) envVars = await configureDocker(rl, envPath);
+    else debug('Skipping Docker configuration');
     if (!options.skipVercel) await setupVercel(rl, envPath, envVars);
     else debug('Skipping Vercel setup');
     if (!options.skipSync) await syncEnvironmentVariables(rl, envPath, {});
@@ -269,6 +273,7 @@ if (require.main === module) {
     .option('--skip-openrouter', 'Skip OpenRouter API Key setup')
     .option('--skip-pg', 'Skip PostgreSQL configuration')
     .option('--skip-dns', 'Skip DNS configuration')
+    .option('--skip-docker', 'Skip Docker configuration')
     .action((cmdOptions) => {
       assist(cmdOptions);
     });
