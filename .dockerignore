@@ -1,32 +1,65 @@
+# Dependencies
 node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Production build
+# Next.js build outputs
 .next
 out
+dist
 
-# Local development
+# Environment files
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Misc
-.DS_Store
-*.tgz
-*.tar.gz
+# Git
+.git
+.gitignore
 
-# IDE
+# IDE and editors
 .vscode
 .idea
 *.swp
 *.swo
+*~
 
-# Git
-.git
-.gitignore
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Coverage directory used by tools like istanbul
+coverage
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Testing
+.nyc_output
+coverage
+
+# Misc
+README.md
+LICENSE
+.github
+
+# Misc
+*.tgz
+*.tar.gz
 
 # Docker
 Dockerfile*
@@ -65,7 +98,6 @@ jspm_packages/
 .yarn-integrity
 
 # Documentation
-README.md
 CONTRIBUTING.md
 DOCKER.md
 docs/

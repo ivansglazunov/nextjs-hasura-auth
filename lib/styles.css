@@ -52,6 +52,7 @@
     --container-md: 28rem;
     --container-lg: 32rem;
     --container-2xl: 42rem;
+    --container-6xl: 72rem;
     --text-xs: 0.75rem;
     --text-xs--line-height: calc(1 / 0.75);
     --text-sm: 0.875rem;
@@ -432,6 +433,9 @@
   .mt-2 {
     margin-top: calc(var(--spacing) * 2);
   }
+  .mt-3 {
+    margin-top: calc(var(--spacing) * 3);
+  }
   .mt-4 {
     margin-top: calc(var(--spacing) * 4);
   }
@@ -606,11 +610,8 @@
   .h-\[1\.15rem\] {
     height: 1.15rem;
   }
-  .h-\[20px\] {
-    height: 20px;
-  }
-  .h-\[50px\] {
-    height: 50px;
+  .h-\[80vh\] {
+    height: 80vh;
   }
   .h-\[calc\(100\%-1px\)\] {
     height: calc(100% - 1px);
@@ -630,9 +631,6 @@
   .h-px {
     height: 1px;
   }
-  .h-screen {
-    height: 100vh;
-  }
   .h-svh {
     height: 100svh;
   }
@@ -645,6 +643,9 @@
   .max-h-\(--radix-select-content-available-height\) {
     max-height: var(--radix-select-content-available-height);
   }
+  .max-h-32 {
+    max-height: calc(var(--spacing) * 32);
+  }
   .max-h-48 {
     max-height: calc(var(--spacing) * 48);
   }
@@ -653,6 +654,9 @@
   }
   .max-h-\[300px\] {
     max-height: 300px;
+  }
+  .max-h-\[800px\] {
+    max-height: 800px;
   }
   .max-h-full {
     max-height: 100%;
@@ -717,6 +721,9 @@
   .w-9 {
     width: calc(var(--spacing) * 9);
   }
+  .w-10 {
+    width: calc(var(--spacing) * 10);
+  }
   .w-12 {
     width: calc(var(--spacing) * 12);
   }
@@ -728,9 +735,6 @@
   }
   .w-80 {
     width: calc(var(--spacing) * 80);
-  }
-  .w-\[50px\] {
-    width: 50px;
   }
   .w-\[100px\] {
     width: 100px;
@@ -755,6 +759,15 @@
   }
   .max-w-2xl {
     max-width: var(--container-2xl);
+  }
+  .max-w-6xl {
+    max-width: var(--container-6xl);
+  }
+  .max-w-\[120px\] {
+    max-width: 120px;
+  }
+  .max-w-\[140px\] {
+    max-width: 140px;
   }
   .max-w-\[calc\(100\%-2rem\)\] {
     max-width: calc(100% - 2rem);
@@ -1817,9 +1830,6 @@
   .select-none {
     -webkit-user-select: none;
     user-select: none;
-  }
-  .\[hasura\:test\] {
-    hasura: test;
   }
   .\[test\:hasyx\] {
     test: hasyx;
@@ -4224,6 +4234,11 @@
           color: var(--destructive) !important;
         }
       }
+    }
+  }
+  .\[\&\>\*\]\:pointer-events-auto {
+    &>* {
+      pointer-events: auto;
     }
   }
   .\[\&\>\[role\=checkbox\]\]\:translate-y-\[2px\] {

@@ -197,6 +197,14 @@ export async function applySQLSchema(hasura: Hasura) {
     comment: 'OAuth token'
   });
   
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'accounts',
+    name: 'provider_data',
+    type: ColumnType.JSONB,
+    comment: 'Additional provider-specific data (e.g., Telegram username, photo_url)'
+  });
+  
   // Create foreign key constraint
   await hasura.defineForeignKey({
     from: { schema: 'public', table: 'accounts', column: 'user_id' },
@@ -277,7 +285,7 @@ export async function applyPermissions(hasura: Hasura) {
     operation: 'select',
     role: 'me',
     filter: { user_id: { _eq: 'X-Hasura-User-Id' } },
-    columns: ['id', 'user_id', 'type', 'provider', 'provider_account_id', 'refresh_token', 'access_token', 'expires_at', 'token_type', 'scope', 'id_token', 'session_state', 'created_at']
+    columns: ['id', 'user_id', 'type', 'provider', 'provider_account_id', 'refresh_token', 'access_token', 'expires_at', 'token_type', 'scope', 'id_token', 'session_state', 'provider_data', 'created_at']
   });
 
   await hasura.definePermission({
@@ -286,7 +294,7 @@ export async function applyPermissions(hasura: Hasura) {
     operation: 'select',
     role: 'user',
     filter: {},
-    columns: ['id', 'provider', 'user_id', 'created_at', 'updated_at']
+    columns: ['id', 'provider', 'user_id', 'provider_data', 'created_at', 'updated_at']
   });
 
   // Admin permissions
@@ -305,7 +313,7 @@ export async function applyPermissions(hasura: Hasura) {
     operation: 'select',
     role: 'admin',
     filter: {},
-    columns: ['id', 'user_id', 'type', 'provider', 'provider_account_id', 'created_at']
+    columns: ['id', 'user_id', 'type', 'provider', 'provider_account_id', 'provider_data', 'created_at']
   });
 
   debug('✅ Users permissions applied.');

@@ -1,92 +1,63 @@
-# Multi-stage build for production
-FROM node:18-alpine AS builder
+# Multi-stage build for Next.js production
+FROM node:22-alpine AS base
 
+# Install dependencies only when needed
+FROM base AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install Python and build tools for native dependencies
-RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    make \
-    g++ \
-    libc6-compat \
-    vips-dev
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
+RUN npm ci --legacy-peer-deps --only=production
 
-# Copy package files and install all dependencies (including dev)
-COPY package*.json ./
-
-# Install dependencies with better error handling
-RUN npm ci --legacy-peer-deps --prefer-offline --no-audit
-
-# Copy source code and build
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time environment variables with placeholder values (not embedded in final image)
+# Install all dependencies (including devDependencies) for build
+RUN npm ci --legacy-peer-deps
+
+# Build the application
+# Set minimal placeholder environment variables for build
 ENV NEXT_PUBLIC_HASURA_GRAPHQL_URL="https://placeholder-hasura-url.com/v1/graphql"
 ENV NEXTAUTH_SECRET="placeholder-nextauth-secret-for-build-only"
 ENV NEXTAUTH_URL="http://localhost:3000"
+ENV NODE_ENV=production
+ENV NEXT_PUBLIC_BUILD_TARGET=server
 
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine AS production
-
+# Production image, copy all the files and run next
+FROM base AS runner
 WORKDIR /app
 
-# Install runtime dependencies including Python for native modules
-RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    make \
-    g++ \
-    libc6-compat \
-    vips-dev \
-    curl \
-    dumb-init
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Copy package files
-COPY package*.json ./
+# Copy the public folder from the project as this is not included in build output
+COPY --from=builder /app/public ./public
 
-# Install only production dependencies with better error handling
-RUN npm ci --only=production --legacy-peer-deps --ignore-scripts --prefer-offline --no-audit || \
-    (echo "First attempt failed, trying with --force" && npm ci --only=production --legacy-peer-deps --force --prefer-offline --no-audit)
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
 
-# Rebuild native modules
-RUN npm rebuild --quiet || echo "Some native modules failed to rebuild, continuing..."
-
-# Clean npm cache
-RUN npm cache clean --force --loglevel=error || echo "Cache clean failed, continuing..."
-
-# Copy built application from builder stage
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-# Copy other necessary files
-COPY --chown=nextjs:nodejs next.config.* ./
-COPY --chown=nextjs:nodejs lib ./lib
-
-# Clean up build dependencies to reduce image size (keep curl for healthcheck)
-RUN apk del python3 py3-pip make g++ vips-dev
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-# Always expose port 3000 internally
 EXPOSE 3000
 
-# Set default environment variables (will be overridden by runtime env vars)
-ENV PORT=3000
-ENV NODE_ENV=production
-ENV HOSTNAME="0.0.0.0"
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
-
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
-
-# Start the application
-CMD ["npm", "start"] 
+# server.js is created by next build from the standalone output
+# https://nextjs.org/docs/pages/api-reference/next-config-js/output
+CMD ["node", "server.js"]

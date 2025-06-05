@@ -6,6 +6,7 @@ import 'next-auth/jwt';
 
 import { createAuthOptions } from 'hasyx/lib/auth-options';
 import { AppCredentialsProvider } from 'hasyx/lib/credentials';
+import { TelegramMiniappCredentialsProvider } from 'hasyx/lib/telegram-miniapp-server';
 
 import schema from '../public/hasura-schema.json';
 
@@ -15,6 +16,7 @@ const client = new Hasyx(createApolloClient({
 
 const authOptions: NextAuthOptions = createAuthOptions([
   AppCredentialsProvider({ hasyx: client }),
+  TelegramMiniappCredentialsProvider({ hasyx: client }),
 ], client);
 
 export default authOptions;

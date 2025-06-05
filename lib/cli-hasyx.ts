@@ -276,6 +276,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'events/notify.json': 'events/notify.json',
     'lib/debug.ts': 'lib/debug.template',
     'lib/cli.ts': 'lib/cli.template',
+    'lib/github-telegram-bot.ts': 'lib/github-telegram-bot.template',
   };
 
   // Ensure directories exist

@@ -113,6 +113,8 @@ export type Accounts = {
   provider: Scalars["String"]["output"];
   /** Provider account ID */
   provider_account_id: Scalars["String"]["output"];
+  /** Additional provider-specific data (e.g., Telegram username, photo_url) */
+  provider_data?: Maybe<Scalars["jsonb"]["output"]>;
   /** OAuth refresh token */
   refresh_token?: Maybe<Scalars["String"]["output"]>;
   /** OAuth scope */
@@ -128,6 +130,11 @@ export type Accounts = {
   user: Users;
   /** Reference to users table */
   user_id: Scalars["uuid"]["output"];
+};
+
+/** columns and relationships of "accounts" */
+export type AccountsProvider_DataArgs = {
+  path?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 /** aggregated selection of "accounts" */
@@ -185,6 +192,12 @@ export type Accounts_Aggregate_Order_By = {
   variance?: InputMaybe<Accounts_Variance_Order_By>;
 };
 
+/** append existing jsonb value of filtered columns with new jsonb value */
+export type Accounts_Append_Input = {
+  /** Additional provider-specific data (e.g., Telegram username, photo_url) */
+  provider_data?: InputMaybe<Scalars["jsonb"]["input"]>;
+};
+
 /** input type for inserting array relation for remote table "accounts" */
 export type Accounts_Arr_Rel_Insert_Input = {
   data: Array<Accounts_Insert_Input>;
@@ -226,6 +239,7 @@ export type Accounts_Bool_Exp = {
   oauth_token_secret?: InputMaybe<String_Comparison_Exp>;
   provider?: InputMaybe<String_Comparison_Exp>;
   provider_account_id?: InputMaybe<String_Comparison_Exp>;
+  provider_data?: InputMaybe<Jsonb_Comparison_Exp>;
   refresh_token?: InputMaybe<String_Comparison_Exp>;
   scope?: InputMaybe<String_Comparison_Exp>;
   session_state?: InputMaybe<String_Comparison_Exp>;
@@ -243,6 +257,24 @@ export enum Accounts_Constraint {
   /** unique or primary key constraint on columns "provider", "provider_account_id" */
   AccountsProviderProviderAccountIdUnique = "accounts_provider_provider_account_id_unique",
 }
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export type Accounts_Delete_At_Path_Input = {
+  /** Additional provider-specific data (e.g., Telegram username, photo_url) */
+  provider_data?: InputMaybe<Array<Scalars["String"]["input"]>>;
+};
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export type Accounts_Delete_Elem_Input = {
+  /** Additional provider-specific data (e.g., Telegram username, photo_url) */
+  provider_data?: InputMaybe<Scalars["Int"]["input"]>;
+};
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export type Accounts_Delete_Key_Input = {
+  /** Additional provider-specific data (e.g., Telegram username, photo_url) */
+  provider_data?: InputMaybe<Scalars["String"]["input"]>;
+};
 
 /** input type for incrementing numeric columns in table "accounts" */
 export type Accounts_Inc_Input = {
@@ -271,6 +303,8 @@ export type Accounts_Insert_Input = {
   provider?: InputMaybe<Scalars["String"]["input"]>;
   /** Provider account ID */
   provider_account_id?: InputMaybe<Scalars["String"]["input"]>;
+  /** Additional provider-specific data (e.g., Telegram username, photo_url) */
+  provider_data?: InputMaybe<Scalars["jsonb"]["input"]>;
   /** OAuth refresh token */
   refresh_token?: InputMaybe<Scalars["String"]["input"]>;
   /** OAuth scope */
@@ -466,6 +500,7 @@ export type Accounts_Order_By = {
   oauth_token_secret?: InputMaybe<Order_By>;
   provider?: InputMaybe<Order_By>;
   provider_account_id?: InputMaybe<Order_By>;
+  provider_data?: InputMaybe<Order_By>;
   refresh_token?: InputMaybe<Order_By>;
   scope?: InputMaybe<Order_By>;
   session_state?: InputMaybe<Order_By>;
@@ -479,6 +514,12 @@ export type Accounts_Order_By = {
 /** primary key columns input for table: accounts */
 export type Accounts_Pk_Columns_Input = {
   id: Scalars["uuid"]["input"];
+};
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export type Accounts_Prepend_Input = {
+  /** Additional provider-specific data (e.g., Telegram username, photo_url) */
+  provider_data?: InputMaybe<Scalars["jsonb"]["input"]>;
 };
 
 /** select columns of table "accounts" */
@@ -505,6 +546,8 @@ export enum Accounts_Select_Column {
   Provider = "provider",
   /** column name */
   ProviderAccountId = "provider_account_id",
+  /** column name */
+  ProviderData = "provider_data",
   /** column name */
   RefreshToken = "refresh_token",
   /** column name */
@@ -539,6 +582,8 @@ export type Accounts_Set_Input = {
   provider?: InputMaybe<Scalars["String"]["input"]>;
   /** Provider account ID */
   provider_account_id?: InputMaybe<Scalars["String"]["input"]>;
+  /** Additional provider-specific data (e.g., Telegram username, photo_url) */
+  provider_data?: InputMaybe<Scalars["jsonb"]["input"]>;
   /** OAuth refresh token */
   refresh_token?: InputMaybe<Scalars["String"]["input"]>;
   /** OAuth scope */
@@ -633,6 +678,8 @@ export type Accounts_Stream_Cursor_Value_Input = {
   provider?: InputMaybe<Scalars["String"]["input"]>;
   /** Provider account ID */
   provider_account_id?: InputMaybe<Scalars["String"]["input"]>;
+  /** Additional provider-specific data (e.g., Telegram username, photo_url) */
+  provider_data?: InputMaybe<Scalars["jsonb"]["input"]>;
   /** OAuth refresh token */
   refresh_token?: InputMaybe<Scalars["String"]["input"]>;
   /** OAuth scope */
@@ -686,6 +733,8 @@ export enum Accounts_Update_Column {
   /** column name */
   ProviderAccountId = "provider_account_id",
   /** column name */
+  ProviderData = "provider_data",
+  /** column name */
   RefreshToken = "refresh_token",
   /** column name */
   Scope = "scope",
@@ -702,8 +751,18 @@ export enum Accounts_Update_Column {
 }
 
 export type Accounts_Updates = {
+  /** append existing jsonb value of filtered columns with new jsonb value */
+  _append?: InputMaybe<Accounts_Append_Input>;
+  /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+  _delete_at_path?: InputMaybe<Accounts_Delete_At_Path_Input>;
+  /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+  _delete_elem?: InputMaybe<Accounts_Delete_Elem_Input>;
+  /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+  _delete_key?: InputMaybe<Accounts_Delete_Key_Input>;
   /** increments the numeric columns with given value of the filtered values */
   _inc?: InputMaybe<Accounts_Inc_Input>;
+  /** prepend existing jsonb value of filtered columns with new jsonb value */
+  _prepend?: InputMaybe<Accounts_Prepend_Input>;
   /** sets the columns of the filtered rows to the given values */
   _set?: InputMaybe<Accounts_Set_Input>;
   /** filter the rows which have to be updated */
@@ -1324,6 +1383,8 @@ export type Deep__Functions_Variance_Fields = {
 /** columns and relationships of "deep._links" */
 export type Deep__Links = {
   __typename?: "deep__links";
+  /** Optional direct name (only for Context type entities) */
+  __name?: Maybe<Scalars["String"]["output"]>;
   /** Deep space isolation key */
   _deep: Scalars["uuid"]["output"];
   /** Link from reference */
@@ -1334,6 +1395,8 @@ export type Deep__Links = {
   _i: Scalars["bigint"]["output"];
   /** Number data reference */
   _number?: Maybe<Scalars["uuid"]["output"]>;
+  /** Whether this link is protected from modifications */
+  _protected?: Maybe<Scalars["Boolean"]["output"]>;
   /** String data reference */
   _string?: Maybe<Scalars["uuid"]["output"]>;
   /** Link to reference */
@@ -1387,6 +1450,7 @@ export type Deep__Links_Avg_Fields = {
 
 /** Boolean expression to filter rows from the table "deep._links". All fields are combined with a logical 'AND'. */
 export type Deep__Links_Bool_Exp = {
+  __name?: InputMaybe<String_Comparison_Exp>;
   _and?: InputMaybe<Array<Deep__Links_Bool_Exp>>;
   _deep?: InputMaybe<Uuid_Comparison_Exp>;
   _from?: InputMaybe<Uuid_Comparison_Exp>;
@@ -1395,6 +1459,7 @@ export type Deep__Links_Bool_Exp = {
   _not?: InputMaybe<Deep__Links_Bool_Exp>;
   _number?: InputMaybe<Uuid_Comparison_Exp>;
   _or?: InputMaybe<Array<Deep__Links_Bool_Exp>>;
+  _protected?: InputMaybe<Boolean_Comparison_Exp>;
   _string?: InputMaybe<Uuid_Comparison_Exp>;
   _to?: InputMaybe<Uuid_Comparison_Exp>;
   _type?: InputMaybe<Uuid_Comparison_Exp>;
@@ -1420,6 +1485,8 @@ export type Deep__Links_Inc_Input = {
 
 /** input type for inserting data into table "deep._links" */
 export type Deep__Links_Insert_Input = {
+  /** Optional direct name (only for Context type entities) */
+  __name?: InputMaybe<Scalars["String"]["input"]>;
   /** Deep space isolation key */
   _deep?: InputMaybe<Scalars["uuid"]["input"]>;
   /** Link from reference */
@@ -1430,6 +1497,8 @@ export type Deep__Links_Insert_Input = {
   _i?: InputMaybe<Scalars["bigint"]["input"]>;
   /** Number data reference */
   _number?: InputMaybe<Scalars["uuid"]["input"]>;
+  /** Whether this link is protected from modifications */
+  _protected?: InputMaybe<Scalars["Boolean"]["input"]>;
   /** String data reference */
   _string?: InputMaybe<Scalars["uuid"]["input"]>;
   /** Link to reference */
@@ -1446,6 +1515,8 @@ export type Deep__Links_Insert_Input = {
 /** aggregate max on columns */
 export type Deep__Links_Max_Fields = {
   __typename?: "deep__links_max_fields";
+  /** Optional direct name (only for Context type entities) */
+  __name?: Maybe<Scalars["String"]["output"]>;
   /** Deep space isolation key */
   _deep?: Maybe<Scalars["uuid"]["output"]>;
   /** Link from reference */
@@ -1472,6 +1543,8 @@ export type Deep__Links_Max_Fields = {
 /** aggregate min on columns */
 export type Deep__Links_Min_Fields = {
   __typename?: "deep__links_min_fields";
+  /** Optional direct name (only for Context type entities) */
+  __name?: Maybe<Scalars["String"]["output"]>;
   /** Deep space isolation key */
   _deep?: Maybe<Scalars["uuid"]["output"]>;
   /** Link from reference */
@@ -1513,11 +1586,13 @@ export type Deep__Links_On_Conflict = {
 
 /** Ordering options when selecting data from "deep._links". */
 export type Deep__Links_Order_By = {
+  __name?: InputMaybe<Order_By>;
   _deep?: InputMaybe<Order_By>;
   _from?: InputMaybe<Order_By>;
   _function?: InputMaybe<Order_By>;
   _i?: InputMaybe<Order_By>;
   _number?: InputMaybe<Order_By>;
+  _protected?: InputMaybe<Order_By>;
   _string?: InputMaybe<Order_By>;
   _to?: InputMaybe<Order_By>;
   _type?: InputMaybe<Order_By>;
@@ -1535,6 +1610,8 @@ export type Deep__Links_Pk_Columns_Input = {
 /** select columns of table "deep._links" */
 export enum Deep__Links_Select_Column {
   /** column name */
+  Name = "__name",
+  /** column name */
   Deep = "_deep",
   /** column name */
   From = "_from",
@@ -1544,6 +1621,8 @@ export enum Deep__Links_Select_Column {
   I = "_i",
   /** column name */
   Number = "_number",
+  /** column name */
+  Protected = "_protected",
   /** column name */
   String = "_string",
   /** column name */
@@ -1562,6 +1641,8 @@ export enum Deep__Links_Select_Column {
 
 /** input type for updating data in table "deep._links" */
 export type Deep__Links_Set_Input = {
+  /** Optional direct name (only for Context type entities) */
+  __name?: InputMaybe<Scalars["String"]["input"]>;
   /** Deep space isolation key */
   _deep?: InputMaybe<Scalars["uuid"]["input"]>;
   /** Link from reference */
@@ -1572,6 +1653,8 @@ export type Deep__Links_Set_Input = {
   _i?: InputMaybe<Scalars["bigint"]["input"]>;
   /** Number data reference */
   _number?: InputMaybe<Scalars["uuid"]["input"]>;
+  /** Whether this link is protected from modifications */
+  _protected?: InputMaybe<Scalars["Boolean"]["input"]>;
   /** String data reference */
   _string?: InputMaybe<Scalars["uuid"]["input"]>;
   /** Link to reference */
@@ -1622,6 +1705,8 @@ export type Deep__Links_Stream_Cursor_Input = {
 
 /** Initial value of the column from where the streaming should start */
 export type Deep__Links_Stream_Cursor_Value_Input = {
+  /** Optional direct name (only for Context type entities) */
+  __name?: InputMaybe<Scalars["String"]["input"]>;
   /** Deep space isolation key */
   _deep?: InputMaybe<Scalars["uuid"]["input"]>;
   /** Link from reference */
@@ -1632,6 +1717,8 @@ export type Deep__Links_Stream_Cursor_Value_Input = {
   _i?: InputMaybe<Scalars["bigint"]["input"]>;
   /** Number data reference */
   _number?: InputMaybe<Scalars["uuid"]["input"]>;
+  /** Whether this link is protected from modifications */
+  _protected?: InputMaybe<Scalars["Boolean"]["input"]>;
   /** String data reference */
   _string?: InputMaybe<Scalars["uuid"]["input"]>;
   /** Link to reference */
@@ -1657,6 +1744,8 @@ export type Deep__Links_Sum_Fields = {
 /** update columns of table "deep._links" */
 export enum Deep__Links_Update_Column {
   /** column name */
+  Name = "__name",
+  /** column name */
   Deep = "_deep",
   /** column name */
   From = "_from",
@@ -1666,6 +1755,8 @@ export enum Deep__Links_Update_Column {
   I = "_i",
   /** column name */
   Number = "_number",
+  /** column name */
+  Protected = "_protected",
   /** column name */
   String = "_string",
   /** column name */
@@ -2213,9 +2304,11 @@ export type Deep__Strings_Variance_Fields = {
 /** columns and relationships of "deep.links" */
 export type Deep_Links = {
   __typename?: "deep_links";
+  __name?: Maybe<Scalars["String"]["output"]>;
   _deep?: Maybe<Scalars["uuid"]["output"]>;
   _from?: Maybe<Scalars["uuid"]["output"]>;
   _i?: Maybe<Scalars["bigint"]["output"]>;
+  _protected?: Maybe<Scalars["Boolean"]["output"]>;
   _to?: Maybe<Scalars["uuid"]["output"]>;
   _type?: Maybe<Scalars["uuid"]["output"]>;
   _value?: Maybe<Scalars["uuid"]["output"]>;
@@ -2232,6 +2325,7 @@ export type Deep_Links = {
   in: Array<Deep_Links>;
   /** An aggregate relationship */
   in_aggregate: Deep_Links_Aggregate;
+  name?: Maybe<Scalars["String"]["output"]>;
   number?: Maybe<Scalars["numeric"]["output"]>;
   /** An array relationship */
   out: Array<Deep_Links>;
@@ -2353,7 +2447,23 @@ export type Deep_Links_Aggregate = {
 };
 
 export type Deep_Links_Aggregate_Bool_Exp = {
+  bool_and?: InputMaybe<Deep_Links_Aggregate_Bool_Exp_Bool_And>;
+  bool_or?: InputMaybe<Deep_Links_Aggregate_Bool_Exp_Bool_Or>;
   count?: InputMaybe<Deep_Links_Aggregate_Bool_Exp_Count>;
+};
+
+export type Deep_Links_Aggregate_Bool_Exp_Bool_And = {
+  arguments: Deep_Links_Select_Column_Deep_Links_Aggregate_Bool_Exp_Bool_And_Arguments_Columns;
+  distinct?: InputMaybe<Scalars["Boolean"]["input"]>;
+  filter?: InputMaybe<Deep_Links_Bool_Exp>;
+  predicate: Boolean_Comparison_Exp;
+};
+
+export type Deep_Links_Aggregate_Bool_Exp_Bool_Or = {
+  arguments: Deep_Links_Select_Column_Deep_Links_Aggregate_Bool_Exp_Bool_Or_Arguments_Columns;
+  distinct?: InputMaybe<Scalars["Boolean"]["input"]>;
+  filter?: InputMaybe<Deep_Links_Bool_Exp>;
+  predicate: Boolean_Comparison_Exp;
 };
 
 export type Deep_Links_Aggregate_Bool_Exp_Count = {
@@ -2424,12 +2534,14 @@ export type Deep_Links_Avg_Order_By = {
 
 /** Boolean expression to filter rows from the table "deep.links". All fields are combined with a logical 'AND'. */
 export type Deep_Links_Bool_Exp = {
+  __name?: InputMaybe<String_Comparison_Exp>;
   _and?: InputMaybe<Array<Deep_Links_Bool_Exp>>;
   _deep?: InputMaybe<Uuid_Comparison_Exp>;
   _from?: InputMaybe<Uuid_Comparison_Exp>;
   _i?: InputMaybe<Bigint_Comparison_Exp>;
   _not?: InputMaybe<Deep_Links_Bool_Exp>;
   _or?: InputMaybe<Array<Deep_Links_Bool_Exp>>;
+  _protected?: InputMaybe<Boolean_Comparison_Exp>;
   _to?: InputMaybe<Uuid_Comparison_Exp>;
   _type?: InputMaybe<Uuid_Comparison_Exp>;
   _value?: InputMaybe<Uuid_Comparison_Exp>;
@@ -2441,6 +2553,7 @@ export type Deep_Links_Bool_Exp = {
   id?: InputMaybe<Uuid_Comparison_Exp>;
   in?: InputMaybe<Deep_Links_Bool_Exp>;
   in_aggregate?: InputMaybe<Deep_Links_Aggregate_Bool_Exp>;
+  name?: InputMaybe<String_Comparison_Exp>;
   number?: InputMaybe<Numeric_Comparison_Exp>;
   out?: InputMaybe<Deep_Links_Bool_Exp>;
   out_aggregate?: InputMaybe<Deep_Links_Aggregate_Bool_Exp>;
@@ -2465,9 +2578,11 @@ export type Deep_Links_Inc_Input = {
 
 /** input type for inserting data into table "deep.links" */
 export type Deep_Links_Insert_Input = {
+  __name?: InputMaybe<Scalars["String"]["input"]>;
   _deep?: InputMaybe<Scalars["uuid"]["input"]>;
   _from?: InputMaybe<Scalars["uuid"]["input"]>;
   _i?: InputMaybe<Scalars["bigint"]["input"]>;
+  _protected?: InputMaybe<Scalars["Boolean"]["input"]>;
   _to?: InputMaybe<Scalars["uuid"]["input"]>;
   _type?: InputMaybe<Scalars["uuid"]["input"]>;
   _value?: InputMaybe<Scalars["uuid"]["input"]>;
@@ -2477,6 +2592,7 @@ export type Deep_Links_Insert_Input = {
   function?: InputMaybe<Scalars["String"]["input"]>;
   id?: InputMaybe<Scalars["uuid"]["input"]>;
   in?: InputMaybe<Deep_Links_Arr_Rel_Insert_Input>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
   number?: InputMaybe<Scalars["numeric"]["input"]>;
   out?: InputMaybe<Deep_Links_Arr_Rel_Insert_Input>;
   string?: InputMaybe<Scalars["String"]["input"]>;
@@ -2491,6 +2607,7 @@ export type Deep_Links_Insert_Input = {
 /** aggregate max on columns */
 export type Deep_Links_Max_Fields = {
   __typename?: "deep_links_max_fields";
+  __name?: Maybe<Scalars["String"]["output"]>;
   _deep?: Maybe<Scalars["uuid"]["output"]>;
   _from?: Maybe<Scalars["uuid"]["output"]>;
   _i?: Maybe<Scalars["bigint"]["output"]>;
@@ -2500,6 +2617,7 @@ export type Deep_Links_Max_Fields = {
   created_at?: Maybe<Scalars["bigint"]["output"]>;
   function?: Maybe<Scalars["String"]["output"]>;
   id?: Maybe<Scalars["uuid"]["output"]>;
+  name?: Maybe<Scalars["String"]["output"]>;
   number?: Maybe<Scalars["numeric"]["output"]>;
   string?: Maybe<Scalars["String"]["output"]>;
   updated_at?: Maybe<Scalars["bigint"]["output"]>;
@@ -2507,6 +2625,7 @@ export type Deep_Links_Max_Fields = {
 
 /** order by max() on columns of table "deep.links" */
 export type Deep_Links_Max_Order_By = {
+  __name?: InputMaybe<Order_By>;
   _deep?: InputMaybe<Order_By>;
   _from?: InputMaybe<Order_By>;
   _i?: InputMaybe<Order_By>;
@@ -2516,6 +2635,7 @@ export type Deep_Links_Max_Order_By = {
   created_at?: InputMaybe<Order_By>;
   function?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
+  name?: InputMaybe<Order_By>;
   number?: InputMaybe<Order_By>;
   string?: InputMaybe<Order_By>;
   updated_at?: InputMaybe<Order_By>;
@@ -2524,6 +2644,7 @@ export type Deep_Links_Max_Order_By = {
 /** aggregate min on columns */
 export type Deep_Links_Min_Fields = {
   __typename?: "deep_links_min_fields";
+  __name?: Maybe<Scalars["String"]["output"]>;
   _deep?: Maybe<Scalars["uuid"]["output"]>;
   _from?: Maybe<Scalars["uuid"]["output"]>;
   _i?: Maybe<Scalars["bigint"]["output"]>;
@@ -2533,6 +2654,7 @@ export type Deep_Links_Min_Fields = {
   created_at?: Maybe<Scalars["bigint"]["output"]>;
   function?: Maybe<Scalars["String"]["output"]>;
   id?: Maybe<Scalars["uuid"]["output"]>;
+  name?: Maybe<Scalars["String"]["output"]>;
   number?: Maybe<Scalars["numeric"]["output"]>;
   string?: Maybe<Scalars["String"]["output"]>;
   updated_at?: Maybe<Scalars["bigint"]["output"]>;
@@ -2540,6 +2662,7 @@ export type Deep_Links_Min_Fields = {
 
 /** order by min() on columns of table "deep.links" */
 export type Deep_Links_Min_Order_By = {
+  __name?: InputMaybe<Order_By>;
   _deep?: InputMaybe<Order_By>;
   _from?: InputMaybe<Order_By>;
   _i?: InputMaybe<Order_By>;
@@ -2549,6 +2672,7 @@ export type Deep_Links_Min_Order_By = {
   created_at?: InputMaybe<Order_By>;
   function?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
+  name?: InputMaybe<Order_By>;
   number?: InputMaybe<Order_By>;
   string?: InputMaybe<Order_By>;
   updated_at?: InputMaybe<Order_By>;
@@ -2570,9 +2694,11 @@ export type Deep_Links_Obj_Rel_Insert_Input = {
 
 /** Ordering options when selecting data from "deep.links". */
 export type Deep_Links_Order_By = {
+  __name?: InputMaybe<Order_By>;
   _deep?: InputMaybe<Order_By>;
   _from?: InputMaybe<Order_By>;
   _i?: InputMaybe<Order_By>;
+  _protected?: InputMaybe<Order_By>;
   _to?: InputMaybe<Order_By>;
   _type?: InputMaybe<Order_By>;
   _value?: InputMaybe<Order_By>;
@@ -2582,6 +2708,7 @@ export type Deep_Links_Order_By = {
   function?: InputMaybe<Order_By>;
   id?: InputMaybe<Order_By>;
   in_aggregate?: InputMaybe<Deep_Links_Aggregate_Order_By>;
+  name?: InputMaybe<Order_By>;
   number?: InputMaybe<Order_By>;
   out_aggregate?: InputMaybe<Deep_Links_Aggregate_Order_By>;
   string?: InputMaybe<Order_By>;
@@ -2596,11 +2723,15 @@ export type Deep_Links_Order_By = {
 /** select columns of table "deep.links" */
 export enum Deep_Links_Select_Column {
   /** column name */
+  Name = "__name",
+  /** column name */
   Deep = "_deep",
   /** column name */
   From = "_from",
   /** column name */
   I = "_i",
+  /** column name */
+  Protected = "_protected",
   /** column name */
   To = "_to",
   /** column name */
@@ -2614,6 +2745,8 @@ export enum Deep_Links_Select_Column {
   /** column name */
   Id = "id",
   /** column name */
+  Name = "name",
+  /** column name */
   Number = "number",
   /** column name */
   String = "string",
@@ -2621,17 +2754,32 @@ export enum Deep_Links_Select_Column {
   UpdatedAt = "updated_at",
 }
 
+/** select "deep_links_aggregate_bool_exp_bool_and_arguments_columns" columns of table "deep.links" */
+export enum Deep_Links_Select_Column_Deep_Links_Aggregate_Bool_Exp_Bool_And_Arguments_Columns {
+  /** column name */
+  Protected = "_protected",
+}
+
+/** select "deep_links_aggregate_bool_exp_bool_or_arguments_columns" columns of table "deep.links" */
+export enum Deep_Links_Select_Column_Deep_Links_Aggregate_Bool_Exp_Bool_Or_Arguments_Columns {
+  /** column name */
+  Protected = "_protected",
+}
+
 /** input type for updating data in table "deep.links" */
 export type Deep_Links_Set_Input = {
+  __name?: InputMaybe<Scalars["String"]["input"]>;
   _deep?: InputMaybe<Scalars["uuid"]["input"]>;
   _from?: InputMaybe<Scalars["uuid"]["input"]>;
   _i?: InputMaybe<Scalars["bigint"]["input"]>;
+  _protected?: InputMaybe<Scalars["Boolean"]["input"]>;
   _to?: InputMaybe<Scalars["uuid"]["input"]>;
   _type?: InputMaybe<Scalars["uuid"]["input"]>;
   _value?: InputMaybe<Scalars["uuid"]["input"]>;
   created_at?: InputMaybe<Scalars["bigint"]["input"]>;
   function?: InputMaybe<Scalars["String"]["input"]>;
   id?: InputMaybe<Scalars["uuid"]["input"]>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
   number?: InputMaybe<Scalars["numeric"]["input"]>;
   string?: InputMaybe<Scalars["String"]["input"]>;
   updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
@@ -2698,15 +2846,18 @@ export type Deep_Links_Stream_Cursor_Input = {
 
 /** Initial value of the column from where the streaming should start */
 export type Deep_Links_Stream_Cursor_Value_Input = {
+  __name?: InputMaybe<Scalars["String"]["input"]>;
   _deep?: InputMaybe<Scalars["uuid"]["input"]>;
   _from?: InputMaybe<Scalars["uuid"]["input"]>;
   _i?: InputMaybe<Scalars["bigint"]["input"]>;
+  _protected?: InputMaybe<Scalars["Boolean"]["input"]>;
   _to?: InputMaybe<Scalars["uuid"]["input"]>;
   _type?: InputMaybe<Scalars["uuid"]["input"]>;
   _value?: InputMaybe<Scalars["uuid"]["input"]>;
   created_at?: InputMaybe<Scalars["bigint"]["input"]>;
   function?: InputMaybe<Scalars["String"]["input"]>;
   id?: InputMaybe<Scalars["uuid"]["input"]>;
+  name?: InputMaybe<Scalars["String"]["input"]>;
   number?: InputMaybe<Scalars["numeric"]["input"]>;
   string?: InputMaybe<Scalars["String"]["input"]>;
   updated_at?: InputMaybe<Scalars["bigint"]["input"]>;
@@ -3632,14 +3783,24 @@ export type Mutation_RootInsert_Users_OneArgs = {
 
 /** mutation root */
 export type Mutation_RootUpdate_AccountsArgs = {
+  _append?: InputMaybe<Accounts_Append_Input>;
+  _delete_at_path?: InputMaybe<Accounts_Delete_At_Path_Input>;
+  _delete_elem?: InputMaybe<Accounts_Delete_Elem_Input>;
+  _delete_key?: InputMaybe<Accounts_Delete_Key_Input>;
   _inc?: InputMaybe<Accounts_Inc_Input>;
+  _prepend?: InputMaybe<Accounts_Prepend_Input>;
   _set?: InputMaybe<Accounts_Set_Input>;
   where: Accounts_Bool_Exp;
 };
 
 /** mutation root */
 export type Mutation_RootUpdate_Accounts_By_PkArgs = {
+  _append?: InputMaybe<Accounts_Append_Input>;
+  _delete_at_path?: InputMaybe<Accounts_Delete_At_Path_Input>;
+  _delete_elem?: InputMaybe<Accounts_Delete_Elem_Input>;
+  _delete_key?: InputMaybe<Accounts_Delete_Key_Input>;
   _inc?: InputMaybe<Accounts_Inc_Input>;
+  _prepend?: InputMaybe<Accounts_Prepend_Input>;
   _set?: InputMaybe<Accounts_Set_Input>;
   pk_columns: Accounts_Pk_Columns_Input;
 };

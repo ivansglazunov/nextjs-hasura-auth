@@ -11,6 +11,7 @@ import { Hasyx } from './hasyx';
 import { NotificationProvider } from '../components/notify';
 import { Analytics } from "@vercel/analytics/next"
 import { HasyxClient } from './hasyx-client';
+import { TelegramMiniappProvider, useTelegramMiniapp } from './telegram-miniapp';
 
 const debug = Debug('provider');
 
@@ -31,6 +32,9 @@ export const useClient = useHasyx;
 
 // Re-export useSession from next-auth/react for use throughout the app
 export const useSession = useSessionNextAuth;
+
+// Re-export useTelegramMiniapp for easy access throughout the app
+export { useTelegramMiniapp };
 
 function HasyxProviderCore({ url: urlOverride, children, generate }: { url?: string, children: React.ReactNode, generate: Generate }) {
   const apolloClient = useCreateApolloClient(useMemo(() => {
@@ -57,7 +61,7 @@ function HasyxProviderCore({ url: urlOverride, children, generate }: { url?: str
     
     return {
       url: apiUrl,
-      ws: true // Enable WebSocket support
+      ws: typeof window !== 'undefined' // Enable WebSocket support
     };
   }, [urlOverride]));
   
@@ -99,19 +103,21 @@ export function HasyxProvider({ children, generate }: { children: React.ReactNod
   return (
     // SessionProvider is needed for signIn/signOut calls
     <SessionProvider basePath={authBasePath}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <HasyxProviderCore generate={generate}>
-          <Analytics/>
-          <NotificationProvider>
-            {children}
-          </NotificationProvider>
-        </HasyxProviderCore>  
-      </ThemeProvider>
+      <TelegramMiniappProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <HasyxProviderCore generate={generate}>
+            <Analytics/>
+            <NotificationProvider>
+              {children}
+            </NotificationProvider>
+          </HasyxProviderCore>  
+        </ThemeProvider>
+      </TelegramMiniappProvider>
     </SessionProvider>
   );
 } 

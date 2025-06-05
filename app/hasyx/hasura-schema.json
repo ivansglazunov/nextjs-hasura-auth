@@ -1302,6 +1302,29 @@
               "deprecationReason": null
             },
             {
+              "name": "provider_data",
+              "description": "Additional provider-specific data (e.g., Telegram username, photo_url)",
+              "args": [
+                {
+                  "name": "path",
+                  "description": "JSON select path",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                }
+              ],
+              "type": {
+                "kind": "SCALAR",
+                "name": "jsonb",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "refresh_token",
               "description": "OAuth refresh token",
               "args": [],
@@ -1849,6 +1872,27 @@
         },
         {
           "kind": "INPUT_OBJECT",
+          "name": "accounts_append_input",
+          "description": "append existing jsonb value of filtered columns with new jsonb value",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "provider_data",
+              "description": "Additional provider-specific data (e.g., Telegram username, photo_url)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "jsonb",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
           "name": "accounts_arr_rel_insert_input",
           "description": "input type for inserting array relation for remote table \"accounts\"",
           "fields": null,
@@ -2151,6 +2195,16 @@
               "defaultValue": null
             },
             {
+              "name": "provider_data",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "jsonb_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "refresh_token",
               "description": null,
               "type": {
@@ -2256,6 +2310,77 @@
               "deprecationReason": null
             }
           ],
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "accounts_delete_at_path_input",
+          "description": "delete the field or element with specified path (for JSON arrays, negative integers count from the end)",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "provider_data",
+              "description": "Additional provider-specific data (e.g., Telegram username, photo_url)",
+              "type": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "kind": "SCALAR",
+                    "name": "String",
+                    "ofType": null
+                  }
+                }
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "accounts_delete_elem_input",
+          "description": "delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "provider_data",
+              "description": "Additional provider-specific data (e.g., Telegram username, photo_url)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "Int",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "accounts_delete_key_input",
+          "description": "delete key/value pair or string element. key/value pairs are matched based on their key value",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "provider_data",
+              "description": "Additional provider-specific data (e.g., Telegram username, photo_url)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
           "possibleTypes": null
         },
         {
@@ -2401,6 +2526,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "provider_data",
+              "description": "Additional provider-specific data (e.g., Telegram username, photo_url)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "jsonb",
                 "ofType": null
               },
               "defaultValue": null
@@ -3596,6 +3731,16 @@
               "defaultValue": null
             },
             {
+              "name": "provider_data",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "refresh_token",
               "description": null,
               "type": {
@@ -3706,6 +3851,27 @@
           "possibleTypes": null
         },
         {
+          "kind": "INPUT_OBJECT",
+          "name": "accounts_prepend_input",
+          "description": "prepend existing jsonb value of filtered columns with new jsonb value",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "provider_data",
+              "description": "Additional provider-specific data (e.g., Telegram username, photo_url)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "jsonb",
+                "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
           "kind": "ENUM",
           "name": "accounts_select_column",
           "description": "select columns of table \"accounts\"",
@@ -3775,6 +3941,12 @@
             },
             {
               "name": "provider_account_id",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "provider_data",
               "description": "column name",
               "isDeprecated": false,
               "deprecationReason": null
@@ -3916,6 +4088,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "provider_data",
+              "description": "Additional provider-specific data (e.g., Telegram username, photo_url)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "jsonb",
                 "ofType": null
               },
               "defaultValue": null
@@ -4411,6 +4593,16 @@
               "defaultValue": null
             },
             {
+              "name": "provider_data",
+              "description": "Additional provider-specific data (e.g., Telegram username, photo_url)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "jsonb",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "refresh_token",
               "description": "OAuth refresh token",
               "type": {
@@ -4636,6 +4828,12 @@
               "deprecationReason": null
             },
             {
+              "name": "provider_data",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "refresh_token",
               "description": "column name",
               "isDeprecated": false,
@@ -4687,11 +4885,61 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "_append",
+              "description": "append existing jsonb value of filtered columns with new jsonb value",
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "accounts_append_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_delete_at_path",
+              "description": "delete the field or element with specified path (for JSON arrays, negative integers count from the end)",
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "accounts_delete_at_path_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_delete_elem",
+              "description": "delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array",
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "accounts_delete_elem_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_delete_key",
+              "description": "delete key/value pair or string element. key/value pairs are matched based on their key value",
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "accounts_delete_key_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_inc",
               "description": "increments the numeric columns with given value of the filtered values",
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "accounts_inc_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_prepend",
+              "description": "prepend existing jsonb value of filtered columns with new jsonb value",
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "accounts_prepend_input",
                 "ofType": null
               },
               "defaultValue": null
@@ -8168,6 +8416,18 @@
           "description": "columns and relationships of \"deep._links\"",
           "fields": [
             {
+              "name": "__name",
+              "description": "Optional direct name (only for Context type entities)",
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "_deep",
               "description": "Deep space isolation key",
               "args": [],
@@ -8230,6 +8490,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "uuid",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_protected",
+              "description": "Whether this link is protected from modifications",
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -8614,6 +8886,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_and",
               "description": null,
               "type": {
@@ -8706,6 +8988,16 @@
                     "ofType": null
                   }
                 }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "Boolean_comparison_exp",
+                "ofType": null
               },
               "defaultValue": null
             },
@@ -8849,6 +9141,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": "Optional direct name (only for Context type entities)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_deep",
               "description": "Deep space isolation key",
               "type": {
@@ -8894,6 +9196,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "uuid",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
+              "description": "Whether this link is protected from modifications",
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               },
               "defaultValue": null
@@ -8978,6 +9290,18 @@
           "name": "deep__links_max_fields",
           "description": "aggregate max on columns",
           "fields": [
+            {
+              "name": "__name",
+              "description": "Optional direct name (only for Context type entities)",
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "_deep",
               "description": "Deep space isolation key",
@@ -9133,6 +9457,18 @@
           "name": "deep__links_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "__name",
+              "description": "Optional direct name (only for Context type entities)",
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "_deep",
               "description": "Deep space isolation key",
@@ -9398,6 +9734,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_deep",
               "description": null,
               "type": {
@@ -9439,6 +9785,16 @@
             },
             {
               "name": "_number",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
               "description": null,
               "type": {
                 "kind": "ENUM",
@@ -9556,6 +9912,12 @@
           "interfaces": null,
           "enumValues": [
             {
+              "name": "__name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "_deep",
               "description": "column name",
               "isDeprecated": false,
@@ -9581,6 +9943,12 @@
             },
             {
               "name": "_number",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_protected",
               "description": "column name",
               "isDeprecated": false,
               "deprecationReason": null
@@ -9637,6 +10005,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": "Optional direct name (only for Context type entities)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_deep",
               "description": "Deep space isolation key",
               "type": {
@@ -9682,6 +10060,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "uuid",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
+              "description": "Whether this link is protected from modifications",
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               },
               "defaultValue": null
@@ -9944,6 +10332,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": "Optional direct name (only for Context type entities)",
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_deep",
               "description": "Deep space isolation key",
               "type": {
@@ -9989,6 +10387,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "uuid",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
+              "description": "Whether this link is protected from modifications",
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               },
               "defaultValue": null
@@ -10124,6 +10532,12 @@
           "interfaces": null,
           "enumValues": [
             {
+              "name": "__name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "_deep",
               "description": "column name",
               "isDeprecated": false,
@@ -10149,6 +10563,12 @@
             },
             {
               "name": "_number",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_protected",
               "description": "column name",
               "isDeprecated": false,
               "deprecationReason": null
@@ -13164,6 +13584,18 @@
           "description": "columns and relationships of \"deep.links\"",
           "fields": [
             {
+              "name": "__name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "_deep",
               "description": null,
               "args": [],
@@ -13194,6 +13626,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "bigint",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_protected",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -13627,6 +14071,18 @@
                   "name": "deep_links_aggregate",
                   "ofType": null
                 }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
               },
               "isDeprecated": false,
               "deprecationReason": null
@@ -14285,12 +14741,150 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "bool_and",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "deep_links_aggregate_bool_exp_bool_and",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "bool_or",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "deep_links_aggregate_bool_exp_bool_or",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "count",
               "description": null,
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "deep_links_aggregate_bool_exp_count",
                 "ofType": null
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "deep_links_aggregate_bool_exp_bool_and",
+          "description": null,
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "arguments",
+              "description": null,
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "ENUM",
+                  "name": "deep_links_select_column_deep_links_aggregate_bool_exp_bool_and_arguments_columns",
+                  "ofType": null
+                }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "distinct",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "filter",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "deep_links_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "predicate",
+              "description": null,
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "Boolean_comparison_exp",
+                  "ofType": null
+                }
+              },
+              "defaultValue": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "deep_links_aggregate_bool_exp_bool_or",
+          "description": null,
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "arguments",
+              "description": null,
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "ENUM",
+                  "name": "deep_links_select_column_deep_links_aggregate_bool_exp_bool_or_arguments_columns",
+                  "ofType": null
+                }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "distinct",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "filter",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "deep_links_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "predicate",
+              "description": null,
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "Boolean_comparison_exp",
+                  "ofType": null
+                }
               },
               "defaultValue": null
             }
@@ -14809,6 +15403,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_and",
               "description": null,
               "type": {
@@ -14881,6 +15485,16 @@
                     "ofType": null
                   }
                 }
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "Boolean_comparison_exp",
+                "ofType": null
               },
               "defaultValue": null
             },
@@ -14990,6 +15604,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "deep_links_aggregate_bool_exp",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "name",
+              "description": null,
+              "type": {
+                "kind": "INPUT_OBJECT",
+                "name": "String_comparison_exp",
                 "ofType": null
               },
               "defaultValue": null
@@ -15177,6 +15801,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_deep",
               "description": null,
               "type": {
@@ -15202,6 +15836,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "bigint",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               },
               "defaultValue": null
@@ -15292,6 +15936,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "deep_links_arr_rel_insert_input",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
                 "ofType": null
               },
               "defaultValue": null
@@ -15397,6 +16051,18 @@
           "description": "aggregate max on columns",
           "fields": [
             {
+              "name": "__name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "_deep",
               "description": null,
               "args": [],
@@ -15499,6 +16165,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "uuid",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -15553,6 +16231,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_deep",
               "description": null,
               "type": {
@@ -15643,6 +16331,16 @@
               "defaultValue": null
             },
             {
+              "name": "name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "number",
               "description": null,
               "type": {
@@ -15682,6 +16380,18 @@
           "name": "deep_links_min_fields",
           "description": "aggregate min on columns",
           "fields": [
+            {
+              "name": "__name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
             {
               "name": "_deep",
               "description": null,
@@ -15785,6 +16495,18 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "uuid",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "name",
+              "description": null,
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
                 "ofType": null
               },
               "isDeprecated": false,
@@ -15839,6 +16561,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_deep",
               "description": null,
               "type": {
@@ -15920,6 +16652,16 @@
             },
             {
               "name": "id",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "name",
               "description": null,
               "type": {
                 "kind": "ENUM",
@@ -16046,6 +16788,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_deep",
               "description": null,
               "type": {
@@ -16067,6 +16819,16 @@
             },
             {
               "name": "_i",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
               "description": null,
               "type": {
                 "kind": "ENUM",
@@ -16161,6 +16923,16 @@
               "type": {
                 "kind": "INPUT_OBJECT",
                 "name": "deep_links_aggregate_order_by",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "name",
+              "description": null,
+              "type": {
+                "kind": "ENUM",
+                "name": "order_by",
                 "ofType": null
               },
               "defaultValue": null
@@ -16269,6 +17041,12 @@
           "interfaces": null,
           "enumValues": [
             {
+              "name": "__name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "_deep",
               "description": "column name",
               "isDeprecated": false,
@@ -16282,6 +17060,12 @@
             },
             {
               "name": "_i",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "_protected",
               "description": "column name",
               "isDeprecated": false,
               "deprecationReason": null
@@ -16323,6 +17107,12 @@
               "deprecationReason": null
             },
             {
+              "name": "name",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "number",
               "description": "column name",
               "isDeprecated": false,
@@ -16344,11 +17134,55 @@
           "possibleTypes": null
         },
         {
+          "kind": "ENUM",
+          "name": "deep_links_select_column_deep_links_aggregate_bool_exp_bool_and_arguments_columns",
+          "description": "select \"deep_links_aggregate_bool_exp_bool_and_arguments_columns\" columns of table \"deep.links\"",
+          "fields": null,
+          "inputFields": null,
+          "interfaces": null,
+          "enumValues": [
+            {
+              "name": "_protected",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "possibleTypes": null
+        },
+        {
+          "kind": "ENUM",
+          "name": "deep_links_select_column_deep_links_aggregate_bool_exp_bool_or_arguments_columns",
+          "description": "select \"deep_links_aggregate_bool_exp_bool_or_arguments_columns\" columns of table \"deep.links\"",
+          "fields": null,
+          "inputFields": null,
+          "interfaces": null,
+          "enumValues": [
+            {
+              "name": "_protected",
+              "description": "column name",
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "possibleTypes": null
+        },
+        {
           "kind": "INPUT_OBJECT",
           "name": "deep_links_set_input",
           "description": "input type for updating data in table \"deep.links\"",
           "fields": null,
           "inputFields": [
+            {
+              "name": "__name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
             {
               "name": "_deep",
               "description": null,
@@ -16375,6 +17209,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "bigint",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               },
               "defaultValue": null
@@ -16435,6 +17279,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "uuid",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
                 "ofType": null
               },
               "defaultValue": null
@@ -16846,6 +17700,16 @@
           "fields": null,
           "inputFields": [
             {
+              "name": "__name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
               "name": "_deep",
               "description": null,
               "type": {
@@ -16871,6 +17735,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "bigint",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "_protected",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               },
               "defaultValue": null
@@ -16931,6 +17805,16 @@
               "type": {
                 "kind": "SCALAR",
                 "name": "uuid",
+                "ofType": null
+              },
+              "defaultValue": null
+            },
+            {
+              "name": "name",
+              "description": null,
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
                 "ofType": null
               },
               "defaultValue": null
@@ -21229,11 +22113,61 @@
               "description": "update data of the table: \"accounts\"",
               "args": [
                 {
+                  "name": "_append",
+                  "description": "append existing jsonb value of filtered columns with new jsonb value",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_append_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "_delete_at_path",
+                  "description": "delete the field or element with specified path (for JSON arrays, negative integers count from the end)",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_delete_at_path_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "_delete_elem",
+                  "description": "delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_delete_elem_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "_delete_key",
+                  "description": "delete key/value pair or string element. key/value pairs are matched based on their key value",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_delete_key_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
                   "name": "_inc",
                   "description": "increments the numeric columns with given value of the filtered values",
                   "type": {
                     "kind": "INPUT_OBJECT",
                     "name": "accounts_inc_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "_prepend",
+                  "description": "prepend existing jsonb value of filtered columns with new jsonb value",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_prepend_input",
                     "ofType": null
                   },
                   "defaultValue": null
@@ -21276,11 +22210,61 @@
               "description": "update single row of the table: \"accounts\"",
               "args": [
                 {
+                  "name": "_append",
+                  "description": "append existing jsonb value of filtered columns with new jsonb value",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_append_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "_delete_at_path",
+                  "description": "delete the field or element with specified path (for JSON arrays, negative integers count from the end)",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_delete_at_path_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "_delete_elem",
+                  "description": "delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_delete_elem_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "_delete_key",
+                  "description": "delete key/value pair or string element. key/value pairs are matched based on their key value",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_delete_key_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
                   "name": "_inc",
                   "description": "increments the numeric columns with given value of the filtered values",
                   "type": {
                     "kind": "INPUT_OBJECT",
                     "name": "accounts_inc_input",
+                    "ofType": null
+                  },
+                  "defaultValue": null
+                },
+                {
+                  "name": "_prepend",
+                  "description": "prepend existing jsonb value of filtered columns with new jsonb value",
+                  "type": {
+                    "kind": "INPUT_OBJECT",
+                    "name": "accounts_prepend_input",
                     "ofType": null
                   },
                   "defaultValue": null
@@ -69788,7 +70772,7 @@
         "table": "users"
       }
     },
-    "timestamp": 1748784041546,
+    "timestamp": 1749108840159,
     "version": "1.0.0"
   }
 }

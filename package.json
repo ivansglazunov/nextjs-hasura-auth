@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.271",
+  "version": "0.1.272",
   "description": "Modern full-stack framework with real-time GraphQL, AI integration, and seamless development experience",
   "homepage": "https://hasyx.deep.foundation/",
   "engines": {
@@ -98,6 +98,7 @@
     "@testing-library/jest-dom": "^6.4.0",
     "@testing-library/react": "^15.0.0",
     "@testing-library/react-hooks": "^8.0.1",
+    "@twa-dev/sdk": "^8.0.2",
     "@types/bcrypt": "^5.0.2",
     "@types/cross-spawn": "^6.0.6",
     "@types/debug": "^4.1.12",

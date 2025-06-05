@@ -54,12 +54,12 @@ Hasyx takes responsibility for:
 *   **Universal Code Execution Engine:** A secure JavaScript execution environment that works in both Node.js and browser contexts, with isolated VM contexts, timeout protection, async/await support, and built-in dynamic npm package loading via use-m. See [`EXEC.md`](EXEC.md) for details.
 *   **TypeScript Execution Engine:** A TypeScript-aware code execution engine that extends the base Exec class with in-memory TypeScript compilation, automatic tsconfig.lib.json loading, and seamless TypeScript syntax detection. Includes `npx hasyx tsx` command for TypeScript execution. See [`EXEC-TS.md`](EXEC-TS.md) for details.
 *   **Terminal Emulation Library:** A comprehensive terminal emulation library for Node.js applications with support for spawning shell processes, executing commands with timeout protection, session management, event handling, and factory functions for different terminal types (bash, zsh, node, python, docker, ssh). Features complete test coverage and cross-platform compatibility using native Node.js APIs. See [`TERMINAL.md`](TERMINAL.md) for details.
-*   **OpenRouter AI Integration with Real-time Streaming:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Features **genuine Server-Sent Events (SSE) streaming** with character-by-character output and real-time progress indicators showing AI thinking, code found, execution status, and results. AI can execute JavaScript/TypeScript code automatically and continue reasoning based on results through iterative processing (up to 3 iterations). Includes both programmatic API and CLI interface with `npx hasyx ask` command. First response tokens appear in 0.5-2 seconds vs 5-10 seconds without streaming. The Ask system uses a modular architecture: **`AskHasyx`** (base class with full AI functionality), **`Ask`** (project-specific extensions), and **`ask.template`** (template for child projects). Execution engines (JavaScript, TypeScript, Terminal) can be configured via `AskOptions` interface. See [`OPENROUTER.md`](OPENROUTER.md) and [`ASK.md`](ASK.md) for details.
+*   **OpenRouter AI Integration with Real-time Streaming:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Features **genuine Server-Sent Events (SSE) streaming** with character-by-character output and real-time progress indicators showing AI thinking, code found, execution status, and results. AI can execute JavaScript/TypeScript code automatically and continue reasoning based on results through iterative processing (up to 3 iterations). Includes both programmatic API and CLI interface with `npx hasyx ask` command. First response tokens appear in 0.5-2 seconds vs 5-10 seconds without streaming. The Ask system uses a modular architecture: **`AskHasyx`** (base class with full AI functionality), **`Ask`** (project-specific extensions), and **`ask.template`** (template for child projects). Similarly, other modules follow this pattern: **`debug.template`**, **`cli.template`**, and **`github-telegram-bot.template`** are copied to child projects during `npx hasyx init`. Execution engines (JavaScript, TypeScript, Terminal) can be configured via `AskOptions` interface. See [`OPENROUTER.md`](OPENROUTER.md) and [`ASK.md`](ASK.md) for details.
 *   Migrations control with `npx hasyx migrate [filter]` and `npx hasyx unmigrate [filter]` for easy database schema management from `./migrations` directory, with optional filtering to run only specific migrations.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   **Server-side Debug Logging:** Built-in `debug()` method for database logging when `HASYX_DEBUG=1` is enabled, storing structured debug data in a dedicated `debug` table for monitoring and troubleshooting production systems.
 *   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
-*   **GitHub → Telegram Bot Integration:** Automated CI/CD notifications via Telegram bot with AI-generated commit summaries, strict status reporting, and privacy-focused messaging. Features strict workflow status reporting (PASSED/FAILED for tests, builds, deploys), privacy-focused messaging (no author names), smart MD file linking, and rich Russian-language notifications. Waits for all workflows to complete, then sends detailed messages with commit analysis, test results, deployment URLs, and direct links to repository and documentation. Configurable via `GITHUB_TELEGRAM_BOT` environment variable. See [`TELEGRAM_BOT.md`](lib/TELEGRAM_BOT.md) for setup and configuration details.
+*   **GitHub → Telegram Bot Integration:** Automated CI/CD notifications via Telegram bot with AI-generated commit summaries, strict status reporting, and privacy-focused messaging. Features strict workflow status reporting (PASSED/FAILED for tests, builds, deploys), privacy-focused messaging (no author names), smart MD file linking, and rich English-language notifications. Waits for all workflows to complete, then sends detailed messages with commit analysis, test results, deployment URLs, and direct links to repository and documentation. Uses a modular architecture: **`github-telegram-bot-hasyx.ts`** (core functionality with generator function), **`github-telegram-bot.ts`** (project-specific configuration), and **`github-telegram-bot.template`** (template for child projects). Configurable via `GITHUB_TELEGRAM_BOT` environment variable. See [`TELEGRAM_BOT.md`](lib/TELEGRAM_BOT.md) for setup and configuration details.
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
 *   **Cytoscape Integration:** A powerful set of React components for graph visualizations using Cytoscape.js, allowing for custom HTML rendering within nodes and reactive style updates. See [`CYTO.md`](CYTO.md) for details.
 *   **DNS and SSL Management:** Comprehensive subdomain management with automated HTTPS setup using CloudFlare DNS, Let's Encrypt SSL certificates, and nginx configuration. Features include DNS propagation waiting, automatic certificate renewal, idempotent operations, and complete subdomain lifecycle management. Use `npx hasyx assist dns` to configure CloudFlare API credentials and domain settings. See [`CLOUDFLARE.md`](CLOUDFLARE.md), [`SSL.md`](SSL.md), [`NGINX.md`](NGINX.md), and [`SUBDOMAIN.md`](SUBDOMAIN.md) for details.
@@ -356,16 +356,22 @@ During initialization, Hasyx ensures that the following npm scripts are added to
 
 ```json
 "scripts": {
+  "test": "NODE_OPTIONS=\"--experimental-vm-modules\" jest --verbose --runInBand",
   "build": "NODE_ENV=production npx -y hasyx build",
   "unbuild": "npx -y hasyx unbuild",
-  "start": "NODE_ENV=production npx -y hasyx start",
-  "dev": "npx -y hasyx dev",
+  "start": "NODE_ENV=production NODE_OPTIONS=\"--experimental-vm-modules\" npx -y hasyx start",
+  "dev": "NODE_OPTIONS=\"--experimental-vm-modules\" npx -y hasyx dev",
+  "doc:build": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx doc",
   "ws": "npx --yes next-ws-cli@latest patch -y",
   "postinstall": "npm run ws -- -y",
   "migrate": "npx hasyx migrate",
   "unmigrate": "npx hasyx unmigrate",
-  "tsx": "npx hasyx tsx",
-  "ask": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/ask.ts"
+  "events": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx events",
+  "schema": "npx hasyx schema",
+  "npm-publish": "npm run build && npm publish",
+  "cli": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx",
+  "assist": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx assist",
+  "js": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx js"
 }
 ```
 
@@ -406,32 +412,73 @@ When running `init`, Hasyx automatically patches your Next.js project for WebSoc
 │       └── telegram_bot/
 │           └── 🔄 route.ts         # Handler for Telegram Bot webhooks
 │       │       └── 🔄 route.ts     # (Likely for email verification)
+├── components/
+│   ├── sidebar/
+│   │   └── ✨ layout.tsx        # Sidebar layout component
+│   └── entities/
+│       └── ✨ default.tsx       # Default entity component
+├── lib/
+│   ├── ✨ entities.tsx          # Entity definitions (from entities.template)
+│   ├── ✨ ask.ts               # AI assistant integration (from ask.template)
+│   ├── ✨ debug.ts             # Debug utilities (from debug.template)
+│   ├── ✨ cli.ts               # CLI utilities (from cli.template)
+│   └── ✨ github-telegram-bot.ts # GitHub→Telegram bot integration (from github-telegram-bot.template)
 ├── migrations/
 │   ├── 1746660891582-hasyx-users/
 │   │   ├── ✨ up.ts
 │   │   └── ✨ down.ts
-│   └── 1746670608552-hasyx-notify/
+│   ├── 1746670608552-hasyx-notify/
+│   │   ├── ✨ up.ts
+│   │   └── ✨ down.ts
+│   ├── 1746837333136-hasyx-debug/
+│   │   ├── ✨ up.ts
+│   │   └── ✨ down.ts
+│   ├── 1748511896530-hasyx-payments/
+│   │   ├── ✨ up.ts
+│   │   └── ✨ down.ts
+│   └── 29991231235959999-hasyx/
 │       ├── ✨ up.ts
 │       └── ✨ down.ts
+├── app/
+│   ├── hasyx/
+│   │   ├── diagnostics/
+│   │   │   └── ✨ page.tsx      # Hasyx diagnostics page
+│   │   ├── aframe/
+│   │   │   ├── ✨ page.tsx      # A-Frame VR integration page
+│   │   │   └── ✨ client.tsx    # A-Frame client component
+│   │   ├── payments/
+│   │   │   └── ✨ page.tsx      # Payments integration page
+│   │   ├── cyto/
+│   │   │   ├── ✨ page.tsx      # Cytoscape graph visualization page
+│   │   │   └── ✨ client.tsx    # Cytoscape client component
+│   │   ├── pwa/
+│   │   │   ├── ✨ page.tsx      # PWA configuration page
+│   │   │   └── ✨ client.tsx    # PWA client component
+│   │   ├── constructor/
+│   │   │   └── ✨ page.tsx      # Visual GraphQL query builder page
+│   │   └── doc/
+│   │       ├── ✨ page.tsx      # Documentation index page
+│   │       └── [filename]/
+│   │           └── ✨ page.tsx  # Dynamic documentation page
 |-- public/
 │   ├── ✨ logo.svg             # Default logo, replace with your own
-│   ├── ✨ favicon.ico           # Default favicon
+│   └── ✨ favicon.ico           # Default favicon
 |-- events/
 │   └── ✨ notify.json           # Default Hasura event trigger definition for notifications
-├── ✨ .gitignore
-├── ✨ .npmignore
-└── ✨ .npmrc
-├── ✨ jest.config.js
-├── ✨ jest.setup.js
-├── ✨ next.config.ts
-├── ✨ postcss.config.mjs
-├── ✨ components.json         # shadcn/ui configuration
-├── ✨ tsconfig.json
-├── ✨ tsconfig.lib.json
-├── migrations/
-│   └── 1746660891582-hasyx-users/
-│       ├── ✨ up.ts             # Initial user schema migration
-│       └── ✨ down.ts           # Rollback for initial user schema
+├── .vscode/
+│   └── ✨ extensions.json       # Recommended VS Code extensions
+├── ✨ .gitignore               # Git ignore patterns (from .gitignore.template)
+├── ✨ .npmignore               # NPM ignore patterns (from .npmignore.template)
+├── ✨ .npmrc                   # NPM configuration (from .npmrc.template)
+├── ✨ vercel.json              # Vercel deployment configuration
+├── ✨ babel.jest.config.mjs    # Babel configuration for Jest
+├── ✨ jest.config.mjs          # Jest testing configuration
+├── ✨ jest.setup.js            # Jest setup file
+├── ✨ next.config.ts           # Next.js configuration
+├── ✨ postcss.config.mjs       # PostCSS configuration
+├── ✨ components.json          # shadcn/ui configuration
+├── ✨ tsconfig.json            # TypeScript configuration
+└── ✨ tsconfig.lib.json        # TypeScript library configuration
 ```
 *Note: GitHub workflow files and `CONTRIBUTING.md` are copied as examples and might need adjustment for your specific repository.*
 

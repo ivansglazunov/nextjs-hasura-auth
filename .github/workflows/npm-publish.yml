@@ -25,6 +25,7 @@ jobs:
           cp .gitignore .gitignore.template
           cp lib/debug.ts lib/debug.template
           cp lib/cli.ts lib/cli.template
+          cp lib/github-telegram-bot.ts lib/github-telegram-bot.template
       - name: Install dependencies
         run: npm ci # Use ci for more reliable installs in CI
 

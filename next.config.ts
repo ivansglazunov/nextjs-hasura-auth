@@ -12,8 +12,8 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
 console.log(`Building config: isClient=${isBuildingForClient}, basePath=${basePath}`);
 
 const config: NextConfig = {
-  // Conditionally set output to 'export'
-  output: isBuildingForClient ? 'export' : undefined,
+  // Conditionally set output to 'export' for client, 'standalone' for server/Docker
+  output: isBuildingForClient ? 'export' : 'standalone',
   // Explicitly set distDir again
   distDir: isBuildingForClient ? 'client' : '.next',
   // Explicitly set basePath again
