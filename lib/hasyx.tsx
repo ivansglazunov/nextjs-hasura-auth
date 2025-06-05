@@ -9,7 +9,7 @@ import { Generate, GenerateOptions, GenerateResult } from "./generator";
 import { Hasura } from './hasura';
 
 import { ApolloError, FetchResult, Observable, OperationVariables, ApolloQueryResult } from '@apollo/client/core';
-import { MutationHookOptions as ApolloMutationHookOptions, QueryHookOptions as ApolloQueryHookOptions, SubscriptionHookOptions as ApolloSubscriptionHookOptions, QueryResult, SubscriptionResult } from '@apollo/client/react';
+import type { MutationHookOptions as ApolloMutationHookOptions, QueryHookOptions as ApolloQueryHookOptions, SubscriptionHookOptions as ApolloSubscriptionHookOptions, QueryResult, SubscriptionResult } from '@apollo/client/react';
 import { HasyxApolloClient } from './apollo';
 import Debug from './debug';
 

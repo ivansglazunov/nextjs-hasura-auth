@@ -75,11 +75,12 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Update Docker Hub description
-      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-      uses: peter-evans/dockerhub-description@v4
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        repository: ${{ secrets.DOCKER_USERNAME }}/${{ steps.package.outputs.name }}
-        readme-filepath: ./README.md
+    # Temporarily disabled due to token permission issues
+    # - name: Update Docker Hub description
+    #   if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    #   uses: peter-evans/dockerhub-description@v4
+    #   with:
+    #     username: ${{ secrets.DOCKER_USERNAME }}
+    #     password: ${{ secrets.DOCKER_PASSWORD }}
+    #     repository: ${{ secrets.DOCKER_USERNAME }}/${{ steps.package.outputs.name }}
+    #     readme-filepath: ./README.md

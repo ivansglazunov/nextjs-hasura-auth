@@ -14,7 +14,6 @@ import { GraphQLRequest } from '@apollo/client/core';
 import { useMemo } from 'react';
 import { getJwtSecret } from './jwt';
 
-
 import { onError } from '@apollo/client/link/error';
 import { Generate } from './generator';
 import { createWebSocketUrl } from './ws-config';
