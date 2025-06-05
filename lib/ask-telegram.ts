@@ -308,7 +308,7 @@ export function defineTelegramAsk(
     debug(`Creating new TelegramAsk instance for user ${userId}, chat ${chatId}`);
     
     // Create system prompt for Telegram bot
-    const systemPrompt = `You are an AI assistant for the "${projectName}" project via Telegram.
+    const systemPrompt = `[SESSION ${Date.now()}] You are an AI assistant for the "${projectName}" project via Telegram.
 
 We are working together through Telegram messages. When we need to execute code, analyze data, or perform operations, we work as a team.
 
@@ -356,7 +356,8 @@ echo "Hello World"
       {
         model: 'google/gemini-2.5-flash-preview',
         temperature: 0.1,
-        max_tokens: 2048
+        max_tokens: 2048,
+        user: `telegram_${userId}` // Unique user ID for OpenRouter to prevent caching conflicts
       }, // options
       systemPrompt,
       {
@@ -374,6 +375,41 @@ echo "Hello World"
       }
     );
 
+    // ВАЖНО: Устанавливаем обработчик выполнения кода
+    ask._do = async (doItem) => {
+      try {
+        const { execDo } = await import('hasyx/lib/exec');
+        const { execTsDo } = await import('hasyx/lib/exec-tsx');
+        const { terminalDo } = await import('hasyx/lib/terminal');
+        
+        let result: string;
+        if (doItem.format === 'js') {
+          result = await execDo.exec(doItem.request);
+        } else if (doItem.format === 'tsx') {
+          result = await execTsDo.exec(doItem.request);
+        } else if (doItem.format === 'terminal') {
+          result = await terminalDo.exec(doItem.request);
+        } else {
+          throw new Error(`Unsupported execution format: ${doItem.format}`);
+        }
+        
+        doItem.response = String(result);
+        debug(`Code execution completed for ${doItem.id}: ${String(result).substring(0, 100)}...`);
+        
+        return doItem;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        doItem.response = `Error: ${errorMessage}`;
+        debug(`Code execution failed for ${doItem.id}: ${errorMessage}`);
+        
+        return doItem;
+      }
+    };
+
+    // Очищаем память для свежего старта (важно для предотвращения "памяти" между контейнерами)
+    ask.clearMemory();
+    ask.clearResults();
+
     instance = {
       ask,
       lastActivity: new Date(),
@@ -389,6 +425,14 @@ echo "Hello World"
     // Update last activity
     instance.lastActivity = new Date();
     debug(`Retrieved existing TelegramAsk instance for user ${userId}, chat ${chatId}`);
+    
+    // Для уже существующего экземпляра тоже очищаем память, если она слишком большая
+    const memorySize = instance.ask.getMemory().length;
+    if (memorySize > 20) { // Если больше 20 сообщений, очищаем
+      debug(`Clearing memory for user ${userId} (${memorySize} messages)`);
+      instance.ask.clearMemory();
+      instance.ask.clearResults();
+    }
   }
 
   return instance.ask;
@@ -435,6 +479,46 @@ export function getTelegramAskStats(): {
 export function clearAllTelegramAskInstances(): void {
   debug(`Clearing all ${instances.size} instances`);
   instances.clear();
+}
+
+/**
+ * Force cleanup and restart all instances (useful for container restarts)
+ */
+export function resetAllTelegramAskInstances(): void {
+  debug(`Resetting all ${instances.size} instances`);
+  
+  // Clear memory and results for all instances
+  for (const [key, instance] of instances.entries()) {
+    try {
+      instance.ask.clearMemory();
+      instance.ask.clearResults();
+      debug(`Cleared memory for instance: ${key}`);
+    } catch (error) {
+      debug(`Error clearing memory for instance ${key}:`, error);
+    }
+  }
+  
+  // Clear the instances map
+  instances.clear();
+  debug('All instances reset and cleared');
+}
+
+/**
+ * Auto-cleanup function that should be called on container startup
+ */
+export function initializeTelegramAsk(): void {
+  debug('Initializing Telegram Ask system...');
+  
+  // Force clear all instances on startup to prevent "memory" between container restarts
+  resetAllTelegramAskInstances();
+  
+  // Set up periodic cleanup
+  setInterval(() => {
+    cleanupOldInstances();
+    debug(`Periodic cleanup complete. Active instances: ${instances.size}`);
+  }, 30 * 60 * 1000); // Every 30 minutes
+  
+  debug('Telegram Ask system initialized');
 }
 
 /**

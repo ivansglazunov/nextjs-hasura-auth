@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { handleStartEvent, TelegramUpdate, sendTelegramMessage } from 'hasyx/lib/telegram-bot';
-import { defineTelegramAsk, getTelegramAskStats } from 'hasyx/lib/ask-telegram';
+import { defineTelegramAsk, getTelegramAskStats, initializeTelegramAsk } from 'hasyx/lib/ask-telegram';
 import { Hasyx } from 'hasyx/lib/hasyx';
 import { createApolloClient } from 'hasyx/lib/apollo'; // Standard Apollo client creation
 import { Generator } from 'hasyx/lib/generator'; // Import Generator
@@ -8,6 +8,9 @@ import schema from 'hasyx/public/hasura-schema.json'; // Import schema
 import Debug from 'hasyx/lib/debug';
 
 const debug = Debug('api:telegram_bot');
+
+// Initialize Telegram Ask system on module load (clears memory from previous container)
+initializeTelegramAsk();
 
 // Message deduplication cache (in-memory, could be Redis in production)
 const processedMessages = new Map<string, number>();
