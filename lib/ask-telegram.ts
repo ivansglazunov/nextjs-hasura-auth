@@ -185,15 +185,58 @@ export class TelegramAskWrapper extends AskHasyx {
       this.asking(question).subscribe({
         next: (event) => {
           switch (event.type) {
+            case 'thinking':
+              if (this.outputHandlers.onThinking) {
+                this.outputHandlers.onThinking();
+              }
+              break;
+              
+            case 'iteration':
+              // Handle iteration events (like "🔄 Итерация 2: Continue after code execution")
+              if (event.data.iteration > 1) {
+                this.sendBufferedMessage(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
+              }
+              break;
+              
             case 'text':
               // For Telegram, we buffer text and send in chunks
               accumulatedText += event.data.delta;
               break;
+              
+            case 'code_found':
+              // Send accumulated text before showing code block
+              if (accumulatedText.trim()) {
+                this.sendBufferedMessage(accumulatedText);
+                accumulatedText = ''; // Reset after sending
+              }
+              if (this.outputHandlers.onCodeFound) {
+                this.outputHandlers.onCodeFound(event.data.code, event.data.format);
+              }
+              break;
+              
+            case 'code_executing':
+              if (this.outputHandlers.onCodeExecuting) {
+                this.outputHandlers.onCodeExecuting(event.data.code, event.data.format);
+              }
+              break;
+              
+            case 'code_result':
+              if (this.outputHandlers.onCodeResult) {
+                this.outputHandlers.onCodeResult(event.data.result);
+              }
+              break;
+              
             case 'complete':
               finalResponse = event.data.finalResponse;
               // Send final accumulated text if any
               if (accumulatedText.trim()) {
                 this.sendBufferedMessage(accumulatedText);
+              }
+              break;
+              
+            case 'error':
+              if (this.outputHandlers.onError) {
+                this.outputHandlers.onError(`Ошибка в итерации ${event.data.iteration}: ${event.data.error.message}`);
               }
               break;
           }
