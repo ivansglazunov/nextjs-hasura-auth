@@ -694,25 +694,37 @@ ${executedDo.response}
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       
-      // Check for standard Do format
-      if (line.startsWith(this.doSpecialSubstring)) {
+      // Check for standard Do format (with or without indentation)
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith(this.doSpecialSubstring)) {
+        // Detect indentation level
+        const indentMatch = line.match(/^(\s*)/);
+        const indent = indentMatch ? indentMatch[1] : '';
+        const indentLength = indent.length;
+        
+        debug(`Found Do operation with ${indentLength} spaces indent: "${line}"`);
+        
         // Find the end of this Do operation (next ``` after the opening ```)
         let startLine = i;
         let codeBlockStart = -1;
         let codeBlockEnd = -1;
         
-        // Find opening ```
+        // Find opening ``` (could also be indented)
         for (let j = i + 1; j < lines.length; j++) {
-          if (lines[j].startsWith('```')) {
+          const currentLine = lines[j];
+          const currentTrimmed = currentLine.trim();
+          if (currentTrimmed.startsWith('```')) {
             codeBlockStart = j;
             break;
           }
         }
         
-        // Find closing ```
+        // Find closing ``` (could also be indented)
         if (codeBlockStart !== -1) {
           for (let j = codeBlockStart + 1; j < lines.length; j++) {
-            if (lines[j] === '```') {
+            const currentLine = lines[j];
+            const currentTrimmed = currentLine.trim();
+            if (currentTrimmed === '```') {
               codeBlockEnd = j;
               break;
             }
@@ -721,7 +733,17 @@ ${executedDo.response}
         
         if (codeBlockStart !== -1 && codeBlockEnd !== -1) {
           const endLine = codeBlockEnd;
-          const messagePart = lines.slice(startLine, endLine + 1).join('\n');
+          
+          // Normalize indentation: remove the detected indent from all lines
+          const normalizedLines = lines.slice(startLine, endLine + 1).map(line => {
+            if (line.startsWith(indent)) {
+              return line.substring(indentLength);
+            }
+            return line;
+          });
+          
+          const messagePart = normalizedLines.join('\n');
+          debug(`Normalized message part (removed ${indentLength} spaces): "${messagePart}"`);
           
           try {
             const doItem = this.generateDo(messagePart);
@@ -736,14 +758,23 @@ ${executedDo.response}
           }
         }
       } 
-      // Also check for standalone terminal code blocks
-      else if (line.startsWith('```terminal') || line.startsWith('```bash') || line.startsWith('```sh')) {
+      // Also check for standalone terminal code blocks (with or without indentation)
+      else if (trimmedLine.startsWith('```terminal') || trimmedLine.startsWith('```bash') || trimmedLine.startsWith('```sh')) {
+        // Detect indentation level
+        const indentMatch = line.match(/^(\s*)/);
+        const indent = indentMatch ? indentMatch[1] : '';
+        const indentLength = indent.length;
+        
+        debug(`Found terminal code block with ${indentLength} spaces indent: "${line}"`);
+        
         let startLine = i;
         let codeBlockEnd = -1;
         
-        // Find closing ```
+        // Find closing ``` (could also be indented)
         for (let j = i + 1; j < lines.length; j++) {
-          if (lines[j] === '```') {
+          const currentLine = lines[j];
+          const currentTrimmed = currentLine.trim();
+          if (currentTrimmed === '```') {
             codeBlockEnd = j;
             break;
           }
@@ -751,7 +782,17 @@ ${executedDo.response}
         
         if (codeBlockEnd !== -1) {
           const endLine = codeBlockEnd;
-          const messagePart = lines.slice(startLine, endLine + 1).join('\n');
+          
+          // Normalize indentation: remove the detected indent from all lines
+          const normalizedLines = lines.slice(startLine, endLine + 1).map(line => {
+            if (line.startsWith(indent)) {
+              return line.substring(indentLength);
+            }
+            return line;
+          });
+          
+          const messagePart = normalizedLines.join('\n');
+          debug(`Normalized terminal code block (removed ${indentLength} spaces): "${messagePart}"`);
           
           try {
             const doItem = this.generateDo(messagePart);

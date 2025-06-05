@@ -53,32 +53,8 @@ export class TelegramAskWrapper extends AskHasyx {
       enableCodeBlocks: true
     };
     
-    // Create output handlers for Telegram
+    // Simple output handlers for Telegram (we handle most logic in overridden methods)
     const outputHandlers: OutputHandlers = {
-      onThinking: () => this.sendBufferedMessage('🧠 AI думает...'),
-      onCodeFound: async (code: string, format: 'js' | 'tsx' | 'terminal') => {
-        await this.sendBufferedMessage(`📋 Найден ${format.toUpperCase()} код для выполнения:`);
-        if (this.enableCodeBlocks) {
-          const displayFormat = format === 'terminal' ? 'bash' : format;
-          await this.sendBufferedMessage(`\`\`\`${displayFormat}\n${code}\n\`\`\``);
-        } else {
-          await this.sendBufferedMessage(code);
-        }
-      },
-      onCodeExecuting: (code: string, format: 'js' | 'tsx' | 'terminal') => 
-        this.sendBufferedMessage(`⚡ Выполняется ${format.toUpperCase()} код...`),
-      onCodeResult: async (result: string) => {
-        await this.sendBufferedMessage('✅ Результат выполнения:');
-        if (this.enableCodeBlocks) {
-          await this.sendBufferedMessage(`\`\`\`\n${result}\n\`\`\``);
-        } else {
-          await this.sendBufferedMessage(result);
-        }
-      },
-      onResponse: (response: string) => 
-        this.sendBufferedMessage(`💭 AI ответил (${response.length} символов)`),
-      onOutput: (message: string) => this.sendBufferedMessage(message),
-      onError: (error: string) => this.sendBufferedMessage(`❌ ${error}`),
       onWelcome: async (enabledEngines: string[]) => {
         await this.sendBufferedMessage('🤖 Добро пожаловать в Hasyx AI Telegram Bot!');
         if (enabledEngines.length > 0) {
@@ -101,6 +77,16 @@ export class TelegramAskWrapper extends AskHasyx {
     this.enableCodeBlocks = telegramOptions.enableCodeBlocks !== false;
 
     debug(`TelegramAskWrapper created for chat ${chatId}`);
+  }
+
+  // Override defaultOutput to use our Telegram message system
+  protected defaultOutput(message: string): void {
+    this.sendBufferedMessage(message);
+  }
+
+  // Override defaultError to use our Telegram message system  
+  protected defaultError(error: string): void {
+    this.sendBufferedMessage(`❌ ${error}`);
   }
 
   private async sendBufferedMessage(message: string): Promise<void> {
@@ -174,84 +160,88 @@ export class TelegramAskWrapper extends AskHasyx {
     return chunks;
   }
 
-  // Override ask method to handle streaming responses for Telegram
-  async ask(question: string): Promise<string> {
-    debug(`Processing question for chat ${this.chatId}:`, question);
+  // Override askWithBeautifulOutput to handle final text properly for Telegram
+  async askWithBeautifulOutput(question: string): Promise<string> {
+    debug(`Processing question with Telegram output for chat ${this.chatId}:`, question);
     
     return new Promise((resolve, reject) => {
-      let finalResponse = '';
       let accumulatedText = '';
+      let finalResponse = '';
       
       this.asking(question).subscribe({
         next: (event) => {
           switch (event.type) {
             case 'thinking':
-              if (this.outputHandlers.onThinking) {
-                this.outputHandlers.onThinking();
-              }
+              this.defaultOutput('🧠 AI думает...');
               break;
               
             case 'iteration':
-              // Handle iteration events (like "🔄 Итерация 2: Continue after code execution")
               if (event.data.iteration > 1) {
-                this.sendBufferedMessage(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
+                this.defaultOutput(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
               }
               break;
               
             case 'text':
-              // For Telegram, we buffer text and send in chunks
+              // Accumulate text but don't send yet
               accumulatedText += event.data.delta;
               break;
               
             case 'code_found':
               // Send accumulated text before showing code block
               if (accumulatedText.trim()) {
-                this.sendBufferedMessage(accumulatedText);
+                this.defaultOutput(accumulatedText);
                 accumulatedText = ''; // Reset after sending
               }
-              if (this.outputHandlers.onCodeFound) {
-                this.outputHandlers.onCodeFound(event.data.code, event.data.format);
-              }
+              this.defaultOutput(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
+              const displayFormat = event.data.format === 'terminal' ? 'bash' : event.data.format;
+              this.defaultOutput(`\`\`\`${displayFormat}\n${event.data.code}\n\`\`\``);
               break;
               
             case 'code_executing':
-              if (this.outputHandlers.onCodeExecuting) {
-                this.outputHandlers.onCodeExecuting(event.data.code, event.data.format);
-              }
+              this.defaultOutput(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
               break;
               
             case 'code_result':
-              if (this.outputHandlers.onCodeResult) {
-                this.outputHandlers.onCodeResult(event.data.result);
-              }
+              const status = event.data.success ? '✅' : '❌';
+              this.defaultOutput(`${status} Результат выполнения:`);
+              this.defaultOutput(`\`\`\`\n${event.data.result}\n\`\`\``);
               break;
               
             case 'complete':
               finalResponse = event.data.finalResponse;
-              // Send final accumulated text if any
-              if (accumulatedText.trim()) {
-                this.sendBufferedMessage(accumulatedText);
-              }
+              this.defaultOutput(`💭 Завершено (${event.data.iterations} итераций)`);
               break;
               
             case 'error':
-              if (this.outputHandlers.onError) {
-                this.outputHandlers.onError(`Ошибка в итерации ${event.data.iteration}: ${event.data.error.message}`);
-              }
+              this.defaultError(`❌ Ошибка в итерации ${event.data.iteration}: ${event.data.error.message}`);
               break;
           }
         },
-        complete: () => {
-          // Flush any remaining messages
-          this.flushMessageBuffer();
-          resolve(finalResponse || accumulatedText);
+        complete: async () => {
+          try {
+            // Send final accumulated text if any (this replaces printMarkdown)
+            if (accumulatedText.trim()) {
+              this.defaultOutput(accumulatedText);
+            }
+            // Flush any remaining messages
+            await this.flushMessageBuffer();
+            resolve(finalResponse || accumulatedText);
+          } catch (error) {
+            reject(error);
+          }
         },
         error: (error) => {
-          this.sendBufferedMessage(`❌ Ошибка: ${error.message}`);
+          this.defaultError(`Ошибка стриминга: ${error.message}`);
           reject(error);
         }
       });
     });
+  }
+
+  // Override ask method to use our Telegram-specific askWithBeautifulOutput
+  async ask(question: string): Promise<string> {
+    debug(`Processing question for chat ${this.chatId}:`, question);
+    return await this.askWithBeautifulOutput(question);
   }
 
   // Force flush any pending messages
