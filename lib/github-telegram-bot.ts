@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { newGithubTelegramBot } from './github-telegram-bot-hasyx';
+import { newGithubTelegramBot } from 'hasyx/lib/github-telegram-bot-hasyx';
 
 // Configure GitHub Telegram Bot with the required message for hasyx project
 export const handleGithubTelegramBot = newGithubTelegramBot({
