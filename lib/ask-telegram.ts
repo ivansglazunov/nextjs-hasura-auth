@@ -168,16 +168,29 @@ export class TelegramAskWrapper extends AskHasyx {
       let accumulatedText = '';
       let finalResponse = '';
       
+      // Add timeout for AI operations (3 minutes instead of 5 for faster restart)
+      const timeout = setTimeout(() => {
+        this.defaultError('⏰ AI operation timed out. Please try a simpler question or try again later.');
+        this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'} timeout after 3 minutes`);
+        reject(new Error('AI operation timeout'));
+      }, 3 * 60 * 1000);
+      
+      // Track if we have any pending code execution
+      let pendingCodeExecution = 0;
+      let operationStartTime = Date.now();
+      
       this.asking(question).subscribe({
         next: (event) => {
           switch (event.type) {
             case 'thinking':
               this.defaultOutput('🧠 AI думает...');
+              this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'}, Started: ${new Date().toISOString()}`);
               break;
               
             case 'iteration':
               if (event.data.iteration > 1) {
                 this.defaultOutput(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
+                this.defaultOutput(`⏱️ Runtime: ${Math.round((Date.now() - operationStartTime) / 1000)}s`);
               }
               break;
               
@@ -198,40 +211,66 @@ export class TelegramAskWrapper extends AskHasyx {
               break;
               
             case 'code_executing':
+              pendingCodeExecution++;
               this.defaultOutput(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
+              this.defaultOutput(`🔧 Debug: Execution engine ${event.data.format}, Container ${process.env.HOSTNAME || 'unknown'}`);
               break;
               
             case 'code_result':
+              pendingCodeExecution = Math.max(0, pendingCodeExecution - 1);
               const status = event.data.success ? '✅' : '❌';
               this.defaultOutput(`${status} Результат выполнения:`);
               this.defaultOutput(`\`\`\`\n${event.data.result}\n\`\`\``);
+              
+              // Отправляем debug info в Telegram вместо логов
+              if (!event.data.success) {
+                this.defaultOutput(`🔧 Debug: Execution failed, Container ${process.env.HOSTNAME || 'unknown'}, Runtime: ${Math.round((Date.now() - operationStartTime) / 1000)}s`);
+              }
               break;
               
             case 'complete':
               finalResponse = event.data.finalResponse;
-              this.defaultOutput(`💭 Завершено (${event.data.iterations} итераций)`);
+              const totalTime = Math.round((Date.now() - operationStartTime) / 1000);
+              this.defaultOutput(`💭 Завершено (${event.data.iterations} итераций, ${totalTime}s)`);
+              this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'}, Execution results: ${event.data.executionResults.length}`);
               break;
               
             case 'error':
               this.defaultError(`❌ Ошибка в итерации ${event.data.iteration}: ${event.data.error.message}`);
+              this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'}, Error stack: ${event.data.error.stack || 'No stack'}`);
               break;
           }
         },
         complete: async () => {
           try {
+            clearTimeout(timeout);
+            
+            // Check if we have pending code executions
+            if (pendingCodeExecution > 0) {
+              this.defaultOutput(`⚠️ Внимание: ${pendingCodeExecution} операций кода все еще выполняются в фоне.`);
+              this.defaultOutput(`🔧 Debug: Pending executions may cause issues on container restart`);
+            }
+            
             // Send final accumulated text if any (this replaces printMarkdown)
             if (accumulatedText.trim()) {
               this.defaultOutput(accumulatedText);
             }
+            
+            const totalTime = Math.round((Date.now() - operationStartTime) / 1000);
+            this.defaultOutput(`ℹ️ Сессия завершена. Время: ${totalTime}s, Container: ${process.env.HOSTNAME || 'unknown'}`);
+            
             // Flush any remaining messages
             await this.flushMessageBuffer();
             resolve(finalResponse || accumulatedText);
           } catch (error) {
+            this.defaultOutput(`🔧 Debug: Error in completion handler: ${error instanceof Error ? error.message : 'Unknown'}`);
             reject(error);
           }
         },
         error: (error) => {
+          clearTimeout(timeout);
           this.defaultError(`Ошибка стриминга: ${error.message}`);
+          this.defaultOutput(`🔧 Debug: Streaming error in Container ${process.env.HOSTNAME || 'unknown'}: ${error.stack || 'No stack'}`);
           reject(error);
         }
       });
