@@ -1,10 +1,10 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
-import { useHasyx, useSubscription } from 'hasyx';
+import { useHasyx, useSubscription } from '../lib';
 import { getDeviceInfo, NotificationPermission } from 'hasyx/lib/notify';
 import { getFirebaseConfig } from 'hasyx/lib/notify-firebase';
-import { useSession } from 'hasyx';
+import { useSession } from '../lib';
 import { v4 as uuidv4 } from 'uuid';
 import Debug from 'hasyx/lib/debug';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from 'hasyx/components/ui/card';
