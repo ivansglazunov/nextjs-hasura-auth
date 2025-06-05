@@ -6,7 +6,7 @@ import Debug from './debug';
 import { Generator } from './generator';
 import { Hasyx } from './hasyx';
 import { generateJWT as generateHasuraJWT } from './jwt';
-import { useTelegramMiniapp } from './provider';
+import { useTelegramMiniapp } from './telegram-miniapp';
 
 const debug = Debug('auth');
 const generate = Generator(schema);
