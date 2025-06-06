@@ -15,6 +15,7 @@ import { HasyxApolloClient } from './apollo';
 import Debug from './debug';
 import { GenerateOptions } from "./generator";
 import { Hasyx } from './hasyx';
+import { useSession } from './auth';
 
 const debug = Debug('client');
 
@@ -61,16 +62,24 @@ export function useQuery<TData = any, TVariables extends OperationVariables = Op
   generateOptions: ClientGeneratorOptions,
   hookOptions?: QueryHookOptions<TData, TVariables> & { variables?: TVariables }
 ): QueryResult<TData, TVariables> {
+  const session = useSession();
   const apolloClient = useApolloClient();
   const client = (hookOptions?.client ?? apolloClient) as HasyxApolloClient;
   
   if (!client?.hasyxGenerator) throw new Error(`❌ useQuery: No client?.hasyxGenerator found.`);
+
+  const _generateOptions = useMemo(() => {
+    return {
+      ...generateOptions,
+      role: session.data?.user ? 'user' : 'anonymous',
+    };
+  }, [generateOptions, session.data?.user]);
   
   // Generate query
   const { query: queryString, variables: generatedVariables, queryName } = useMemo(() => client.hasyxGenerator({
     operation: 'query',
-    ...generateOptions
-  }), [client.hasyxGenerator, generateOptions]);
+    ..._generateOptions
+  }), [client.hasyxGenerator, _generateOptions]);
 
   const query: DocumentNode = useMemo(() => gql`${queryString}`, [queryString]);
   const combinedVariables = { ...generatedVariables, ...hookOptions?.variables } as TVariables;
@@ -111,10 +120,18 @@ function useWsSubscription<TData = any, TVariables extends OperationVariables = 
     pollingInterval?: number;
   }
 ): SubscriptionResult<TData, TVariables> {
+  const session = useSession();
   const apolloClient = useApolloClient();
   const client = (hookOptions?.client ?? apolloClient) as HasyxApolloClient;
   
   if (!client?.hasyxGenerator) throw new Error(`❌ useWsSubscription: No client?.hasyxGenerator found.`);
+
+  const _generateOptions = useMemo(() => {
+    return {
+      ...generateOptions,
+      role: session.data?.user ? 'user' : 'anonymous',
+    };
+  }, [generateOptions, session.data?.user]);
 
   const { query: subscriptionString, variables: generatedVariables, queryName } = useMemo(() => client.hasyxGenerator({
     operation: 'subscription',
@@ -172,12 +189,20 @@ function usePollingSubscription<TData = any, TVariables extends OperationVariabl
     pollingInterval?: number;
   }
 ): SubscriptionResult<TData, TVariables> {
+  const session = useSession();
   const lastDataRef = useRef<TData | null>(null);
   const [, setForceUpdate] = useState<number>(0);
   const [initialFetchDone, setInitialFetchDone] = useState(false);
 
+  const _generateOptions = useMemo(() => {
+    return {
+      ...generateOptions,
+      role: session.data?.user ? 'user' : 'anonymous',
+    };
+  }, [generateOptions, session.data?.user]);
+
   const queryResult = useQuery<TData, TVariables>(
-    generateOptions,
+    _generateOptions,
     {
       ...hookOptions,
       fetchPolicy: 'network-only',
@@ -213,6 +238,7 @@ export function useMutation<TData = any, TVariables extends OperationVariables =
   generateOptions: GenerateOptions,
   hookOptions?: MutationHookOptions<TData, TVariables>
 ): MutationTuple<TData, TVariables> {
+  const session = useSession();
   const apolloClient = useApolloClient();
   const client = (hookOptions?.client ?? apolloClient) as HasyxApolloClient;
 
@@ -222,8 +248,15 @@ export function useMutation<TData = any, TVariables extends OperationVariables =
   
   if (!client?.hasyxGenerator) throw new Error(`❌ useMutation: No client?.hasyxGenerator found.`);
 
+  const _generateOptions = useMemo(() => {
+    return {
+      ...generateOptions,
+      role: session.data?.user ? 'user' : 'anonymous',
+    };
+  }, [generateOptions, session.data?.user]);
+
   const { query: mutationString, variables: baseVariables, queryName } = useMemo(() => 
-    client.hasyxGenerator(generateOptions), [client.hasyxGenerator, generateOptions]);
+    client.hasyxGenerator(_generateOptions), [client.hasyxGenerator, _generateOptions]);
 
   const mutation: DocumentNode = useMemo(() => gql`${mutationString}`, [mutationString]);
   const { context, apolloOptions } = prepareHookArgs(hookOptions, true);
