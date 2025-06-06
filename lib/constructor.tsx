@@ -16,7 +16,96 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "hasyx/components/ui/ta
 import { Plus, X, Search } from 'lucide-react';
 import { Session } from 'next-auth';
 import { useSession } from 'next-auth/react';
-import hasuraSchema from '@/app/hasyx/hasura-schema.json';
+import hasyxSchema from 'hasyx/app/hasyx/hasura-schema.json';
+
+function getFieldsForType(graphqlType: any, schema: any): any[] {
+  if (!graphqlType?.fields) return [];
+  return graphqlType.fields.map((field: any) => {
+    let currentType = field.type;
+    let isList = false;
+
+    // Unwrap NON_NULL
+    if (currentType.kind === 'NON_NULL') {
+      currentType = currentType.ofType;
+    }
+
+    // Check for LIST
+    if (currentType.kind === 'LIST') {
+      isList = true;
+      currentType = currentType.ofType; // Unwrap list
+      if (currentType.kind === 'NON_NULL') {
+        currentType = currentType.ofType; // Unwrap NON_NULL inside list
+      }
+    }
+
+    const isObjectRelation = currentType.kind === 'OBJECT';
+    const isRelation = isObjectRelation;
+    const isScalar = currentType.kind === 'SCALAR';
+
+    const typeName = currentType.name;
+    let targetTypename: string | undefined = undefined;
+
+    if (isRelation) {
+        const tableMappings = schema?.hasyx?.tableMappings;
+        if (tableMappings) {
+            // Find the table mapping where the 'type' matches our GQL type name
+            const mappingKey = Object.keys(tableMappings).find(key => {
+                const mapping = tableMappings[key];
+                return mapping.type === currentType.name;
+            });
+            targetTypename = mappingKey || currentType.name; // The key is the __typename
+        } else {
+            targetTypename = currentType.name;
+        }
+    }
+    
+    return {
+      name: field.name,
+      isRelation,
+      isList,
+      isScalar,
+      typeName,
+      targetTypename,
+    };
+  });
+}
+
+function getFieldDetails(schema: any, typename: string): any[] {
+  if (!typename) return [];
+  const tableConfig = schema?.hasyx?.tableMappings?.[typename];
+  const typeNameFromSchema = tableConfig?.type || typename;
+
+  let graphqlType = schema?.data?.__schema?.types?.find((type: any) => type.name === typeNameFromSchema);
+  
+  if (!graphqlType || !graphqlType?.fields) {
+    graphqlType = schema?.data?.__schema?.types?.find((type: any) => type.name === typename);
+  }
+
+  return getFieldsForType(graphqlType, schema);
+}
+
+export function getObjectRelationsByTypename(schema: any, typename: string): Record<string, string> {
+    const fields = getFieldDetails(schema, typename);
+    const relations: Record<string, string> = {};
+    fields.filter(f => f.isRelation && !f.isList && f.targetTypename).forEach(f => {
+        relations[f.name] = f.targetTypename!;
+    });
+    return relations;
+}
+
+export function getArrayRelationsByTypename(schema: any, typename: string): Record<string, string> {
+    const fields = getFieldDetails(schema, typename);
+    const relations: Record<string, string> = {};
+    fields.filter(f => f.isRelation && f.isList && f.targetTypename).forEach(f => {
+        relations[f.name] = f.targetTypename!;
+    });
+    return relations;
+}
+
+export function getIdFieldsByTypename(schema: any, typename: string): string[] {
+    const fields = getFieldDetails(schema, typename);
+    return fields.filter(f => f.isScalar && f.typeName === 'uuid').map(f => f.name);
+}
 
 // Types
 interface ConstructorState {
@@ -26,6 +115,7 @@ interface ConstructorState {
   limit?: number;
   offset?: number;
   order_by?: Array<{ [field: string]: 'asc' | 'desc' }>;
+  targetTable?: string;
 }
 
 interface NestedReturning {
@@ -39,6 +129,7 @@ interface HasyxConstructorProps {
   value: ConstructorState;
   onChange: (value: ConstructorState) => void;
   defaultTable?: string;
+  schema?: any;
 }
 
 interface FieldInfo {
@@ -809,9 +900,7 @@ function OrderBySection({
 }
 
 // Main HasyxConstructor component
-function HasyxConstructor({ value, onChange, defaultTable = 'users' }: HasyxConstructorProps) {
-  const [schema, setSchema] = useState<any>(hasuraSchema);
-  
+function HasyxConstructor({ value, onChange, defaultTable = 'users', schema = hasyxSchema }: HasyxConstructorProps) {
   const tables = useMemo(() => schema ? getTablesFromSchema(schema) : [], [schema]);
   const fields = useMemo(() => 
     schema && value.table ? getFieldsFromTable(schema, value.table) : [], 
@@ -1144,11 +1233,13 @@ function HasyxConstructorResults({ constructorState }: { constructorState: Const
 function HasyxConstructorColumns({ 
   value, 
   onChange, 
-  defaultTable = 'users' 
+  defaultTable = 'users',
+  schema = hasyxSchema
 }: {
   value: ConstructorState;
   onChange: (value: ConstructorState) => void;
   defaultTable?: string;
+  schema?: any;
 }) {
   return (
     <div className="flex flex-1 h-full">
@@ -1159,6 +1250,7 @@ function HasyxConstructorColumns({
           value={value}
           onChange={onChange}
           defaultTable={defaultTable}
+          schema={schema}
         />
       </div>
       
@@ -1175,11 +1267,13 @@ function HasyxConstructorColumns({
 function HasyxConstructorTabs({ 
   value, 
   onChange, 
-  defaultTable = 'users' 
+  defaultTable = 'users',
+  schema = hasyxSchema
 }: {
   value: ConstructorState;
   onChange: (value: ConstructorState) => void;
   defaultTable?: string;
+  schema?: any;
 }) {
   return (
     <div className="w-full h-full">
@@ -1194,6 +1288,7 @@ function HasyxConstructorTabs({
             value={value}
             onChange={onChange}
             defaultTable={defaultTable}
+            schema={schema}
           />
         </TabsContent>
         
@@ -1211,13 +1306,15 @@ function HasyxConstructorButton({
   onChange, 
   defaultTable = 'users',
   icon,
-  size = 'default'
+  size = 'default',
+  schema = hasyxSchema
 }: {
   value: ConstructorState;
   onChange: (value: ConstructorState) => void;
   defaultTable?: string;
   icon?: React.ReactNode;
   size?: 'sm' | 'default' | 'lg';
+  schema?: any;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -1251,6 +1348,7 @@ function HasyxConstructorButton({
                 value={value}
                 onChange={onChange}
                 defaultTable={defaultTable}
+                schema={schema}
               />
             </CardContent>
           </Card>
@@ -1263,9 +1361,10 @@ function HasyxConstructorButton({
 interface ConstructorProps {
   serverSession: Session | null;
   sidebarData: SidebarData;
+  schema?: any;
 }
 
-export default function Constructor({ serverSession, sidebarData }: ConstructorProps) {
+export default function Constructor({ serverSession, sidebarData, schema = hasyxSchema }: ConstructorProps) {
   const [constructorState, setConstructorState] = useState<ConstructorState>({
     table: 'users',
     where: {},
@@ -1284,6 +1383,7 @@ export default function Constructor({ serverSession, sidebarData }: ConstructorP
         value={constructorState}
         onChange={setConstructorState}
         defaultTable="users"
+        schema={hasyxSchema}
       />
     </SidebarLayout>
   );

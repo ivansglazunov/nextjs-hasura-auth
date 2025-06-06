@@ -111,7 +111,7 @@ export type AIStreamEventUnion =
 export class AI {
   private openRouter: OpenRouter;
   
-  public doSpecialSubstring = `> 🪬`;
+  public doSpecialSubstring = `> 😈`;
   public memory: (OpenRouterMessage | Do)[] = [];
   public systemPrompt?: string;
   
@@ -147,7 +147,7 @@ export class AI {
     console.log('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
     console.log('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
     if (this._do) {
-      console.log('🪬 AI can execute code automatically!');
+      console.log('😈 AI can execute code automatically!');
     }
     
     const rl = readline.createInterface({
@@ -629,9 +629,9 @@ ${executedDo.response}
     debug('Parsing Do operation from message part:', messagePart);
     
     // Extract operation and ID from first line
-    // Format: > 🪬<uuid>/do/exec/js or > 🪬<uuid>/do/exec/tsx or > 🪬<uuid>/do/terminal/cmd
-    const execMatch = firstLine.match(/> 🪬([^/]+)\/do\/exec\/(js|tsx)/);
-    const terminalMatch = firstLine.match(/> 🪬([^/]+)\/do\/terminal\/(cmd|bash|zsh|sh)/);
+    // Format: > 😈<uuid>/do/exec/js or > 😈<uuid>/do/exec/tsx or > 😈<uuid>/do/terminal/cmd
+    const execMatch = firstLine.match(/> 😈([^/]+)\/do\/exec\/(js|tsx)/);
+    const terminalMatch = firstLine.match(/> 😈([^/]+)\/do\/terminal\/(cmd|bash|zsh|sh)/);
     
     let id: string, format: 'js' | 'tsx' | 'terminal', operation: string;
     

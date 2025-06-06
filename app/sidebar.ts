@@ -15,38 +15,38 @@ export const sidebar: SidebarData = {
   logo: "logo.svg",
   navMain: [
     {
-      title: "Hasyx",
+      title: "😈 Hasyx",
       url: "#",
       items: [
         {
-          title: "Diagnostics",
+          title: "🧪 Diagnostics",
           url: "/hasyx/diagnostics",
         },
         {
-          title: "PWA Diagnostics",
+          title: "🟡 PWA Diagnostics",
           url: "/hasyx/pwa",
         },
         {
-          title: "Constructor",
+          title: "🟢 Constructor",
           url: "/hasyx/constructor",
         },
         {
-          title: "A-Frame",
+          title: "🟠 A-Frame",
           url: "/hasyx/aframe",
         },
         {
-          title: "Cyto",
+          title: "🟢 Cyto",
           url: "/hasyx/cyto",
         },
         {
-          title: "Payments",
+          title: "🟡 Payments",
           url: "/hasyx/payments",
         },
       ],
     },
     // Add documentation section with collapse functionality
     {
-      title: "Documentation",
+      title: "📚 Documentation",
       url: "/hasyx/doc",
       items: docNavigation?.items || [],
     },

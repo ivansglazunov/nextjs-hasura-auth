@@ -567,12 +567,12 @@ const response = await ai.ask('Calculate the factorial of 5 using JavaScript');
 The AI uses special syntax for code execution:
 
 ```
-> 🪬<uuid>/do/exec/js
+> 😈<uuid>/do/exec/js
 ```js
 your javascript code here
 ```
 
-> 🪬<uuid>/do/exec/tsx
+> 😈<uuid>/do/exec/tsx
 ```tsx
 your typescript code here
 ```
@@ -671,7 +671,7 @@ ai._onMemory = (message) => {
 #### `doSpecialSubstring`
 
 ```typescript
-public doSpecialSubstring = '> 🪬';
+public doSpecialSubstring = '> 😈';
 ```
 
 The special substring that identifies Do operations.

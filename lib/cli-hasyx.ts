@@ -217,6 +217,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     '.github/workflows/test.yml': '.github/workflows/test.yml',
     '.github/workflows/nextjs.yml': '.github/workflows/nextjs.yml',
     '.github/workflows/telegram-notifications.yml': '.github/workflows/telegram-notifications.yml',
+    '.github/workflows/docker-publish.yml': '.github/workflows/docker-publish.yml',
     'app/api/auth/[...nextauth]/route.ts': 'app/api/auth/[...nextauth]/route.ts',
     'app/options.ts': 'app/options.ts',
     'app/api/auth/verify/route.ts': 'app/api/auth/verify/route.ts',
@@ -492,7 +493,8 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
         "npm-publish": "npm run build && npm publish",
         "cli": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName}`,
         "assist": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} assist`,
-        "js": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} js`
+        "js": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} js`,
+        "tsx": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} tsx`
       };
       
       let scriptsModified = false;

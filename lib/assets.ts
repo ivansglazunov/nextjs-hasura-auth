@@ -264,34 +264,32 @@ export const assetsCommand = async () => {
   // Generate favicon if needed
   try {
     const faviconPath = path.join(projectRoot, 'public', 'favicon.ico');
-    if (!fs.existsSync(faviconPath)) {
-      console.log(`🔖 Generating favicon from ${logoType} logo...`);
-      debug(`Generating favicon from ${logoType} logo`);
+    console.log(`🔖 Generating favicon from ${logoType} logo...`);
+    debug(`Generating favicon from ${logoType} logo`);
+    
+    try {
+      const sharp = require('sharp');
       
+      const favicon32 = await sharp(logoPath)
+        .resize(32, 32)
+        .png()
+        .toBuffer();
+      
+      // Try to convert to ICO format
       try {
-        const sharp = require('sharp');
-        
-        const favicon32 = await sharp(logoPath)
-          .resize(32, 32)
-          .png()
-          .toBuffer();
-        
-        // Try to convert to ICO format
-        try {
-          const pngToIco = require('png-to-ico');
-          const icoBuffer = await pngToIco(favicon32);
-          await fs.writeFile(faviconPath, icoBuffer);
-          console.log('✅ Generated favicon.ico');
-          debug('Generated favicon.ico');
-        } catch (icoError) {
-          console.warn('⚠️ Could not generate favicon.ico, using PNG fallback');
-          await fs.writeFile(path.join(projectRoot, 'public', 'favicon.png'), favicon32);
-          debug(`ICO conversion failed: ${icoError}`);
-        }
-      } catch (sharpError) {
-        console.warn('⚠️ Sharp not available for favicon generation:', sharpError);
-        debug(`Sharp error for favicon: ${sharpError}`);
+        const pngToIco = require('png-to-ico');
+        const icoBuffer = await pngToIco(favicon32);
+        await fs.writeFile(faviconPath, icoBuffer);
+        console.log('✅ Generated favicon.ico');
+        debug('Generated favicon.ico');
+      } catch (icoError) {
+        console.warn('⚠️ Could not generate favicon.ico, using PNG fallback');
+        await fs.writeFile(path.join(projectRoot, 'public', 'favicon.png'), favicon32);
+        debug(`ICO conversion failed: ${icoError}`);
       }
+    } catch (sharpError) {
+      console.warn('⚠️ Sharp not available for favicon generation:', sharpError);
+      debug(`Sharp error for favicon: ${sharpError}`);
     }
   } catch (error) {
     console.warn('⚠️ Error generating favicon:', error);

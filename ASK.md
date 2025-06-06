@@ -270,7 +270,7 @@ $ npx hasyx ask
 🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.
 💡 Responses with code, formatting, or markdown will be beautifully rendered!
 🚀 Real-time streaming enabled!
-🪬 AI can execute code automatically!
+😈 AI can execute code automatically!
 
 > What is TypeScript?
 

@@ -6,7 +6,7 @@ This document describes the GitHub Actions integration with Telegram bot that au
 
 The integration provides:
 - ✅ Automatic notifications after all workflows complete
-- 🤖 AI-generated rich messages in Russian with project context
+- 🤖 AI-generated rich messages in English with project context
 - 📊 Detailed commit information (author, files changed, etc.)
 - 🧪 Test results and build status
 - 📦 Publication status (npm/GitHub releases)
@@ -99,7 +99,7 @@ You can modify the target workflows in the `.github/workflows/telegram-notificat
 - 📝 File change statistics
 - ✅/❌ Workflow results with timing
 - 🔗 Deployment URLs
-- 🤖 AI-generated summary in Russian
+- 🤖 AI-generated summary in English
 
 ## 🧪 Testing
 
@@ -132,7 +132,7 @@ npx tsx lib/github-telegram-bot.ts
 
 ### OpenRouter AI API:
 - Message generation with context
-- Russian language output
+- English language output
 - Project-aware content
 
 ### Telegram Bot API:
@@ -144,7 +144,7 @@ npx tsx lib/github-telegram-bot.ts
 
 ### Message Templates:
 Edit the AI prompt in `lib/github-telegram-bot.ts` to customize:
-- Language (currently Russian)
+- Language (currently English)
 - Message structure
 - Information emphasis
 - Tone and style

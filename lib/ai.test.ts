@@ -36,7 +36,7 @@ describe('[DEBUG] Real AI Environment Check', () => {
   it('should test AI instance creation without API calls', () => {
     const testSystemPrompt = `You are a helpful AI assistant for testing purposes.
 When asked to execute code, use this format:
-> 🪬<uuid>/do/exec/js
+> 😈<uuid>/do/exec/js
 \`\`\`js
 // code here
 \`\`\``;
@@ -49,7 +49,7 @@ When asked to execute code, use this format:
     );
 
     expect(ai).toBeInstanceOf(AI);
-    expect(ai.doSpecialSubstring).toBe('> 🪬');
+    expect(ai.doSpecialSubstring).toBe('> 😈');
     expect(ai.memory).toEqual([]);
     
     debug('Real AI instance created successfully');
@@ -119,7 +119,7 @@ describe('Real AI Class Tests', () => {
       const message = `
 Here is some explanation.
 
-> 🪬${testId1}/do/exec/js
+> 😈${testId1}/do/exec/js
 \`\`\`js
 console.log('Hello from test');
 const result = 2 + 2;
@@ -128,7 +128,7 @@ return result;
 
 More explanation here.
 
-> 🪬${testId2}/do/exec/tsx
+> 😈${testId2}/do/exec/tsx
 \`\`\`tsx
 const x: number = 42;
 const y: string = 'test';
@@ -182,7 +182,7 @@ End of message.
       debug('Testing real Do object generation');
       
       const testId = generateTestId();
-      const messagePart = `> 🪬${testId}/do/exec/js
+      const messagePart = `> 😈${testId}/do/exec/js
 \`\`\`js
 console.log('Real test execution');
 const calculation = 5 * 8;
@@ -203,7 +203,7 @@ return calculation;
       debug('Real Do object generation working correctly');
       
       // Test TypeScript format
-      const tsxMessagePart = `> 🪬${testId}-tsx/do/exec/tsx
+      const tsxMessagePart = `> 😈${testId}-tsx/do/exec/tsx
 \`\`\`tsx
 interface TestInterface {
   value: number;
@@ -223,11 +223,11 @@ console.log(obj);
       
       // Test error cases
       expect(() => {
-        ai.generateDo('> 🪬invalid-format\n```js\nconsole.log(\'test\');\n```');
+        ai.generateDo('> 😈invalid-format\n```js\nconsole.log(\'test\');\n```');
       }).toThrow('Invalid Do format');
       
       expect(() => {
-        ai.generateDo(`> 🪬${testId}/do/exec/js\nNo code block here`);
+        ai.generateDo(`> 😈${testId}/do/exec/js\nNo code block here`);
       }).toThrow('Invalid code block format');
       
       debug('Real Do object error handling working correctly');
@@ -283,7 +283,7 @@ console.log(obj);
         operation: 'do/exec/js',
         request: 'const result = 2 + 2; return result;',
         role: 'tool',
-        content: `> 🪬${testId}/do/exec/js\n\`\`\`js\nconst result = 2 + 2; return result;\n\`\`\``,
+        content: `> 😈${testId}/do/exec/js\n\`\`\`js\nconst result = 2 + 2; return result;\n\`\`\``,
         startLine: 0,
         endLine: 0
       };

@@ -711,28 +711,28 @@ You can execute terminal commands using various shells with node-pty support.
 - ssh - Remote shell access
 
 **Execution Format:**
-> 🪬<uuid>/do/terminal/bash
+> 😈<uuid>/do/terminal/bash
 \`\`\`bash
 your terminal command here
 \`\`\`
 
 **Examples:**
-> 🪬ls1/do/terminal/bash
+> 😈ls1/do/terminal/bash
 \`\`\`bash
 ls -la
 \`\`\`
 
-> 🪬info1/do/terminal/bash
+> 😈info1/do/terminal/bash
 \`\`\`bash
 uname -a && pwd
 \`\`\`
 
-> 🪬node1/do/terminal/bash
+> 😈node1/do/terminal/bash
 \`\`\`bash
 node --version
 \`\`\`
 
-> 🪬python1/do/terminal/bash
+> 😈python1/do/terminal/bash
 \`\`\`bash
 python3 --version
 \`\`\`

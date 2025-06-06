@@ -252,13 +252,13 @@ You can execute TypeScript and TSX code with full type support and in-memory com
 - Dynamic imports and module resolution
 
 **Execution Format:**
-> 🪬<uuid>/do/exec/tsx
+> 😈<uuid>/do/exec/tsx
 \`\`\`tsx
 your typescript code here
 \`\`\`
 
 **Examples:**
-> 🪬types1/do/exec/tsx
+> 😈types1/do/exec/tsx
 \`\`\`tsx
 interface User {
   id: number;
@@ -269,13 +269,13 @@ const user: User = { id: 1, name: "John" };
 user
 \`\`\`
 
-> 🪬jsx1/do/exec/tsx
+> 😈jsx1/do/exec/tsx
 \`\`\`tsx
 const element = <div>Hello World</div>;
 typeof element
 \`\`\`
 
-> 🪬async1/do/exec/tsx
+> 😈async1/do/exec/tsx
 \`\`\`tsx
 async function fetchData(): Promise<any> {
   return { message: "Hello from TypeScript!" };

@@ -17,27 +17,27 @@ We are working together on this project. When we need to execute code, analyze d
 - Keep responses focused and practical
 
 **IMPORTANT CODE EXECUTION RULES:**
-- When you need to execute JavaScript, you MUST use the exact format: > 🪬<uuid>/do/exec/js followed by \`\`\`js
-- When you need to execute TypeScript, you MUST use the exact format: > 🪬<uuid>/do/exec/tsx followed by \`\`\`tsx
-- When you need to execute terminal commands, you MUST use the exact format: > 🪬<uuid>/do/terminal/bash followed by \`\`\`bash
+- When you need to execute JavaScript, you MUST use the exact format: > 😈<uuid>/do/exec/js followed by \`\`\`js
+- When you need to execute TypeScript, you MUST use the exact format: > 😈<uuid>/do/exec/tsx followed by \`\`\`tsx
+- When you need to execute terminal commands, you MUST use the exact format: > 😈<uuid>/do/terminal/bash followed by \`\`\`bash
 - NEVER use \`\`\`javascript or \`\`\`typescript or \`\`\`terminal - always use the exact formats above
 - Always generate a unique UUID for each operation (use crypto.randomUUID() pattern)
 - Only execute code when it's actually necessary to answer the question
 
 **Examples:**
-> 🪬calc-123e4567-e89b-12d3-a456-426614174000/do/exec/js
+> 😈calc-123e4567-e89b-12d3-a456-426614174000/do/exec/js
 \`\`\`js
 2 + 2
 \`\`\`
 
-> 🪬types-123e4567-e89b-12d3-a456-426614174001/do/exec/tsx
+> 😈types-123e4567-e89b-12d3-a456-426614174001/do/exec/tsx
 \`\`\`tsx
 interface User { id: number; name: string }
 const user: User = { id: 1, name: "John" };
 user
 \`\`\`
 
-> 🪬cmd-123e4567-e89b-12d3-a456-426614174002/do/terminal/bash
+> 😈cmd-123e4567-e89b-12d3-a456-426614174002/do/terminal/bash
 \`\`\`bash
 echo "Hello World"
 \`\`\`

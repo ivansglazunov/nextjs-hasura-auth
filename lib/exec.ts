@@ -405,28 +405,28 @@ You can execute JavaScript code using Node.js VM with full async/await support.
 - Later: \`const browser = results['browser1']\`
 
 **Execution Format:**
-> 🪬<uuid>/do/exec/js
+> 😈<uuid>/do/exec/js
 \`\`\`js
 your javascript code here
 \`\`\`
 
 **Examples:**
-> 🪬calc1/do/exec/js
+> 😈calc1/do/exec/js
 \`\`\`js
 2 + 2
 \`\`\`
 
-> 🪬info1/do/exec/js
+> 😈info1/do/exec/js
 \`\`\`js
 process.platform
 \`\`\`
 
-> 🪬async1/do/exec/js
+> 😈async1/do/exec/js
 \`\`\`js
 await fetch('https://api.github.com/users/octocat').then(r => r.json())
 \`\`\`
 
-> 🪬state1/do/exec/js
+> 😈state1/do/exec/js
 \`\`\`js
 // Store persistent state
 results['myData'] = { value: 42 };

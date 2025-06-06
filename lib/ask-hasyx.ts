@@ -91,9 +91,9 @@ ${contextParts.join('\n\n')}
 - Keep responses focused and practical
 
 **IMPORTANT CODE EXECUTION RULES:**
-${finalAskOptions.terminal ? '- When you need to execute terminal commands, you MUST use the exact format: > 🪬<uuid>/do/terminal/bash followed by ```bash' : ''}
-${finalAskOptions.exec ? '- When you need to execute JavaScript, you MUST use the exact format: > 🪬<uuid>/do/exec/js followed by ```js' : ''}
-${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use the exact format: > 🪬<uuid>/do/exec/tsx followed by ```tsx' : ''}
+${finalAskOptions.terminal ? '- When you need to execute terminal commands, you MUST use the exact format: > 😈<uuid>/do/terminal/bash followed by ```bash' : ''}
+${finalAskOptions.exec ? '- When you need to execute JavaScript, you MUST use the exact format: > 😈<uuid>/do/exec/js followed by ```js' : ''}
+${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use the exact format: > 😈<uuid>/do/exec/tsx followed by ```tsx' : ''}
 - NEVER use \`\`\`terminal - always use \`\`\`bash for terminal commands
 - Always generate a unique UUID for each operation
 - Only execute code when it's actually necessary to answer the question
@@ -367,7 +367,7 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
       this.defaultOutput('🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.');
       this.defaultOutput('💡 Responses with code, formatting, or markdown will be beautifully rendered!');
       if (enabledEngines.length > 0) {
-        this.defaultOutput(`🪬 AI can execute code automatically! Enabled engines: ${enabledEngines.join(', ')}`);
+        this.defaultOutput(`😈 AI can execute code automatically! Enabled engines: ${enabledEngines.join(', ')}`);
       }
     }
 

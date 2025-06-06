@@ -4,10 +4,15 @@ import fs from 'fs-extra';
 import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import dotenv from 'dotenv';
+import { API_URL } from './url';
 
 dotenv.config();
 
 const debug = Debug('events');
+
+if (!API_URL) {
+  throw new Error('NEXT_PUBLIC_MAIN_URL | NEXT_PUBLIC_BASE_URL || NEXT_PUBLIC_API_URL is not set');
+}
 
 /**
  * Structure of a Hasura Event Trigger definition file
@@ -20,7 +25,7 @@ export interface EventTriggerDefinition {
   };
   source?: string; // Defaults to 'default' if not specified
   webhook?: string; // Full URL for webhook
-  webhook_path?: string; // Path only, to be combined with NEXT_PUBLIC_MAIN_URL
+  webhook_path?: string; // Path only, to be combined with API_URL
   insert?: {
     columns: string | string[];
   };
@@ -147,9 +152,9 @@ export async function createOrUpdateEventTrigger(
     let webhookUrl = trigger.webhook;
     if (!webhookUrl && trigger.webhook_path) {
       if (!baseUrl) {
-        baseUrl = process.env.NEXT_PUBLIC_MAIN_URL || '';
+        baseUrl = API_URL || '';
         if (!baseUrl) {
-          debug('No base URL specified and NEXT_PUBLIC_MAIN_URL is not set');
+          debug('No base URL specified and API_URL is not set');
           return false;
         }
       }
@@ -785,9 +790,9 @@ export async function main() {
   
   try {
     // Determine base URL for webhook
-    const baseUrl = process.env.NEXT_PUBLIC_MAIN_URL || process.env.NEXT_PUBLIC_BASE_URL;
+    const baseUrl = API_URL;
     if (!baseUrl) {
-      console.warn('⚠️ NEXT_PUBLIC_MAIN_URL or NEXT_PUBLIC_BASE_URL not set. Using relative paths for webhooks.');
+      console.warn('⚠️ API_URL or NEXT_PUBLIC_BASE_URL not set. Using relative paths for webhooks.');
       console.warn('   This may cause issues if Hasura cannot access your API with relative paths.');
       console.warn('   For production, set NEXT_PUBLIC_MAIN_URL to your publicly accessible domain (e.g., https://your-domain.com).');
       debug('No base URL found in environment variables');

@@ -3939,104 +3939,6 @@
       "level": 1
     },
     {
-      "title": "📋 Финальное ТЗ: Проверка соответствия документации реальному стримингу",
-      "url": "/hasyx/doc/STREAMING_FINAL_TEST",
-      "collapse": true,
-      "items": [
-        {
-          "title": "🎯 Цель",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 2
-        },
-        {
-          "title": "✅ Обновленные файлы",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 2
-        },
-        {
-          "title": "1. **README.md** ✅",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#1-readmemd",
-          "level": 3
-        },
-        {
-          "title": "2. **ASK.md** ✅",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#2-askmd",
-          "level": 3
-        },
-        {
-          "title": "3. **AI.md** ✅",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#3-aimd",
-          "level": 3
-        },
-        {
-          "title": "🧪 Тесты для выполнения",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 2
-        },
-        {
-          "title": "Тест 1: Проверка unit-тестов стриминга",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#1-unit",
-          "level": 3
-        },
-        {
-          "title": "Тест 2: Проверка реального стриминга",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#2",
-          "level": 3
-        },
-        {
-          "title": "Тест 3: Интерактивный режим со стримингом",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#3",
-          "level": 3
-        },
-        {
-          "title": "Тест 4: Программный API стриминга",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#4-api",
-          "level": 3
-        },
-        {
-          "title": "🎯 Критерии успеха",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 2
-        },
-        {
-          "title": "✅ Документация:",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 3
-        },
-        {
-          "title": "✅ Реализация:",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 3
-        },
-        {
-          "title": "✅ Производительность:",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 3
-        },
-        {
-          "title": "🚨 Важные отличия от старой версии",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 2
-        },
-        {
-          "title": "❌ Старая (фейковая) реализация:",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 3
-        },
-        {
-          "title": "✅ Новая (реальная) реализация:",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 3
-        },
-        {
-          "title": "📝 Итоговый отчет",
-          "url": "/hasyx/doc/STREAMING_FINAL_TEST#",
-          "level": 2
-        }
-      ],
-      "level": 1
-    },
-    {
       "title": "Subdomain Management",
       "url": "/hasyx/doc/SUBDOMAIN",
       "collapse": true,
@@ -6165,5 +6067,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-05T13:09:20.746Z"
+  "lastUpdated": "2025-06-05T23:22:06.299Z"
 }

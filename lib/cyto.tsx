@@ -74,11 +74,6 @@ export const Cyto = memo(function Graph({
   onLoaded?: (cy) => void;
   onInsert?: (inserted, insertQuery) => void;
 
-  spaceId?: any;
-  onSpaceId?: (id) => void;
-  containerId?: any;
-  onContainerId?: (id) => void;
-
   buttons?: boolean;
   buttonsChildren?: any,
   layout?: any;
@@ -94,7 +89,6 @@ export const Cyto = memo(function Graph({
   const rootRef = useRef<any>(undefined);
   const { width, height } = useResizeDetector({ targetRef: rootRef });
   const [viewport, setViewport] = useState<{ zoom: number; pan: { x: number; y: number; } }>({ zoom: 1, pan: { x: 0, y: 0 } });
-
 
   const gridColor = '#747474';
 

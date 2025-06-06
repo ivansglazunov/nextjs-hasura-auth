@@ -122,7 +122,7 @@ export async function POST(request: Request) {
             await sendTelegramMessage(
               botToken, 
               result.chatId, 
-              `Hello ${result.username}! Your Chat ID for Hasyx is: ${result.chatId}\n\nI'm an AI assistant with code execution capabilities. Send me any question and I'll help you with real-time streaming responses!\n\n🪬 Available features:\n• JavaScript/TypeScript execution\n• Terminal commands\n• Math calculations\n• General knowledge\n• Code examples and explanations\n\nJust type your question!`
+              `Hello ${result.username}! Your Chat ID for Hasyx is: ${result.chatId}\n\nI'm an AI assistant with code execution capabilities. Send me any question and I'll help you with real-time streaming responses!\n\n😈 Available features:\n• JavaScript/TypeScript execution\n• Terminal commands\n• Math calculations\n• General knowledge\n• Code examples and explanations\n\nJust type your question!`
             );
           } else if (payload.message?.text && payload.message.text.trim() !== '/start') {
             // Handle other text messages with AI
