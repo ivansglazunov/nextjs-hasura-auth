@@ -66,7 +66,10 @@ export const Cyto = memo(function Graph({
   onInsert,
 
   buttons = true,
-  buttonsChildren = null,
+  leftTop = null,
+  rightTop = null,
+  leftBottom = null,
+  rightBottom = null,
   layout: _layout,
 
   children = null,
@@ -74,8 +77,11 @@ export const Cyto = memo(function Graph({
   onLoaded?: (cy) => void;
   onInsert?: (inserted, insertQuery) => void;
 
-  buttons?: boolean;
-  buttonsChildren?: any,
+  buttons?: boolean | 'leftTop' | 'rightTop' | 'leftBottom' | 'rightBottom';
+  leftTop?: React.ReactNode;
+  rightTop?: React.ReactNode;
+  leftBottom?: React.ReactNode;
+  rightBottom?: React.ReactNode;
   layout?: any;
 
   children?: any;
@@ -317,6 +323,27 @@ export const Cyto = memo(function Graph({
     }
   }, [_cy, eh]);
 
+  const buttonsPosition = buttons === true ? 'rightTop' : (buttons === false ? null : buttons);
+
+  const buttonsMarkup = useMemo(() => (
+    !!buttons && <>
+      <Button
+        style={{ width: '3em', height: '3em', padding: 0 }}
+        onClick={() => relayout()}
+        variant="outline"
+      >
+        🔄
+      </Button>
+      <Button
+        style={{ width: '3em', height: '3em', padding: 0 }}
+        onClick={center}
+        variant="outline"
+      >
+        ⚪
+      </Button>
+    </>
+  ), [buttons, relayout, center]);
+
   const returning = (<>
     <div className="relative w-full h-full" ref={rootRef}>
       {!!insertOpen && !!insert && (
@@ -358,35 +385,21 @@ export const Cyto = memo(function Graph({
         }}
       />
       {cytoscape}
-      <div
-        className="absolute right-4 top-4 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto"
-      >
-        {!!buttons && (
-          <>
-            <Button
-              style={{ width: '3em', height: '3em', padding: 0 }}
-              onClick={() => relayout()}
-              variant="outline"
-            >
-              🔄
-            </Button>
-            <Button
-              style={{ width: '3em', height: '3em', padding: 0 }}
-              onClick={center}
-              variant="outline"
-            >
-              ⚪
-            </Button>
-            {/* <Button
-              style={{ width: '3em', height: '3em', padding: 0 }}
-              onClick={toggleDrawMode}
-              variant={!!eh ? 'default' : 'outline'}
-            >
-              ✏️
-            </Button> */}
-          </>
-        )}
-        {buttonsChildren}
+      <div className="absolute left-4 top-4 flex flex-col items-start gap-2 pointer-events-none [&>*]:pointer-events-auto">
+        {buttonsPosition === 'leftTop' && buttonsMarkup}
+        {leftTop}
+      </div>
+      <div className="absolute right-4 top-4 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto">
+        {buttonsPosition === 'rightTop' && buttonsMarkup}
+        {rightTop}
+      </div>
+      <div className="absolute left-4 bottom-4 flex flex-col items-start gap-2 pointer-events-none [&>*]:pointer-events-auto">
+        {buttonsPosition === 'leftBottom' && buttonsMarkup}
+        {leftBottom}
+      </div>
+      <div className="absolute right-4 bottom-4 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto">
+        {buttonsPosition === 'rightBottom' && buttonsMarkup}
+        {rightBottom}
       </div>
     </div>
   </>);

@@ -17,6 +17,7 @@ import { Plus, X, Search } from 'lucide-react';
 import { Session } from 'next-auth';
 import { useSession } from 'next-auth/react';
 import hasyxSchema from 'hasyx/app/hasyx/hasura-schema.json';
+import { cn } from 'hasyx/lib/utils';
 
 function getFieldsForType(graphqlType: any, schema: any): any[] {
   if (!graphqlType?.fields) return [];
@@ -552,25 +553,32 @@ function ReturningSection({
       <div className="flex items-center justify-between mb-1">
         <Label className="text-xs font-medium">Returning</Label>
         
-        {sortedAvailableFields.length > 0 && (
-          <Select onValueChange={(fieldName) => {
-            const field = fields.find(f => f.name === fieldName);
-            if (field) {
-              addField(field.name, field.isRelation, field.targetTable);
-            }
-          }}>
-            <SelectTrigger className="square border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0 [&>svg:nth-child(2)]:hidden">
-              <Plus className="h-2.5 w-2.5 flex-shrink-0" />
-            </SelectTrigger>
-            <SelectContent>
-              {sortedAvailableFields.map(field => (
-                <SelectItem key={field.name} value={field.name} className="text-xs">
-                  {field.name} {field.isRelation && <span className="text-muted-foreground">({field.targetTable})</span>}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <div className="flex items-center">
+          {returning.length > 0 && (
+            <Button variant="ghost" onClick={() => onReturningChange([])} className="h-6 w-6 p-0 rounded-none">
+              <X className="h-2.5 w-2.5" />
+            </Button>
+          )}
+          {sortedAvailableFields.length > 0 && (
+            <Select onValueChange={(fieldName) => {
+              const field = fields.find(f => f.name === fieldName);
+              if (field) {
+                addField(field.name, field.isRelation, field.targetTable);
+              }
+            }}>
+              <SelectTrigger className="square border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0 [&>svg:nth-child(2)]:hidden">
+                <Plus className="h-2.5 w-2.5 flex-shrink-0" />
+              </SelectTrigger>
+              <SelectContent>
+                {sortedAvailableFields.map(field => (
+                  <SelectItem key={field.name} value={field.name} className="text-xs">
+                    {field.name} {field.isRelation && <span className="text-muted-foreground">({field.targetTable})</span>}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
       
       <div className="space-y-1">
@@ -684,30 +692,37 @@ function WhereSection({
       <div className="flex items-center justify-between mb-1">
         <Label className="text-xs font-medium">Where</Label>
         
-        {sortedAvailableFields.length > 0 && (
-          <Select onValueChange={(fieldName) => {
-            addWhereCondition(fieldName);
-          }}>
-            <SelectTrigger className="square border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0 [&>svg:nth-child(2)]:hidden">
-              <Plus className="h-2.5 w-2.5 flex-shrink-0" />
-            </SelectTrigger>
-            <SelectContent>
-              {sortedAvailableFields.map(field => (
-                <SelectItem key={field.name} value={field.name} className="text-xs">
-                  <div className="flex items-center gap-1">
-                    <span>{field.name}</span>
-                    {field.name === primaryKeyField && (
-                      <Badge variant="outline" className="text-xs px-1 py-0 h-3">PK</Badge>
-                    )}
-                    {field.isRelation && (
-                      <span className="text-muted-foreground">({field.targetTable})</span>
-                    )}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <div className="flex items-center">
+          {Object.keys(where).length > 0 && (
+            <Button variant="ghost" onClick={() => onWhereChange({})} className="h-6 w-6 p-0 rounded-none">
+              <X className="h-2.5 w-2.5" />
+            </Button>
+          )}
+          {sortedAvailableFields.length > 0 && (
+            <Select onValueChange={(fieldName) => {
+              addWhereCondition(fieldName);
+            }}>
+              <SelectTrigger className="square border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0 [&>svg:nth-child(2)]:hidden">
+                <Plus className="h-2.5 w-2.5 flex-shrink-0" />
+              </SelectTrigger>
+              <SelectContent>
+                {sortedAvailableFields.map(field => (
+                  <SelectItem key={field.name} value={field.name} className="text-xs">
+                    <div className="flex items-center gap-1">
+                      <span>{field.name}</span>
+                      {field.name === primaryKeyField && (
+                        <Badge variant="outline" className="text-xs px-1 py-0 h-3">PK</Badge>
+                      )}
+                      {field.isRelation && (
+                        <span className="text-muted-foreground">({field.targetTable})</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
       
       <div className="space-y-1">
@@ -1307,7 +1322,9 @@ function HasyxConstructorButton({
   defaultTable = 'users',
   icon,
   size = 'default',
-  schema = hasyxSchema
+  schema = hasyxSchema,
+  children = null,
+  ...props
 }: {
   value: ConstructorState;
   onChange: (value: ConstructorState) => void;
@@ -1315,19 +1332,30 @@ function HasyxConstructorButton({
   icon?: React.ReactNode;
   size?: 'sm' | 'default' | 'lg';
   schema?: any;
+  children?: React.ReactNode;
+  [key: string]: any;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <Button 
+      {children ? <Button 
         variant="outline" 
         size={size}
-        className="square"
         onClick={() => setIsOpen(true)}
+        {...props}
+        className={cn('square', props.className)}
+      >
+        {children}
+      </Button> : <Button 
+        variant="outline" 
+        size={size}
+        onClick={() => setIsOpen(true)}
+        {...props}
+        className={cn('square', props.className)}
       >
         {icon || <Search className="h-4 w-4" />}
-      </Button>
+      </Button>}
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">

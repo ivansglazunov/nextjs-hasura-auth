@@ -7,6 +7,8 @@ import { HasyxConstructor, HasyxConstructorButton } from "hasyx/lib/constructor"
 import { Cyto, CytoEdge, CytoNode, CytoStyle } from "hasyx/lib/cyto";
 import React, { useState, useCallback, useMemo } from "react";
 import hasyxSchema from '../hasura-schema.json';
+import { Button } from 'hasyx/components/ui/button';
+import { Plus, X } from 'lucide-react';
 import {
   getObjectRelationsByTypename,
   getArrayRelationsByTypename,
@@ -44,11 +46,11 @@ const RowParser = (schema) => (rowObjectWithTypename) => {
   if (!typename) {
     return { objectRelations: {}, arrayRelations: {}, idFields: [] };
   }
-  
+
   const objectRelations = getObjectRelationsByTypename(schema, typename);
   const arrayRelations = getArrayRelationsByTypename(schema, typename);
   const idFields = getIdFieldsByTypename(schema, typename);
-  
+
   return { objectRelations, arrayRelations, idFields };
 }
 
@@ -67,11 +69,11 @@ const CytoEntityEdge = ({ source, target }) => (
 
 const EntitityByConstructor = ({ object, handleEntityClick }) => {
   if (!object || !object.id || !object.__typename) return null;
-  
+
   const nodeId = `${object.__typename}-${object.id}`;
 
   const { objectRelations, arrayRelations } = useMemo(() => parseRow(object), [object]);
-  
+
   const childrenAndEdges = useMemo(() => {
     const children = new Map();
     const edges = new Map();
@@ -81,20 +83,20 @@ const EntitityByConstructor = ({ object, handleEntityClick }) => {
       const relatedObject = object[fieldName];
       if (relatedObject && relatedObject.id) {
         const targetTypename = relatedObject.__typename || objectRelations[fieldName];
-        const relatedWithTypename = {...relatedObject, __typename: targetTypename};
+        const relatedWithTypename = { ...relatedObject, __typename: targetTypename };
         const relatedNodeId = `${relatedWithTypename.__typename}-${relatedWithTypename.id}`;
-        
+
         if (!children.has(relatedNodeId)) {
           children.set(relatedNodeId, <EntitityByConstructor key={relatedNodeId} object={relatedWithTypename} handleEntityClick={handleEntityClick} />);
         }
-        
+
         const edgeId = `edge-${nodeId}-${relatedNodeId}`;
         if (!edges.has(edgeId)) {
           edges.set(edgeId, <CytoEntityEdge key={edgeId} source={object} target={relatedWithTypename} />);
         }
       }
     }
-    
+
     // Array relations
     for (const fieldName in arrayRelations) {
       const relatedArray = object[fieldName];
@@ -102,7 +104,7 @@ const EntitityByConstructor = ({ object, handleEntityClick }) => {
         relatedArray.forEach(relatedObject => {
           if (relatedObject && relatedObject.id) {
             const targetTypename = relatedObject.__typename || arrayRelations[fieldName];
-            const relatedWithTypename = {...relatedObject, __typename: targetTypename};
+            const relatedWithTypename = { ...relatedObject, __typename: targetTypename };
             const relatedNodeId = `${relatedWithTypename.__typename}-${relatedWithTypename.id}`;
 
             if (!children.has(relatedNodeId)) {
@@ -117,13 +119,13 @@ const EntitityByConstructor = ({ object, handleEntityClick }) => {
         });
       }
     }
-    
+
     return { children: Array.from(children.values()), edges: Array.from(edges.values()) };
   }, [object, objectRelations, arrayRelations, handleEntityClick, nodeId]);
 
   return (
     <>
-      <CytoNode 
+      <CytoNode
         element={{
           id: nodeId,
           data: {
@@ -132,7 +134,7 @@ const EntitityByConstructor = ({ object, handleEntityClick }) => {
           },
         }}
       >
-        <EntityButton 
+        <EntityButton
           data={object}
           className="w-auto max-w-[140px]"
           onClick={() => handleEntityClick(object)}
@@ -144,15 +146,65 @@ const EntitityByConstructor = ({ object, handleEntityClick }) => {
   );
 };
 
-export default function Client() {
-  const [query, setQuery] = useState<any>({
-    table: 'users',
-    where: {},
-    returning: ['id', 'name', { 'accounts': { 'returning': ['id', 'provider'] } }],
-    limit: 10,
-  });
+const QueryManager = ({ queries, setQueries }) => {
+  const addQuery = () => {
+    const newQuery = {
+      table: 'users',
+      where: {},
+      returning: ['id', 'name'],
+      limit: 10,
+    };
+    setQueries(prev => [...prev, newQuery]);
+  };
 
+  const removeQuery = (index) => {
+    setQueries(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateQuery = (index, updatedQuery) => {
+    setQueries(prev => prev.map((q, i) => (i === index ? updatedQuery : q)));
+  };
+
+  return (<>
+    {queries.map((query, index) => (
+      <div key={index} className="flex items-center">
+        <HasyxConstructorButton
+          value={query}
+          onChange={(newQuery) => updateQuery(index, newQuery)}
+          defaultTable="users"
+          schema={hasyxSchema}
+        >
+          <span className="max-w-[100px] truncate">{query.table}</span>
+        </HasyxConstructorButton>
+        <Button variant="outline" size="icon" className="square ml-1" onClick={() => removeQuery(index)}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    ))}
+    <Button variant="outline" size="sm" className="square" onClick={addQuery}>
+      <Plus/>
+    </Button>
+  </>)
+}
+
+const QueryLoader = ({ query, renderer }) => {
   const { data: results = [] } = useSubscription(query);
+  const graphElements = useMemo(() => {
+    if (!results) return [];
+    return results.map(renderer);
+  }, [results, renderer]);
+  return <>{graphElements}</>;
+};
+
+export default function Client() {
+  const [queries, setQueries] = useState<any[]>([
+    {
+      table: 'users',
+      where: {},
+      returning: ['id', 'name', { 'accounts': { 'returning': ['id', 'provider'] } }],
+      limit: 10,
+    }
+  ]);
 
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
 
@@ -165,7 +217,7 @@ export default function Client() {
   const onInsert = useCallback((inserted, insertQuery) => {
     debug("Cyto client: onInsert called", { inserted, insertQuery });
   }, []);
-  
+
   const layoutConfig = useMemo(() => ({
     name: 'cola',
     nodeDimensionsIncludeLabels: true,
@@ -180,38 +232,38 @@ export default function Client() {
     setSelectedEntity(null);
   }, []);
 
-  const graphElements = useMemo(() => {
-    if (!results) return [];
-    return results.map(item => <EntitityByConstructor key={`${item.__typename}-${item.id}`} object={item} handleEntityClick={handleEntityClick}/>);
-  }, [results, handleEntityClick]);
-
-  console.log('🟢 graphElements', graphElements);
+  const renderer = useCallback((item) => (
+    <EntitityByConstructor
+      key={`${item.__typename}-${item.id}`}
+      object={item}
+      handleEntityClick={handleEntityClick}
+    />
+  ), [handleEntityClick]);
 
   return (
     <div className="w-full h-full relative">
-      <Cyto 
+      <Cyto
         onLoaded={onGraphLoaded}
         onInsert={onInsert}
         buttons={true}
         layout={layoutConfig}
-          buttonsChildren={
-            <HasyxConstructorButton
-              value={query}
-              onChange={setQuery}
-              defaultTable="users"
-              schema={hasyxSchema}
-            />
-          }
+        leftTop={
+          <div className="w-96">
+            <QueryManager queries={queries} setQueries={setQueries} />
+          </div>
+        }
       >
         <CytoStyle stylesheet={stylesheet} />
-        {graphElements}
+        {queries.map((query, index) => (
+          <QueryLoader key={index} query={query} renderer={renderer} />
+        ))}
       </Cyto>
 
       {/* Modal for entity details */}
       {selectedEntity && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={handleCloseModal}>
           <div className='w-1/3' onClick={e => e.stopPropagation()}>
-            <EntityCard 
+            <EntityCard
               data={selectedEntity}
               onClose={handleCloseModal}
             />

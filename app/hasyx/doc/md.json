@@ -4706,11 +4706,6 @@
           "level": 2
         },
         {
-          "title": "Examples Repository",
-          "url": "/hasyx/doc/TELEGRAM-ASK#examples-repository",
-          "level": 2
-        },
-        {
           "title": "Roadmap",
           "url": "/hasyx/doc/TELEGRAM-ASK#roadmap",
           "level": 2
@@ -5515,139 +5510,6 @@
       "level": 1
     },
     {
-      "title": "GitHub Telegram Bot 🤖",
-      "url": "/hasyx/doc/TELEGRAM_BOT",
-      "collapse": true,
-      "items": [
-        {
-          "title": "Overview",
-          "url": "/hasyx/doc/TELEGRAM_BOT#overview",
-          "level": 2
-        },
-        {
-          "title": "✨ Features",
-          "url": "/hasyx/doc/TELEGRAM_BOT#features",
-          "level": 2
-        },
-        {
-          "title": "🚀 Quick Start",
-          "url": "/hasyx/doc/TELEGRAM_BOT#quick-start",
-          "level": 2
-        },
-        {
-          "title": "Environment Variables",
-          "url": "/hasyx/doc/TELEGRAM_BOT#environment-variables",
-          "level": 3
-        },
-        {
-          "title": "GitHub Actions Integration",
-          "url": "/hasyx/doc/TELEGRAM_BOT#github-actions-integration",
-          "level": 3
-        },
-        {
-          "title": "📋 API Reference",
-          "url": "/hasyx/doc/TELEGRAM_BOT#api-reference",
-          "level": 2
-        },
-        {
-          "title": "🎨 Message Format",
-          "url": "/hasyx/doc/TELEGRAM_BOT#message-format",
-          "level": 2
-        },
-        {
-          "title": "Sample Message",
-          "url": "/hasyx/doc/TELEGRAM_BOT#sample-message",
-          "level": 3
-        },
-        {
-          "title": "⚙️ Configuration",
-          "url": "/hasyx/doc/TELEGRAM_BOT#configuration",
-          "level": 2
-        },
-        {
-          "title": "Telegram Setup",
-          "url": "/hasyx/doc/TELEGRAM_BOT#telegram-setup",
-          "level": 3
-        },
-        {
-          "title": "Multiple Recipients",
-          "url": "/hasyx/doc/TELEGRAM_BOT#multiple-recipients",
-          "level": 3
-        },
-        {
-          "title": "AI Configuration",
-          "url": "/hasyx/doc/TELEGRAM_BOT#ai-configuration",
-          "level": 3
-        },
-        {
-          "title": "🔧 Troubleshooting",
-          "url": "/hasyx/doc/TELEGRAM_BOT#troubleshooting",
-          "level": 2
-        },
-        {
-          "title": "Common Issues",
-          "url": "/hasyx/doc/TELEGRAM_BOT#common-issues",
-          "level": 3
-        },
-        {
-          "title": "Debug Mode",
-          "url": "/hasyx/doc/TELEGRAM_BOT#debug-mode",
-          "level": 3
-        },
-        {
-          "title": "📚 Integration Examples",
-          "url": "/hasyx/doc/TELEGRAM_BOT#integration-examples",
-          "level": 2
-        },
-        {
-          "title": "Custom Script",
-          "url": "/hasyx/doc/TELEGRAM_BOT#custom-script",
-          "level": 3
-        },
-        {
-          "title": "Webhook Integration",
-          "url": "/hasyx/doc/TELEGRAM_BOT#webhook-integration",
-          "level": 3
-        },
-        {
-          "title": "🔒 Security",
-          "url": "/hasyx/doc/TELEGRAM_BOT#security",
-          "level": 2
-        },
-        {
-          "title": "🛠️ Development",
-          "url": "/hasyx/doc/TELEGRAM_BOT#development",
-          "level": 2
-        },
-        {
-          "title": "Running Tests",
-          "url": "/hasyx/doc/TELEGRAM_BOT#running-tests",
-          "level": 3
-        },
-        {
-          "title": "Local Testing",
-          "url": "/hasyx/doc/TELEGRAM_BOT#local-testing",
-          "level": 3
-        },
-        {
-          "title": "📈 Monitoring",
-          "url": "/hasyx/doc/TELEGRAM_BOT#monitoring",
-          "level": 2
-        },
-        {
-          "title": "🔄 Updates",
-          "url": "/hasyx/doc/TELEGRAM_BOT#updates",
-          "level": 2
-        },
-        {
-          "title": "🎯 Best Practices",
-          "url": "/hasyx/doc/TELEGRAM_BOT#best-practices",
-          "level": 2
-        }
-      ],
-      "level": 1
-    },
-    {
       "title": "NO MOCK EXPERIMENT - ОТЧЕТ О СОСТОЯНИИ ТЕСТОВ",
       "url": "/hasyx/doc/nomock.experiment",
       "collapse": true,
@@ -6067,5 +5929,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-05T23:22:06.299Z"
+  "lastUpdated": "2025-06-06T15:01:11.621Z"
 }

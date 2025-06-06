@@ -264,6 +264,16 @@ export async function applyPermissions(hasura: Hasura) {
     schema: 'public',
     table: 'users',
     operation: 'select',
+    role: 'anonymous',
+    filter: {},
+    columns: ['id', 'name', 'image', 'created_at', 'updated_at', 'hasura_role']
+  });
+
+  // User permissions
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'users',
+    operation: 'select',
     role: 'user',
     filter: {},
     columns: ['id', 'name', 'image', 'created_at', 'updated_at', 'hasura_role']
@@ -286,6 +296,15 @@ export async function applyPermissions(hasura: Hasura) {
     role: 'me',
     filter: { user_id: { _eq: 'X-Hasura-User-Id' } },
     columns: ['id', 'user_id', 'type', 'provider', 'provider_account_id', 'refresh_token', 'access_token', 'expires_at', 'token_type', 'scope', 'id_token', 'session_state', 'provider_data', 'created_at']
+  });
+
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'accounts',
+    operation: 'select',
+    role: 'anonymous',
+    filter: {},
+    columns: ['id', 'provider', 'user_id', 'provider_data', 'created_at', 'updated_at']
   });
 
   await hasura.definePermission({
