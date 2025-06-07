@@ -7,6 +7,14 @@ import "hasyx/lib/styles.css";
 import { Generator } from "hasyx";
 import schema from "../public/hasura-schema.json";
 
+// Initialize PWA dev utils in development
+if (typeof window !== 'undefined' && 
+    (window.location.hostname === 'localhost' || window.location.port === '3000')) {
+  import('../lib/pwa-dev-utils').catch(() => {
+    // Silently fail if utils not available
+  });
+}
+
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import cola from 'cytoscape-cola';

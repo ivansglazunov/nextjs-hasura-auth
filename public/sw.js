@@ -1,5 +1,16 @@
-const CACHE_NAME = 'hasyx-v1';
-const RUNTIME_CACHE = 'hasyx-runtime-v1';
+// Development mode detection
+const isDevelopment = self.location.hostname === 'localhost' || 
+                     self.location.hostname === '127.0.0.1' || 
+                     self.location.hostname.includes('.local') ||
+                     self.location.port === '3000';
+
+// Disable aggressive caching in development
+const DEVELOPMENT_CACHE_DISABLED = isDevelopment;
+
+console.log('Service Worker mode:', isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION');
+
+const CACHE_NAME = isDevelopment ? `hasyx-dev-${Date.now()}` : 'hasyx-v1';
+const RUNTIME_CACHE = isDevelopment ? `hasyx-runtime-dev-${Date.now()}` : 'hasyx-runtime-v1';
 
 // Static resources to cache immediately
 const STATIC_CACHE_RESOURCES = [
@@ -27,13 +38,20 @@ const RUNTIME_CACHE_PATTERNS = [
 
 // Install event - cache static resources
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
+  console.log('Service Worker installing...', isDevelopment ? '(Development Mode)' : '(Production Mode)');
   
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Caching static resources');
-        return cache.addAll(STATIC_CACHE_RESOURCES);
+        // In development, cache fewer resources to allow for easier updates
+        const resourcesToCache = isDevelopment ? 
+          STATIC_CACHE_RESOURCES.filter(resource => 
+            resource.includes('/icons/') || resource === '/manifest.webmanifest'
+          ) : 
+          STATIC_CACHE_RESOURCES;
+        
+        return cache.addAll(resourcesToCache);
       })
       .then(() => {
         // Force activation of new service worker
@@ -153,6 +171,25 @@ async function cacheFirstStrategy(request) {
 
 // Stale While Revalidate Strategy (for pages)
 async function staleWhileRevalidateStrategy(request) {
+  // In development mode - always try network first to get fresh content
+  if (DEVELOPMENT_CACHE_DISABLED) {
+    try {
+      console.log('Development mode: fetching fresh content for', request.url);
+      const networkResponse = await fetch(request);
+      if (networkResponse.ok) {
+        const cache = await caches.open(RUNTIME_CACHE);
+        cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    } catch (error) {
+      console.log('Network failed in development, trying cache for', request.url);
+      // Fallback to cache only if network fails
+      const cachedResponse = await caches.match(request);
+      return cachedResponse || createOfflineFallback(request);
+    }
+  }
+  
+  // Production behavior - serve from cache first, update in background
   const cache = await caches.open(RUNTIME_CACHE);
   const cachedResponse = await cache.match(request);
   

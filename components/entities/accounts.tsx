@@ -6,6 +6,8 @@ import { Button as UIButton } from 'hasyx/components/ui/button';
 import { Card as UICard, CardContent, CardHeader, CardTitle } from 'hasyx/components/ui/card';
 import { Badge } from 'hasyx/components/ui/badge';
 import { X } from 'lucide-react';
+import { CytoNode as CytoNodeComponent } from 'hasyx/lib/cyto';
+import { cn } from 'hasyx/lib/utils';
 
 interface AccountData {
   id?: string;
@@ -26,6 +28,11 @@ interface AccountButtonProps {
 interface AccountCardProps {
   data: AccountData | string;
   onClose?: () => void;
+  [key: string]: any;
+}
+
+interface AccountCytoNodeProps {
+  data: AccountData;
   [key: string]: any;
 }
 
@@ -159,4 +166,16 @@ export function Card({ data, onClose, ...props }: AccountCardProps) {
       </CardContent>
     </UICard>
   );
-} 
+}
+
+export function CytoNode({ data, ...props }: AccountCytoNodeProps) {
+  return <CytoNodeComponent {...props} element={{
+    id: data.id,
+    data: {
+      id: data.id,
+      label: data?.provider,
+    },
+    ...props?.elements,
+    classes: cn('entity', props.classes)
+  }} />;
+}

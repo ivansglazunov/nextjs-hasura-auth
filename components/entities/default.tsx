@@ -4,10 +4,12 @@ import React from 'react';
 import { Button as UIButton } from 'hasyx/components/ui/button';
 import { Card as UICard, CardContent, CardHeader, CardTitle } from 'hasyx/components/ui/card';
 import { Badge } from 'hasyx/components/ui/badge';
+import { CytoNode as CytoNodeComponent } from 'hasyx/lib/cyto';
 import { X, Database } from 'lucide-react';
+import { cn } from 'hasyx/lib/utils';
 
 interface DefaultEntityData {
-  id?: string;
+  id: string;
   created_at?: string;
   updated_at?: string;
   __typename?: string;
@@ -15,13 +17,18 @@ interface DefaultEntityData {
 }
 
 interface DefaultButtonProps {
-  data: DefaultEntityData | string;
+  data: DefaultEntityData;
   [key: string]: any;
 }
 
 interface DefaultCardProps {
-  data: DefaultEntityData | string;
+  data: DefaultEntityData;
   onClose?: () => void;
+  [key: string]: any;
+}
+
+interface DefaultCytoNodeProps {
+  data: DefaultEntityData;
   [key: string]: any;
 }
 
@@ -154,4 +161,16 @@ export function Card({ data, onClose, ...props }: DefaultCardProps) {
       </CardContent>
     </UICard>
   );
-} 
+}
+
+export function CytoNode({ data, ...props }: DefaultCytoNodeProps) {
+  return <CytoNodeComponent {...props} element={{
+    id: data.id,
+    data: {
+      id: data.id,
+      label: data?.name,
+    },
+    ...props?.elements,
+    classes: cn('entity', props.classes)
+  }} />;
+}

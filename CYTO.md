@@ -68,6 +68,7 @@ Allows for declarative and reactive application of styles to the graph. Multiple
       { selector: 'edge', style: { 'line-color': 'gray', 'width': 2 } }
     ]
     ```
+> **Theming with CSS Variables:** `CytoStyle` now automatically resolves CSS variables (e.g., `var(--primary)`) used in your stylesheet. This includes support for modern color formats like `oklch`. This feature allows your graph's styling to be fully integrated with your application's theming (e.g., TailwindCSS themes), ensuring a consistent look and feel. The styles are re-resolved automatically when the theme changes.
 
 ### 5. `useGraph()`
 
@@ -312,11 +313,20 @@ export default function MyGraphPage() {
 }
 ```
 
+## Automated Graph Rendering with `hasyx/lib/renderer`
+
+While you can manually build complex graphs by mapping over your data as shown in the comprehensive example, Hasyx provides an even more powerful and automated way to render graphs directly from your GraphQL queries.
+
+The `hasyx/lib/renderer` module can take one or more Hasyx queries, fetch the data, and recursively render all the objects and their relationships as nodes and edges. This is the recommended approach for quickly visualizing complex, interconnected data from your database.
+
+For more details, see the **[Renderer Documentation](./RENDERER.md)**.
+
 ## Key Aspects and Benefits
 
 *   **Declarativeness & Direct Data Mapping:** This is where `hasyx/lib/cyto` truly shines! You can now directly map your data structures (like arrays of users, each with nested arrays of accounts) into `<CytoNode>` and `<CytoEdge>` components within your JSX. No more tedious pre-processing of data into separate `nodes` and `edges` arrays. Just map and render – it's that simple and incredibly powerful! This makes your graph definitions much more readable and aligned with the natural structure of your data.
 *   **Full React Component Power in Nodes:** The ability to use any HTML markup and **your existing React components** for node display offers immense design flexibility. Cytoscape node sizes automatically synchronize with your HTML/React content dimensions. This means you can leverage your entire component library (like `Avatar`, `Badge`, custom cards, etc.) directly within your graph nodes.
 *   **Reactivity:** Changes in your data source (e.g., the `users` array in the example) will reactively update the graph. Add a user, and a new node appears. Remove an account, and its node and edge disappear. All handled seamlessly by React's rendering lifecycle.
+*   **Dynamic Theming:** With automatic CSS variable resolution, graph styles can be tied directly to your application's theme, allowing for seamless light/dark mode transitions and brand consistency.
 *   **UI Framework Integration:** Effortlessly integrates with components from your UI framework (e.g., `Avatar`, `Button` from `hasyx/components/ui` or any other library).
 *   **Ease of Creation:** Radically simplifies the creation of complex, dynamic, and interactive graph visualizations by abstracting many details of direct Cytoscape API interaction, while still providing access to it via `onLoaded` or `useGraph` if needed.
 *   **Standard Cytoscape Elements:** The `element` props for `CytoNode` and `CytoEdge` still expect data in the standard Cytoscape element format for their core definition (`id`, `data.id`, `data.source`, `data.target`), making transition or integration with existing Cytoscape logic simpler if necessary.

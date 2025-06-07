@@ -208,10 +208,75 @@ async function fetchSchema() {
     // Analyze the schema and identify table mappings
     const schemaTypes = introspectionResult.data.__schema.types;
     const tableMappings = identifyTableSchemas(schemaTypes);
+
+    // Fetch metadata to get permissions
+    const metadataUrl = HASURA_GRAPHQL_URL!.replace('/v1/graphql', '/v1/metadata');
+    debug(`🚀 Requesting metadata for permissions from ${metadataUrl}...`);
+    const metadataResponse = await axios.post(
+        metadataUrl,
+        { type: 'export_metadata', args: {} },
+        { headers }
+    );
+
+    if (metadataResponse.data.errors) {
+        throw new Error(`Hasura metadata error: ${JSON.stringify(metadataResponse.data.errors)}`);
+    }
+
+    const metadata = metadataResponse.data.metadata || metadataResponse.data;
+    const permissions: Record<string, any> = {};
+
+    const sources = metadata.sources || [];
+    for (const source of sources) {
+        if (!source.tables) continue;
+        for (const tableInfo of source.tables) {
+            const { table: { schema: tableSchema, name: tableName } } = tableInfo;
+            
+            const gqlTypeName = Object.keys(tableMappings).find(key => 
+                tableMappings[key].schema === tableSchema && tableMappings[key].table === tableName
+            );
+
+            if (gqlTypeName) {
+                const tablePermissions: Record<string, any> = {};
+
+                if (tableInfo.select_permissions) {
+                    const selectPermissions: Record<string, string[]> = {};
+                    for (const perm of tableInfo.select_permissions) {
+                        let columns = perm.permission.columns;
+                        if (columns === '*') {
+                            const tableGraphQLType = schemaTypes.find((t: any) => t.name === gqlTypeName);
+                            if (tableGraphQLType && tableGraphQLType.fields) {
+                                columns = tableGraphQLType.fields
+                                    .filter((field: any) => {
+                                        let type = field.type;
+                                        while (type.ofType) {
+                                            type = type.ofType;
+                                        }
+                                        return type.kind === 'SCALAR' || type.kind === 'ENUM';
+                                    })
+                                    .map((field: any) => field.name);
+                            } else {
+                                columns = ['*']; 
+                            }
+                        }
+                        if (Array.isArray(columns)) {
+                            selectPermissions[perm.role] = columns;
+                        }
+                    }
+                    tablePermissions.select = selectPermissions;
+                }
+
+                if (Object.keys(tablePermissions).length > 0) {
+                    permissions[gqlTypeName] = tablePermissions;
+                }
+            }
+        }
+    }
+    debug(`✅ Permissions for ${Object.keys(permissions).length} tables identified.`);
     
     // Add hasyx metadata to the schema
     introspectionResult.hasyx = {
       tableMappings,
+      permissions,
       timestamp: new Date().valueOf(),
       version: "1.0.0"
     };

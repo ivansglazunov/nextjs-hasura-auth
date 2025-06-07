@@ -37,6 +37,22 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     return null;
   }
 
+  // Development mode detection
+  const isDevelopment = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' || 
+                       window.location.port === '3000';
+                       
+  // In development mode - optional registration via localStorage flag
+  if (isDevelopment && !localStorage.getItem('pwa-dev-enabled')) {
+    debug('Service worker disabled in development mode');
+    debug('To enable PWA in development: localStorage.setItem("pwa-dev-enabled", "true")');
+    return null;
+  }
+
+  if (isDevelopment) {
+    debug('Service worker enabled in development mode via localStorage flag');
+  }
+
   try {
     debug('Registering service worker...');
     const registration = await navigator.serviceWorker.register('/sw.js', {

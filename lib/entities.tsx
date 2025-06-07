@@ -5,23 +5,26 @@ import React from 'react';
 // Import all available entity components
 import * as UsersEntity from 'hasyx/components/entities/users';
 import * as AccountsEntity from 'hasyx/components/entities/accounts';
-import * as PaymentProvidersEntity from 'hasyx/components/entities/payments_providers';
-import * as PaymentSubscriptionsEntity from 'hasyx/components/entities/payments_subscriptions';
 import * as DefaultEntity from 'hasyx/components/entities/default';
 
 interface EntityData {
-  id?: string;
+  id: string;
   __typename?: string;
   [key: string]: any;
 }
 
 interface EntityButtonProps {
-  data: EntityData | string;
+  data: EntityData;
+  [key: string]: any;
+}
+
+interface EntityCytoNodeProps {
+  data: EntityData;
   [key: string]: any;
 }
 
 interface EntityCardProps {
-  data: EntityData | string;
+  data: EntityData;
   onClose?: () => void;
   [key: string]: any;
 }
@@ -30,8 +33,7 @@ interface EntityCardProps {
 const ENTITY_REGISTRY = {
   'users': UsersEntity,
   'accounts': AccountsEntity,
-  'payments_providers': PaymentProvidersEntity,
-  'payments_subscriptions': PaymentSubscriptionsEntity,
+  'default': DefaultEntity,
   // Add more entities here as they are created
   // 'notifications': NotificationsEntity,
   // 'posts': PostsEntity,
@@ -75,4 +77,13 @@ export function Card({ data, onClose, ...props }: EntityCardProps) {
   const EntityComponent = getEntityComponent(typename);
   
   return <EntityComponent.Card data={data} onClose={onClose} {...props} />;
+} 
+
+export function CytoNode({ data, ...props }: EntityCytoNodeProps) {
+  const entityData = typeof data === 'object' ? data : null;
+  const typename = entityData?.__typename;
+  
+  const EntityComponent = getEntityComponent(typename);
+  
+  return <EntityComponent.CytoNode data={data} {...props} />;
 } 

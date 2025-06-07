@@ -1,12 +1,14 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from 'hasyx';
 import { Button as UIButton } from 'hasyx/components/ui/button';
 import { Card as UICard, CardContent, CardHeader, CardTitle } from 'hasyx/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from 'hasyx/components/ui/avatar';
 import { Badge } from 'hasyx/components/ui/badge';
 import { X } from 'lucide-react';
+import { CytoNode as CytoNodeComponent } from 'hasyx/lib/cyto';
+import { cn } from 'hasyx/lib/utils';
 
 interface UserData {
   id?: string;
@@ -27,6 +29,11 @@ interface UserButtonProps {
 interface UserCardProps {
   data: UserData | string;
   onClose?: () => void;
+  [key: string]: any;
+}
+
+interface UserCytoNodeProps {
+  data: UserData;
   [key: string]: any;
 }
 
@@ -146,4 +153,24 @@ export function Card({ data, onClose, ...props }: UserCardProps) {
       </CardContent>
     </UICard>
   );
-} 
+}
+
+export function CytoNode({ data, ...props }: UserCytoNodeProps) {
+  const name = data?.name || data?.id?.slice(0, 4);
+  const image = data?.image;
+  const [opened, setOpened] = useState(false);
+  return <CytoNodeComponent {...props}
+    onClick={() => setOpened(true)}
+    element={{
+      id: data.id,
+      data: {
+        id: data.id,
+        label: name,
+        image: image,
+      },
+      ...props?.elements,
+      classes: cn('entity', { avatar: !!image, opened, }, props.classes)
+    }}
+    children={opened ? <Card data={data} onClose={() => setOpened(false)} /> : null}
+  />;
+}

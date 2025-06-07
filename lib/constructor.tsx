@@ -113,6 +113,7 @@ interface ConstructorState {
   table: string;
   where: Record<string, any>;
   returning: (string | NestedReturning)[];
+  role: string;
   limit?: number;
   offset?: number;
   order_by?: Array<{ [field: string]: 'asc' | 'desc' }>;
@@ -524,11 +525,12 @@ function ReturningSection({
   schema: any;
   level?: number;
 }) {
-  const addField = (fieldName: string, isRelation: boolean, targetTable?: string) => {
+  const addField = (fieldName: string, isRelation: boolean, targetTable?: string, isList?: boolean) => {
     if (isRelation && targetTable) {
       const newRelation: NestedReturning = {
         [fieldName]: {
-          returning: ['id']
+          returning: ['id'],
+          ...(isList && { limit: 10 }),
         }
       };
       onReturningChange([...returning, newRelation]);
@@ -602,7 +604,7 @@ function ReturningSection({
             <Select onValueChange={(fieldName) => {
               const field = fields.find(f => f.name === fieldName);
               if (field) {
-                addField(field.name, field.isRelation, field.targetTable);
+                addField(field.name, field.isRelation, field.targetTable, field.isList);
               }
             }}>
               <SelectTrigger className="square border-0 rounded-none hover:bg-destructive/10 hover:text-destructive flex-shrink-0 [&>svg:nth-child(2)]:hidden">
@@ -824,10 +826,11 @@ function LimitOffsetSection({
             type="number"
             value={limit || ''}
             onChange={(e) => {
-              const val = e.target.value === '' ? undefined : Number(e.target.value);
+              const numValue = Number(e.target.value);
+              const val = (e.target.value === '' || numValue === 0) ? undefined : numValue;
               onLimitChange(val);
             }}
-            placeholder="100"
+            placeholder="10"
             className="h-full border-0 rounded-none text-xs bg-transparent focus:bg-transparent px-1"
             min="0"
           />
@@ -981,20 +984,31 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users', schema = ha
     // Get fields for the new table
     const newTableFields = schema ? getFieldsFromTable(schema, newTable) : [];
     
-    // Auto-populate returning with all physical fields (non-relation fields)
-    // Exclude Hasyx system fields
-    const physicalFields = newTableFields
-      .filter(field => !field.isRelation && !field.name.startsWith('_hasyx_'))
-      .map(field => field.name);
+    // Auto-populate returning with fields allowed for the current role
+    const allowedColumns = schema?.hasyx?.permissions?.[newTable]?.select?.[value.role];
+    
+    let physicalFields: string[] = [];
+
+    if (Array.isArray(allowedColumns)) {
+      physicalFields = newTableFields
+        .filter(field => !field.isRelation && !field.name.startsWith('_hasyx_') && allowedColumns.includes(field.name))
+        .map(field => field.name);
+    }
     
     onChange({
+      ...value,
       table: newTable,
       where: {},
       returning: physicalFields,
-      limit: undefined,
+      limit: 10,
       offset: undefined,
       order_by: undefined
     });
+  };
+
+  const handleRoleChange = (newRole: string) => {
+    handleTableChange(value.table);
+    onChange({ ...value, role: newRole });
   };
   
   const handleWhereChange = (newWhere: Record<string, any>) => {
@@ -1033,9 +1047,26 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users', schema = ha
   
   return (
     <div className="space-y-2">
-      {/* Table Selection */}
+      {/* Role and Table Selection */}
       <Card>
         <CardContent className="pt-2 pb-2">
+          <div className="w-full flex items-center border rounded h-6 bg-background mb-2">
+            <div className="px-2 py-1 text-xs font-medium bg-muted/50 flex-shrink-0">
+              Role
+            </div>
+            <div className="w-px h-4 bg-border"></div>
+            <Select value={value.role} onValueChange={handleRoleChange}>
+              <SelectTrigger className="border-0 rounded-none px-2 text-xs bg-transparent hover:bg-muted/50 flex-1 max-h-full">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="anonymous" className="text-xs">anonymous</SelectItem>
+                <SelectItem value="user" className="text-xs">user</SelectItem>
+                <SelectItem value="me" className="text-xs">me</SelectItem>
+                <SelectItem value="admin" className="text-xs">admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="w-full flex items-center border rounded h-6 bg-background mb-2">
             <div className="px-2 py-1 text-xs font-medium bg-muted/50 flex-shrink-0">
               Table
@@ -1448,14 +1479,42 @@ interface ConstructorProps {
 }
 
 export default function Constructor({ serverSession, sidebarData, schema = hasyxSchema }: ConstructorProps) {
+  const { data: session, status } = useSession();
   const [constructorState, setConstructorState] = useState<ConstructorState>({
     table: 'users',
     where: {},
     returning: [],
-    limit: undefined,
+    role: 'anonymous',
+    limit: 10,
     offset: undefined,
     order_by: undefined
   });
+  
+  const initialRoleSet = React.useRef(false);
+
+  useEffect(() => {
+    if (status !== 'loading' && !initialRoleSet.current) {
+      const newRole = session?.user ? 'user' : 'anonymous';
+      const newTable = constructorState.table || 'users';
+      
+      const newTableFields = schema ? getFieldsFromTable(schema, newTable) : [];
+      const allowedColumns = schema?.hasyx?.permissions?.[newTable]?.select?.[newRole];
+      let physicalFields: string[] = [];
+
+      if (Array.isArray(allowedColumns)) {
+        physicalFields = newTableFields
+          .filter(field => !field.isRelation && !field.name.startsWith('_hasyx_') && allowedColumns.includes(field.name))
+          .map(field => field.name);
+      }
+
+      setConstructorState(s => ({ 
+        ...s, 
+        role: newRole,
+        returning: physicalFields
+      }));
+      initialRoleSet.current = true;
+    }
+  }, [status, session, schema, constructorState.table]);
   
   return (
     <SidebarLayout sidebarData={sidebarData} breadcrumb={[

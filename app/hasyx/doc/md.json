@@ -3650,9 +3650,109 @@
           "level": 3
         },
         {
+          "title": "Development Mode",
+          "url": "/hasyx/doc/PWA#development-mode",
+          "level": 2
+        },
+        {
+          "title": "Development vs Production Behavior",
+          "url": "/hasyx/doc/PWA#development-vs-production-behavior",
+          "level": 3
+        },
+        {
+          "title": "Enabling PWA in Development",
+          "url": "/hasyx/doc/PWA#enabling-pwa-in-development",
+          "level": 3
+        },
+        {
+          "title": "Development Utilities",
+          "url": "/hasyx/doc/PWA#development-utilities",
+          "level": 3
+        },
+        {
+          "title": "Development Cache Management",
+          "url": "/hasyx/doc/PWA#development-cache-management",
+          "level": 3
+        },
+        {
+          "title": "Service Worker Development Behavior",
+          "url": "/hasyx/doc/PWA#service-worker-development-behavior",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting Development Issues",
+          "url": "/hasyx/doc/PWA#troubleshooting-development-issues",
+          "level": 3
+        },
+        {
+          "title": "Configuration",
+          "url": "/hasyx/doc/PWA#configuration",
+          "level": 3
+        },
+        {
+          "title": "Best Practices for Development",
+          "url": "/hasyx/doc/PWA#best-practices-for-development",
+          "level": 3
+        },
+        {
+          "title": "Migration from Previous Versions",
+          "url": "/hasyx/doc/PWA#migration-from-previous-versions",
+          "level": 3
+        },
+        {
           "title": "Learn More",
           "url": "/hasyx/doc/PWA#learn-more",
           "level": 2
+        },
+        {
+          "title": "Development Mode",
+          "url": "/hasyx/doc/PWA#development-mode",
+          "level": 2
+        },
+        {
+          "title": "Development vs Production Behavior",
+          "url": "/hasyx/doc/PWA#development-vs-production-behavior",
+          "level": 3
+        },
+        {
+          "title": "Enabling PWA in Development",
+          "url": "/hasyx/doc/PWA#enabling-pwa-in-development",
+          "level": 3
+        },
+        {
+          "title": "Development Utilities",
+          "url": "/hasyx/doc/PWA#development-utilities",
+          "level": 3
+        },
+        {
+          "title": "Development Cache Management",
+          "url": "/hasyx/doc/PWA#development-cache-management",
+          "level": 3
+        },
+        {
+          "title": "Service Worker Development Behavior",
+          "url": "/hasyx/doc/PWA#service-worker-development-behavior",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting Development Issues",
+          "url": "/hasyx/doc/PWA#troubleshooting-development-issues",
+          "level": 3
+        },
+        {
+          "title": "Configuration",
+          "url": "/hasyx/doc/PWA#configuration",
+          "level": 3
+        },
+        {
+          "title": "Best Practices for Development",
+          "url": "/hasyx/doc/PWA#best-practices-for-development",
+          "level": 3
+        },
+        {
+          "title": "Migration from Previous Versions",
+          "url": "/hasyx/doc/PWA#migration-from-previous-versions",
+          "level": 3
         }
       ],
       "level": 1
@@ -5929,5 +6029,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-07T09:22:05.023Z"
+  "lastUpdated": "2025-06-07T16:51:27.906Z"
 }

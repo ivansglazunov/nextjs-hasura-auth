@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.288",
+  "version": "0.1.289",
   "description": "Modern full-stack framework with real-time GraphQL, AI integration, and seamless development experience",
   "homepage": "https://hasyx.deep.foundation/",
   "engines": {
@@ -125,6 +125,7 @@
     "commander": "^13.1.0",
     "cross-fetch": "^4.1.0",
     "cross-spawn": "^7.0.6",
+    "culori": "^4.0.1",
     "cytoscape": "^3.32.0",
     "cytoscape-cola": "^2.5.1",
     "cytoscape-dagre": "^2.5.0",

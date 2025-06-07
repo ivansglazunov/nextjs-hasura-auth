@@ -466,9 +466,557 @@ import {
 } from 'hasyx/lib/pwa';
 ```
 
+## Development Mode
+
+Hasyx PWA includes intelligent development mode handling to prevent caching issues during development while maintaining full PWA functionality in production.
+
+### Development vs Production Behavior
+
+#### Development Mode (localhost, port 3000)
+- ✅ **PWA Disabled by Default** - No aggressive caching that interferes with development
+- ✅ **Network First Strategy** - Always fetch fresh content from server
+- ✅ **Minimal Static Caching** - Only essential PWA assets (icons, manifest)
+- ✅ **No-Cache Headers** - Prevents browser and CDN caching
+- ✅ **Optional PWA Testing** - Can be enabled via localStorage flag
+
+#### Production Mode
+- ✅ **Full PWA Features** - Complete offline functionality and caching
+- ✅ **Cache First Strategy** - Optimal performance with intelligent caching
+- ✅ **Aggressive Caching** - All static resources cached for speed
+- ✅ **Background Updates** - Seamless app updates
+
+### Enabling PWA in Development
+
+By default, PWA features are disabled in development to prevent caching issues. To enable PWA for testing:
+
+```javascript
+// Enable PWA in development mode
+localStorage.setItem('pwa-dev-enabled', 'true');
+location.reload();
+```
+
+Or use the development utilities:
+
+```javascript
+// Using PWA dev utils
+window.pwaDevUtils.enablePWA();
+```
+
+### Development Utilities
+
+Hasyx provides comprehensive development utilities available globally in development mode:
+
+#### Available Commands
+
+```javascript
+// Check PWA development status
+window.pwaDevUtils.status();
+
+// Debug PWA state and configuration
+window.pwaDevUtils.debug();
+
+// Clear all PWA cache and service workers
+window.pwaDevUtils.clearCache();
+
+// Enable PWA features in development
+window.pwaDevUtils.enablePWA();
+
+// Disable PWA features in development
+window.pwaDevUtils.disablePWA();
+
+// Force reload from server (bypassing all caches)
+window.pwaDevUtils.forceReload();
+```
+
+#### Example Usage
+
+```javascript
+// Check if PWA is causing caching issues
+const status = window.pwaDevUtils.status();
+console.log('PWA Enabled:', status.isPWAEnabled);
+console.log('Service Worker Active:', status.hasServiceWorker);
+
+// Clear everything and start fresh
+await window.pwaDevUtils.clearCache();
+
+// Enable PWA for testing, then disable when done
+window.pwaDevUtils.enablePWA();
+// ... test PWA features ...
+window.pwaDevUtils.disablePWA();
+```
+
+### Development Cache Management
+
+#### Automatic Cache Prevention
+
+In development mode, Hasyx automatically:
+
+1. **Adds No-Cache Headers** - Prevents browser caching of dynamic content
+2. **Uses Dynamic Cache Names** - Timestamp-based cache names prevent conflicts
+3. **Implements Network-First Strategy** - Always tries to fetch fresh content
+4. **Reduces Static Caching** - Only caches essential PWA assets
+
+#### Manual Cache Control
+
+```javascript
+// Import development utilities
+import { 
+  clearDevelopmentCache,
+  enablePWAInDevelopment,
+  disablePWAInDevelopment,
+  forceReloadFromServer 
+} from 'hasyx/lib/pwa-dev-utils';
+
+// Clear all development cache
+const result = await clearDevelopmentCache();
+console.log('Cache cleared:', result.actions);
+
+// Force fresh reload
+await forceReloadFromServer();
+```
+
+### Service Worker Development Behavior
+
+The service worker automatically detects development mode and adjusts behavior:
+
+```javascript
+// Automatic development detection in service worker
+const isDevelopment = self.location.hostname === 'localhost' || 
+                     self.location.hostname === '127.0.0.1' || 
+                     self.location.port === '3000';
+
+// Development-specific caching strategy
+if (isDevelopment) {
+  // Network-first for all requests
+  // Minimal static resource caching
+  // Detailed logging for debugging
+}
+```
+
+### Troubleshooting Development Issues
+
+#### PWA Caching Issues in Development
+
+**Problem**: App shows old version even after changes
+**Solution**:
+```javascript
+// Quick fix - clear all PWA cache
+window.pwaDevUtils.clearCache();
+
+// Or disable PWA entirely for development
+window.pwaDevUtils.disablePWA();
+```
+
+**Problem**: Service worker not updating
+**Solution**:
+```javascript
+// Force unregister and clear cache
+await window.pwaDevUtils.clearCache();
+location.reload();
+```
+
+**Problem**: Need to test PWA features
+**Solution**:
+```javascript
+// Enable PWA temporarily
+window.pwaDevUtils.enablePWA();
+// Test features...
+// Disable when done
+window.pwaDevUtils.disablePWA();
+```
+
+#### Development Mode Detection
+
+Check if you're in development mode:
+
+```javascript
+// Check development mode
+const isDev = window.location.hostname === 'localhost' || 
+              window.location.port === '3000';
+
+// Or use utility
+import { isDevelopmentMode } from 'hasyx/lib/pwa-dev-utils';
+const isDev = isDevelopmentMode();
+```
+
+### Configuration
+
+#### Environment Variables
+
+Control PWA behavior with environment variables:
+
+```env
+# Disable PWA entirely (overrides all other settings)
+NEXT_PUBLIC_PWA_DISABLED=true
+
+# Force PWA in development (not recommended)
+NEXT_PUBLIC_PWA_FORCE_DEV=true
+```
+
+#### Next.js Configuration
+
+Development-specific headers are automatically added:
+
+```typescript
+// Automatic in development mode
+headers: [
+  {
+    source: '/((?!_next/static|icons/|favicon.ico|manifest.webmanifest).*)',
+    headers: [
+      { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+      { key: 'Pragma', value: 'no-cache' },
+      { key: 'Expires', value: '0' },
+    ],
+  }
+]
+```
+
+### Best Practices for Development
+
+#### 1. Default Development Workflow
+
+```bash
+# Start development server
+npm run dev
+
+# PWA is automatically disabled
+# Make changes and see them immediately
+# No cache clearing needed
+```
+
+#### 2. Testing PWA Features
+
+```javascript
+// Enable PWA for testing
+window.pwaDevUtils.enablePWA();
+
+// Test install prompt, offline functionality, etc.
+// ...
+
+// Disable when done testing
+window.pwaDevUtils.disablePWA();
+```
+
+#### 3. Debugging Cache Issues
+
+```javascript
+// Debug PWA state
+window.pwaDevUtils.debug();
+
+// Check what's cached
+const status = window.pwaDevUtils.status();
+
+// Clear everything if needed
+await window.pwaDevUtils.clearCache();
+```
+
+#### 4. Production Testing
+
+```bash
+# Build and test production PWA locally
+npm run build
+npm run start
+
+# PWA will be fully active with production caching
+```
+
+### Migration from Previous Versions
+
+If you're upgrading from a previous version where PWA was always active:
+
+1. **Clear existing cache**:
+   ```javascript
+   window.pwaDevUtils.clearCache();
+   ```
+
+2. **PWA is now disabled by default in development** - no action needed
+
+3. **To enable PWA testing**:
+   ```javascript
+   window.pwaDevUtils.enablePWA();
+   ```
+
+4. **Production behavior unchanged** - PWA works exactly the same
+
+This development mode system ensures that PWA features enhance your production app without interfering with the development experience.
+
 ## Learn More
 
 - [Web.dev PWA Guide](https://web.dev/progressive-web-apps/)
 - [MDN Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
 - [PWA Builder](https://www.pwabuilder.com/)
-- [Workbox (Advanced PWA Library)](https://developers.google.com/web/tools/workbox) 
+- [Workbox (Advanced PWA Library)](https://developers.google.com/web/tools/workbox)
+
+## Development Mode
+
+Hasyx PWA includes intelligent development mode handling to prevent caching issues during development while maintaining full PWA functionality in production.
+
+### Development vs Production Behavior
+
+#### Development Mode (localhost, port 3000)
+- ✅ **PWA Disabled by Default** - No aggressive caching that interferes with development
+- ✅ **Network First Strategy** - Always fetch fresh content from server
+- ✅ **Minimal Static Caching** - Only essential PWA assets (icons, manifest)
+- ✅ **No-Cache Headers** - Prevents browser and CDN caching
+- ✅ **Optional PWA Testing** - Can be enabled via localStorage flag
+
+#### Production Mode
+- ✅ **Full PWA Features** - Complete offline functionality and caching
+- ✅ **Cache First Strategy** - Optimal performance with intelligent caching
+- ✅ **Aggressive Caching** - All static resources cached for speed
+- ✅ **Background Updates** - Seamless app updates
+
+### Enabling PWA in Development
+
+By default, PWA features are disabled in development to prevent caching issues. To enable PWA for testing:
+
+```javascript
+// Enable PWA in development mode
+localStorage.setItem('pwa-dev-enabled', 'true');
+location.reload();
+```
+
+Or use the development utilities:
+
+```javascript
+// Using PWA dev utils
+window.pwaDevUtils.enablePWA();
+```
+
+### Development Utilities
+
+Hasyx provides comprehensive development utilities available globally in development mode:
+
+#### Available Commands
+
+```javascript
+// Check PWA development status
+window.pwaDevUtils.status();
+
+// Debug PWA state and configuration
+window.pwaDevUtils.debug();
+
+// Clear all PWA cache and service workers
+window.pwaDevUtils.clearCache();
+
+// Enable PWA features in development
+window.pwaDevUtils.enablePWA();
+
+// Disable PWA features in development
+window.pwaDevUtils.disablePWA();
+
+// Force reload from server (bypassing all caches)
+window.pwaDevUtils.forceReload();
+```
+
+#### Example Usage
+
+```javascript
+// Check if PWA is causing caching issues
+const status = window.pwaDevUtils.status();
+console.log('PWA Enabled:', status.isPWAEnabled);
+console.log('Service Worker Active:', status.hasServiceWorker);
+
+// Clear everything and start fresh
+await window.pwaDevUtils.clearCache();
+
+// Enable PWA for testing, then disable when done
+window.pwaDevUtils.enablePWA();
+// ... test PWA features ...
+window.pwaDevUtils.disablePWA();
+```
+
+### Development Cache Management
+
+#### Automatic Cache Prevention
+
+In development mode, Hasyx automatically:
+
+1. **Adds No-Cache Headers** - Prevents browser caching of dynamic content
+2. **Uses Dynamic Cache Names** - Timestamp-based cache names prevent conflicts
+3. **Implements Network-First Strategy** - Always tries to fetch fresh content
+4. **Reduces Static Caching** - Only caches essential PWA assets
+
+#### Manual Cache Control
+
+```javascript
+// Import development utilities
+import { 
+  clearDevelopmentCache,
+  enablePWAInDevelopment,
+  disablePWAInDevelopment,
+  forceReloadFromServer 
+} from 'hasyx/lib/pwa-dev-utils';
+
+// Clear all development cache
+const result = await clearDevelopmentCache();
+console.log('Cache cleared:', result.actions);
+
+// Force fresh reload
+await forceReloadFromServer();
+```
+
+### Service Worker Development Behavior
+
+The service worker automatically detects development mode and adjusts behavior:
+
+```javascript
+// Automatic development detection in service worker
+const isDevelopment = self.location.hostname === 'localhost' || 
+                     self.location.hostname === '127.0.0.1' || 
+                     self.location.port === '3000';
+
+// Development-specific caching strategy
+if (isDevelopment) {
+  // Network-first for all requests
+  // Minimal static resource caching
+  // Detailed logging for debugging
+}
+```
+
+### Troubleshooting Development Issues
+
+#### PWA Caching Issues in Development
+
+**Problem**: App shows old version even after changes
+**Solution**:
+```javascript
+// Quick fix - clear all PWA cache
+window.pwaDevUtils.clearCache();
+
+// Or disable PWA entirely for development
+window.pwaDevUtils.disablePWA();
+```
+
+**Problem**: Service worker not updating
+**Solution**:
+```javascript
+// Force unregister and clear cache
+await window.pwaDevUtils.clearCache();
+location.reload();
+```
+
+**Problem**: Need to test PWA features
+**Solution**:
+```javascript
+// Enable PWA temporarily
+window.pwaDevUtils.enablePWA();
+// Test features...
+// Disable when done
+window.pwaDevUtils.disablePWA();
+```
+
+#### Development Mode Detection
+
+Check if you're in development mode:
+
+```javascript
+// Check development mode
+const isDev = window.location.hostname === 'localhost' || 
+              window.location.port === '3000';
+
+// Or use utility
+import { isDevelopmentMode } from 'hasyx/lib/pwa-dev-utils';
+const isDev = isDevelopmentMode();
+```
+
+### Configuration
+
+#### Environment Variables
+
+Control PWA behavior with environment variables:
+
+```env
+# Disable PWA entirely (overrides all other settings)
+NEXT_PUBLIC_PWA_DISABLED=true
+
+# Force PWA in development (not recommended)
+NEXT_PUBLIC_PWA_FORCE_DEV=true
+```
+
+#### Next.js Configuration
+
+Development-specific headers are automatically added:
+
+```typescript
+// Automatic in development mode
+headers: [
+  {
+    source: '/((?!_next/static|icons/|favicon.ico|manifest.webmanifest).*)',
+    headers: [
+      { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+      { key: 'Pragma', value: 'no-cache' },
+      { key: 'Expires', value: '0' },
+    ],
+  }
+]
+```
+
+### Best Practices for Development
+
+#### 1. Default Development Workflow
+
+```bash
+# Start development server
+npm run dev
+
+# PWA is automatically disabled
+# Make changes and see them immediately
+# No cache clearing needed
+```
+
+#### 2. Testing PWA Features
+
+```javascript
+// Enable PWA for testing
+window.pwaDevUtils.enablePWA();
+
+// Test install prompt, offline functionality, etc.
+// ...
+
+// Disable when done testing
+window.pwaDevUtils.disablePWA();
+```
+
+#### 3. Debugging Cache Issues
+
+```javascript
+// Debug PWA state
+window.pwaDevUtils.debug();
+
+// Check what's cached
+const status = window.pwaDevUtils.status();
+
+// Clear everything if needed
+await window.pwaDevUtils.clearCache();
+```
+
+#### 4. Production Testing
+
+```bash
+# Build and test production PWA locally
+npm run build
+npm run start
+
+# PWA will be fully active with production caching
+```
+
+### Migration from Previous Versions
+
+If you're upgrading from a previous version where PWA was always active:
+
+1. **Clear existing cache**:
+   ```javascript
+   window.pwaDevUtils.clearCache();
+   ```
+
+2. **PWA is now disabled by default in development** - no action needed
+
+3. **To enable PWA testing**:
+   ```javascript
+   window.pwaDevUtils.enablePWA();
+   ```
+
+4. **Production behavior unchanged** - PWA works exactly the same
+
+This development mode system ensures that PWA features enhance your production app without interfering with the development experience. 

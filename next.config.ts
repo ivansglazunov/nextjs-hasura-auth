@@ -47,7 +47,7 @@ const config: NextConfig = {
   
   // Add CORS headers to all API routes
   async headers() {
-    return [
+    const headers = [
       {
         // Apply CORS headers to all API routes - used for regular requests
         source: '/api/:path*',
@@ -60,6 +60,31 @@ const config: NextConfig = {
         ],
       },
     ];
+    
+    // Development specific headers to prevent aggressive caching
+    if (process.env.NODE_ENV === 'development') {
+      headers.push({
+        // Apply no-cache headers to all non-static resources in development
+        source: '/((?!_next/static|icons/|favicon.ico|manifest.webmanifest).*)',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+        ],
+      });
+      
+      // Special handling for service worker files
+      headers.push({
+        source: '/(sw.js|firebase-messaging-sw.js)',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+        ],
+      });
+    }
+    
+    return headers;
   },
 
   // Prevent double mount unmount

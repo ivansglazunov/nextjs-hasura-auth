@@ -13,6 +13,8 @@ import isEqual from 'lodash/isEqual';
 import { useResizeDetector } from 'react-resize-detector';
 import Debug from './debug';
 import { v4 as uuidv4 } from 'uuid';
+import { useTheme } from '../components/theme-switcher';
+import { formatRgb, parse } from 'culori';
 
 import cytoscape from 'cytoscape';
 import cola from 'cytoscape-cola';
@@ -62,6 +64,64 @@ if (typeof useDebounceCallback !== 'function') {
   };
 }
 
+function resolveCssVars(styleArray: any[]): Promise<any[]> {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      debug(`[CSS Vars] Starting resolveCssVars with ${styleArray.length} rules`);
+      if (typeof document === 'undefined') {
+        return resolve(styleArray); // SSR guard
+      }
+      const computedStyles = getComputedStyle(document.documentElement);
+      const resolvedRules = styleArray.map((rule: any) => {
+        const newStyle = {};
+        if (!rule.style) return rule;
+        for (const [key, value] of Object.entries(rule.style)) {
+          if (typeof value === 'string' && value.startsWith('var(')) {
+            const varNameMatch = value.match(/var\((--[^,)]+)(,.*)?\)/);
+            if (varNameMatch) {
+              const varName = varNameMatch[1].trim();
+              let resolvedValue = computedStyles.getPropertyValue(varName).trim();
+              
+              debug(`[CSS Vars] Resolving ${varName} for ${key}: '${resolvedValue}'`);
+              
+              if (resolvedValue.startsWith('oklch(')) {
+                debug(`[CSS Vars] Detected oklch color, attempting to parse: '${resolvedValue}'`);
+                const parsed = parse(resolvedValue);
+                debug(`[CSS Vars] parse result:`, parsed);
+                if(parsed) {
+                  const rgbValue = formatRgb(parsed);
+                  debug(`[CSS Vars] Converted oklch '${resolvedValue}' to rgb '${rgbValue}'`);
+                  resolvedValue = rgbValue;
+                } else {
+                  debug(`[CSS Vars] Failed to parse oklch color: '${resolvedValue}'`);
+                }
+              }
+
+              if (resolvedValue) {
+                newStyle[key] = resolvedValue;
+              } else {
+                const fallback = varNameMatch[2] ? varNameMatch[2].substring(1).trim() : undefined;
+                if (fallback) {
+                  newStyle[key] = fallback.replace(/^['"]|['"]$/g, '');
+                } else {
+                  newStyle[key] = value;
+                }
+              }
+            } else {
+              newStyle[key] = value;
+            }
+          } else {
+            newStyle[key] = value;
+          }
+        }
+        return { ...rule, style: newStyle };
+      });
+      debug(`[CSS Vars] Finished resolveCssVars, returning ${resolvedRules.length} resolved rules`);
+      resolve(resolvedRules);
+    }, 0);
+  });
+}
+
 export const Cyto = memo(function Graph({
   onLoaded: _onLoaded,
   onInsert,
@@ -88,6 +148,8 @@ export const Cyto = memo(function Graph({
   children?: any;
 }) {
   const [_cy, setCy] = useState<any>();
+  const { theme } = useTheme();
+  debug(`[THEME CHANGE] Cyto component rendered with theme: ${theme}`);
   const cyRef = useRef<any>(undefined); cyRef.current = _cy;
   const ceRef = useRef<any>(undefined);
   const layoutRef = useRef<any>(undefined);
@@ -110,19 +172,6 @@ export const Cyto = memo(function Graph({
 
       const translateX = pan.x;
       const translateY = pan.y;
-
-
-      debug('[DEBUG_VIEWPORT]', {
-        eventSource: event?.type,
-        pan,
-        zoom,
-        translateX,
-        translateY,
-
-        overlayTransform: `translate(${translateX}px, ${translateY}px) scale(${zoom})`,
-        bgPosition: `${translateX}px ${translateY}px`,
-        bgSize: `${zoom * 3}em ${zoom * 3}em`,
-      });
 
 
       if (bgRef.current) {
@@ -208,17 +257,14 @@ export const Cyto = memo(function Graph({
     });
   }, []);
 
-  const newStylesheets = useCallback(() => {
-    const e = bgRef.current;
-    const stylesheets = [
-      ...(flatten(Object.values(styles)))
-    ];
+  const [finalStylesheet, setFinalStylesheet] = useState<any[]>([]);
+  useEffect(() => {
+    const stylesheets = flatten(Object.values(styles));
     const _stylesheets: any = cloneDeep(stylesheets);
-    for (let s in _stylesheets) {
-      const st = _stylesheets[s].style;
-    }
-    return _stylesheets;
-  }, [styles]);
+    resolveCssVars(_stylesheets).then(resolvedStyles => {
+      setFinalStylesheet(resolvedStyles);
+    });
+  }, [styles, theme]);
 
   const elements = useMemo(() => [], []);
 
@@ -261,14 +307,14 @@ export const Cyto = memo(function Graph({
         cy={onLoaded}
         elements={elements}
         layout={layout}
-        stylesheet={newStylesheets()}
+        stylesheet={finalStylesheet}
         panningEnabled={true}
         pan={viewport?.pan}
         zoom={viewport?.zoom}
         style={{ width: '100%', height: '100%' }}
       />
     );
-  }, [onLoaded, newStylesheets]);
+  }, [onLoaded, finalStylesheet]);
 
   const center = useCallback(() => {
     if (!_cy) return;
@@ -506,15 +552,16 @@ let nodesIterator = 1;
 
 
 interface CytoNodeProps {
+  id?: string;
   element?: {
-    id: string;
+    id?: string;
     data: {
       id?: string;
       parent?: string;
       [key: string]: any;
     };
     position?: { x?: number; y?: number };
-    classes?: string[];
+    classes?: string | string[];
     locked?: boolean;
     grabbable?: boolean;
   };
@@ -542,12 +589,15 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
   const cls = useMemo(() => `ni-${i}${ghost ? '-ghost' : ''}`, [i, ghost]);
   const parent: any = useContext(CytoElementsContext);
   
-  const id = useMemo(() => `${element?.id || element?.data?.id}`, [element]);
+  const id = useMemo(() => `${props?.id || element?.id || element?.data?.id}`, [props?.id, element]);
   if (!id) {
     debug("Error: GraphNode !props.element.id && !props.element.data.id. Element:", element);
     throw new Error(`GraphNode !props.element.id && !props.element.data.id`);
   }
-
+  if (element) {
+    element.id = id;
+    element.data.id = id;
+  }
 
   const [htmlElement, setHtmlElement] = useState<HTMLDivElement | null>(null);
   const boxRefCallback = useCallback((node: HTMLDivElement | null) => {
@@ -571,6 +621,8 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
 
   const [cytoscapeNode, setCytoscapeNode] = useState<any>(null);
 
+  const classesArray = useMemo(() => typeof element?.classes === 'string' ? (element?.classes as string).split(' ') : element?.classes || [], [element?.classes]);
+
   useEffect(() => {
     if (!cy) return;
 
@@ -590,7 +642,7 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
         group: 'nodes' as const,
         data: dataForCy,
         position: element?.position,
-        classes: [cls, ...(element?.classes || [])],
+        classes: [cls, ...classesArray],
         locked: element?.locked,
         grabbable: element?.grabbable,
       };
@@ -600,6 +652,9 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
       if (onAdded) onAdded(cyEl, cy);
     } else {
       cyEl.addClass(cls);
+      if (classesArray.length > 0) {
+        cyEl.addClass(classesArray.join(' '));
+      }
       debug(`GraphNode [${id}] prepare update. element.data:`, element?.data, 'dataForCy:', dataForCy);
       if (element?.data && !isEqual(cyEl.data(), dataForCy)) {
         debug(`GraphNode [${id}] Updating data in Cytoscape. Old:`, cyEl.data(), 'New:', dataForCy);
@@ -660,7 +715,7 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
     JSON.stringify(element?.data),
     element?.locked,
     element?.grabbable,
-    JSON.stringify(element?.classes),
+    JSON.stringify(classesArray),
     cls, 
     onAdded, 
     refToUse,
@@ -678,13 +733,6 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
       if (htmlElement) {
 
         const transformString = `translate(calc(${p.x}px - 50%), calc(${p.y}px - 50%))`;
-
-        debug('[DEBUG_NODE_POS]', {
-          eventSource: 'onPositionCallbackRef',
-          nodeId: id,
-          position: p,
-          transformString,
-        });
 
         htmlElement.style.transform = transformString;
       }
@@ -846,7 +894,7 @@ export const CytoEdge = memo(function GraphEdge({
       target: string;
       [key: string]: any;
     };
-    classes?: string[];
+    classes?: string | string[];
     [key: string]: any;
   };
   children?: any;
@@ -875,6 +923,8 @@ export const CytoEdge = memo(function GraphEdge({
     debug(`GraphEdge [${id}] mount called (all ghost nodes ready). Setting isMounted to true.`);
     setIsMounted(true);
   }, [id]);
+
+  const classesArray = useMemo(() => typeof element?.classes === 'string' ? (element?.classes as string).split(' ') : element?.classes || [], [element?.classes]);
 
   const addEdgeToCytoscape = useCallback(() => {
     if (!cy || !element?.data?.source || !element?.data?.target) {
@@ -916,7 +966,7 @@ export const CytoEdge = memo(function GraphEdge({
         data: {
           ...(element.data || {}),
         },
-        classes: [cls, ...(element.classes || [])],
+        classes: [cls, ...classesArray],
       };
       edgeDataForCytoscape.data.id = id;
 
