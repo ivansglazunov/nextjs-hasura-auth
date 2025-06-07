@@ -1,18 +1,17 @@
 "use client"
 
-import Debug from '@/lib/debug';
 import { Button } from 'hasyx/components/ui/button';
 import {
   getArrayRelationsByTypename,
   getIdFieldsByTypename, getObjectRelationsByTypename, HasyxConstructorButton
 } from "hasyx/lib/constructor";
-import { CytoEdge, CytoNode } from "hasyx/lib/cyto";
+import { CytoEdge } from "hasyx/lib/cyto";
 import { Button as EntityButton, CytoNode as EntityCytoNode } from 'hasyx/lib/entities';
 import { useSubscription } from "hasyx/lib/hasyx-client";
-import { Plus, X } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from "react";
 import hasyxSchema from 'hasyx/public/hasura-schema.json';
-import { cn } from 'hasyx/lib/utils';
+import { Plus, X } from 'lucide-react';
+import React, { useCallback, useMemo } from "react";
+import Debug from './debug';
 
 const debug = Debug('renderer');
 
