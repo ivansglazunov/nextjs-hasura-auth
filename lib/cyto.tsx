@@ -465,7 +465,6 @@ function useCytoReactNodes() {
 }
 
 const CytoReactNode = ({ id, children, boxRefCallback }) => {
-  const [instanceId] = useState(uuidv4());
   const { mount, unmount } = useCytoReactNodes();
   const { overlayRef } = useGraph();
 
@@ -493,7 +492,6 @@ const CytoReactNode = ({ id, children, boxRefCallback }) => {
           pointerEvents: 'all',
         }}
       >
-        {instanceId}
         {children}
       </div>
     </Portal>
