@@ -123,6 +123,9 @@ interface NestedReturning {
   [relationName: string]: {
     where?: Record<string, any>;
     returning: (string | NestedReturning)[];
+    limit?: number;
+    offset?: number;
+    order_by?: Array<{ [field: string]: 'asc' | 'desc' }>;
   };
 }
 
@@ -138,6 +141,7 @@ interface FieldInfo {
   type: string;
   isRelation: boolean;
   targetTable?: string;
+  isList?: boolean;
 }
 
 // Utility functions
@@ -203,8 +207,8 @@ function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
         ...commonFields,
         { name: 'name', type: 'String', isRelation: false },
         { name: 'email', type: 'String', isRelation: false },
-        { name: 'accounts', type: 'Account', isRelation: true, targetTable: 'accounts' },
-        { name: 'notifications', type: 'Notification', isRelation: true, targetTable: 'notifications' }
+        { name: 'accounts', type: 'Account', isRelation: true, targetTable: 'accounts', isList: true },
+        { name: 'notifications', type: 'Notification', isRelation: true, targetTable: 'notifications', isList: true }
       ];
     }
     
@@ -214,7 +218,7 @@ function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
         { name: 'provider', type: 'String', isRelation: false },
         { name: 'provider_id', type: 'String', isRelation: false },
         { name: 'user_id', type: 'String', isRelation: false },
-        { name: 'user', type: 'User', isRelation: true, targetTable: 'users' }
+        { name: 'user', type: 'User', isRelation: true, targetTable: 'users', isList: false }
       ];
     }
     
@@ -224,7 +228,7 @@ function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
         { name: 'title', type: 'String', isRelation: false },
         { name: 'message', type: 'String', isRelation: false },
         { name: 'user_id', type: 'String', isRelation: false },
-        { name: 'user', type: 'User', isRelation: true, targetTable: 'users' }
+        { name: 'user', type: 'User', isRelation: true, targetTable: 'users', isList: false }
       ];
     }
     
@@ -232,18 +236,31 @@ function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
   }
   
   return graphqlType?.fields?.map((field: any) => {
-    const fieldType = field.type;
-    const actualType = fieldType?.ofType || fieldType; // Handle NON_NULL wrappers
+    let currentType = field.type;
+    let isList = false;
+
+    // Unwrap NON_NULL
+    if (currentType.kind === 'NON_NULL') {
+      currentType = currentType.ofType;
+    }
+
+    // Check for LIST
+    if (currentType.kind === 'LIST') {
+      isList = true;
+      currentType = currentType.ofType; // Unwrap list
+      if (currentType.kind === 'NON_NULL') {
+        currentType = currentType.ofType; // Unwrap NON_NULL inside list
+      }
+    }
     
-    // Determine if this is a relation
-    const isRelation = actualType?.kind === 'OBJECT' || actualType?.kind === 'LIST';
+    const isRelation = currentType.kind === 'OBJECT';
     
     // Get the type name for display
     let typeName = 'String'; // default
-    if (actualType?.name) {
-      typeName = actualType.name;
-    } else if (actualType?.ofType?.name) {
-      typeName = actualType.ofType.name;
+    if (currentType?.name) {
+      typeName = currentType.name;
+    } else if (currentType?.ofType?.name) {
+      typeName = currentType.ofType.name;
     }
     
     // Map GraphQL types to simplified types
@@ -257,7 +274,8 @@ function getFieldsFromTable(schema: any, tableName: string): FieldInfo[] {
       name: field.name,
       type: typeName,
       isRelation,
-      targetTable: isRelation ? actualType?.name : undefined
+      isList,
+      targetTable: isRelation ? currentType.name : undefined
     };
   });
 }
@@ -539,6 +557,27 @@ function ReturningSection({
     onReturningChange(newReturning);
   };
   
+  const updateNestedLimit = (index: number, relationName: string, limit: number | undefined) => {
+    const newReturning = [...returning];
+    const item = newReturning[index] as NestedReturning;
+    item[relationName].limit = limit;
+    onReturningChange(newReturning);
+  };
+
+  const updateNestedOffset = (index: number, relationName: string, offset: number | undefined) => {
+    const newReturning = [...returning];
+    const item = newReturning[index] as NestedReturning;
+    item[relationName].offset = offset;
+    onReturningChange(newReturning);
+  };
+
+  const updateNestedOrderBy = (index: number, relationName: string, orderBy: Array<{ [field: string]: 'asc' | 'desc' }> | undefined) => {
+    const newReturning = [...returning];
+    const item = newReturning[index] as NestedReturning;
+    item[relationName].order_by = orderBy;
+    onReturningChange(newReturning);
+  };
+  
   const availableFields = fields.filter(field => 
     !returning.some(r => 
       typeof r === 'string' ? r === field.name : Object.keys(r)[0] === field.name
@@ -631,6 +670,22 @@ function ReturningSection({
                     onWhereChange={(newWhere) => updateNestedWhere(index, relationName, newWhere)}
                     level={level + 1}
                   />
+                  
+                  {field?.isList && (
+                    <>
+                      <LimitOffsetSection
+                        limit={relationData.limit}
+                        offset={relationData.offset}
+                        onLimitChange={(limit) => updateNestedLimit(index, relationName, limit)}
+                        onOffsetChange={(offset) => updateNestedOffset(index, relationName, offset)}
+                      />
+                      <OrderBySection
+                        fields={targetFields}
+                        orderBy={relationData.order_by}
+                        onChange={(orderBy) => updateNestedOrderBy(index, relationName, orderBy)}
+                      />
+                    </>
+                  )}
                   
                   {/* Nested Returning */}
                   <ReturningSection
