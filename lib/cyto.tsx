@@ -12,6 +12,7 @@ import flatten from 'lodash/flatten';
 import isEqual from 'lodash/isEqual';
 import { useResizeDetector } from 'react-resize-detector';
 import Debug from './debug';
+import { v4 as uuidv4 } from 'uuid';
 
 import cytoscape from 'cytoscape';
 import cola from 'cytoscape-cola';
@@ -404,20 +405,44 @@ export const Cyto = memo(function Graph({
     </div>
   </>);
 
-  const classesRef = useRef<{ [id: string]: { [className: string]: number } }>({});
+  const classesRef = useRef<Map<string, Set<Function>>>(new Map());
+
+  const instancesRef = useRef<Map<string, Set<() => void>>>(new Map());
+  const mount = useCallback((id: string, activeItFunction: () => void): boolean => {
+    const map = instancesRef.current;
+    let instances = map.get(id);
+    if (!instances) map.set(id, instances = new Set());
+    const size = instances.size;
+    instances.add(activeItFunction);
+    return !size;
+  }, []);
+
+  const unmount = useCallback((id: string, activeItFunction: () => void) => {
+    const map = instancesRef.current;
+    const instances = map.get(id) || new Set();
+    map.set(id, instances);
+    instances.delete(activeItFunction);
+    const activeNextInstance = instances.values().next().value;
+    if (activeNextInstance) activeNextInstance();
+    if (instances.size === 0) map.delete(id);
+  }, []);
+  
+  const reactNodesProviderValue = useMemo(() => ({ mount, unmount }), [mount, unmount]);
 
   return <CytoContext.Provider value={{ cyRef, layout, layoutRef, relayout, style, cy: _cy, classesRef, overlayRef }}>
-    {returning}
-    {!!_cy && <div
-      ref={overlayRef}
-      className="absolute left-0 top-0"
-      style={{
-        transformOrigin: 'top left',
-        pointerEvents: 'none'
-      }}
-    >
-      {children}
-    </div>}
+    <CytoReactNodesContext.Provider value={reactNodesProviderValue}>
+      {returning}
+      {!!_cy && <div
+        ref={overlayRef}
+        className="absolute left-0 top-0"
+        style={{
+          transformOrigin: 'top left',
+          pointerEvents: 'none'
+        }}
+      >
+        {children}
+      </div>}
+    </CytoReactNodesContext.Provider>
   </CytoContext.Provider>
 });
 
@@ -425,6 +450,55 @@ export const CytoContext = createContext<any>(null);
 export function useGraph() {
   return useContext(CytoContext);
 }
+
+export const CytoReactNodesContext = createContext<{
+  mount: (id: string, activate: () => void) => boolean;
+  unmount: (id: string, activate: () => void) => void;
+} | null>(null);
+
+function useCytoReactNodes() {
+  const context = useContext(CytoReactNodesContext);
+  if (!context) {
+    throw new Error('useCytoReactNodes must be used within a CytoReactNodesProvider');
+  }
+  return context;
+}
+
+const CytoReactNode = ({ id, children, boxRefCallback }) => {
+  const [instanceId] = useState(uuidv4());
+  const { mount, unmount } = useCytoReactNodes();
+  const { overlayRef } = useGraph();
+
+  const activate = useCallback(() => setIsActive(true), []);
+  const initialActive = useMemo(() => {
+    const active = mount(id, activate);
+    return active;
+  }, []);
+  const [isActive, setIsActive] = useState(initialActive);
+
+  useEffect(() => () => {
+    unmount(id, activate);
+  }, []);
+
+  if (!isActive) {
+    return null;
+  }
+
+  return (
+    <Portal containerRef={overlayRef}>
+      <div
+        ref={boxRefCallback}
+        style={{
+          position: 'absolute',
+          pointerEvents: 'all',
+        }}
+      >
+        {instanceId}
+        {children}
+      </div>
+    </Portal>
+  );
+};
 
 export const CytoElementsContext = createContext(undefined);
 CytoElementsContext.displayName = 'GraphElementsContext';
@@ -465,7 +539,7 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
     ? forwardedRef
     : internalElRef;
 
-  const { cy, relayout, overlayRef } = useContext(CytoContext);
+  const { cy, relayout } = useContext(CytoContext);
   const i = useMemo(() => nodesIterator++, []);
   const cls = useMemo(() => `ni-${i}${ghost ? '-ghost' : ''}`, [i, ghost]);
   const parent: any = useContext(CytoElementsContext);
@@ -731,19 +805,7 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
 
   return <>
     <CytoElementsContext.Provider value={cytoscapeNode}>
-      {children && (
-        <Portal containerRef={overlayRef}>
-          <div
-            ref={boxRefCallback}
-            style={{
-              position: 'absolute',
-              pointerEvents: 'all',
-            }}
-          >
-            {isMounted && children}
-          </div>
-        </Portal>
-      )}
+      {!!children && <CytoReactNode id={id} children={children} boxRefCallback={boxRefCallback} />}
     </CytoElementsContext.Provider>
   </>;
 };

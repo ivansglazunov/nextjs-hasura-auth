@@ -61,6 +61,9 @@ const config: NextConfig = {
       },
     ];
   },
+
+  // Prevent double mount unmount
+  reactStrictMode: false,
 };
 
 export default config;

@@ -4,8 +4,11 @@ import { usePWA } from '../hooks/use-pwa';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Download, X, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 
 export function PWAInstallPrompt() {
+  const [show, setShow] = useState(true);
+
   const { 
     isSupported,
     isInstalled,
@@ -25,7 +28,7 @@ export function PWAInstallPrompt() {
   return (
     <>
       {/* Install Prompt */}
-      {installPromptAvailable && (
+      {installPromptAvailable && show && (
         <Card className="fixed bottom-4 right-4 z-50 w-80 shadow-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -43,7 +46,7 @@ export function PWAInstallPrompt() {
               <Button onClick={install} className="flex-1">
                 Install
               </Button>
-              <Button variant="outline" onClick={() => {}}>
+              <Button variant="outline" onClick={() => setShow(false)}>
                 Later
               </Button>
             </div>
