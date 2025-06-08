@@ -20,23 +20,10 @@ interface AccountData {
   [key: string]: any;
 }
 
-interface AccountButtonProps {
-  data: AccountData | string;
-  [key: string]: any;
-}
-
-interface AccountCardProps {
-  data: AccountData | string;
-  onClose?: () => void;
-  [key: string]: any;
-}
-
-interface AccountCytoNodeProps {
+export function Button({ data, ...props }: {
   data: AccountData;
   [key: string]: any;
-}
-
-export function Button({ data, ...props }: AccountButtonProps) {
+}) {
   const accountId = typeof data === 'string' ? data : data?.id;
   const accountData = typeof data === 'object' ? data : null;
   
@@ -66,7 +53,11 @@ export function Button({ data, ...props }: AccountButtonProps) {
   );
 }
 
-export function Card({ data, onClose, ...props }: AccountCardProps) {
+export function Card({ data, onClose, ...props }: {
+  data: AccountData | string;
+  onClose?: () => void;
+  [key: string]: any;
+}) {
   const accountId = typeof data === 'string' ? data : data?.id;
   const providedData = typeof data === 'object' ? data : null;
   
@@ -168,7 +159,10 @@ export function Card({ data, onClose, ...props }: AccountCardProps) {
   );
 }
 
-export function CytoNode({ data, ...props }: AccountCytoNodeProps) {
+export function CytoNode({ data, ...props }: {
+  data: AccountData;
+  [key: string]: any;
+}) {
   return <CytoNodeComponent {...props} element={{
     id: data.id,
     data: {

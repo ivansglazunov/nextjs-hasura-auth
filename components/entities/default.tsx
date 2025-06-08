@@ -8,27 +8,11 @@ import { CytoNode as CytoNodeComponent } from 'hasyx/lib/cyto';
 import { X, Database } from 'lucide-react';
 import { cn } from 'hasyx/lib/utils';
 
-interface DefaultEntityData {
+interface DefaultData {
   id: string;
   created_at?: string;
   updated_at?: string;
   __typename?: string;
-  [key: string]: any;
-}
-
-interface DefaultButtonProps {
-  data: DefaultEntityData;
-  [key: string]: any;
-}
-
-interface DefaultCardProps {
-  data: DefaultEntityData;
-  onClose?: () => void;
-  [key: string]: any;
-}
-
-interface DefaultCytoNodeProps {
-  data: DefaultEntityData;
   [key: string]: any;
 }
 
@@ -47,7 +31,10 @@ function getEntityTypeFromTypename(typename?: string): { table: string; schema: 
   return { table, schema };
 }
 
-export function Button({ data, ...props }: DefaultButtonProps) {
+export function Button({ data, ...props }: {
+  data: DefaultData;
+  [key: string]: any;
+}) {
   const entityId = typeof data === 'string' ? data : data?.id;
   const entityData = typeof data === 'object' ? data : null;
   
@@ -71,7 +58,11 @@ export function Button({ data, ...props }: DefaultButtonProps) {
   );
 }
 
-export function Card({ data, onClose, ...props }: DefaultCardProps) {
+export function Card({ data, onClose, ...props }: {
+  data: DefaultData;
+  onClose?: () => void;
+  [key: string]: any;
+}) {
   const entityId = typeof data === 'string' ? data : data?.id;
   const entityData = typeof data === 'object' ? data : null;
   
@@ -163,7 +154,10 @@ export function Card({ data, onClose, ...props }: DefaultCardProps) {
   );
 }
 
-export function CytoNode({ data, ...props }: DefaultCytoNodeProps) {
+export function CytoNode({ data, ...props }: {
+  data: DefaultData;
+  [key: string]: any;
+}) {
   return <CytoNodeComponent {...props} element={{
     id: data.id,
     data: {

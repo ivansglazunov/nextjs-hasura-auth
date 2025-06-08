@@ -21,23 +21,10 @@ interface UserData {
   [key: string]: any;
 }
 
-interface UserButtonProps {
+export function Button({ data, ...props }: {
   data: UserData | string;
   [key: string]: any;
-}
-
-interface UserCardProps {
-  data: UserData | string;
-  onClose?: () => void;
-  [key: string]: any;
-}
-
-interface UserCytoNodeProps {
-  data: UserData;
-  [key: string]: any;
-}
-
-export function Button({ data, ...props }: UserButtonProps) {
+}) {
   const userId = typeof data === 'string' ? data : data?.id;
   const userData = typeof data === 'object' ? data : null;
   
@@ -62,7 +49,11 @@ export function Button({ data, ...props }: UserButtonProps) {
   );
 }
 
-export function Card({ data, onClose, ...props }: UserCardProps) {
+export function Card({ data, onClose, ...props }: {
+  data: UserData | string;
+  onClose?: () => void;
+  [key: string]: any;
+}) {
   const userId = typeof data === 'string' ? data : data?.id;
   const providedData = typeof data === 'object' ? data : null;
   
@@ -155,7 +146,10 @@ export function Card({ data, onClose, ...props }: UserCardProps) {
   );
 }
 
-export function CytoNode({ data, ...props }: UserCytoNodeProps) {
+export function CytoNode({ data, ...props }: {
+  data: UserData;
+  [key: string]: any;
+}) {
   const name = data?.name || data?.id?.slice(0, 4);
   const image = data?.image;
   const [opened, setOpened] = useState(false);
