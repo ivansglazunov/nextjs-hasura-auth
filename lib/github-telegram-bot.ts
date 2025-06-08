@@ -1,9 +1,40 @@
 #!/usr/bin/env node
 
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
 import { newGithubTelegramBot } from 'hasyx/lib/github-telegram-bot-hasyx';
+
+// Load environment variables from .env file in the consumer project
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+// Load package.json from the consumer project
+const pckgPath = path.resolve(process.cwd(), 'package.json');
+const pckg = fs.existsSync(pckgPath) ? JSON.parse(fs.readFileSync(pckgPath, 'utf-8')) : {};
+
+// Helper to get Telegram channel ID for GitHub notifications
+function getTelegramChannelId(): string | undefined {
+  return process.env.TELEGRAM_CHANNEL_ID;
+}
 
 // Configure GitHub Telegram Bot with the required message for hasyx project
 export const handleGithubTelegramBot = newGithubTelegramBot({
+  // Pass all the config here
+  telegramChannelId: getTelegramChannelId(),
+  repositoryUrl: pckg.repository?.url,
+  projectName: pckg.name,
+  projectVersion: pckg.version,
+  projectDescription: pckg.description,
+  projectHomepage: pckg.homepage,
+  
+  // These will be picked up from process.env inside hasyx-lib as fallbacks,
+  // but we can be explicit for clarity.
+  commitSha: process.env.GITHUB_SHA,
+  githubToken: process.env.GITHUB_TOKEN,
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN,
+  openRouterApiKey: process.env.OPENROUTER_API_KEY,
+  enabled: process.env.GITHUB_TELEGRAM_BOT,
+
   message: `Create a celebratory, enthusiastic Telegram message in English that:
 
 🎯 **MAIN GOAL**: Celebrate progress and achievements! Focus on what was DONE and ACCOMPLISHED!

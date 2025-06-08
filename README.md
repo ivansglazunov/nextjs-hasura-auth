@@ -470,6 +470,9 @@ When running `init`, Hasyx automatically patches your Next.js project for WebSoc
 ├── ✨ .gitignore               # Git ignore patterns (from .gitignore.template)
 ├── ✨ .npmignore               # NPM ignore patterns (from .npmignore.template)
 ├── ✨ .npmrc                   # NPM configuration (from .npmrc.template)
+├── ✨ Dockerfile               # Docker container configuration
+├── ✨ .dockerignore            # Docker ignore patterns
+├── ✨ DOCKER.md                # Docker documentation and usage guide
 ├── ✨ vercel.json              # Vercel deployment configuration
 ├── ✨ babel.jest.config.mjs    # Babel configuration for Jest
 ├── ✨ jest.config.mjs          # Jest testing configuration

@@ -1,13 +1,8 @@
 #!/usr/bin/env node
 
-import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load environment variables from .env file
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-
-import pckg from '../package.json';
-import { TelegramBot, sendTelegramMessage } from './telegram-bot';
+import { TelegramBot } from './telegram-bot';
 import { Ask } from './ask';
 import Debug from './debug';
 
@@ -36,10 +31,17 @@ export interface GithubTelegramBotOptions {
   commitSha?: string;
   githubToken?: string;
   telegramBotToken?: string;
-  telegramAdminChatId?: string;
   repositoryUrl?: string;
   enabled?: boolean | string | number;
   message: string; // Required message parameter
+
+  // New properties to replace process.env and pckg
+  telegramChannelId?: string; // Single channel for GitHub notifications
+  openRouterApiKey?: string;
+  projectName?: string;
+  projectVersion?: string;
+  projectDescription?: string;
+  projectHomepage?: string;
 }
 
 /**
@@ -316,43 +318,19 @@ async function fetchWorkflowStatus(commitSha: string, repoUrl: string, githubTok
 }
 
 /**
- * Gets Telegram chat IDs from environment variables
- */
-function getTelegramChatIds(): string[] {
-  const chatIds: string[] = [];
-  
-  // Add admin chat ID
-  if (process.env.TELEGRAM_ADMIN_CHAT_ID) {
-    chatIds.push(process.env.TELEGRAM_ADMIN_CHAT_ID);
-  }
-  
-  // Add channel ID
-  if (process.env.TELEGRAM_CHANNEL_ID) {
-    chatIds.push(process.env.TELEGRAM_CHANNEL_ID);
-  }
-  
-  // Add numbered chat IDs
-  let index = 1;
-  while (true) {
-    const chatId = process.env[`TELEGRAM_CHAT_ID_${index}`];
-    if (!chatId) break;
-    chatIds.push(chatId);
-    index++;
-  }
-  
-  // Remove duplicates
-  return [...new Set(chatIds)];
-}
-
-/**
  * Generates AI-powered commit notification message
  */
 export async function askGithubTelegramBot(options: GithubTelegramBotOptions): Promise<string> {
   const {
     commitSha = process.env.GITHUB_SHA,
     githubToken = process.env.GITHUB_TOKEN,
-    repositoryUrl = (pckg as any).repository?.url,
-    message
+    repositoryUrl,
+    message,
+    openRouterApiKey = process.env.OPENROUTER_API_KEY,
+    projectName = 'Unknown Project',
+    projectVersion,
+    projectDescription,
+    projectHomepage,
   } = options;
   
   console.log(`🤖 Generating AI-powered commit notification message...`);
@@ -360,11 +338,11 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
   console.log(`📂 Repository: ${repositoryUrl}`);
   
   if (!commitSha) {
-    throw new Error('GITHUB_SHA environment variable is required');
+    throw new Error('Commit SHA is required. Provide it via options.commitSha or GITHUB_SHA env var.');
   }
 
   if (!repositoryUrl) {
-    throw new Error('Repository URL not found in package.json');
+    throw new Error('repositoryUrl is required in options');
   }
 
   if (!message) {
@@ -377,8 +355,8 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
   
   // Create Ask instance for AI analysis
   const ask = new Ask(
-    process.env.OPENROUTER_API_KEY || 'dummy-key',
-    pckg.name || 'Unknown Project'
+    openRouterApiKey || 'dummy-key',
+    projectName || 'Unknown Project'
   );
   
   // Map status to emojis
@@ -406,11 +384,11 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
 - If any MD files are mentioned in commit message, provide direct GitHub links: https://github.com/ivansglazunov/hasyx/blob/main/lib/FILENAME.md
 
 **Project Information:**
-- Name: ${pckg.name}
-- Version: ${pckg.version}
-- Description: ${(pckg as any).description || 'No description'}
-- Repository: ${(pckg as any).repository?.url || 'Repository URL not available'}
-- Homepage: ${(pckg as any).homepage || 'Homepage not available'}
+- Name: ${projectName}
+- Version: ${projectVersion || 'N/A'}
+- Description: ${projectDescription || 'No description'}
+- Repository: ${repositoryUrl || 'Repository URL not available'}
+- Homepage: ${projectHomepage || 'Homepage not available'}
 
 **Commit Details (Focus on what was ACCOMPLISHED):**
 - SHA: ${commitInfo.sha}
@@ -458,8 +436,8 @@ ${workflowStatus.details.workflows.map(w =>
 ${message}
 
 **MANDATORY LINKS AT THE END**:
-🔗 Repository: ${(pckg as any).repository?.url || 'https://github.com/ivansglazunov/hasyx.git'}
-📚 Documentation: ${(pckg as any).homepage || 'https://hasyx.deep.foundation/'}
+🔗 Repository: ${repositoryUrl || 'https://github.com/ivansglazunov/hasyx.git'}
+📚 Documentation: ${projectHomepage || 'https://hasyx.deep.foundation/'}
 
 Format: Telegram Markdown (*bold*, \`code\`, [links](url))
 Length: up to 1500 characters
@@ -486,7 +464,8 @@ export function newGithubTelegramBot(options: GithubTelegramBotOptions) {
     const {
       commitSha = process.env.GITHUB_SHA,
       telegramBotToken = process.env.TELEGRAM_BOT_TOKEN,
-      enabled = process.env.GITHUB_TELEGRAM_BOT
+      enabled = process.env.GITHUB_TELEGRAM_BOT,
+      telegramChannelId = process.env.TELEGRAM_CHANNEL_ID,
     } = options;
     
     console.log(`🚀 Starting GitHub Telegram Bot notification process...`);
@@ -494,8 +473,7 @@ export function newGithubTelegramBot(options: GithubTelegramBotOptions) {
     console.log(`   - Enabled: ${enabled}`);
     console.log(`   - Commit SHA: ${commitSha ? 'provided' : 'missing'}`);
     console.log(`   - Telegram Bot Token: ${telegramBotToken ? 'configured' : 'missing'}`);
-    console.log(`   - Admin Chat ID: ${process.env.TELEGRAM_ADMIN_CHAT_ID ? 'configured' : 'missing'}`);
-    console.log(`   - Channel ID: ${process.env.TELEGRAM_CHANNEL_ID ? 'configured' : 'missing'}`);
+    console.log(`   - Channel ID: ${telegramChannelId ? 'configured' : 'missing'}`);
     console.log(`   - OpenRouter API Key: ${process.env.OPENROUTER_API_KEY ? 'configured' : 'missing'}`);
     
     // Check if functionality is enabled
@@ -515,45 +493,26 @@ export function newGithubTelegramBot(options: GithubTelegramBotOptions) {
       return { success: false, message: 'TELEGRAM_BOT_TOKEN is required', chatsSent: 0 };
     }
     
+    if (!telegramChannelId) {
+      console.error(`❌ TELEGRAM_CHANNEL_ID environment variable is required`);
+      return { success: false, message: 'TELEGRAM_CHANNEL_ID is required', chatsSent: 0 };
+    }
+    
     try {
       // Get message from AI
       console.log(`🤖 Generating notification message...`);
       const message = await askGithubTelegramBot(options);
       
-      // Get Telegram chat IDs from environment variables
-      console.log(`👥 Getting Telegram chat IDs...`);
-      const chatIds = getTelegramChatIds();
-      
-      if (chatIds.length === 0) {
-        console.log(`📭 No Telegram chat IDs found in environment variables`);
-        console.log(`💡 To configure recipients, set these environment variables:`);
-        console.log(`   - TELEGRAM_ADMIN_CHAT_ID: Admin chat or user ID`);
-        console.log(`   - TELEGRAM_CHANNEL_ID: Channel ID (e.g., @channel_name)`);
-        console.log(`   - TELEGRAM_CHAT_ID_1, TELEGRAM_CHAT_ID_2, etc.: Additional chat IDs`);
-        return { success: true, message: 'No chat IDs configured', chatsSent: 0 };
-      }
-      
-      // Send notifications to all configured chats
-      console.log(`📤 Sending notifications to ${chatIds.length} chats...`);
-      let successCount = 0;
+      // Send notification to the configured channel
+      console.log(`📤 Sending notification to channel: ${telegramChannelId}`);
       const bot = new TelegramBot(telegramBotToken);
+      await bot.chat(telegramChannelId).sendMessage(message);
       
-      for (const chatId of chatIds) {
-        try {
-          console.log(`📨 Sending to chat: ${chatId}...`);
-          await bot.chat(chatId).sendMessage(message);
-          successCount++;
-          console.log(`✅ Successfully sent to chat: ${chatId}`);
-        } catch (error) {
-          console.error(`❌ Failed to send to chat ${chatId}:`, error);
-        }
-      }
-      
-      console.log(`🎉 Notification process completed: ${successCount}/${chatIds.length} chats notified`);
+      console.log(`🎉 Notification process completed successfully`);
       return { 
         success: true, 
-        message: `Notifications sent to ${successCount}/${chatIds.length} chats`, 
-        chatsSent: successCount 
+        message: `Notification sent to channel: ${telegramChannelId}`, 
+        chatsSent: 1 
       };
       
     } catch (error) {

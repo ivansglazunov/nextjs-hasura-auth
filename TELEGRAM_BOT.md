@@ -42,13 +42,12 @@ Set these variables in your `.env` file and GitHub repository secrets:
 #### Required:
 ```bash
 TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHANNEL_ID=your_channel_id_here
 OPENROUTER_API_KEY=your_openrouter_api_key
 ```
 
 #### Optional:
 ```bash
-TELEGRAM_ADMIN_CHAT_ID=your_admin_chat_id_here
-TELEGRAM_CHANNEL_ID=your_channel_id_here
 GITHUB_TELEGRAM_BOT=1  # 1=enabled, 2=test mode, unset=disabled
 ```
 
@@ -57,17 +56,16 @@ GITHUB_TELEGRAM_BOT=1  # 1=enabled, 2=test mode, unset=disabled
 Configure these secrets in your GitHub repository settings:
 
 - `TELEGRAM_BOT_TOKEN` - Your Telegram bot API token
+- `TELEGRAM_CHANNEL_ID` - Channel ID for GitHub commit notifications
 - `OPENROUTER_API_KEY` - OpenRouter API key for AI message generation
-- `TELEGRAM_ADMIN_CHAT_ID` - (Optional) Admin chat ID for notifications
-- `TELEGRAM_CHANNEL_ID` - (Optional) Channel ID for announcements
 - `GITHUB_TELEGRAM_BOT` - (Optional) Control mode: `1` or `2`
 
 ### 4. Telegram Bot Setup
 
 1. Create a bot via @BotFather on Telegram
 2. Get the bot token
-3. Add the bot to your group/channel if using those targets
-4. Users can start the bot with `/start` to receive notifications
+3. Add the bot to your channel as an administrator
+4. Get the channel ID (e.g., `@your_channel` or `-1001234567890`)
 
 ## 📋 Configuration Options
 
@@ -169,7 +167,8 @@ const targetWorkflows = ['test', 'npm-publish', 'Deploy Next.js site to Pages'];
 
 **No notifications sent:**
 - Check `GITHUB_TELEGRAM_BOT` is set to `1`
-- Verify all required secrets are configured
+- Verify `TELEGRAM_CHANNEL_ID` is configured correctly
+- Ensure bot has administrator permissions in the channel
 - Check GitHub Actions logs for errors
 
 **API rate limits:**
@@ -181,8 +180,8 @@ const targetWorkflows = ['test', 'npm-publish', 'Deploy Next.js site to Pages'];
 - Check that target workflow names match exactly
 
 **Bot permissions:**
-- Ensure bot has permission to send messages
-- For channels, bot must be added as administrator
+- Bot must be added to the channel as administrator
+- Ensure bot has permission to send messages in the channel
 
 ## 🔗 Related Documentation
 
