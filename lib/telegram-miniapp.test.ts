@@ -4,6 +4,9 @@ import { Hasyx } from './hasyx';
 import { createApolloClient } from './apollo';
 import { Generator } from './generator';
 import schema from '../public/hasura-schema.json';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 describe('[DEBUG] Telegram Miniapp Authentication with Accounts Architecture', () => {
   let hasyx: Hasyx;
