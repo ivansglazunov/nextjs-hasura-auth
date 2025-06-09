@@ -25,9 +25,12 @@ import { CloudFlare, CloudflareConfig, DnsRecord } from './cloudflare';
 import { SSL } from './ssl';
 import { Nginx } from './nginx';
 import { configureDocker, listContainers, defineContainer, undefineContainer, showContainerLogs, showContainerEnv } from './assist-docker';
+import { processLogs } from './logs';
+import { processConfiguredDiffs } from './logs-diffs';
+import { processConfiguredStates } from './logs-states';
 
 export {
-  assetsCommand, eventsCommand, unbuildCommand, assist, localCommand, vercelCommand };
+  assetsCommand, eventsCommand, unbuildCommand, assist, localCommand, vercelCommand, processLogs, processConfiguredDiffs, processConfiguredStates };
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
@@ -275,6 +278,8 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'migrations/1746837333136-hasyx-debug/down.ts': 'migrations/1746837333136-hasyx-debug/down.ts',
     'migrations/1748511896530-hasyx-payments/up.ts': 'migrations/1748511896530-hasyx-payments/up.ts',
     'migrations/1748511896530-hasyx-payments/down.ts': 'migrations/1748511896530-hasyx-payments/down.ts',
+    'migrations/1746999999999-hasyx-logs/up.ts': 'migrations/1746999999999-hasyx-logs/up.ts',
+    'migrations/1746999999999-hasyx-logs/down.ts': 'migrations/1746999999999-hasyx-logs/down.ts',
     'migrations/29991231235959999-hasyx/up.ts': 'migrations/29991231235959999-hasyx/up.ts',
     'migrations/29991231235959999-hasyx/down.ts': 'migrations/29991231235959999-hasyx/down.ts',
     'events/notify.json': 'events/notify.json',
@@ -294,6 +299,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'migrations/1746670608552-hasyx-notify',
     'migrations/1746837333136-hasyx-debug',
     'migrations/1748511896530-hasyx-payments',
+    'migrations/1746999999999-hasyx-logs',
     'migrations/29991231235959999-hasyx',
     'app/api/events/[name]',
     'events',
@@ -497,7 +503,10 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
         "cli": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName}`,
         "assist": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} assist`,
         "js": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} js`,
-        "tsx": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} tsx`
+        "tsx": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} tsx`,
+        "logs": `npx ${packageName} logs`,
+        "logs-diffs": `npx ${packageName} logs-diffs`,
+        "logs-states": `npx ${packageName} logs-states`
       };
       
       let scriptsModified = false;
@@ -1242,6 +1251,37 @@ export const dockerEnvCommand = async (port: string) => {
   }
 };
 
+// Logs commands
+export const logsCommand = async () => {
+  debug('Executing "logs" command.');
+  try {
+    await processLogs();
+  } catch (error) {
+    console.error('❌ Failed to process logs configuration:', error);
+    process.exit(1);
+  }
+};
+
+export const logsDiffsCommand = async () => {
+  debug('Executing "logs-diffs" command.');
+  try {
+    await processConfiguredDiffs();
+  } catch (error) {
+    console.error('❌ Failed to process logs-diffs configuration:', error);
+    process.exit(1);
+  }
+};
+
+export const logsStatesCommand = async () => {
+  debug('Executing "logs-states" command.');
+  try {
+    await processConfiguredStates();
+  } catch (error) {
+    console.error('❌ Failed to process logs-states configuration:', error);
+    process.exit(1);
+  }
+};
+
 // Command descriptor functions
 export const initCommandDescribe = (cmd: Command) => {
   return cmd
@@ -1397,6 +1437,18 @@ Requirements:
   return subCmd;
 };
 
+export const logsCommandDescribe = (cmd: Command) => {
+  return cmd.description('Apply logs configuration from hasyx.config.json (includes both diffs and states)');
+};
+
+export const logsDiffsCommandDescribe = (cmd: Command) => {
+  return cmd.description('Apply logs-diffs configuration from hasyx.config.json');
+};
+
+export const logsStatesCommandDescribe = (cmd: Command) => {
+  return cmd.description('Apply logs-states configuration from hasyx.config.json');
+};
+
 export const dockerCommandDescribe = (cmd: Command) => {
   const subCmd = cmd
     .description('Manage Docker containers with automatic updates via Watchtower')
@@ -1545,6 +1597,21 @@ export const setupCommands = (program: Command, packageName: string = 'hasyx') =
 
   // Subdomain command
   subdomainCommandDescribe(program.command('subdomain'));
+
+  // Logs command
+  logsCommandDescribe(program.command('logs')).action(async () => {
+    await logsCommand();
+  });
+
+  // Logs-diffs command
+  logsDiffsCommandDescribe(program.command('logs-diffs')).action(async () => {
+    await logsDiffsCommand();
+  });
+
+  // Logs-states command
+  logsStatesCommandDescribe(program.command('logs-states')).action(async () => {
+    await logsStatesCommand();
+  });
 
   // Docker command
   dockerCommandDescribe(program.command('docker'));

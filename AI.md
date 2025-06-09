@@ -588,13 +588,33 @@ These operations are:
 ### Constructor
 
 ```typescript
-new AI(token: string, context?: any, options?: OpenRouterOptions, systemPrompt?: string)
+new AI(token: string, options?: AIOptions)
 ```
 
+**Parameters:**
 - `token`: OpenRouter API key
-- `context`: Optional context object passed to execution engines
-- `options`: OpenRouter configuration options
-- `systemPrompt`: Optional system prompt for AI behavior (can also be set via setSystemPrompt method)
+- `options`: Configuration options
+
+**AIOptions Interface:**
+```typescript
+interface AIOptions extends OpenRouterOptions {
+  systemPrompt?: string;
+  localMessageMemoryLimit?: number;  // Number of messages to keep in memory (default: 10)
+  maxIterations?: number;           // Max AI iterations per request (default: 5)
+}
+```
+
+**Example:**
+```typescript
+const ai = new AI('your-api-key', {
+  model: 'google/gemini-2.5-flash-preview',
+  temperature: 0.7,
+  max_tokens: 4096,
+  systemPrompt: 'You are a helpful coding assistant',
+  localMessageMemoryLimit: 20,
+  maxIterations: 3
+});
+```
 
 ### Methods
 

@@ -26,6 +26,7 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![Telegram Bot Notifications Documentation](https://img.shields.io/badge/Notify%20Telegram%20Bot-MD-skyblue)](NOTIFY-TELEGRAM-BOT.md)
 [![GitHub Telegram Bot Integration Documentation](https://img.shields.io/badge/GitHub%20Telegram%20Bot-MD-brightgreen)](TELEGRAM_BOT.md)
 [![PWA Support Documentation](https://img.shields.io/badge/PWA%20Support-MD-9cf)](PWA.md)
+[![Logs System Documentation](https://img.shields.io/badge/Logs%20System-MD-brown)](LOGS.md)
 [![TBank Payments Documentation](https://img.shields.io/badge/TBank%20Payments-MD-ff69b4)](TBANK.md)
 [![Tinkoff API Base Documentation](https://img.shields.io/badge/Tinkoff%20API-MD-lightpink)](TINKOFF_API.md)
 [![CloudFlare DNS Management Documentation](https://img.shields.io/badge/CloudFlare%20DNS-MD-orange)](CLOUDFLARE.md)
@@ -59,6 +60,7 @@ Hasyx takes responsibility for:
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   **Server-side Debug Logging:** Built-in `debug()` method for database logging when `HASYX_DEBUG=1` is enabled, storing structured debug data in a dedicated `debug` table for monitoring and troubleshooting production systems.
 *   **Progressive Web App (PWA) Support:** Complete PWA functionality with service workers, offline support, installability, and push notifications. See [`PWA.md`](PWA.md) for details.
+*   **Audit Trail & Logs System:** Comprehensive audit trail functionality with configurable database triggers for tracking granular string changes (using diff-match-patch) and complete state snapshots. Features include CLI management with `npx hasyx logs`, JSON-based configuration via `hasyx.config.json`, selective column tracking, and complete Hasura permissions integration. See [`LOGS.md`](LOGS.md) for details.
 *   **GitHub → Telegram Bot Integration:** Automated CI/CD notifications via Telegram bot with AI-generated commit summaries, strict status reporting, and privacy-focused messaging. Features strict workflow status reporting (PASSED/FAILED for tests, builds, deploys), privacy-focused messaging (no author names), smart MD file linking, and rich English-language notifications. Waits for all workflows to complete, then sends detailed messages with commit analysis, test results, deployment URLs, and direct links to repository and documentation. Uses a modular architecture: **`github-telegram-bot-hasyx.ts`** (core functionality with generator function), **`github-telegram-bot.ts`** (project-specific configuration), and **`github-telegram-bot.template`** (template for child projects). Configurable via `GITHUB_TELEGRAM_BOT` environment variable. See [`TELEGRAM_BOT.md`](lib/TELEGRAM_BOT.md) for setup and configuration details.
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
 *   **Cytoscape Integration:** A powerful set of React components for graph visualizations using Cytoscape.js, allowing for custom HTML rendering within nodes and reactive style updates. See [`CYTO.md`](CYTO.md) for details.
@@ -146,6 +148,7 @@ Explore the different modules and functionalities of Hasyx:
 *   **[HID.md](HID.md):** Explanation of Hasyx Identifiers (HID) for resource identification.
 *   **[EVENTS.md](EVENTS.md):** Complete guide to Hasura Event Triggers integration with automatic synchronization and secure webhook handling.
 *   **[PWA.md](PWA.md):** Progressive Web App support with offline functionality, installability, and push notifications.
+*   **[LOGS.md](LOGS.md):** Comprehensive audit trail system with granular diff tracking and complete state snapshots for your Hasura database.
 *   **[NOTIFY.md](NOTIFY.md):** Overview of the notifications system.
 *   **[NOTIFY-FIREBASE.md](NOTIFY-FIREBASE.md):** Specifics on Firebase Cloud Messaging for push notifications.
 *   **[NOTIFY-TELEGRAM-BOT.md](NOTIFY-TELEGRAM-BOT.md):** Details on Telegram Bot integration for notifications.
@@ -371,7 +374,10 @@ During initialization, Hasyx ensures that the following npm scripts are added to
   "npm-publish": "npm run build && npm publish",
   "cli": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx",
   "assist": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx assist",
-  "js": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx js"
+  "js": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx js",
+  "logs": "npx hasyx logs",
+  "logs-diffs": "npx hasyx logs-diffs",
+  "logs-states": "npx hasyx logs-states"
 }
 ```
 
@@ -434,6 +440,9 @@ When running `init`, Hasyx automatically patches your Next.js project for WebSoc
 │   │   ├── ✨ up.ts
 │   │   └── ✨ down.ts
 │   ├── 1748511896530-hasyx-payments/
+│   │   ├── ✨ up.ts
+│   │   └── ✨ down.ts
+│   ├── 1746999999999-hasyx-logs/
 │   │   ├── ✨ up.ts
 │   │   └── ✨ down.ts
 │   └── 29991231235959999-hasyx/

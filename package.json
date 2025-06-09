@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.294",
+  "version": "0.1.295",
   "description": "Modern full-stack framework with real-time GraphQL, AI integration, and seamless development experience",
   "homepage": "https://hasyx.deep.foundation/",
   "engines": {
@@ -38,7 +38,10 @@
     "assist": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx ./lib/assist.ts",
     "ask": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/ask.ts",
     "js": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/js.ts",
-    "tsx": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/tsx.ts"
+    "tsx": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/tsx.ts",
+    "logs": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/cli-hasyx.ts logs",
+    "logs-diffs": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/cli-hasyx.ts logs-diffs",
+    "logs-states": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/cli-hasyx.ts logs-states"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

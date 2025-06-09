@@ -29,6 +29,9 @@ import {
   tsxCommandDescribe, tsxCommand,
   subdomainCommandDescribe,
   dockerCommandDescribe,
+  logsCommandDescribe, logsCommand,
+  logsDiffsCommandDescribe, logsDiffsCommand,
+  logsStatesCommandDescribe, logsStatesCommand,
   assetsCommand,
   eventsCommand,
   unbuildCommand,
@@ -112,6 +115,18 @@ vercelCommandDescribe(program.command('vercel')).action(async () => {
 jsCommandDescribe(program.command('js [filePath]')).action(jsCommand);
 askCommandDescribe(program.command('ask')).action(askCommand);
 tsxCommandDescribe(program.command('tsx [filePath]')).action(tsxCommand);
+
+logsCommandDescribe(program.command('logs')).action(async () => {
+  await logsCommand();
+});
+
+logsDiffsCommandDescribe(program.command('logs-diffs')).action(async () => {
+  await logsDiffsCommand();
+});
+
+logsStatesCommandDescribe(program.command('logs-states')).action(async () => {
+  await logsStatesCommand();
+});
 
 subdomainCommandDescribe(program.command('subdomain'));
 

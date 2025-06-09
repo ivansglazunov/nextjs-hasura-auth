@@ -194,7 +194,7 @@ export class Hasura {
     const { url, secret } = options;
 
     if (!url || !secret) {
-      const errorMessage = '❌ Hasura URL or Admin Secret is missing. Check NEXT_PUBLIC_HASURA_GRAPHQL_ENDPOINT and HASURA_ADMIN_SECRET environment variables.';
+      const errorMessage = '❌ Hasura URL or Admin Secret is missing. Check NEXT_PUBLIC_HASURA_GRAPHQL_URL and HASURA_ADMIN_SECRET environment variables.';
       debug(errorMessage);
       throw new Error(errorMessage);
     }

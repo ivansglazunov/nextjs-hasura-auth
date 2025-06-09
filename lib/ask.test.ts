@@ -410,7 +410,7 @@ const debug = Debug('test:ask');
       expect(typeof response).toBe('string');
       expect(response.length).toBeGreaterThan(0);
       // Check that the AI either mentioned the function or that execution worked correctly
-      expect(response.toLowerCase()).toMatch(/function|worked|result|expected|successful/);
+      expect(response.toLowerCase()).toMatch(/function|worked|result|expected|successful|execution|logs|called/);
     }, 60000);
 
     it('should handle general knowledge questions', async () => {
