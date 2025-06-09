@@ -1,7 +1,9 @@
-import * as fs from 'fs-extra';
-import * as path from 'path';
+import fs from 'fs-extra';
+import path from 'path';
+import DiffMatchPatch from 'diff-match-patch';
 import { Hasura } from './hasura';
 import Debug from './debug';
+import type { HasuraEventPayload } from './events';
 
 const debug = Debug('logs-diffs');
 
@@ -129,7 +131,7 @@ export async function loadConfigFromFile(): Promise<LogsDiffsConfig | null> {
   }
   
   try {
-    const config = await fs.readJSON(configPath);
+    const config = await fs.readJson(configPath);
     return config['logs-diffs'] || null;
   } catch (error) {
     debug(`Error reading hasyx.config.json: ${error}`);
@@ -153,4 +155,104 @@ export async function processConfiguredDiffs(hasura?: Hasura) {
   
   await applyLogsDiffs(hasu, config);
   console.log('✅ Logs-diffs configuration applied successfully');
+}
+
+/**
+ * Handles Hasura event trigger payload to create diffs
+ * This function processes the raw value stored in logs.diffs table and creates
+ * diff patches using diff-match-patch library
+ */
+export async function handleLogsDiffsEventTrigger(payload: HasuraEventPayload) {
+  debug('Processing logs-diffs event trigger payload');
+  
+  const { event, table } = payload;
+  const { op, data } = event;
+  
+  // Only process INSERT operations on logs.diffs table
+  if (op !== 'INSERT' || table.schema !== 'logs' || table.name !== 'diffs') {
+    debug('Ignoring event - not an INSERT to logs.diffs table');
+    return { success: false, message: 'Not a logs.diffs INSERT event' };
+  }
+  
+  const diffRecord = data.new;
+  if (!diffRecord || !diffRecord.id || !diffRecord._value) {
+    debug('Skipping diff processing - no value to process');
+    return { success: false, message: 'No value to process' };
+  }
+  
+  const hasura = new Hasura({
+    url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
+    secret: process.env.HASURA_ADMIN_SECRET!,
+  });
+  
+  try {
+    // Get previous values for this record to create diff
+    const previousDiffsResult = await hasura.sql(`
+      SELECT _value FROM logs.diffs 
+      WHERE _schema = '${diffRecord._schema}' 
+      AND _table = '${diffRecord._table}' 
+      AND _column = '${diffRecord._column}' 
+      AND _id = '${diffRecord._id}'
+      AND id != '${diffRecord.id}'
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `);
+    
+    let previousValue = '';
+    if (previousDiffsResult.result && previousDiffsResult.result.length > 1) {
+      previousValue = previousDiffsResult.result[1][0] || '';
+    }
+    
+    const currentValue = diffRecord._value || '';
+    
+    // Create diff using diff-match-patch
+    const dmp = new DiffMatchPatch();
+    const diffs = dmp.diff_main(previousValue, currentValue);
+    dmp.diff_cleanupSemantic(diffs);
+    
+    // Convert diffs to patches for storage
+    const patches = dmp.patch_make(previousValue, currentValue, diffs);
+    const diffText = dmp.patch_toText(patches);
+    
+    debug('Created diff:', { 
+      from: previousValue.substring(0, 50) + (previousValue.length > 50 ? '...' : ''),
+      to: currentValue.substring(0, 50) + (currentValue.length > 50 ? '...' : ''),
+      diffText: diffText.substring(0, 100) + (diffText.length > 100 ? '...' : '')
+    });
+    
+    // Update the diff record to set diff and mark as processed
+    // Use dollar-quoted strings to avoid escaping issues
+    const updateQuery = `
+      UPDATE logs.diffs 
+      SET diff = $diff$${diffText}$diff$, processed = TRUE
+      WHERE id = '${diffRecord.id}'
+    `;
+    
+    debug('Executing UPDATE query:', updateQuery);
+    
+    const updateResult = await hasura.sql(updateQuery);
+    debug('UPDATE result:', updateResult);
+    
+    debug('Successfully processed diff for record:', diffRecord.id);
+    
+    // Verify the update was successful
+    const verifyResult = await hasura.sql(`
+      SELECT _value, diff, processed FROM logs.diffs WHERE id = '${diffRecord.id}'
+    `);
+    debug('Verification after update:', {
+      _value: verifyResult.result[1]?.[0],
+      diff: verifyResult.result[1]?.[1]?.substring(0, 50) + '...',
+      processed: verifyResult.result[1]?.[2]
+    });
+    
+    return { 
+      success: true, 
+      diffId: diffRecord.id,
+      diffText: diffText.substring(0, 200) + (diffText.length > 200 ? '...' : '')
+    };
+    
+  } catch (error) {
+    debug('Error processing diff:', error);
+    return { success: false, error: String(error) };
+  }
 } 

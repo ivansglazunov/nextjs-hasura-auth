@@ -7,9 +7,6 @@ import Debug from './debug';
 
 const debug = Debug('logs:test');
 
-// Extended timeout for database operations
-jest.setTimeout(120000); // 2 minutes
-
 type StateConfig = {
   schema?: string;
   table: string;
@@ -337,6 +334,97 @@ describe('[DEBUG] Logs System Tests', () => {
       
       debug('✅ Combined system working correctly');
     });
+  });
+
+  describe('Event Trigger Functionality', () => {
+    it('should process diffs event trigger and create diff patches', async () => {
+      debug('Testing diffs event trigger processing...');
+      
+      const hasura = createTestHasura();
+      
+      // Insert initial data to create first diff record
+      const insertResult = await hasura.sql(`
+        INSERT INTO ${TEST_SCHEMA}.test_users (name, email, status) 
+        VALUES ('Initial Name', 'test@example.com', 'active') 
+        RETURNING id
+      `);
+      
+      const userId = insertResult.result[1][0];
+      
+      // Manually insert a diff record to simulate trigger behavior
+      const diffInsertResult = await hasura.sql(`
+        INSERT INTO logs.diffs (_schema, _table, _column, _id, _value) 
+        VALUES ('${TEST_SCHEMA}', 'test_users', 'name', '${userId}', 'Updated Name')
+        RETURNING id, _schema, _table, _column, _id, _value
+      `);
+      
+      expect(diffInsertResult.result).toBeDefined();
+      expect(diffInsertResult.result.length).toBeGreaterThan(1);
+      
+      const diffRecord = {
+        id: diffInsertResult.result[1][0],
+        _schema: diffInsertResult.result[1][1],
+        _table: diffInsertResult.result[1][2],
+        _column: diffInsertResult.result[1][3],
+        _id: diffInsertResult.result[1][4],
+        _value: diffInsertResult.result[1][5]
+      };
+      
+      debug('Created test diff record:', diffRecord);
+      
+      // Simulate event trigger payload
+      const mockPayload = {
+        event: {
+          op: 'INSERT' as const,
+          data: {
+            old: null,
+            new: diffRecord
+          }
+        },
+        table: {
+          schema: 'logs',
+          name: 'diffs'
+        },
+        trigger: {
+          name: 'logs_diffs_trigger'
+        }
+      };
+      
+      // Import and call the handler
+      const { handleLogsDiffsEventTrigger } = await import('./logs-diffs');
+      const result = await handleLogsDiffsEventTrigger(mockPayload as any);
+      
+      debug('Event trigger handler result:', result);
+      expect(result.success).toBe(true);
+      expect(result.diffId).toBe(diffRecord.id);
+      
+      // Add small delay to ensure database update is committed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Verify that diff was populated and record marked as processed
+      const processedDiffResult = await hasura.sql(`
+        SELECT _value, diff, processed 
+        FROM logs.diffs 
+        WHERE id = '${diffRecord.id}'
+      `);
+      
+      expect(processedDiffResult.result).toBeDefined();
+      expect(processedDiffResult.result.length).toBeGreaterThan(1);
+      
+      const processedRecord = processedDiffResult.result[1];
+      const originalValue = processedRecord[0];
+      const diffPatch = processedRecord[1];
+      const isProcessed = processedRecord[2];
+      
+      debug('Processed record after handler:', { originalValue, diffPatch, isProcessed });
+      
+      expect(originalValue).toBe('Updated Name'); // _value should remain unchanged
+      expect(diffPatch).toBeTruthy(); // diff should be populated
+      expect(typeof diffPatch).toBe('string');
+      expect(isProcessed).toBe('t'); // should be marked as processed (PostgreSQL boolean 't')
+      
+      debug('✅ Event trigger functionality working correctly');
+    }, 120000); // 2 minute timeout
   });
 
   afterAll(async () => {

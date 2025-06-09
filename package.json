@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.295",
+  "version": "0.1.296",
   "description": "Modern full-stack framework with real-time GraphQL, AI integration, and seamless development experience",
   "homepage": "https://hasyx.deep.foundation/",
   "engines": {
@@ -106,6 +106,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/cross-spawn": "^6.0.6",
     "@types/debug": "^4.1.12",
+    "@types/diff-match-patch": "^1.0.36",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.12",
     "@types/jsonwebtoken": "^9.0.9",
@@ -142,6 +143,7 @@
     "cytoscape-tidytree": "^0.2.0",
     "date-fns": "^4.1.0",
     "debug": "^4.4.0",
+    "diff-match-patch": "^1.0.5",
     "dotenv": "^16.5.0",
     "echarts": "^5.6.0",
     "embla-carousel-react": "^8.6.0",

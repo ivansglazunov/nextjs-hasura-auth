@@ -1,5 +1,5 @@
-import * as fs from 'fs-extra';
-import * as path from 'path';
+import fs from 'fs-extra';
+import path from 'path';
 import { Hasura } from './hasura';
 import Debug from './debug';
 
@@ -198,7 +198,7 @@ export async function loadConfigFromFile(): Promise<LogsStatesConfig | null> {
   }
   
   try {
-    const config = await fs.readJSON(configPath);
+    const config = await fs.readJson(configPath);
     return config['logs-states'] || null;
   } catch (error) {
     debug(`Error reading hasyx.config.json: ${error}`);

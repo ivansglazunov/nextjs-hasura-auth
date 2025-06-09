@@ -98,6 +98,15 @@ export async function applySQLSchema(hasura: Hasura) {
     comment: 'Calculated diff from previous state'
   });
   
+  await hasura.defineColumn({
+    schema: 'logs',
+    table: 'diffs',
+    name: 'processed',
+    type: ColumnType.BOOLEAN,
+    postfix: 'DEFAULT FALSE',
+    comment: 'Whether the diff has been processed by event trigger'
+  });
+  
   // Define states table
   await hasura.defineTable({
     schema: 'logs',
@@ -168,13 +177,22 @@ export async function applySQLSchema(hasura: Hasura) {
     comment: 'State snapshot (null for delete)'
   });
   
-  // Create constraint for diffs to prevent updates
+  // Create constraint for diffs to prevent updates (except for diff and processed fields)
   await hasura.sql(`
     CREATE OR REPLACE FUNCTION prevent_diffs_update()
     RETURNS TRIGGER AS $$
     BEGIN
       IF TG_OP = 'UPDATE' THEN
-        RAISE EXCEPTION 'Updates to diffs table are not allowed to preserve history integrity';
+        -- Allow updates only to diff and processed fields
+        IF (OLD._schema IS DISTINCT FROM NEW._schema OR
+            OLD._table IS DISTINCT FROM NEW._table OR
+            OLD._column IS DISTINCT FROM NEW._column OR
+            OLD._id IS DISTINCT FROM NEW._id OR
+            OLD.user_id IS DISTINCT FROM NEW.user_id OR
+            OLD.created_at IS DISTINCT FROM NEW.created_at OR
+            OLD._value IS DISTINCT FROM NEW._value) THEN
+          RAISE EXCEPTION 'Updates to core diffs fields are not allowed to preserve history integrity. Only diff and processed fields can be updated.';
+        END IF;
       END IF;
       RETURN COALESCE(NEW, OLD);
     END;
