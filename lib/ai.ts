@@ -108,12 +108,20 @@ export type AIStreamEventUnion =
   | AICompleteEvent 
   | AIErrorEvent;
 
+export interface AIOptions extends OpenRouterOptions {
+  systemPrompt?: string;
+  localMessageMemoryLimit?: number;
+  maxIterations?: number;
+}
+
 export class AI {
   private openRouter: OpenRouter;
   
   public doSpecialSubstring = `> 😈`;
   public memory: (OpenRouterMessage | Do)[] = [];
   public systemPrompt?: string;
+  private localMessageMemoryLimit: number;
+  private maxIterations: number;
   
   // Results tracking for AI context
   public results: Record<string, any> = {};
@@ -130,14 +138,24 @@ export class AI {
 
   constructor(
     token: string,
-    context: any = {},
-    options: OpenRouterOptions = {},
-    systemPrompt?: string
+    options: AIOptions = {}
   ) {
-    this.openRouter = new OpenRouter(token, context, options);
-    this.systemPrompt = systemPrompt;
+    // Merge options with defaults
+    const finalOptions: AIOptions = {
+      localMessageMemoryLimit: 10,
+      maxIterations: 5,
+      ...options
+    };
     
-    debug('AI instance created');
+    this.openRouter = new OpenRouter(token, finalOptions);
+    this.systemPrompt = finalOptions.systemPrompt;
+    this.localMessageMemoryLimit = finalOptions.localMessageMemoryLimit!;
+    this.maxIterations = finalOptions.maxIterations!;
+    
+    debug('AI instance created with options:', {
+      localMessageMemoryLimit: this.localMessageMemoryLimit,
+      maxIterations: this.maxIterations
+    });
   }
 
   /**
@@ -235,7 +253,7 @@ export class AI {
     let finalResponse = '';
     let allExecutionResults: string[] = [];
     let iterationCount = 0;
-    const maxIterations = 3;
+    const maxIterations = this.maxIterations;
 
     while (iterationCount < maxIterations) {
       iterationCount++;
@@ -265,103 +283,35 @@ export class AI {
         debug(`Found ${dos.length} Do operations`);
         
         if (dos.length > 0) {
-          // Execute all Do operations and collect results
-          const executionResults: string[] = [];
+          const executedDos: Do[] = [];
           
           for (const doItem of dos) {
             debug(`Executing Do operation: ${doItem.id}`);
             const executedDo = await this.do(doItem);
+            executedDos.push(executedDo);
             this.addToMemory(executedDo);
-            
-            // Format execution result for display
-            if (executedDo.response) {
-              // Determine the best language for the result display
-              let resultLanguage = 'text';
-              let codeLanguage: string = doItem.format;
-              
-              // Use 'bash' instead of 'terminal' for better display
-              if (doItem.format === 'terminal') {
-                codeLanguage = 'bash';
-                resultLanguage = 'text'; // Terminal output is usually plain text
-              } else if (doItem.format === 'js' || doItem.format === 'tsx') {
-                // For JS/TS, try to detect if result looks like JSON
-                try {
-                  JSON.parse(executedDo.response);
-                  resultLanguage = 'json';
-                } catch {
-                  // Check if it's a simple number, boolean, or text
-                  if (/^\d+(\.\d+)?$/.test(executedDo.response.trim())) {
-                    resultLanguage = 'javascript';
-                  } else if (/^(true|false)$/.test(executedDo.response.trim())) {
-                    resultLanguage = 'javascript';
-                  } else {
-                    resultLanguage = 'text';
-                  }
-                }
-              }
-
-              const resultDisplay = `
-**Code Executed:**
-\`\`\`${codeLanguage}
-${doItem.request}
-\`\`\`
-
-**Result:**
-\`\`\`${resultLanguage}
-${executedDo.response}
-\`\`\``;
-              executionResults.push(resultDisplay);
-              allExecutionResults.push(resultDisplay);
-            }
           }
-
-          // Remove Do operations from response
+          
+          // Remove Do operations from response for the assistant's message
           const cleanResponse = this.removeDo(response, dos);
-          
-          // Add clean response to final response
-          if (finalResponse) {
-            finalResponse += '\n\n' + cleanResponse;
-          } else {
-            finalResponse = cleanResponse;
-          }
-          
-          // Add execution results to final response
-          if (executionResults.length > 0) {
-            finalResponse += '\n\n' + executionResults.join('\n\n');
-          }
-          
-          debug(`Clean response length: ${cleanResponse.length}`);
-          debug(`Final response with execution results length: ${finalResponse.length}`);
-          
-          // Create assistant message with clean response (without execution results)
-          const assistantMessage: OpenRouterMessage = {
-            role: 'assistant',
-            content: cleanResponse
-          };
-          this.addToMemory(assistantMessage);
-          
-          // Only continue if we haven't reached max iterations
-          debug(`Iteration check: ${iterationCount} < ${maxIterations} = ${iterationCount < maxIterations}`);
-          if (iterationCount < maxIterations) {
-            // Add a follow-up message to continue the conversation
-            const followUpMessage: OpenRouterMessage = {
-              role: 'user',
-              content: 'Continue your response based on the execution results. You can execute more code if needed, but try to provide a complete answer.'
+
+          // Add clean response part to the memory
+          if (cleanResponse.trim()) {
+            const assistantMessage: OpenRouterMessage = {
+              role: 'assistant',
+              content: cleanResponse
             };
-            messages = [followUpMessage];
-            debug(`Continuing to iteration ${iterationCount + 1}`);
-            // Continue the loop - don't break here
-          } else {
-            debug('Reached max iterations, stopping');
-            break;
+            this.addToMemory(assistantMessage);
           }
+
+          // We executed code, so we need to loop again to let the AI process the results.
+          // The results are now in memory, and contextMemory will add them to the next prompt.
+          // No need to create an artificial "continue" message. The results themselves are the prompt.
+          messages = []; // Next prompt will be built from memory
+          debug(`Continuing to iteration ${iterationCount + 1} to process execution results.`);
         } else {
-          // No Do operations found, this is the final response
-          if (finalResponse) {
-            finalResponse += '\n\n' + response;
-          } else {
-            finalResponse = response;
-          }
+          // No Do operations found, this is the final response from this iteration
+          finalResponse = response;
           
           // Create assistant message
           const assistantMessage: OpenRouterMessage = {
@@ -375,8 +325,8 @@ ${executedDo.response}
         }
       } catch (error) {
         debug('Error during AI iteration:', error);
+        // If we have a partial response, return it, otherwise rethrow.
         if (finalResponse) {
-          // Return what we have so far
           break;
         } else {
           throw error;
@@ -384,8 +334,13 @@ ${executedDo.response}
       }
     }
 
-    debug('AI ask completed, final response length:', finalResponse.length);
-    return finalResponse;
+    if (iterationCount >= maxIterations) {
+      debug('Reached max iterations, returning final response.');
+    }
+    
+    // The final response is the last content from the assistant in memory
+    const lastAssistantMessage = this.memory.filter(m => m.role === 'assistant').pop();
+    return lastAssistantMessage?.content || finalResponse || '';
   }
 
   /**
@@ -424,7 +379,7 @@ ${executedDo.response}
     let finalResponse = '';
     let allExecutionResults: any[] = [];
     let iterationCount = 0;
-    const maxIterations = 3;
+    const maxIterations = this.maxIterations;
 
     while (iterationCount < maxIterations) {
       iterationCount++;
@@ -485,8 +440,7 @@ ${executedDo.response}
         debug(`Found ${dos.length} Do operations`);
         
         if (dos.length > 0) {
-          // Execute all Do operations and collect results
-          const executionResults: any[] = [];
+          const executedDos: Do[] = [];
           
           for (const doItem of dos) {
             debug(`Executing Do operation: ${doItem.id}`);
@@ -512,6 +466,7 @@ ${executedDo.response}
             } as AICodeExecutingEvent);
             
             const executedDo = await this.do(doItem);
+            executedDos.push(executedDo);
             this.addToMemory(executedDo);
             
             // Emit code result event
@@ -525,13 +480,12 @@ ${executedDo.response}
             } as AICodeResultEvent);
             
             if (executedDo.response) {
-              executionResults.push({
+              allExecutionResults.push({
                 id: executedDo.id,
                 code: executedDo.request,
                 result: executedDo.response,
                 format: executedDo.format
               });
-              allExecutionResults.push(executionResults[executionResults.length - 1]);
             }
           }
 
@@ -554,27 +508,12 @@ ${executedDo.response}
           };
           this.addToMemory(assistantMessage);
           
-          // Only continue if we haven't reached max iterations
-          if (iterationCount < maxIterations) {
-            // Add a follow-up message to continue the conversation
-            const followUpMessage: OpenRouterMessage = {
-              role: 'user',
-              content: 'Continue your response based on the execution results. You can execute more code if needed, but try to provide a complete answer.'
-            };
-            messages = [followUpMessage];
-            debug(`Continuing to iteration ${iterationCount + 1}`);
-            // Continue the loop
-          } else {
-            debug('Reached max iterations, stopping');
-            break;
-          }
+          // We executed code, loop again to process results.
+          messages = []; // Next prompt will be built from memory
+          debug(`Continuing to iteration ${iterationCount + 1}`);
         } else {
-          // No Do operations found, this is the final response
-          if (finalResponse) {
-            finalResponse += '\n\n' + streamedResponse;
-          } else {
-            finalResponse = streamedResponse;
-          }
+          // No Do operations found, this is the final response part
+          finalResponse += streamedResponse;
           
           // Create assistant message
           const assistantMessage: OpenRouterMessage = {
@@ -947,17 +886,18 @@ ${executedDo.response}
     }
     
     // Add relevant memory (limit to prevent context overflow)
-    const recentMemory = this.memory.slice(-10); // Last 10 messages
+    const recentMemory = this.memory.slice(-this.localMessageMemoryLimit); // Use configurable limit
     recentMemory.forEach(item => {
       if ('role' in item) {
         // Handle Do objects specially to include execution results
-        if ('operation' in item && 'response' in item && item.response) {
-          // This is a Do object with execution results - send as user message
+        if (item.role === 'tool' && 'operation' in item && 'response' in item && item.response) {
+          // This is a Do object with execution results - send as tool result message
           allMessages.push({
-            role: 'user',
-            content: `Execution result from previous code:\nCode: ${item.request}\nResult: ${item.response}\n\nPlease continue your response based on this result.`
+            role: 'tool',
+            content: `Execution result from ${item.id}:\n${item.response}`,
+            tool_call_id: item.id, // This part is a bit of a hack without real tool_calls
           });
-        } else {
+        } else if (item.role === 'user' || item.role === 'assistant') {
           // Regular message
           allMessages.push({
             role: item.role,
@@ -967,8 +907,9 @@ ${executedDo.response}
       }
     });
     
-    // Add current messages
-    allMessages.push(...yourMessages);
+    // Add current messages, only if they are not already in memory from a previous failed iteration
+    const newMessages = yourMessages.filter(ym => !this.memory.some(mem => 'content' in mem && mem.content === ym.content));
+    allMessages.push(...newMessages);
     
     return allMessages;
   }
@@ -1047,6 +988,7 @@ ${executedDo.response}
    */
   setSystemPrompt(prompt: string): void {
     this.systemPrompt = prompt;
+    this.openRouter.updateOptions({ systemPrompt: prompt });
     debug('System prompt updated');
   }
 
@@ -1115,7 +1057,7 @@ ${executedDo.response}
    */
   askStream(question: string | OpenRouterMessage | OpenRouterMessage[]): Observable<string> {
     return this.asking(question).pipe(
-      filter((event: AIStreamEventUnion) => event.type === 'text'),
+      filter((event: AIStreamEventUnion): event is AITextEvent => event.type === 'text'),
       map((event: AITextEvent) => event.data.delta)
     );
   }
@@ -1125,7 +1067,7 @@ ${executedDo.response}
    */
   askWithStreaming(question: string | OpenRouterMessage | OpenRouterMessage[]): Observable<string> {
     return this.asking(question).pipe(
-      filter((event: AIStreamEventUnion) => event.type === 'complete'),
+      filter((event: AIStreamEventUnion): event is AICompleteEvent => event.type === 'complete'),
       map((event: AICompleteEvent) => event.data.finalResponse)
     );
   }
@@ -1135,7 +1077,7 @@ ${executedDo.response}
    */
   getExecutionResults(question: string | OpenRouterMessage | OpenRouterMessage[]): Observable<any[]> {
     return this.asking(question).pipe(
-      filter((event: AIStreamEventUnion) => event.type === 'complete'),
+      filter((event: AIStreamEventUnion): event is AICompleteEvent => event.type === 'complete'),
       map((event: AICompleteEvent) => event.data.executionResults)
     );
   }

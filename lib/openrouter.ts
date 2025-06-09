@@ -30,6 +30,7 @@ export interface OpenRouterOptions {
   response_format?: { type: 'json_object' };
   user?: string;
   timeout?: number;
+  systemPrompt?: string;
 }
 
 export interface OpenRouterResponse {
@@ -83,6 +84,7 @@ export class OpenRouter {
   public context: ExecContext;
   private execInstance: Exec;
   private token: string;
+  private options: OpenRouterOptions;
 
   constructor(
     token: string, 
@@ -94,9 +96,9 @@ export class OpenRouter {
     }
 
     this.token = token;
-
+    this.options = { ...this.defaultOptions, ...options };
     this.context = { ...context };
-    this.execInstance = new Exec(this.context);
+    this.execInstance = new Exec({ initialContext: this.context });
   }
 
   /**
@@ -106,7 +108,7 @@ export class OpenRouter {
     messages: string | OpenRouterMessage | OpenRouterMessage[],
     options: OpenRouterOptions = {}
   ): Promise<string> {
-    const finalOptions = { ...this.defaultOptions, ...options };
+    const finalOptions = { ...this.options, ...options };
     
     // Normalize messages to array format
     let normalizedMessages: OpenRouterMessage[];
@@ -117,6 +119,11 @@ export class OpenRouter {
       normalizedMessages = messages;
     } else {
       normalizedMessages = [messages];
+    }
+
+    // Add system prompt if it exists in options
+    if (finalOptions.systemPrompt && !normalizedMessages.some(m => m.role === 'system')) {
+      normalizedMessages.unshift({ role: 'system', content: finalOptions.systemPrompt });
     }
 
     try {
@@ -169,7 +176,7 @@ export class OpenRouter {
     messages: string | OpenRouterMessage | OpenRouterMessage[],
     options: OpenRouterOptions = {}
   ): Promise<ReadableStream<string>> {
-    const finalOptions = { ...this.defaultOptions, ...options, stream: true };
+    const finalOptions = { ...this.options, ...options, stream: true };
     
     // Normalize messages to array format
     let normalizedMessages: OpenRouterMessage[];
@@ -180,6 +187,11 @@ export class OpenRouter {
       normalizedMessages = messages;
     } else {
       normalizedMessages = [messages];
+    }
+
+    // Add system prompt if it exists in options
+    if (finalOptions.systemPrompt && !normalizedMessages.some(m => m.role === 'system')) {
+      normalizedMessages.unshift({ role: 'system', content: finalOptions.systemPrompt });
     }
 
     try {
@@ -374,6 +386,13 @@ IMPORTANT:
   updateContext(updates: ExecContext): void {
     Object.assign(this.context, updates);
     this.execInstance.updateContext(updates);
+  }
+
+  /**
+   * Update the OpenRouter options
+   */
+  updateOptions(updates: OpenRouterOptions): void {
+    this.options = { ...this.options, ...updates };
   }
 
   /**

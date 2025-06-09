@@ -51,13 +51,9 @@ describe('OpenRouter', () => {
     });
 
     it('should maintain context between executions', async () => {
-      const openrouter = new OpenRouter(testToken);
-      
-      // Set a variable in context manually
-      openrouter.updateContext({ x: 42 });
-      
-      // Use the variable in execution
-      const result = await openrouter.exec('x + 8');
+      const openrouter = new OpenRouter('test-token', { x: 42 });
+      await openrouter.exec('x = 42');
+      const { result } = await openrouter.exec('x + 8');
       
       expect(result).toBe(50);
     });
@@ -65,26 +61,25 @@ describe('OpenRouter', () => {
 
   describe('JavaScript Execution', () => {
     it('should execute JavaScript code', async () => {
-      const openrouter = new OpenRouter(testToken);
+      const openrouter = new OpenRouter('test-token');
       
-      const result = await openrouter.exec('2 + 2');
+      const { result } = await openrouter.exec('2 + 2');
       expect(result).toBe(4);
     });
 
     it('should support context extension', async () => {
-      const openrouter = new OpenRouter(testToken);
+      const openrouter = new OpenRouter('test-token');
       
-      const result = await openrouter.exec('y + 5', { y: 15 });
+      const { result } = await openrouter.exec('y + 5', { y: 15 });
       expect(result).toBe(20);
     });
 
     it('should support async code execution', async () => {
-      const openrouter = new OpenRouter(testToken);
+      const openrouter = new OpenRouter('test-token');
       
-      const result = await openrouter.exec(`
-        const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-        await delay(10);
-        return 'async result';
+      const { result } = await openrouter.exec(`
+        const p = new Promise(resolve => setTimeout(() => resolve('async result'), 10));
+        await p;
       `);
       expect(result).toBe('async result');
     });

@@ -3,6 +3,7 @@ import { ExecTs, createExecTs } from './exec-tsx';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import * as ts from 'typescript';
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -19,9 +20,11 @@ describe('ExecTs', () => {
     
     // Initialize ExecTs instance
     execTs = new ExecTs({
-      console,
-      Math,
-      Date,
+      initialContext: {
+        console,
+        Math,
+        Date,
+      }
     });
   });
 
@@ -40,7 +43,7 @@ describe('ExecTs', () => {
         return { message, count };
       `;
       
-      const result = await execTs.execTs(code);
+      const { result } = await execTs.execTs(code);
       expect(result).toEqual({ message: "Hello TypeScript", count: 42 });
     });
 
@@ -59,7 +62,7 @@ describe('ExecTs', () => {
         return user;
       `;
       
-      const result = await execTs.execTs(code);
+      const { result } = await execTs.execTs(code);
       expect(result).toEqual({ name: "John Doe", age: 30 });
     });
 
@@ -73,7 +76,7 @@ describe('ExecTs', () => {
         return { userStatus, isActive };
       `;
       
-      const result = await execTs.execTs(code);
+      const { result } = await execTs.execTs(code);
       expect(result).toEqual({ userStatus: "active", isActive: true });
     });
 
@@ -89,7 +92,7 @@ describe('ExecTs', () => {
         return { stringResult, numberResult };
       `;
       
-      const result = await execTs.execTs(code);
+      const { result } = await execTs.execTs(code);
       expect(result).toEqual({ stringResult: "hello", numberResult: 123 });
     });
 
@@ -106,7 +109,7 @@ describe('ExecTs', () => {
         return { favoriteColor, allColors: Object.values(Color) };
       `;
       
-      const result = await execTs.execTs(code);
+      const { result } = await execTs.execTs(code);
       expect(result).toEqual({ 
         favoriteColor: "blue", 
         allColors: ["red", "green", "blue"] 
@@ -129,7 +132,7 @@ describe('ExecTs', () => {
         return { config1, config2 };
       `;
       
-      const result = await execTs.execTs(code);
+      const { result } = await execTs.execTs(code);
       expect(result).toEqual({
         config1: { name: "app" },
         config2: { name: "app", port: 3000, debug: true }
@@ -145,7 +148,7 @@ describe('ExecTs', () => {
         return upperCase;
       `;
       
-      const result = await execTs.execTs(code);
+      const { result } = await execTs.execTs(code);
       expect(result).toBe("HELLO WORLD");
     });
 
@@ -160,7 +163,7 @@ describe('ExecTs', () => {
         return { doubled, uppercased };
       `;
       
-      const result = await execTs.execTs(code);
+      const { result } = await execTs.execTs(code);
       expect(result).toEqual({
         doubled: [2, 4, 6, 8, 10],
         uppercased: ["A", "B", "C"]
@@ -177,7 +180,7 @@ describe('ExecTs', () => {
       
       // Note: TypeScript transpiler is lenient and may not catch all type errors
       // This test verifies that the execution doesn't crash
-      const result = await execTs.execTs(code);
+      const { result } = await execTs.execTs(code);
       expect(result).toBe(123);
     });
 
@@ -194,8 +197,10 @@ describe('ExecTs', () => {
   describe('Context integration', () => {
     it('should use provided context', async () => {
       const customExecTs = new ExecTs({
-        customValue: 42,
-        customFunction: (x: number) => x * 2
+        initialContext: {
+          customValue: 42,
+          customFunction: (x: number) => x * 2
+        }
       });
       
       const code = `
@@ -203,7 +208,7 @@ describe('ExecTs', () => {
         return result;
       `;
       
-      const result = await customExecTs.execTs(code);
+      const { result } = await customExecTs.execTs(code);
       expect(result).toBe(84);
     });
 
@@ -213,7 +218,7 @@ describe('ExecTs', () => {
         return sum;
       `;
       
-      const result = await execTs.execTs(code, { a: 10, b: 20 });
+      const { result } = await execTs.execTs(code, { a: 10, b: 20 });
       expect(result).toBe(30);
     });
   });
@@ -232,13 +237,25 @@ describe('ExecTs', () => {
       expect(ExecTs.isTypeScriptCode('function test(x) { return x; }')).toBe(false);
       expect(ExecTs.isTypeScriptCode('const obj = { name: "test" }')).toBe(false);
     });
+
+    it('should create ExecTs instance using factory function', async () => {
+      const instance = createExecTs({ initialContext: { testValue: 123 } });
+      
+      const code = `
+        const result: number = testValue * 2;
+        return result;
+      `;
+      
+      const { result } = await instance.execTs(code);
+      expect(result).toBe(246);
+    });
   });
 
   describe('Configuration', () => {
     it('should use custom compiler options', async () => {
-      const customExecTs = new ExecTs({}, {
+      const customExecTs = new ExecTs({
         compilerOptions: {
-          target: 5, // ES2015
+          target: ts.ScriptTarget.ES2015,
           strict: false
         }
       });
@@ -248,12 +265,12 @@ describe('ExecTs', () => {
         return message;
       `;
       
-      const result = await customExecTs.execTs(code);
+      const { result } = await customExecTs.execTs(code);
       expect(result).toBe("Hello");
     });
 
     it('should use strict option from ExecTsOptions', async () => {
-      const customExecTs = new ExecTs({}, {
+      const customExecTs = new ExecTs({
         strict: false
       });
       
@@ -262,22 +279,8 @@ describe('ExecTs', () => {
         return message;
       `;
       
-      const result = await customExecTs.execTs(code);
+      const { result } = await customExecTs.execTs(code);
       expect(result).toBe("Hello");
-    });
-  });
-
-  describe('Factory function', () => {
-    it('should create ExecTs instance using factory function', async () => {
-      const instance = createExecTs({ testValue: 123 });
-      
-      const code = `
-        const result: number = testValue * 2;
-        return result;
-      `;
-      
-      const result = await instance.execTs(code);
-      expect(result).toBe(246);
     });
   });
 

@@ -43,9 +43,10 @@ When asked to execute code, use this format:
 
     const ai = new AI(
       process.env.OPENROUTER_API_KEY || 'test-key',
-      {},
-      { model: TEST_MODEL },
-      testSystemPrompt
+      { 
+        model: TEST_MODEL,
+        systemPrompt: testSystemPrompt
+      }
     );
 
     expect(ai).toBeInstanceOf(AI);
@@ -61,7 +62,6 @@ describe('Real AI Class Tests', () => {
   it('should handle real memory management operations', () => {
     const ai = new AI(
       process.env.OPENROUTER_API_KEY || 'test-key',
-      {},
       { model: TEST_MODEL }
     );
     
@@ -106,7 +106,6 @@ describe('Real AI Class Tests', () => {
   it('should parse real Do operations from message content', () => {
     const ai = new AI(
       process.env.OPENROUTER_API_KEY || 'test-key',
-      {},
       { model: TEST_MODEL }
     );
     
@@ -174,7 +173,6 @@ End of message.
   it('should generate real Do objects from message parts', () => {
     const ai = new AI(
       process.env.OPENROUTER_API_KEY || 'test-key',
-      {},
       { model: TEST_MODEL }
     );
     
@@ -240,7 +238,6 @@ console.log(obj);
   it('should handle real code execution via Do operations', async () => {
     const ai = new AI(
       process.env.OPENROUTER_API_KEY || 'test-key',
-      {},
       { model: TEST_MODEL }
     );
     
@@ -309,7 +306,6 @@ console.log(obj);
     
     const ai = new AI(
       process.env.OPENROUTER_API_KEY!,
-      {},
       { model: TEST_MODEL }
     );
     
@@ -352,7 +348,6 @@ console.log(obj);
     
     const ai = new AI(
       process.env.OPENROUTER_API_KEY!,
-      {},
       { model: TEST_MODEL }
     );
     
@@ -409,7 +404,6 @@ console.log(obj);
     
     const ai = new AI(
       process.env.OPENROUTER_API_KEY!,
-      {},
       { model: TEST_MODEL }
     );
     

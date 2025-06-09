@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import cloneDeep from 'lodash/cloneDeep';
-import { Exec, ExecOptions, ExecContext } from './exec';
+import { Exec, ExecOptions, ExecContext, ExecResult } from './exec';
 import Debug from './debug';
 
 const debug = Debug('hasyx:exec-tsx');
@@ -69,8 +69,8 @@ export class ExecTs extends Exec {
   private tsOptions: ExecTsOptions;
   private compilerOptions: ts.CompilerOptions;
 
-  constructor(initialContext: ExecContext = {}, options: ExecTsOptions = {}) {
-    super(initialContext, options);
+  constructor(options: ExecTsOptions = {}) {
+    super(options);
     
     this.tsOptions = options;
     
@@ -90,7 +90,7 @@ export class ExecTs extends Exec {
   /**
    * Execute TypeScript code by compiling it to JavaScript first
    */
-  async execTs(code: string, contextExtend: ExecContext = {}): Promise<any> {
+  async execTs(code: string, contextExtend: ExecContext = {}): Promise<ExecResult> {
     debug('Executing TypeScript code:', code);
     
     try {
@@ -109,7 +109,7 @@ export class ExecTs extends Exec {
   /**
    * Execute compiled TypeScript/JavaScript code with special handling for return statements
    */
-  private async execCompiledTs(compiledJs: string, contextExtend: ExecContext = {}): Promise<any> {
+  private async execCompiledTs(compiledJs: string, contextExtend: ExecContext = {}): Promise<ExecResult> {
     // Check if code has top-level return statements
     const hasTopLevelReturn = /^\s*return\s/m.test(compiledJs);
     
@@ -183,12 +183,12 @@ export class ExecTs extends Exec {
 }
 
 // Factory function for easier usage
-export function createExecTs(context: ExecContext = {}, options: ExecTsOptions = {}): ExecTs {
-  return new ExecTs(context, options);
+export function createExecTs(options: ExecTsOptions = {}): ExecTs {
+  return new ExecTs(options);
 }
 
 export interface ExecTsDo {
-  exec: (code: string) => Promise<any>;
+  exec: (code: string) => Promise<ExecResult>;
   context: any;
   updateContext: (newContext: any) => void;
   getContext: () => any;
@@ -197,7 +197,7 @@ export interface ExecTsDo {
 
 export interface ExecTsDoCallbacks {
   onCodeExecuting?: (code: string) => void;
-  onCodeResult?: (result: any) => void;
+  onCodeResult?: (result: any, logs: any[]) => void;
   onError?: (error: Error) => void;
 }
 
@@ -205,7 +205,7 @@ export interface ExecTsDoCallbacks {
  * Create execTsDo object for AI integration
  */
 export function createExecTsDo(context: any = {}, callbacks: ExecTsDoCallbacks = {}): ExecTsDo {
-  const execTs = new ExecTs(context);
+  const execTs = new ExecTs({ initialContext: context });
   
   return {
     exec: async (code: string) => {
@@ -214,10 +214,10 @@ export function createExecTsDo(context: any = {}, callbacks: ExecTsDoCallbacks =
           callbacks.onCodeExecuting(code);
         }
         
-        const result = await execTs.exec(code);
+        const result = await execTs.execTs(code);
         
         if (callbacks.onCodeResult) {
-          callbacks.onCodeResult(result);
+          callbacks.onCodeResult(result.result, result.logs);
         }
         
         return result;

@@ -3,15 +3,95 @@
 // replace 'vm' with 'vm-browserify'
 import vm from 'vm';
 import { createRequire } from 'module';
+import Debug from './debug';
+
+const debug = Debug('hasyx:exec');
 
 export interface ExecOptions {
   timeout?: number;
   displayErrors?: boolean;
+  consoleMemoryLimit?: number;
+  onConsole?: (log: ConsoleLog) => void;
+  initialContext?: ExecContext;
 }
 
 export interface ExecContext {
   [key: string]: any;
 }
+
+export interface ConsoleLog {
+  level: 'log' | 'warn' | 'error' | 'info' | 'debug';
+  args: any[];
+  timestamp: Date;
+}
+
+export interface ExecResult {
+  result: any;
+  logs: ConsoleLog[];
+}
+
+/**
+ * Creates a proxy for the console object to intercept log messages.
+ */
+export const generateConsole = (options: {
+  onConsole?: (log: ConsoleLog) => void;
+  memoryLimit?: number;
+}) => {
+  const memory: ConsoleLog[] = [];
+  const limit = options.memoryLimit ?? 1000;
+
+  const createHandler = (level: ConsoleLog['level']) => {
+    return (...args: any[]) => {
+      const logEntry: ConsoleLog = {
+        level,
+        args,
+        timestamp: new Date(),
+      };
+      
+      memory.push(logEntry);
+      if (memory.length > limit) {
+        memory.shift();
+      }
+      
+      if (options.onConsole) {
+        options.onConsole(logEntry);
+      }
+      
+      // Also call the original console method
+      if (typeof console !== 'undefined' && console[level]) {
+        (console[level] as Function)(...args);
+      } else if (typeof console !== 'undefined') {
+        console.log(...args);
+      }
+    };
+  };
+
+  const consoleProxy = {
+    log: createHandler('log'),
+    warn: createHandler('warn'),
+    error: createHandler('error'),
+    info: createHandler('info'),
+    debug: createHandler('debug'),
+    _memory: memory,
+    _clearMemory: () => {
+      memory.length = 0;
+    },
+    get _memoryLimit() {
+      return limit;
+    }
+  };
+
+  // Add other console methods to the proxy to ensure full compatibility
+  if (typeof console !== 'undefined') {
+    for (const key in console) {
+      if (typeof (console as any)[key] === 'function' && !(consoleProxy as any)[key]) {
+        (consoleProxy as any)[key] = (console as any)[key].bind(console);
+      }
+    }
+  }
+
+  return consoleProxy;
+};
 
 // Global results storage for persistent state between executions
 const globalResults: { [uuid: string]: any } = {};
@@ -48,50 +128,36 @@ const initializeUse = async () => {
 };
 
 // Get environment-appropriate globals
-const getEnvironmentGlobals = () => {
+const getEnvironmentGlobals = (wrappedConsole: any) => {
   const globals: any = {
-    console: console,
-    setTimeout: setTimeout,
-    clearTimeout: clearTimeout,
-    setInterval: setInterval,
-    clearInterval: clearInterval,
-    URL: URL,
-    Error: Error,
-    Date: Date,
-    Math: Math,
-    JSON: JSON,
-    Promise: Promise,
-    // Add global results object for persistent state
+    console: wrappedConsole,
     results: globalResults,
   };
 
+  // Add globals available in both environments
+  if(typeof setTimeout !== 'undefined') globals.setTimeout = setTimeout;
+  if(typeof clearTimeout !== 'undefined') globals.clearTimeout = clearTimeout;
+  if(typeof setInterval !== 'undefined') globals.setInterval = setInterval;
+  if(typeof clearInterval !== 'undefined') globals.clearInterval = clearInterval;
+  if(typeof URL !== 'undefined') globals.URL = URL;
+  if(typeof Error !== 'undefined') globals.Error = Error;
+  if(typeof Date !== 'undefined') globals.Date = Date;
+  if(typeof Math !== 'undefined') globals.Math = Math;
+  if(typeof JSON !== 'undefined') globals.JSON = JSON;
+  if(typeof Promise !== 'undefined') globals.Promise = Promise;
+
   // Add Node.js specific globals only if available
   if (typeof window === 'undefined') {
-    // Node.js environment
     globals.process = process;
-    
-    // Create require function for ESM compatibility
-    try {
-      // In Jest environment, just use require if available
-      if (typeof require !== 'undefined') {
-        globals.require = require;
-      }
-    } catch (error) {
-      // Fallback for environments where require is not available
+    if (typeof require !== 'undefined') {
+      globals.require = require;
     }
-    
-    globals.Buffer = Buffer;
+    if(typeof Buffer !== 'undefined') globals.Buffer = Buffer;
   } else {
-    // Browser environment - provide safe alternatives
     globals.process = {
-      env: {},
-      version: 'browser',
-      platform: 'browser',
-      cwd: () => '/',
-      nextTick: (fn: Function) => setTimeout(fn, 0)
+      env: {}, version: 'browser', platform: 'browser',
+      cwd: () => '/', nextTick: (fn: Function) => setTimeout(fn, 0)
     };
-    // Note: require is intentionally not provided in browser for security
-    // Buffer is not available in browser by default
   }
 
   return globals;
@@ -100,202 +166,144 @@ const getEnvironmentGlobals = () => {
 export class Exec {
   private context: vm.Context;
   private options: ExecOptions;
-  private initialContext: ExecContext;
+  public initialContext: ExecContext;
+  public console: ReturnType<typeof generateConsole>;
+  public results: { [uuid: string]: any } = globalResults;
 
-  constructor(initialContext: ExecContext = {}, options: ExecOptions = {}) {
+  constructor(options: ExecOptions = {}) {
     this.options = {
       timeout: 30000,
       displayErrors: true,
+      consoleMemoryLimit: 1000,
       ...options
     };
 
-    this.initialContext = { ...initialContext };
-
-    // Create VM context with environment-appropriate globals and user context
-    this.context = vm.createContext({
-      ...getEnvironmentGlobals(),
-      ...initialContext
+    this.initialContext = { ...this.options.initialContext };
+    this.console = generateConsole({
+      onConsole: this.options.onConsole,
+      memoryLimit: this.options.consoleMemoryLimit,
     });
+    this.context = vm.createContext({});
+    this.rebuildContext();
+  }
+  
+  private rebuildContext() {
+    this.context = vm.createContext(getEnvironmentGlobals(this.console));
+    const fullContext = { ...this.initialContext, use: this.use.bind(this) };
+    
+    for (const key of Object.keys(fullContext)) {
+      this.context[key] = fullContext[key];
+    }
   }
 
-  async exec(code: string, contextExtend: ExecContext = {}): Promise<any> {
-    // Initialize use-m function if not already done
-    const use = await initializeUse();
-    
-    // Create execution context with all globals
-    const executionContext = vm.createContext({
-      ...getEnvironmentGlobals(),
-      ...this.initialContext,
-      ...contextExtend,
-      // Add use-m function (dynamically loaded)
-      use: use
+  async use(moduleName: string): Promise<any> {
+    const useFn = await initializeUse();
+    if (useFn) {
+        return useFn(moduleName);
+    }
+    throw new Error("'use' function is not available in this environment.");
+  }
+
+  async exec(code: string, contextExtend: ExecContext = {}): Promise<ExecResult> {
+    // Create a temporary console for this execution to capture its specific logs
+    const executionLogs: ConsoleLog[] = [];
+    const executionConsole = generateConsole({
+      onConsole: (log) => {
+        // Add to execution-specific logs
+        executionLogs.push(log);
+        // Also add to instance console for memory accumulation
+        this.console._memory.push(log);
+        if (this.console._memory.length > this.console._memoryLimit) {
+          this.console._memory.shift();
+        }
+        // Call the original onConsole callback if provided
+        if (this.options.onConsole) {
+          this.options.onConsole(log);
+        }
+      },
+      memoryLimit: this.options.consoleMemoryLimit,
     });
+    
+    const originalConsole = this.context.console;
+    this.context.console = executionConsole;
+
+    // Add extended context for this execution
+    for (const key in contextExtend) {
+      this.context[key] = contextExtend[key];
+    }
+    
+    // Check if code needs async wrapping
+    const hasAwait = /\bawait\s+/m.test(code);
+    // Only consider it a top-level return if it's not inside a function
+    const hasTopLevelReturn = /^(\s*)return\s/m.test(code) && 
+      !/function\s*\w*\s*\([^)]*\)\s*{[\s\S]*return/.test(code) &&
+      !/=>\s*{[\s\S]*return/.test(code);
+    
+    let wrappedCode: string;
+    if (hasTopLevelReturn) {
+      // Code has explicit return statements - just wrap in function
+      wrappedCode = `(async function() { ${code} })()`;
+    } else if (hasAwait) {
+      // Code has await but no explicit returns - need to return last expression
+      const lines = code.trim().split('\n');
+      const lastLine = lines[lines.length - 1].trim();
+      const previousLines = lines.slice(0, -1).join('\n');
+      if (previousLines.trim()) {
+        wrappedCode = `(async function() { ${previousLines}; return ${lastLine}; })()`;
+      } else {
+        wrappedCode = `(async function() { return ${lastLine}; })()`;
+      }
+    } else {
+      // For most cases, simple execution works fine and returns the last expression
+      wrappedCode = code;
+    }
 
     try {
-      const trimmedCode = code.trim();
-      
-      // Check if code contains await or async patterns
-      const hasAwait = /\bawait\b/.test(trimmedCode);
-      
-      // Check if await is at top level (not inside async function)
-      let hasTopLevelAwait = false;
-      if (hasAwait) {
-        // Remove all async function blocks and check if await still exists
-        const codeWithoutAsyncFunctions = trimmedCode
-          .replace(/async\s+function[^{]*\{[\s\S]*?\}/g, '') // Remove async functions
-          .replace(/async\s*\([^)]*\)\s*=>\s*\{[\s\S]*?\}/g, '') // Remove async arrow functions
-          .replace(/async\s*\([^)]*\)\s*=>[^,;\n}]*/g, ''); // Remove simple async arrows
-        
-        hasTopLevelAwait = /\bawait\b/.test(codeWithoutAsyncFunctions);
-      }
-
-      // For simple expressions, wrap in return statement
-      const isSimpleExpression = (
-        !trimmedCode.includes('\n') && 
-        !trimmedCode.includes(';') &&
-        !trimmedCode.includes('const ') &&
-        !trimmedCode.includes('let ') &&
-        !trimmedCode.includes('var ') &&
-        !trimmedCode.includes('function ') &&
-        !trimmedCode.includes('class ') &&
-        !trimmedCode.includes('if ') &&
-        !trimmedCode.includes('for ') &&
-        !trimmedCode.includes('while ') &&
-        !trimmedCode.includes('throw ') &&
-        !trimmedCode.includes('return ') &&
-        !trimmedCode.includes('break ') &&
-        !trimmedCode.includes('continue ') &&
-        !trimmedCode.includes('=') &&
-        !hasAwait &&
-        trimmedCode.length > 0
-      );
-
-      let wrappedCode: string;
-      
-      if (isSimpleExpression) {
-        // Simple expression - just return it
-        wrappedCode = `(${trimmedCode})`;
-      } else if (hasTopLevelAwait) {
-        // Wrap in async IIFE for top-level await
-        const lines = trimmedCode.split('\n').map(line => line.trim()).filter(line => line);
-        const lastLine = lines[lines.length - 1];
-        
-        // If last line looks like an expression, return it
-        if (lastLine && 
-            !lastLine.includes('=') && 
-            !lastLine.endsWith(';') &&
-            !lastLine.startsWith('const ') &&
-            !lastLine.startsWith('let ') &&
-            !lastLine.startsWith('var ') &&
-            !lastLine.startsWith('throw ') &&
-            !lastLine.includes('function ') &&
-            !lastLine.includes('class ') &&
-            // Check if it's a valid expression (variable, comparison, logical operations, etc.)
-            (
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*$/.test(lastLine) || // Simple variable access
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*(===|!==|==|!=|>|<|>=|<=)\s*/.test(lastLine) || // Comparisons
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*(&&|\|\|)\s*/.test(lastLine) || // Logical operations
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*[+\-*/]\s*/.test(lastLine) || // Arithmetic operations
-              /^\(.+\)$/.test(lastLine) || // Parenthesized expressions
-              /^typeof\s+/.test(lastLine) || // typeof operator
-              /^await\s+/.test(lastLine) || // await expressions
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\([^)]*\)$/.test(lastLine) || // Method calls like _.add(1,2)
-              lastLine.includes(' === ') || lastLine.includes(' !== ') || // Explicit equality checks
-              lastLine.includes(' == ') || lastLine.includes(' != ') ||
-              lastLine.includes(' && ') || lastLine.includes(' || ') // Explicit logical operators
-            )) {
-          
-          const codeWithoutLastLine = lines.slice(0, -1).join('\n');
-          wrappedCode = `(async function() {
-            ${codeWithoutLastLine}
-            return ${lastLine};
-          })()`;
-        } else {
-          // Just execute as-is in async IIFE
-          wrappedCode = `(async function() {
-            ${trimmedCode}
-          })()`;
-        }
-            } else {
-        // Multi-line code or statements
-        const lines = trimmedCode.split('\n').map(line => line.trim()).filter(line => line);
-              const lastLine = lines[lines.length - 1];
-              
-        // If last line looks like an expression (no keywords, no assignment), return it
-        if (lastLine && 
-            !lastLine.includes('=') && 
-            !lastLine.endsWith(';') &&
-            !lastLine.startsWith('const ') &&
-            !lastLine.startsWith('let ') &&
-            !lastLine.startsWith('var ') &&
-            !lastLine.startsWith('throw ') &&
-            // Check if it's a valid expression (variable, comparison, logical operations, etc.)
-            (
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*$/.test(lastLine) || // Simple variable access
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*(===|!==|==|!=|>|<|>=|<=)\s*/.test(lastLine) || // Comparisons
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*(&&|\|\|)\s*/.test(lastLine) || // Logical operations
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\s*[+\-*/]\s*/.test(lastLine) || // Arithmetic operations
-              /^\(.+\)$/.test(lastLine) || // Parenthesized expressions
-              /^typeof\s+/.test(lastLine) || // typeof operator
-              /^await\s+/.test(lastLine) || // await expressions
-              /^[a-zA-Z_$][a-zA-Z0-9_$.[\]]*\([^)]*\)$/.test(lastLine) || // Method calls like _.add(1,2)
-              lastLine.includes(' === ') || lastLine.includes(' !== ') || // Explicit equality checks
-              lastLine.includes(' == ') || lastLine.includes(' != ') ||
-              lastLine.includes(' && ') || lastLine.includes(' || ') // Explicit logical operators
-            )) {
-          
-          // Execute all but last line, then return last line
-          const codeWithoutLastLine = lines.slice(0, -1).join('\n');
-          wrappedCode = `
-            ${codeWithoutLastLine}
-            ${lastLine}
-          `;
-                  } else {
-          // Just execute the code as-is
-          wrappedCode = trimmedCode;
-        }
-      }
-
-      const result = vm.runInContext(wrappedCode, executionContext, {
+      const resultPromise = vm.runInContext(wrappedCode, this.context, {
         timeout: this.options.timeout,
         displayErrors: this.options.displayErrors
       });
 
-      // Handle promises (for async code)
-      const finalResult = result instanceof Promise ? await result : result;
+      // Handle both sync and async results
+      const result = await Promise.resolve(resultPromise);
       
-      return finalResult;
+      // Return the execution-specific logs
+      const capturedLogs = executionLogs;
+
+      debug(`Code executed successfully, result: ${JSON.stringify(result)}`);
+      return { result, logs: capturedLogs };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Execution error: ${errorMessage}`);
+    } finally {
+        // Cleanup: remove extended context properties and restore console
+        for (const key in contextExtend) {
+            delete this.context[key];
+        }
+        this.context.console = originalConsole;
     }
   }
 
   getContext(): ExecContext {
-    return { ...this.initialContext };
+    const context = { ...this.initialContext };
+    delete (context as any).console;
+    return context;
   }
 
   updateContext(updates: ExecContext): void {
     Object.assign(this.initialContext, updates);
-    // Update the main context as well
-    Object.assign(this.context, updates);
+    this.rebuildContext();
   }
 
   clearContext(): void {
     this.initialContext = {};
-    
-    // Recreate context with only essential globals
-    this.context = vm.createContext({
-      ...getEnvironmentGlobals()
-    });
+    this.rebuildContext();
   }
 
-  // Static method to detect environment
   static getEnvironment(): 'node' | 'browser' {
     return typeof window === 'undefined' ? 'node' : 'browser';
   }
 
-  // Static method to check if running in secure context (browser only)
   static isSecureContext(): boolean {
     if (typeof window === 'undefined') {
       return true; // Node.js is considered secure
@@ -303,7 +311,6 @@ export class Exec {
     return window.isSecureContext || location.protocol === 'https:';
   }
 
-  // Static methods for working with global results object
   static getResults(): { [uuid: string]: any } {
     return globalResults;
   }
@@ -330,12 +337,12 @@ export class Exec {
 }
 
 // Factory function for easier usage
-export function createExec(context: ExecContext = {}, options: ExecOptions = {}): Exec {
-  return new Exec(context, options);
-} 
+export function createExec(options: ExecOptions = {}): Exec {
+  return new Exec(options);
+}
 
 export interface ExecDo {
-  exec: (code: string) => Promise<any>;
+  exec: (code: string) => Promise<ExecResult>;
   context: any;
   updateContext: (newContext: any) => void;
   getContext: () => any;
@@ -344,7 +351,7 @@ export interface ExecDo {
 
 export interface ExecDoCallbacks {
   onCodeExecuting?: (code: string) => void;
-  onCodeResult?: (result: any) => void;
+  onCodeResult?: (result: any, logs: ConsoleLog[]) => void;
   onError?: (error: Error) => void;
 }
 
@@ -352,26 +359,17 @@ export interface ExecDoCallbacks {
  * Create execDo object for AI integration
  */
 export function createExecDo(context: any = {}, callbacks: ExecDoCallbacks = {}): ExecDo {
-  const exec = new Exec(context);
+  const exec = new Exec({ initialContext: context });
   
   return {
     exec: async (code: string) => {
       try {
-        if (callbacks.onCodeExecuting) {
-          callbacks.onCodeExecuting(code);
-        }
-        
-        const result = await exec.exec(code);
-        
-        if (callbacks.onCodeResult) {
-          callbacks.onCodeResult(result);
-        }
-        
-        return result;
+        if (callbacks.onCodeExecuting) callbacks.onCodeExecuting(code);
+        const execResult = await exec.exec(code);
+        if (callbacks.onCodeResult) callbacks.onCodeResult(execResult.result, execResult.logs);
+        return execResult;
       } catch (error) {
-        if (callbacks.onError) {
-          callbacks.onError(error as Error);
-        }
+        if (callbacks.onError) callbacks.onError(error as Error);
         throw error;
       }
     },

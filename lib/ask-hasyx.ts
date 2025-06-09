@@ -10,8 +10,8 @@ import Debug from 'hasyx/lib/debug';
 // the .env is loaded from the user's current directory, not from hasyx package directory
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-import { AI, Do } from 'hasyx/lib/ai';
-import { execDo, execContext } from 'hasyx/lib/exec';
+import { AI, Do, AIOptions } from 'hasyx/lib/ai';
+import { execDo, execContext, ExecResult } from 'hasyx/lib/exec';
 import { execTsDo, execTsContext } from 'hasyx/lib/exec-tsx';
 import { terminalDo, terminalContext } from 'hasyx/lib/terminal';
 import { printMarkdown } from 'hasyx/lib/markdown-terminal';
@@ -36,6 +36,11 @@ export interface OutputHandlers {
   onGoodbye?: () => void | Promise<void>;
 }
 
+export interface AskHasyxOptions extends AIOptions {
+  askOptions?: AskOptions;
+  outputHandlers?: OutputHandlers;
+}
+
 export class AskHasyx extends AI {
   public context: string;
   public engines: {
@@ -47,36 +52,17 @@ export class AskHasyx extends AI {
   public askOptions: AskOptions;
   public outputHandlers: OutputHandlers;
 
-  constructor(
-    token: string, 
-    context: any = {}, 
-    options: any = {}, 
-    systemPrompt?: string, 
-    askOptions: AskOptions = {},
-    outputHandlers: OutputHandlers = {}
-  ) {
-    // Set default ask options
-    const defaultAskOptions: AskOptions = {
-      exec: true,
-      execTs: true,
-      terminal: true
-    };
-    
+  constructor(token: string, options: AskHasyxOptions = {}) {
+    const { askOptions = {}, outputHandlers = {}, ...aiOptions } = options;
+
+    const defaultAskOptions: AskOptions = { exec: true, execTs: true, terminal: true };
     const finalAskOptions = { ...defaultAskOptions, ...askOptions };
 
-    // Build context string based on enabled engines
     const contextParts: string[] = [];
-    if (finalAskOptions.exec) {
-      contextParts.push(execContext);
-    }
-    if (finalAskOptions.execTs) {
-      contextParts.push(execTsContext);
-    }
-    if (finalAskOptions.terminal) {
-      contextParts.push(terminalContext);
-    }
+    if (finalAskOptions.exec) contextParts.push(execContext);
+    if (finalAskOptions.execTs) contextParts.push(execTsContext);
+    if (finalAskOptions.terminal) contextParts.push(terminalContext);
 
-    // Default system prompt if none provided
     const defaultSystemPrompt = `You are an AI assistant for development projects.
 
 We are working together on this project. When we need to execute code, analyze data, or perform operations, we use the available execution environments.
@@ -99,36 +85,28 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
 - Only execute code when it's actually necessary to answer the question
 
 **Important:** Don't separate yourself from the user - we are working together as a team. Only execute code when it's actually necessary to answer the question.`;
+    
+    const finalSystemPrompt = aiOptions.systemPrompt || defaultSystemPrompt;
 
-    // Use provided system prompt or default
-    const finalSystemPrompt = systemPrompt || defaultSystemPrompt;
-
-    // Set default AI options
-    const defaultOptions = {
+    const finalAiOptions: AIOptions = {
       model: 'google/gemini-2.5-flash-preview',
       temperature: 0.1,
-      max_tokens: 2048
+      max_tokens: 2048,
+      ...aiOptions,
+      systemPrompt: finalSystemPrompt,
     };
     
-    const finalOptions = { ...defaultOptions, ...options };
-
-    super(token, context, finalOptions, finalSystemPrompt);
+    super(token, finalAiOptions);
 
     this.askOptions = finalAskOptions;
     this.outputHandlers = outputHandlers;
     this.context = contextParts.join('\n\n');
+    this.systemPrompt = finalSystemPrompt;
     
-    // Initialize engines based on options
     this.engines = {};
-    if (finalAskOptions.exec) {
-      this.engines.exec = execDo;
-    }
-    if (finalAskOptions.execTs) {
-      this.engines.execTs = execTsDo;
-    }
-    if (finalAskOptions.terminal) {
-      this.engines.terminal = terminalDo;
-    }
+    if (this.askOptions.exec) this.engines.exec = execDo;
+    if (this.askOptions.execTs) this.engines.execTs = execTsDo;
+    if (this.askOptions.terminal) this.engines.terminal = terminalDo;
 
     // Setup progress callbacks with overridable handlers
     this._onThinking = () => {
@@ -177,67 +155,59 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     // Setup Do handler
     this._do = async (doItem: Do): Promise<Do> => {
       try {
-        // Notify that code execution is starting
-        if (this._onCodeExecuting) {
-          this._onCodeExecuting(doItem.request, doItem.format);
-        }
+        if (this._onCodeExecuting) this._onCodeExecuting(doItem.request, doItem.format);
 
-        let result: any;
+        let execResult: ExecResult | any;
 
         if (doItem.operation.startsWith('do/exec/js')) {
-          if (!this.askOptions.exec || !this.engines.exec) {
-            throw new Error('JavaScript execution is disabled');
-          }
-          // Update exec context with current AI results
-          this.engines.exec.updateContext({ 
-            ...this.engines.exec.getContext(), 
-            results: this.results 
-          });
-          result = await this.engines.exec.exec(doItem.request);
+          if (!this.askOptions.exec || !this.engines.exec) throw new Error('JavaScript execution is disabled');
+          execResult = await this.engines.exec.exec(doItem.request);
         } else if (doItem.operation.startsWith('do/exec/tsx')) {
-          if (!this.askOptions.execTs || !this.engines.execTs) {
-            throw new Error('TypeScript execution is disabled');
-          }
-          // Update execTs context with current AI results
-          this.engines.execTs.updateContext({ 
-            ...this.engines.execTs.getContext(), 
-            results: this.results 
-          });
-          result = await this.engines.execTs.exec(doItem.request);
+          if (!this.askOptions.execTs || !this.engines.execTs) throw new Error('TypeScript execution is disabled');
+          execResult = await this.engines.execTs.exec(doItem.request);
         } else if (doItem.operation.startsWith('do/terminal/')) {
-          if (!this.askOptions.terminal || !this.engines.terminal) {
-            throw new Error('Terminal execution is disabled');
-          }
-          const shell = doItem.operation.split('/')[2]; // Extract shell type
-          result = await this.engines.terminal.exec(doItem.request, shell);
+          if (!this.askOptions.terminal || !this.engines.terminal) throw new Error('Terminal execution is disabled');
+          const shell = doItem.operation.split('/')[2];
+          execResult = await this.engines.terminal.exec(doItem.request, shell);
         } else {
           throw new Error(`Unknown operation: ${doItem.operation}`);
         }
 
-        // Format result for AI
-        doItem.response = this.formatResult(result);
+        const formattedResponse = this.formatResult(execResult);
+        doItem.response = formattedResponse;
         
-        // Notify about execution result
-        if (this._onCodeResult) {
-          await this._onCodeResult(doItem.response);
-        }
+        if (this._onCodeResult) await this._onCodeResult(formattedResponse);
         
         return doItem;
       } catch (error) {
         const errorMessage = `Error: ${error instanceof Error ? error.message : String(error)}`;
         doItem.response = errorMessage;
-        
-        // Notify about execution result (even if it's an error)
-        if (this._onCodeResult) {
-          await this._onCodeResult(errorMessage);
-        }
-        
+        if (this._onCodeResult) await this._onCodeResult(errorMessage);
         return doItem;
       }
     };
   }
 
   private formatResult(result: any): string {
+    // Handle new { result, logs } format from exec/exec-tsx
+    if (result && typeof result === 'object' && 'result' in result && 'logs' in result) {
+      const execResult = result as ExecResult;
+      const formattedResult = this.formatSingleResult(execResult.result);
+      
+      if (execResult.logs && execResult.logs.length > 0) {
+        const formattedLogs = execResult.logs.map(log => 
+          `[${log.level.toUpperCase()}] ${log.args.map(arg => this.formatSingleResult(arg, true)).join(' ')}`
+        ).join('\n');
+        return `Result:\n${formattedResult}\n\nLogs:\n${formattedLogs}`;
+      }
+      return formattedResult;
+    }
+    
+    // Handle terminal results or other direct results
+    return this.formatSingleResult(result);
+  }
+
+  private formatSingleResult(result: any, isLogArg: boolean = false): string {
     if (result === undefined) return 'undefined';
     if (result === null) return 'null';
     if (typeof result === 'string') return result;
@@ -246,7 +216,8 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     if (typeof result === 'function') return `[Function: ${result.name || 'anonymous'}]`;
     if (typeof result === 'object') {
       try {
-        return JSON.stringify(result, null, 2);
+        // For log arguments, use more compact format. For main results, pretty print.
+        return JSON.stringify(result, null, isLogArg ? 0 : 2);
       } catch {
         return String(result);
       }

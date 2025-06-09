@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { AskHasyx, AskOptions, ensureOpenRouterApiKey } from 'hasyx/lib/ask-hasyx';
+import { AskHasyx, AskOptions, ensureOpenRouterApiKey, AskHasyxOptions } from 'hasyx/lib/ask-hasyx';
 
 export class Ask extends AskHasyx {
-  constructor(token: string, projectName: string = 'Unknown Project') {
+  constructor(token: string, projectName: string = 'Unknown Project', options: AskHasyxOptions = {}) {
     // Project-specific system prompt with proper code execution instructions
     const systemPrompt = `You are an AI assistant for the "${projectName}" project.
 
@@ -44,23 +44,22 @@ echo "Hello World"
 
 **Important:** Don't separate yourself from the user - we are working together as a team. Only execute code when it's actually necessary to answer the question.`;
 
-    // Call parent constructor with project-specific configuration
-    super(
-      token,
-      {}, // context
-      {
-        model: 'google/gemini-2.5-flash-preview',
-        temperature: 0.1,
-        max_tokens: 2048
-      }, // options
-      systemPrompt, // use our enhanced system prompt with code execution rules
-      {
+    const finalOptions: AskHasyxOptions = {
+      model: 'google/gemini-2.5-flash-preview',
+      temperature: 0.1,
+      max_tokens: 2048,
+      ...options, // User options should override defaults
+      systemPrompt: options.systemPrompt || systemPrompt, // Prioritize user-provided prompt
+      askOptions: {
         exec: true,
         execTs: true,
-        terminal: true
-      }, // ask options - enable all engines by default
-      {} // output handlers - use defaults
-    );
+        terminal: true,
+        ...(options.askOptions || {})
+      },
+    };
+
+    // Call parent constructor with project-specific configuration
+    super(token, finalOptions);
   }
 }
 
