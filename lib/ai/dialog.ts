@@ -114,24 +114,8 @@ export class Dialog {
       return;
     }
 
-    const messagesToSend: AIMessage[] = [];
-    const systemMessage = this.memory.find(m => m.role === 'system');
-    
-    // Combine system prompt with the first user message if it exists
-    if (systemMessage && this._toSend.length > 0 && this._toSend[0].role === 'user') {
-        const firstUserMessage = this._toSend.shift()!;
-        const combinedContent = `${systemMessage.content}\n\n${firstUserMessage.content}`;
-        messagesToSend.push({ role: 'user', content: combinedContent });
-        messagesToSend.push(...this._toSend);
-        
-        // Update memory
-        this.memory.push({ role: 'user', content: firstUserMessage.content });
-
-    } else {
-        messagesToSend.push(...this.memory, ...this._toSend);
-        this.memory.push(...this._toSend);
-    }
-    
+    const messagesToSend = [...this.memory, ...this._toSend];
+    this.memory.push(...this._toSend);
     this._toSend = [];
 
     this.emit({ type: 'ai_request', messages: messagesToSend });

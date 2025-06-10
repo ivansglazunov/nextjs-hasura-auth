@@ -1,219 +1,57 @@
-#!/usr/bin/env node
+import { generateTerminalHandler } from './ai/terminal';
+import { OpenRouterProvider } from './ai/providers/openrouter';
+import { ExecJSTool } from './ai/tools/exec-js-tool';
+import { TerminalTool } from './ai/tools/terminal-tool';
+import { Tool } from './ai/tool';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-import { AskHasyx, AskHasyxOptions, ensureOpenRouterApiKey } from 'hasyx/lib/ask-hasyx';
-import { OpenRouter } from 'hasyx/lib/openrouter';
-import { Ollama } from 'hasyx/lib/ollama';
-import { AIProvider } from "./ai";
-import { availableModels } from './available-models';
-import { Command } from 'commander';
+// Load .env file from the root of the project
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-interface AskOptions extends Omit<AskHasyxOptions, 'provider'> {
-  projectName?: string;
-  provider?: AIProvider;
+const getSystemPrompt = (tools: Tool[]) => `
+You are a powerful AI assistant running in a terminal. Your primary goal is to achieve user requests by executing commands.
+You have access to the following tools:
+${tools.map(t => `- ${t.name}: ${t.contextPreprompt}`).join('\n')}
+
+**Process:**
+1.  **Analyze the user's request.**
+2.  **Select the most appropriate tool.**
+3.  **Formulate the command and content for the tool.**
+4.  **Execute the tool using the format: > 😈<uuid>/<tool_name>/<command>**
+5.  **Review the tool's output.**
+6.  **If the task is complete, provide the final answer. If not, continue using tools until the goal is achieved.**
+
+**IMPORTANT:**
+- Directly execute commands whenever possible. Do not ask for permission.
+- Do not explain that you are an AI. Focus on completing the task.
+- Provide concise and direct answers based on the tool output.
+`;
+
+const tools = [new ExecJSTool(), new TerminalTool()];
+const systemPrompt = getSystemPrompt(tools);
+
+if (!process.env.OPENROUTER_API_KEY) {
+  throw new Error('OPENROUTER_API_KEY is not set in the environment variables.');
 }
 
-export class Ask extends AskHasyx {
-  constructor(options: AskOptions) {
-    const projectName = options.projectName || 'Unknown Project';
-    
-    // Project-specific system prompt with proper code execution instructions
-    const systemPrompt = `You are an AI assistant for the "${projectName}" project.
+const provider = new OpenRouterProvider({
+  token: process.env.OPENROUTER_API_KEY,
+  model: 'google/gemini-flash-1.5'
+});
 
-We are working together on this project. When we need to execute code, analyze data, or perform operations, we work as a team.
+export const ask = generateTerminalHandler({
+  provider,
+  tools,
+  systemPrompt
+});
 
-**Communication Guidelines:**
-- Always use "we" when referring to our work together ("we implemented", "we will try", "we observed", "we succeeded", "we agree", "we made a mistake")
-- Execute code ONLY when calculations, demonstrations, or verification are actually needed
-- For simple questions, conversations, or general knowledge - respond directly without code execution
-- Use proper error handling and provide helpful explanations
-- Keep responses focused and practical
-
-**IMPORTANT CODE EXECUTION RULES:**
-- When you need to execute JavaScript, you MUST use the exact format: > 😈<uuid>/do/exec/js followed by \`\`\`js
-- When you need to execute TypeScript, you MUST use the exact format: > 😈<uuid>/do/exec/tsx followed by \`\`\`tsx
-- When you need to execute terminal commands, you MUST use the exact format: > 😈<uuid>/do/terminal/bash followed by \`\`\`bash
-- NEVER use \`\`\`javascript or \`\`\`typescript or \`\`\`terminal - always use the exact formats above
-- Always generate a unique UUID for each operation (use crypto.randomUUID() pattern)
-- Only execute code when it's actually necessary to answer the question
-
-**Examples:**
-> 😈calc-123e4567-e89b-12d3-a456-426614174000/do/exec/js
-\`\`\`js
-2 + 2
-\`\`\`
-
-> 😈types-123e4567-e89b-12d3-a456-426614174001/do/exec/tsx
-\`\`\`tsx
-interface User { id: number; name: string }
-const user: User = { id: 1, name: "John" };
-user
-\`\`\`
-
-> 😈cmd-123e4567-e89b-12d3-a456-426614174002/do/terminal/bash
-\`\`\`bash
-echo "Hello World"
-\`\`\`
-
-**Important:** Don't separate yourself from the user - we are working together as a team. Only execute code when it's actually necessary to answer the question.`;
-
-    if (!options.provider) {
-      throw new Error('Provider is required');
-    }
-
-    const finalOptions: AskHasyxOptions = {
-      provider: options.provider,
-      systemPrompt: options.systemPrompt || systemPrompt,
-      askOptions: {
-        exec: true,
-        execTs: true,
-        terminal: true,
-        ...(options.askOptions || {})
-      },
-      ...options
-    };
-
-    // Call parent constructor with project-specific configuration
-    super(finalOptions);
-  }
+async function main() {
+  // This runs the interactive mode when the script is executed directly
+  ask();
 }
 
-// Function to create provider based on CLI arguments
-function createProvider(providerName: string, model: string): AIProvider {
-  switch (providerName.toLowerCase()) {
-    case 'openrouter':
-      if (!process.env.OPENROUTER_API_KEY) {
-        throw new Error('OPENROUTER_API_KEY is required for OpenRouter provider');
-      }
-      return new OpenRouter({
-        token: process.env.OPENROUTER_API_KEY,
-        model: model || 'google/gemini-2.5-flash-preview' // Default free model
-      });
-    
-    case 'ollama':
-      return new Ollama({
-        baseUrl: 'http://localhost:11434',
-        model: model || 'gemma2:2b', // Default local model
-        timeout: 120000 // 2 minutes timeout for local models
-      });
-    
-    default:
-      throw new Error(`Unknown provider: ${providerName}. Supported providers: openrouter, ollama`);
-  }
+// Check if the script is being run directly
+if (require.main === module) {
+  main().catch(console.error);
 }
-
-// Parse CLI arguments if this file is executed directly
-if (typeof require !== 'undefined' && require.main === module) {
-  const program = new Command();
-  
-  program
-    .name('hasyx ask')
-    .description('AI assistant with code execution capabilities')
-    .option('--provider <name>', 'AI provider to use (openrouter, ollama)', 'openrouter')
-    .option('--model <name>', 'Model to use')
-    .option('--models', 'List available models for the provider')
-    .argument('[question]', 'Question to ask the AI')
-    .parse();
-
-  const options = program.opts();
-  const [question] = program.args;
-  
-  (async () => {
-    try {
-      // Handle --models flag
-      if (options.models) {
-        console.log(`🤖 Fetching available models for ${options.provider}...`);
-        
-        let models;
-        if (options.provider === 'openrouter') {
-          await ensureOpenRouterApiKey();
-          if (!process.env.OPENROUTER_API_KEY) {
-            throw new Error('OPENROUTER_API_KEY is required');
-          }
-          models = await availableModels({
-            provider: 'openrouter',
-            token: process.env.OPENROUTER_API_KEY
-          });
-        } else if (options.provider === 'ollama') {
-          models = await availableModels({
-            provider: 'ollama'
-          });
-        } else {
-          throw new Error(`Unknown provider: ${options.provider}`);
-        }
-
-        console.log(`\n📋 Available ${options.provider} models (${models.length} found):\n`);
-        
-        for (const model of models) {
-          console.log(`• ${model.id}`);
-          if (model.name !== model.id) {
-            console.log(`  Name: ${model.name}`);
-          }
-          if (model.context_length) {
-            console.log(`  Context: ${model.context_length.toLocaleString()} tokens`);
-          }
-          if (model.description) {
-            console.log(`  Description: ${model.description}`);
-          }
-          console.log('');
-        }
-        
-        console.log(`💡 Usage: npm run ask -- --provider ${options.provider} --model <model_id> "Your question"`);
-        return;
-      }
-      
-      // Determine model based on provider if not specified
-      let model = options.model;
-      if (!model) {
-        model = options.provider === 'ollama' ? 'gemma2:2b' : 'google/gemini-2.5-flash-preview';
-      }
-
-      // Ensure OpenRouter API Key is configured if using OpenRouter
-      if (options.provider === 'openrouter') {
-        await ensureOpenRouterApiKey();
-      }
-
-      // Create provider
-      const provider = createProvider(options.provider, model);
-      
-      // Create Ask instance
-      const ask = new Ask({
-        provider,
-        projectName: process?.env?.npm_package_name || 'Unknown Project'
-      });
-
-      // If question provided, answer it directly
-      if (question) {
-        console.log(`🤖 Using ${options.provider} with model ${model}`);
-        const response = await ask.askWithBeautifulOutput(question);
-        return;
-      }
-      
-      // Otherwise start REPL
-      console.log(`🤖 Using ${options.provider} with model ${model}`);
-      ask.repl().catch((error) => {
-        console.error('❌ Error in ask REPL:', error);
-        process.exit(1);
-      });
-      
-    } catch (error) {
-      console.error('❌ Error:', error instanceof Error ? error.message : String(error));
-      console.error('💡 Try: npm run ask -- --provider openrouter --model google/gemini-2.5-flash-preview "Your question"');
-      console.error('💡 Or:  npm run ask -- --provider ollama --model gemma2:2b "Your question"');
-      process.exit(1);
-    }
-  })();
-}
-
-// Export default instance with OpenRouter for backward compatibility
-export const ask = (() => {
-  try {
-    const provider = createProvider('openrouter', 'google/gemini-2.5-flash-preview');
-    return new Ask({
-      provider,
-      projectName: process?.env?.npm_package_name || 'Unknown Project'
-    });
-  } catch (error) {
-    console.warn('⚠️ Could not create default ask instance:', error instanceof Error ? error.message : String(error));
-    return null;
-  }
-})(); 

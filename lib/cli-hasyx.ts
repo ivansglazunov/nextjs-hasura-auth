@@ -792,27 +792,10 @@ export const jsCommand = async (filePath: string | undefined, options: any) => {
 export const askCommand = async (options: any) => {
   debug('Executing "ask" command with options:', options);
   
-  // Check and setup OPENROUTER_API_KEY if needed
-  await ensureOpenRouterApiKey();
-
+  // The logic is now handled by the ask module itself.
+  // We just need to call it with the correct options.
   try {
-    // Always use Hasyx's ask module
-    debug('Using default Hasyx ask.ts with streaming support');
-
-    if (!ask) {
-      console.error('❌ Ask instance is not available. Please check your OpenRouter API key configuration.');
-      process.exit(1);
-    }
-
-    if (options.eval) {
-      // Direct question mode with beautiful streaming output
-      const response = await ask.askWithBeautifulOutput(options.eval);
-      // Response is already printed with beautiful markdown formatting
-      debug('Direct question completed with streaming output');
-    } else {
-      // Interactive REPL mode with real-time streaming
-      await ask.repl();
-    }
+    ask({ execute: options.eval });
   } catch (error) {
     console.error('❌ Error in ask command:', error);
     debug('Ask command error:', error);
@@ -1391,9 +1374,7 @@ export const jsCommandDescribe = (cmd: Command) => {
 export const askCommandDescribe = (cmd: Command) => {
   return cmd
     .description('AI assistant with code execution capabilities')
-    .option('-e, --eval <question>', 'Execute a direct question')
-    .option('-y, --yes', 'Auto-approve code execution (no confirmation)')
-    .option('-m, --model <model>', 'Specify OpenRouter model');
+    .option('-e, --eval <question>', 'Execute a direct question');
 };
 
 export const tsxCommandDescribe = (cmd: Command) => {

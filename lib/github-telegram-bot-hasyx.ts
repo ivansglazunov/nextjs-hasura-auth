@@ -2,10 +2,11 @@
 
 import * as path from 'path';
 
-import { TelegramBot } from './telegram-bot';
-import { Ask } from './ask';
-import { OpenRouter } from './openrouter';
+import { sendTelegramMessage } from './telegram-bot';
+import { Dialog } from './ai/dialog';
+import { OpenRouterProvider } from './ai/providers/openrouter';
 import Debug from './debug';
+import { AIMessage } from './ai/ai';
 
 const debug = Debug('hasyx:github-telegram-bot');
 
@@ -337,7 +338,7 @@ async function fetchWorkflowStatus(commitSha: string, repoUrl: string, githubTok
 }
 
 /**
- * Generates AI-powered commit notification message
+ * Generates AI-powered commit notification message using the new Dialog system
  */
 export async function askGithubTelegramBot(options: GithubTelegramBotOptions): Promise<string> {
   const {
@@ -352,36 +353,30 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
     projectHomepage,
   } = options;
   
-  console.log(`🤖 Generating AI-powered commit notification message...`);
-  console.log(`📝 Commit SHA: ${commitSha}`);
-  console.log(`📂 Repository: ${repositoryUrl}`);
+  debug(`🤖 Generating AI-powered commit notification message...`);
   
-  if (!commitSha) {
-    throw new Error('Commit SHA is required. Provide it via options.commitSha or GITHUB_SHA env var.');
+  if (!commitSha || !repositoryUrl || !message || !openRouterApiKey) {
+    throw new Error('Missing required options for askGithubTelegramBot');
   }
 
-  if (!repositoryUrl) {
-    throw new Error('repositoryUrl is required in options');
-  }
-
-  if (!message) {
-    throw new Error('Message parameter is required');
-  }
-  
-  // Fetch commit and workflow information
   const commitInfo = await fetchCommitInfo(commitSha, repositoryUrl, githubToken);
   const workflowStatus = await fetchWorkflowStatus(commitInfo.sha, repositoryUrl, githubToken);
   
-  // Create Ask instance for AI analysis
-  const provider = new OpenRouter({
-    token: openRouterApiKey || 'dummy-key'
-  });
-  const ask = new Ask({
-    provider,
-    projectName: projectName || 'Unknown Project'
-  });
+  const provider = new OpenRouterProvider({ token: openRouterApiKey });
   
-  // Map status to emojis
+  const systemPrompt = `Create a joyful, celebratory Telegram notification message for a GitHub commit that radiates happiness about the progress made!
+
+**IMPORTANT**: Return ONLY the final Telegram message content. Do not include any explanatory text, comments, or meta-discussion. Do not say "Here's the message" or "How's this?" - just return the pure message content.
+
+**STRICT REQUIREMENTS**:
+- DO NOT mention who made the commit (no author name or email)
+- ALWAYS include clear, strict reporting of workflow statuses
+- For failed tests/builds/publishes: be explicit about failures but maintain positive tone
+- If any MD files are mentioned in commit message, provide direct GitHub links: https://github.com/ivansglazunov/hasyx/blob/main/lib/FILENAME.md
+- Format: Telegram Markdown (*bold*, \`code\`, [links](url))
+- Language: English with technical terms
+- Remember: this is not just a notification, it's a CELEBRATION of progress! 🎉`;
+
   const getStatusEmoji = (status: string) => {
     switch (status) {
       case 'success': return '✅';
@@ -394,22 +389,12 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
     }
   };
 
-  // Build context for AI with the custom message
-  const contextPrompt = `Create a joyful, celebratory Telegram notification message for a GitHub commit that radiates happiness about the progress made!
-
-**IMPORTANT**: Return ONLY the final Telegram message content. Do not include any explanatory text, comments, or meta-discussion. Do not say "Here's the message" or "How's this?" - just return the pure message content.
-
-**STRICT REQUIREMENTS**:
-- DO NOT mention who made the commit (no author name or email)
-- ALWAYS include clear, strict reporting of workflow statuses
-- For failed tests/builds/publishes: be explicit about failures but maintain positive tone
-- If any MD files are mentioned in commit message, provide direct GitHub links: https://github.com/ivansglazunov/hasyx/blob/main/lib/FILENAME.md
-
+  const userContent = `
 **Project Information:**
 - Name: ${projectName}
 - Version: ${projectVersion || 'N/A'}
 - Description: ${projectDescription || 'No description'}
-- Repository: ${repositoryUrl || 'Repository URL not available'}
+- Repository: ${repositoryUrl}
 - Homepage: ${projectHomepage || 'Homepage not available'}
 
 **Commit Details (Focus on what was ACCOMPLISHED):**
@@ -427,29 +412,6 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
 - Build/Publishing: ${workflowStatus.publish} ${getStatusEmoji(workflowStatus.publish)} (REQUIRED: explicitly state "PASSED" or "FAILED")
 - Deployment: ${workflowStatus.deploy} ${getStatusEmoji(workflowStatus.deploy)} (REQUIRED: explicitly state "PASSED" or "FAILED")
 
-**Progress Summary:**
-- Total Workflows: ${workflowStatus.details.summary.totalWorkflows}
-- Successful: ${workflowStatus.details.summary.successfulWorkflows}
-- Failed: ${workflowStatus.details.summary.failedWorkflows}
-
-**Test Results:** ${workflowStatus.details.testResults ? 
-  `${workflowStatus.details.testResults.conclusion} in "${workflowStatus.details.testResults.name}" (${workflowStatus.details.testResults.duration}s)` : 
-  'No test details available'}
-
-**Test Failures:** ${workflowStatus.details.summary.testFailures.length > 0 ? 
-  workflowStatus.details.summary.testFailures.map(f => `${f.stepName} in ${f.workflowName}`).join(', ') : 
-  'None - all tests passed successfully! 🎉'}
-
-**Publish Results:** ${workflowStatus.details.publishResults ? 
-  `${workflowStatus.details.publishResults.conclusion} in "${workflowStatus.details.publishResults.name}" (${workflowStatus.details.publishResults.duration}s)` : 
-  'No publish workflow'}
-
-**Deploy Results:** ${workflowStatus.details.deployResults ? 
-  `${workflowStatus.details.deployResults.conclusion} in "${workflowStatus.details.deployResults.name}" (${workflowStatus.details.deployResults.duration}s)` : 
-  'No deploy workflow'}
-
-**Deploy URL:** ${workflowStatus.details.summary.deployUrl || 'Not available'}
-
 **All Workflows Summary:**
 ${workflowStatus.details.workflows.map(w => 
   `- ${w.name}: ${w.conclusion} ${getStatusEmoji(w.conclusion)} (${w.duration}s)`
@@ -458,24 +420,35 @@ ${workflowStatus.details.workflows.map(w =>
 ${message}
 
 **MANDATORY LINKS AT THE END**:
-🔗 Repository: ${repositoryUrl || 'https://github.com/ivansglazunov/hasyx.git'}
+🔗 Repository: ${repositoryUrl}
 📚 Documentation: ${projectHomepage || 'https://hasyx.deep.foundation/'}
+`;
 
-Format: Telegram Markdown (*bold*, \`code\`, [links](url))
-Length: up to 1500 characters
-Language: English with technical terms
+  return new Promise<string>((resolve, reject) => {
+    let fullResponse = '';
+    const dialog = new Dialog({
+      provider,
+      systemPrompt,
+      onChange: (event) => {
+        if (event.type === 'ai_response') {
+          fullResponse = event.content;
+        }
+        if (event.type === 'done') {
+          debug(`✅ AI generated message successfully. Length: ${fullResponse.length} chars`);
+          resolve(fullResponse);
+        }
+      },
+      onError: (error) => {
+        debug(`💥 Error during AI message generation:`, error);
+        reject(error);
+      },
+    });
 
-Remember: this is not just a notification, it's a CELEBRATION of progress! 🎉
-
-Return ONLY the joyful message content without any additional text.`;
-
-  console.log(`🧠 Sending context to AI for message generation...`);
-  const aiResponse = await ask.askWithBeautifulOutput(contextPrompt);
-  
-  console.log(`✅ AI generated message successfully`);
-  console.log(`📄 Generated message length: ${aiResponse.length} characters`);
-  
-  return aiResponse;
+    const userMessage: AIMessage = { role: 'user', content: userContent };
+    
+    debug(`🧠 Sending context to AI for message generation...`);
+    dialog.ask(userMessage);
+  });
 }
 
 /**
@@ -490,47 +463,27 @@ export function newGithubTelegramBot(options: GithubTelegramBotOptions) {
       telegramChannelId = process.env.TELEGRAM_CHANNEL_ID,
     } = options;
     
-    console.log(`🚀 Starting GitHub Telegram Bot notification process...`);
-    console.log(`📋 Configuration check:`);
-    console.log(`   - Enabled: ${enabled}`);
-    console.log(`   - Commit SHA: ${commitSha ? 'provided' : 'missing'}`);
-    console.log(`   - Telegram Bot Token: ${telegramBotToken ? 'configured' : 'missing'}`);
-    console.log(`   - Channel ID: ${telegramChannelId ? 'configured' : 'missing'}`);
-    console.log(`   - OpenRouter API Key: ${process.env.OPENROUTER_API_KEY ? 'configured' : 'missing'}`);
+    debug(`🚀 Starting GitHub Telegram Bot notification process...`);
     
-    // Check if functionality is enabled
     if (!enabled || (enabled !== '1' && enabled !== '2' && enabled !== 1 && enabled !== 2)) {
-      console.log(`⏭️ GitHub Telegram Bot is disabled (GITHUB_TELEGRAM_BOT=${enabled})`);
+      debug(`⏭️ GitHub Telegram Bot is disabled (GITHUB_TELEGRAM_BOT=${enabled})`);
       return { success: true, message: 'GitHub Telegram Bot is disabled', chatsSent: 0 };
     }
     
-    // Validate required environment variables
-    if (!commitSha) {
-      console.error(`❌ GITHUB_SHA environment variable is required`);
-      return { success: false, message: 'GITHUB_SHA is required', chatsSent: 0 };
-    }
-    
-    if (!telegramBotToken) {
-      console.error(`❌ TELEGRAM_BOT_TOKEN environment variable is required`);
-      return { success: false, message: 'TELEGRAM_BOT_TOKEN is required', chatsSent: 0 };
-    }
-    
-    if (!telegramChannelId) {
-      console.error(`❌ TELEGRAM_CHANNEL_ID environment variable is required`);
-      return { success: false, message: 'TELEGRAM_CHANNEL_ID is required', chatsSent: 0 };
+    if (!commitSha || !telegramBotToken || !telegramChannelId) {
+      const errorMsg = 'Missing one of required vars: GITHUB_SHA, TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL_ID';
+      console.error(`❌ ${errorMsg}`);
+      return { success: false, message: errorMsg, chatsSent: 0 };
     }
     
     try {
-      // Get message from AI
-      console.log(`🤖 Generating notification message...`);
+      debug(`🤖 Generating notification message...`);
       const message = await askGithubTelegramBot(options);
       
-      // Send notification to the configured channel
-      console.log(`📤 Sending notification to channel: ${telegramChannelId}`);
-      const bot = new TelegramBot(telegramBotToken);
-      await bot.chat(telegramChannelId).sendMessage(message);
+      debug(`📤 Sending notification to channel: ${telegramChannelId}`);
+      await sendTelegramMessage(telegramBotToken, telegramChannelId, message, { parse_mode: 'Markdown' });
       
-      console.log(`🎉 Notification process completed successfully`);
+      debug(`🎉 Notification process completed successfully`);
       return { 
         success: true, 
         message: `Notification sent to channel: ${telegramChannelId}`, 
@@ -538,7 +491,7 @@ export function newGithubTelegramBot(options: GithubTelegramBotOptions) {
       };
       
     } catch (error) {
-      console.error(`💥 Error in GitHub Telegram Bot process:`, error);
+      debug(`💥 Error in GitHub Telegram Bot process:`, error);
       return { 
         success: false, 
         message: error instanceof Error ? error.message : String(error), 

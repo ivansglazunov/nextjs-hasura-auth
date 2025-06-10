@@ -14,8 +14,6 @@ export * from './notify';
 export * from './hid';
 export * from './hasyx-client';
 export * from './pwa';
-export * from './openrouter';
-export * from './ai';
 
 // Server-only modules (use Node.js APIs like fs, node-pty, etc.)
 export * from './exec';
