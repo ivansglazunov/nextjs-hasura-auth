@@ -207,7 +207,7 @@ export class TelegramAskWrapper extends AskHasyx {
   // Override ask method to use our Telegram-specific askWithBeautifulOutput
   async ask(question: string): Promise<string> {
     debug(`Processing question for chat ${this.chatId}:`, question);
-    return await this.askWithBeautifulOutput(question);
+    return await super.ask(question);
   }
 
   // Force flush any pending messages

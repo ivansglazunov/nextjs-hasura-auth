@@ -252,15 +252,50 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     
     try {
       // Get AI response
-      const response = await this.ask(question);
+      let response = await this.ask(question);
       
       // Execute code blocks in response
       const processedResponse = await this.executeCodeBlocks(response);
       
-      // Render response as markdown for beautiful output
-      await printMarkdown(processedResponse);
+      // Check if any code was executed (results added to response)
+      const hasExecutionResults = processedResponse.includes('**Результат выполнения:**') || processedResponse.includes('**Ошибка выполнения:**');
       
-      return processedResponse;
+      let finalResponse = processedResponse;
+      
+      // If code was executed, send results back to AI for analysis (up to 3 iterations)
+      if (hasExecutionResults) {
+        debug('Code execution results detected, sending back to AI for analysis');
+        
+        for (let iteration = 0; iteration < 3; iteration++) {
+          try {
+            // Send the results back to AI for analysis
+            const analysisResponse = await this.ask(`Проанализируй результаты выполнения кода выше и ответь пользователю:\n\n${finalResponse}`);
+            
+            // Execute any new code blocks in the analysis
+            const analysisProcessed = await this.executeCodeBlocks(analysisResponse);
+            
+            // If AI provided additional analysis, append it
+            if (analysisResponse.trim() && !analysisResponse.includes('```')) {
+              finalResponse += '\n\n' + analysisProcessed;
+              break; // AI provided text analysis, we're done
+            } else if (analysisProcessed.includes('**Результат выполнения:**')) {
+              // AI executed more code, continue iteration
+              finalResponse = analysisProcessed;
+              debug(`Code execution iteration ${iteration + 1} completed`);
+            } else {
+              break; // No more code to execute
+            }
+          } catch (iterationError) {
+            debug(`Error in iteration ${iteration + 1}:`, iterationError);
+            break; // Stop iterations on error
+          }
+        }
+      }
+      
+      // Render final response as markdown for beautiful output
+      await printMarkdown(finalResponse);
+      
+      return finalResponse;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.defaultError(`❌ Error: ${errorMessage}`);
@@ -314,13 +349,48 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
           this.defaultOutput('🧠 AI думает...');
           
           // Get AI response
-          const response = await this.ask(question);
+          let response = await this.ask(question);
           
           // Execute code blocks in response
-          const processedResponse = await this.executeCodeBlocks(response);
+          let processedResponse = await this.executeCodeBlocks(response);
           
-          // Print the processed response
-          await printMarkdown(processedResponse);
+          // Check if any code was executed (results added to response)
+          const hasExecutionResults = processedResponse.includes('**Результат выполнения:**') || processedResponse.includes('**Ошибка выполнения:**');
+          
+          let finalResponse = processedResponse;
+          
+          // If code was executed, send results back to AI for analysis (up to 3 iterations)
+          if (hasExecutionResults) {
+            debug('Code execution results detected in REPL, sending back to AI for analysis');
+            
+            for (let iteration = 0; iteration < 3; iteration++) {
+              try {
+                // Send the results back to AI for analysis
+                const analysisResponse = await this.ask(`Проанализируй результаты выполнения кода выше и ответь пользователю:\n\n${finalResponse}`);
+                
+                // Execute any new code blocks in the analysis
+                const analysisProcessed = await this.executeCodeBlocks(analysisResponse);
+                
+                // If AI provided additional analysis, append it
+                if (analysisResponse.trim() && !analysisResponse.includes('```')) {
+                  finalResponse += '\n\n' + analysisProcessed;
+                  break; // AI provided text analysis, we're done
+                } else if (analysisProcessed.includes('**Результат выполнения:**')) {
+                  // AI executed more code, continue iteration
+                  finalResponse = analysisProcessed;
+                  debug(`REPL code execution iteration ${iteration + 1} completed`);
+                } else {
+                  break; // No more code to execute
+                }
+              } catch (iterationError) {
+                debug(`Error in REPL iteration ${iteration + 1}:`, iterationError);
+                break; // Stop iterations on error
+              }
+            }
+          }
+          
+          // Print the final response
+          await printMarkdown(finalResponse);
           
           this.defaultOutput('💭 Ответ завершен');
           rl.prompt();
