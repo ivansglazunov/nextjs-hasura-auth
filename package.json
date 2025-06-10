@@ -195,6 +195,7 @@
     "ts-essentials": "^10.0.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.4",
     "tw-animate-css": "^1.2.5",
     "typescript": "^5",
     "use-m": "^8.10.25",
