@@ -33,6 +33,7 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![SSL Certificate Management Documentation](https://img.shields.io/badge/SSL%20Certificates-MD-green)](SSL.md)
 [![Nginx Configuration Documentation](https://img.shields.io/badge/Nginx%20Config-MD-blue)](NGINX.md)
 [![Subdomain Management Documentation](https://img.shields.io/badge/Subdomain%20Manager-MD-purple)](SUBDOMAIN.md)
+[![URL Query State Management Documentation](https://img.shields.io/badge/Use%20Query%20Hook-MD-lightblue)](USE-QUERY.md)
 
 ## Technologies Used
 
@@ -65,6 +66,7 @@ Hasyx takes responsibility for:
 *   [Coming Soon] Preparing Capacitor for building cross-platform applications (Android, iOS, Desktop, Browser Extensions, etc.).
 *   **Cytoscape Integration:** A powerful set of React components for graph visualizations using Cytoscape.js, allowing for custom HTML rendering within nodes and reactive style updates. See [`CYTO.md`](CYTO.md) for details.
 *   **DNS and SSL Management:** Comprehensive subdomain management with automated HTTPS setup using CloudFlare DNS, Let's Encrypt SSL certificates, and nginx configuration. Features include DNS propagation waiting, automatic certificate renewal, idempotent operations, and complete subdomain lifecycle management. Use `npx hasyx assist dns` to configure CloudFlare API credentials and domain settings. See [`CLOUDFLARE.md`](CLOUDFLARE.md), [`SSL.md`](SSL.md), [`NGINX.md`](NGINX.md), and [`SUBDOMAIN.md`](SUBDOMAIN.md) for details.
+*   **URL Query State Management:** A powerful `use-query` hook for synchronizing state between multiple components using URL query parameters. Features automatic URL synchronization, multi-component state sharing, TypeScript support, browser navigation compatibility, SSR safety, and JSON serialization for complex objects. Perfect for search pages, filters, pagination, and any scenario where you need shareable, bookmarkable URLs with persistent state. See [`USE-QUERY.md`](USE-QUERY.md) for complete documentation and examples.
 
 Applying best development practices from the listed ecosystems, we have combined these libraries into a single framework for rapid deployment.
 
@@ -159,6 +161,7 @@ Explore the different modules and functionalities of Hasyx:
 *   **[SSL.md](SSL.md):** Documentation for SSL certificate management.
 *   **[NGINX.md](NGINX.md):** Documentation for Nginx configuration.
 *   **[SUBDOMAIN.md](SUBDOMAIN.md):** Documentation for subdomain management.
+*   **[USE-QUERY.md](USE-QUERY.md):** Complete guide to URL query state management with the `use-query` hook for synchronizing state between multiple components through URL parameters.
 
 ## 🚀 Quick Start
 
