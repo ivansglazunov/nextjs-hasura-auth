@@ -1,6 +1,6 @@
 import { Exec, ExecContext } from './exec';
 import { AIMessage } from "./ai";
-import { AIProvider } from "./ai";
+import { AIProvider, AIModel, AvailableModelsOptions } from "./ai";
 
 export interface OpenRouterTool {
   type: 'function';
@@ -434,18 +434,70 @@ IMPORTANT:
    * Create a tool message
    */
   static toolMessage(content: string, toolCallId: string, name?: string): AIMessage {
-    return { role: 'tool', content, tool_call_id: toolCallId, name };
+    return {
+      role: 'tool',
+      content,
+      tool_call_id: toolCallId,
+      name
+    };
   }
 
   /**
    * Create a conversation from multiple messages
    */
   static conversation(...messages: (string | AIMessage)[]): AIMessage[] {
-    return messages.map(msg => {
-      if (typeof msg === 'string') {
-        return { role: 'user', content: msg };
+    return messages.map(msg => 
+      typeof msg === 'string' ? OpenRouter.userMessage(msg) : msg
+    );
+  }
+
+  /**
+   * Get available models in standardized format (free only)
+   */
+  async availableModels(options?: AvailableModelsOptions): Promise<AIModel[]> {
+    try {
+      const token = options?.token || this.token;
+      if (!token) {
+        throw new Error('OpenRouter API token is required');
       }
-      return msg;
-    });
+
+      const response = await fetch('https://openrouter.ai/api/v1/models', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://github.com/ivansglazunov/hasyx',
+          'X-Title': 'Hasyx Framework'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const models = data.data || [];
+
+      // Filter only free models (where both prompt and completion costs are "0")
+      const freeModels = models.filter((model: any) => {
+        const pricing = model.pricing;
+        return pricing && 
+               pricing.prompt === "0" && 
+               pricing.completion === "0" &&
+               pricing.request === "0";
+      });
+
+      return freeModels.map((model: any) => ({
+        id: model.id,
+        name: model.name,
+        provider: 'openrouter',
+        free: true,
+        context_length: model.context_length,
+        description: model.description || `OpenRouter free model`
+      }));
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to get available models: ${errorMessage}`);
+    }
   }
 } 
