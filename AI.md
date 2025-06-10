@@ -1,14 +1,82 @@
 # AI Class Documentation
 
-The `AI` class provides an intelligent assistant with **real-time streaming** and code execution capabilities. It features **genuine Server-Sent Events (SSE) streaming** from OpenRouter API, not a fake implementation.
+The `AI` class is the **core AI interface** in Hasyx that provides an intelligent assistant with **real-time streaming** and code execution capabilities. It uses a **provider pattern** to support multiple AI backends including OpenRouter and Ollama.
 
-## 🚀 New Real-time Streaming Features
+## Architecture Overview
 
-- **🔥 Genuine SSE Streaming**: Real Server-Sent Events from OpenRouter API
+The AI class acts as a **universal interface** that works with different AI providers:
+
+- **OpenRouter Provider**: Access to cloud-based models (GPT, Claude, Gemini, etc.)
+- **Ollama Provider**: Local AI models running on your machine
+- **Provider Interface**: Extensible design for adding new AI backends
+
+```typescript
+import { AI } from 'hasyx/lib/ai';
+import { OpenRouter } from 'hasyx/lib/openrouter';
+import { Ollama } from 'hasyx/lib/ollama';
+
+// Use OpenRouter (cloud models)
+const cloudAI = new AI({
+  provider: new OpenRouter({ token: process.env.OPENROUTER_API_KEY! }),
+  systemPrompt: 'You are a helpful assistant.'
+});
+
+// Use Ollama (local models)  
+const localAI = new AI({
+  provider: new Ollama({ model: 'gemma2:2b' }),
+  systemPrompt: 'You are a helpful assistant.'
+});
+```
+
+## 🚀 Real-time Streaming Features
+
+- **🔥 Genuine SSE Streaming**: Real Server-Sent Events from both OpenRouter and Ollama
+- **🏭 Multi-Provider Support**: OpenRouter (cloud) and Ollama (local) backends
 - **📊 Rich Event Types**: Multiple event types for granular control
 - **⚡ Real-time Code Execution**: Code execution happens during streaming
 - **🔄 Iterative Processing**: AI can continue reasoning and execute more code
 - **🎯 Multiple Stream Methods**: Different methods for different use cases
+- **🔀 Provider Switching**: Easy switching between cloud and local models
+
+## AI Class Constructor
+
+### Basic Usage
+
+```typescript
+import { AI, AIOptions } from 'hasyx/lib/ai';
+
+interface AIOptions {
+  provider: AIProvider;        // Required: OpenRouter or Ollama instance
+  systemPrompt?: string;       // Optional: System prompt for the conversation
+  onResponse?: (response: string) => void;    // Optional: Called when response complete
+  onStream?: (chunk: string) => void;         // Optional: Called for each stream chunk
+  onStreamEnd?: () => void;                   // Optional: Called when streaming ends
+}
+
+// Basic initialization
+const ai = new AI({
+  provider: new OpenRouter({ token: 'your-key' }),
+  systemPrompt: 'You are a helpful assistant.'
+});
+```
+
+### Provider Interface
+
+Both OpenRouter and Ollama implement the same `AIProvider` interface:
+
+```typescript
+interface AIProvider {
+  ask(messages: AIMessage[]): Promise<string>;
+  askStream(messages: AIMessage[]): Promise<ReadableStream<string>>;
+}
+
+interface AIMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+```
+
+This allows seamless switching between providers without changing your AI class usage.
 
 ## Stream Event Types
 

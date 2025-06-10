@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
-import { OpenRouter, OpenRouterMessage } from './openrouter';
+import { OpenRouter } from './openrouter';
+import { AIMessage } from './provider';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -14,11 +15,12 @@ describe('OpenRouter', () => {
 
   describe('Constructor and Basic Setup', () => {
     it('should throw error if no token provided', () => {
-      expect(() => new OpenRouter('')).toThrow('OpenRouter API token is required');
+      // @ts-expect-error testing invalid input
+      expect(() => new OpenRouter({})).toThrow('OpenRouter API token is required');
     });
 
     it('should initialize with default options', () => {
-      const openrouter = new OpenRouter(testToken);
+      const openrouter = new OpenRouter({ token: testToken });
       
       expect(openrouter).toBeInstanceOf(OpenRouter);
       expect(openrouter.context).toEqual({});
@@ -28,7 +30,7 @@ describe('OpenRouter', () => {
       const customContext = { testVar: 'testValue' };
       const customOptions = { model: 'anthropic/claude-3-haiku', temperature: 0.5 };
       
-      const openrouter = new OpenRouter(testToken, customContext, customOptions);
+      const openrouter = new OpenRouter({ token: testToken, context: customContext, ...customOptions });
       
       expect(openrouter.context).toEqual(customContext);
       expect(openrouter.getContext()).toEqual(customContext);
@@ -37,21 +39,21 @@ describe('OpenRouter', () => {
 
   describe('Context Management', () => {
     it('should update context correctly', () => {
-      const openrouter = new OpenRouter(testToken);
+      const openrouter = new OpenRouter({ token: testToken });
       
       openrouter.updateContext({ newVar: 'newValue' });
       expect(openrouter.getContext()).toEqual({ newVar: 'newValue' });
     });
 
     it('should clear context correctly', () => {
-      const openrouter = new OpenRouter(testToken, { initialVar: 'value' });
+      const openrouter = new OpenRouter({ token: testToken, context: { initialVar: 'value' } });
       
       openrouter.clearContext();
       expect(openrouter.getContext()).toEqual({});
     });
 
     it('should maintain context between executions', async () => {
-      const openrouter = new OpenRouter('test-token', { x: 42 });
+      const openrouter = new OpenRouter({ token: 'test-token', context: { x: 42 } });
       await openrouter.exec('x = 42');
       const { result } = await openrouter.exec('x + 8');
       
@@ -61,21 +63,21 @@ describe('OpenRouter', () => {
 
   describe('JavaScript Execution', () => {
     it('should execute JavaScript code', async () => {
-      const openrouter = new OpenRouter('test-token');
+      const openrouter = new OpenRouter({ token: 'test-token' });
       
       const { result } = await openrouter.exec('2 + 2');
       expect(result).toBe(4);
     });
 
     it('should support context extension', async () => {
-      const openrouter = new OpenRouter('test-token');
+      const openrouter = new OpenRouter({ token: 'test-token' });
       
       const { result } = await openrouter.exec('y + 5', { y: 15 });
       expect(result).toBe(20);
     });
 
     it('should support async code execution', async () => {
-      const openrouter = new OpenRouter('test-token');
+      const openrouter = new OpenRouter({ token: 'test-token' });
       
       const { result } = await openrouter.exec(`
         const p = new Promise(resolve => setTimeout(() => resolve('async result'), 10));
@@ -142,14 +144,14 @@ describe('OpenRouter', () => {
       // They can be enabled manually for integration testing with real OpenRouter API
       
       it('should create OpenRouter instance with valid token', () => {
-        const openrouter = new OpenRouter(testToken);
+        const openrouter = new OpenRouter({ token: testToken });
         expect(openrouter).toBeDefined();
         expect(typeof openrouter.ask).toBe('function');
         expect(typeof openrouter.askWithExec).toBe('function');
       });
 
       it('should handle message creation correctly', () => {
-        const openrouter = new OpenRouter(testToken);
+        const openrouter = new OpenRouter({ token: testToken });
         
         // Test message creation helpers
         const userMsg = OpenRouter.userMessage('test');
@@ -165,7 +167,7 @@ describe('OpenRouter', () => {
       it('should handle conversation creation from mixed inputs', () => {
         const messages = OpenRouter.conversation(
           'Hello',
-          { role: 'assistant', content: 'Hi there!' } as OpenRouterMessage,
+          { role: 'assistant', content: 'Hi there!' } as AIMessage,
           'How are you?'
         );
         
@@ -181,14 +183,14 @@ describe('OpenRouter', () => {
       // Uncomment these tests for manual integration testing:
       /*
       it('should send simple string message', async () => {
-        const openrouter = new OpenRouter(testToken);
+        const openrouter = new OpenRouter({ token: testToken });
         const response = await openrouter.ask('Say hello');
         expect(typeof response).toBe('string');
         expect(response.length).toBeGreaterThan(0);
       }, 30000);
 
       it('should send single message object', async () => {
-        const openrouter = new OpenRouter(testToken);
+        const openrouter = new OpenRouter({ token: testToken });
         const message = OpenRouter.userMessage('What is 2+2? Answer with just the number.');
         const response = await openrouter.ask(message);
         expect(typeof response).toBe('string');
@@ -196,7 +198,7 @@ describe('OpenRouter', () => {
       }, 30000);
 
       it('should send array of messages', async () => {
-        const openrouter = new OpenRouter(testToken);
+        const openrouter = new OpenRouter({ token: testToken });
         const messages = [
           OpenRouter.systemMessage('You are a helpful math assistant.'),
           OpenRouter.userMessage('What is 5 + 10?')
@@ -207,14 +209,14 @@ describe('OpenRouter', () => {
       }, 30000);
 
       it('should handle askWithExec without code blocks', async () => {
-        const openrouter = new OpenRouter(testToken);
+        const openrouter = new OpenRouter({ token: testToken });
         const result = await openrouter.askWithExec('Just say hello, no code needed');
         expect(result.response).toBeTruthy();
         expect(result.execResults).toBeUndefined();
       }, 30000);
 
       it('should handle askWithExec with code blocks', async () => {
-        const openrouter = new OpenRouter(testToken);
+        const openrouter = new OpenRouter({ token: testToken });
         const result = await openrouter.askWithExec(
           'Calculate 5 + 3 using JavaScript and show the result in a code block with exec:test'
         );
@@ -225,7 +227,7 @@ describe('OpenRouter', () => {
       }, 30000);
 
       it('should preserve context across askWithExec calls', async () => {
-        const openrouter = new OpenRouter(testToken);
+        const openrouter = new OpenRouter({ token: testToken });
         
         // First call sets a variable
         await openrouter.askWithExec('Set x to 100 using code execution');
@@ -236,7 +238,7 @@ describe('OpenRouter', () => {
       }, 45000);
 
       it('should pass custom options to API call', async () => {
-        const openrouter = new OpenRouter(testToken);
+        const openrouter = new OpenRouter({ token: testToken });
         const response = await openrouter.ask('Say hello', {
           temperature: 0.1,
           max_tokens: 10
@@ -252,7 +254,7 @@ describe('OpenRouter', () => {
   // Tests for error handling (don't require real API)
   describe('Error Handling', () => {
     it('should handle code execution errors in askWithExec', async () => {
-      const openrouter = new OpenRouter(testToken);
+      const openrouter = new OpenRouter({ token: testToken });
       
       // Test direct exec error handling (no API call)
       try {
@@ -266,7 +268,7 @@ describe('OpenRouter', () => {
     }, 5000);
 
     it('should handle API errors gracefully', async () => {
-      const openrouter = new OpenRouter('invalid-token');
+      const openrouter = new OpenRouter({ token: 'invalid-token' });
       
       await expect(openrouter.ask('test')).rejects.toThrow();
     });
@@ -274,13 +276,13 @@ describe('OpenRouter', () => {
     it('should handle empty response from API', async () => {
       // This test just checks that the class can be instantiated
       // without making real API calls
-      const openrouter = new OpenRouter(testToken);
+      const openrouter = new OpenRouter({ token: testToken });
       expect(openrouter).toBeDefined();
       expect(typeof openrouter.ask).toBe('function');
     });
 
     it('should handle multiple code blocks in askWithExec', async () => {
-      const openrouter = new OpenRouter(testToken);
+      const openrouter = new OpenRouter({ token: testToken });
       
       // Test direct exec with multiple operations (no API call)
       try {

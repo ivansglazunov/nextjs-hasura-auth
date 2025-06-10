@@ -22,7 +22,7 @@ const debug = Debug('test:ask');
 
   describe('AskHasyx Base Class', () => {
     it('should create AskHasyx instance extending AI', () => {
-      const askInstance = new AskHasyx(process.env.OPENROUTER_API_KEY!);
+      const askInstance = new AskHasyx({ token: process.env.OPENROUTER_API_KEY! });
       expect(askInstance).toBeInstanceOf(AskHasyx);
       expect(askInstance).toBeInstanceOf(AI);
     });
@@ -34,7 +34,7 @@ const debug = Debug('test:ask');
         terminal: true
       };
       
-      const askInstance = new AskHasyx(process.env.OPENROUTER_API_KEY!, { askOptions });
+      const askInstance = new AskHasyx({ token: process.env.OPENROUTER_API_KEY!, askOptions });
       
       expect(askInstance.askOptions).toEqual({
         exec: true,
@@ -48,7 +48,7 @@ const debug = Debug('test:ask');
     });
 
     it('should use default options when none provided', () => {
-      const askInstance = new AskHasyx(process.env.OPENROUTER_API_KEY!);
+      const askInstance = new AskHasyx({ token: process.env.OPENROUTER_API_KEY! });
       
       expect(askInstance.askOptions).toEqual({
         exec: true,
@@ -62,10 +62,10 @@ const debug = Debug('test:ask');
     });
 
     it('should include only enabled engines in context', () => {
-      const askInstancePartial = new AskHasyx(
-        process.env.OPENROUTER_API_KEY!, 
-        { askOptions: { exec: true, execTs: false, terminal: false } }
-      );
+      const askInstancePartial = new AskHasyx({
+        token: process.env.OPENROUTER_API_KEY!, 
+        askOptions: { exec: true, execTs: false, terminal: false }
+      });
       
       expect(askInstancePartial.context).toContain('JavaScript');
       expect(askInstancePartial.context).not.toContain('TypeScript');
@@ -73,10 +73,10 @@ const debug = Debug('test:ask');
     });
 
     it('should disable execution for disabled engines', async () => {
-      const askInstance = new AskHasyx(
-        process.env.OPENROUTER_API_KEY!, 
-        { askOptions: { exec: false, execTs: false, terminal: false } }
-      );
+      const askInstance = new AskHasyx({
+        token: process.env.OPENROUTER_API_KEY!, 
+        askOptions: { exec: false, execTs: false, terminal: false }
+      });
 
       // Real Do operation for disabled engine
       const testDo = {
@@ -97,7 +97,7 @@ const debug = Debug('test:ask');
 
   describe('Ask Class (Child)', () => {
     it('should create Ask instance extending AskHasyx', () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       expect(askInstance instanceof Ask).toBe(true);
       expect(askInstance instanceof AI).toBe(true);
       
@@ -111,7 +111,7 @@ const debug = Debug('test:ask');
     });
 
     it('should have all engines enabled by default', () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       // Check that engines are present
       expect(askInstance.engines.exec).toBeDefined();
@@ -129,7 +129,7 @@ const debug = Debug('test:ask');
     });
 
     it('should have project-specific system prompt', () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       expect(askInstance.systemPrompt).toContain('Test Project');
       expect(askInstance.systemPrompt).toContain('working together');
       // Note: The systemPrompt may contain execution environments context from AskHasyx
@@ -137,7 +137,7 @@ const debug = Debug('test:ask');
     });
 
     it('should use Google Gemini 2.5 Flash Preview model by default', () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       expect(askInstance).toBeDefined();
       // Note: The actual model is configured in the super() call and would need to be tested at integration level
     });
@@ -152,13 +152,11 @@ const debug = Debug('test:ask');
         terminal: true
       };
       
-      const askInstance = new AskHasyx(
-        process.env.OPENROUTER_API_KEY!, 
-        { 
-          systemPrompt: 'Custom prompt',
-          askOptions: customOptions
-        }
-      );
+      const askInstance = new AskHasyx({
+        token: process.env.OPENROUTER_API_KEY!, 
+        systemPrompt: 'Custom prompt',
+        askOptions: customOptions
+      });
       
       expect(askInstance.askOptions).toEqual(customOptions);
       expect(askInstance.engines.exec).toBeDefined();
@@ -167,20 +165,20 @@ const debug = Debug('test:ask');
     });
 
     it('should handle all engines disabled', () => {
-      const askInstance = new AskHasyx(
-        process.env.OPENROUTER_API_KEY!, 
-        { askOptions: { exec: false, execTs: false, terminal: false } }
-      );
+      const askInstance = new AskHasyx({
+        token: process.env.OPENROUTER_API_KEY!, 
+        askOptions: { exec: false, execTs: false, terminal: false }
+      });
       
       expect(askInstance.context).toBe(''); // No context when all engines disabled
       expect(Object.keys(askInstance.engines)).toHaveLength(0);
     });
 
     it('should show correct enabled engines in REPL message', async () => {
-      const askInstance = new AskHasyx(
-        process.env.OPENROUTER_API_KEY!, 
-        { askOptions: { exec: true, execTs: false, terminal: true } }
-      );
+      const askInstance = new AskHasyx({
+        token: process.env.OPENROUTER_API_KEY!, 
+        askOptions: { exec: true, execTs: false, terminal: true }
+      });
       
       // Check what would be logged without actually using mocks
       if (askInstance._do) {
@@ -196,7 +194,7 @@ const debug = Debug('test:ask');
 
   describe('Progress Callbacks', () => {
     it('should have progress callback functions defined', () => {
-      const askInstance = new AskHasyx(process.env.OPENROUTER_API_KEY!, { systemPrompt: 'Test Project' });
+      const askInstance = new AskHasyx({ token: process.env.OPENROUTER_API_KEY!, systemPrompt: 'Test Project' });
       
       expect(askInstance._onThinking).toBeDefined();
       expect(askInstance._onCodeFound).toBeDefined();
@@ -206,7 +204,7 @@ const debug = Debug('test:ask');
     });
 
     it('should support async progress callbacks', () => {
-      const askInstance = new AskHasyx(process.env.OPENROUTER_API_KEY!, { systemPrompt: 'Test Project' });
+      const askInstance = new AskHasyx({ token: process.env.OPENROUTER_API_KEY!, systemPrompt: 'Test Project' });
       
       // The callbacks should support both sync and async functions
       expect(typeof askInstance._onCodeFound).toBe('function');
@@ -217,7 +215,7 @@ const debug = Debug('test:ask');
   describe('Markdown Integration', () => {
     it('should import printMarkdown for beautiful output', () => {
       // Test that the markdown formatting module is properly imported
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       expect(askInstance).toBeDefined();
       // The actual printMarkdown usage is tested through integration tests
     });
@@ -244,7 +242,7 @@ const debug = Debug('test:ask');
 
   describe('AI Functionality', () => {
     it('should handle simple questions', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const response = await askInstance.ask('Say "test response" and nothing else');
       expect(typeof response).toBe('string');
@@ -252,7 +250,7 @@ const debug = Debug('test:ask');
     }, 30000);
 
     it('should handle mathematical questions', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const response = await askInstance.ask('What is 2 + 2? Answer with just the number.');
       expect(typeof response).toBe('string');
@@ -262,7 +260,7 @@ const debug = Debug('test:ask');
 
   describe('Code Execution Integration', () => {
     it('should execute JavaScript code via Do operations', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const response = await askInstance.ask('Calculate 5 + 3 using JavaScript code execution');
       expect(typeof response).toBe('string');
@@ -270,7 +268,7 @@ const debug = Debug('test:ask');
     }, 45000);
 
     it('should handle TypeScript code execution', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const response = await askInstance.ask('Create a TypeScript interface for a user with id and name, then create an instance');
       expect(typeof response).toBe('string');
@@ -278,7 +276,7 @@ const debug = Debug('test:ask');
     }, 45000);
 
     it('should handle terminal command execution', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const response = await askInstance.ask('Execute echo "hello world" in terminal');
       expect(typeof response).toBe('string');
@@ -286,7 +284,7 @@ const debug = Debug('test:ask');
     }, 45000);
 
     it('should support iterative code execution and reasoning', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const response = await askInstance.ask('First calculate 10 * 5 with JavaScript, then explain the result');
       expect(typeof response).toBe('string');
@@ -295,10 +293,10 @@ const debug = Debug('test:ask');
     }, 60000);
 
     it('should respect disabled engines', async () => {
-      const askInstance = new AskHasyx(
-        process.env.OPENROUTER_API_KEY!, 
-        { askOptions: { exec: false, execTs: true, terminal: true } }
-      );
+      const askInstance = new AskHasyx({
+        token: process.env.OPENROUTER_API_KEY!, 
+        askOptions: { exec: false, execTs: true, terminal: true }
+      });
       
       // This should not execute JavaScript but might try TypeScript or terminal
       const response = await askInstance.ask('Calculate 2 + 2 using any available method');
@@ -311,20 +309,20 @@ const debug = Debug('test:ask');
   describe('Error Handling', () => {
     it('should handle invalid API key gracefully', () => {
       expect(() => {
-        new Ask('invalid-key', 'Test Project');
+        new Ask({ token: 'invalid-key', projectName: 'Test Project' });
       }).not.toThrow();
     });
 
     it('should handle missing project name', () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!);
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY! });
       expect(askInstance.systemPrompt).toContain('Unknown Project');
     });
 
     it('should handle disabled engine execution attempts', async () => {
-      const askInstance = new AskHasyx(
-        process.env.OPENROUTER_API_KEY!, 
-        { askOptions: { exec: false, execTs: false, terminal: false } }
-      );
+      const askInstance = new AskHasyx({
+        token: process.env.OPENROUTER_API_KEY!, 
+        askOptions: { exec: false, execTs: false, terminal: false }
+      });
 
       // Real Do operation for testing
       const testDo = {
@@ -345,21 +343,19 @@ const debug = Debug('test:ask');
 
   describe('OpenRouter Base Integration', () => {
     it('should create OpenRouter instance with correct configuration', () => {
-      const openrouter = new OpenRouter(
-        process.env.OPENROUTER_API_KEY!,
-        {},
-        {
-          model: 'google/gemini-2.5-flash-preview',
-          temperature: 0.7,
-          max_tokens: 4096
-        }
-      );
+      const openrouter = new OpenRouter({
+        token: process.env.OPENROUTER_API_KEY!,
+        context: {},
+        model: 'google/gemini-2.5-flash-preview',
+        temperature: 0.7,
+        max_tokens: 4096
+      });
       
       expect(openrouter).toBeInstanceOf(OpenRouter);
     });
 
     it('should handle API errors gracefully', async () => {
-      const invalidOpenrouter = new OpenRouter('invalid-key');
+      const invalidOpenrouter = new OpenRouter({ token: 'invalid-key' });
       
       await expect(invalidOpenrouter.ask('test')).rejects.toThrow();
     });
@@ -367,30 +363,26 @@ const debug = Debug('test:ask');
 
   describe('Model Configuration', () => {
     it('should use correct default model', () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       expect(askInstance).toBeDefined();
     });
 
     it('should handle different temperature settings via OpenRouter', async () => {
-      const lowTempRouter = new OpenRouter(
-        process.env.OPENROUTER_API_KEY!,
-        {},
-        {
-          model: 'google/gemini-2.5-flash-preview',
-          temperature: 0.1,
-          max_tokens: 50
-        }
-      );
+      const lowTempRouter = new OpenRouter({
+        token: process.env.OPENROUTER_API_KEY!,
+        context: {},
+        model: 'google/gemini-2.5-flash-preview',
+        temperature: 0.1,
+        max_tokens: 50
+      });
       
-      const highTempRouter = new OpenRouter(
-        process.env.OPENROUTER_API_KEY!,
-        {},
-        {
-          model: 'google/gemini-2.5-flash-preview',
-          temperature: 0.9,
-          max_tokens: 50
-        }
-      );
+      const highTempRouter = new OpenRouter({
+        token: process.env.OPENROUTER_API_KEY!,
+        context: {},
+        model: 'google/gemini-2.5-flash-preview',
+        temperature: 0.9,
+        max_tokens: 50
+      });
       
       const lowTempResponse = await lowTempRouter.ask('Say hello');
       const highTempResponse = await highTempRouter.ask('Say hello');
@@ -404,7 +396,7 @@ const debug = Debug('test:ask');
 
   describe('Real World Usage Scenarios', () => {
     it('should handle coding questions', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const response = await askInstance.ask('Write a simple JavaScript function that adds two numbers');
       expect(typeof response).toBe('string');
@@ -414,7 +406,7 @@ const debug = Debug('test:ask');
     }, 60000);
 
     it('should handle general knowledge questions', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const response = await askInstance.ask('What is the capital of France? Answer in one word.');
       expect(typeof response).toBe('string');
@@ -422,7 +414,7 @@ const debug = Debug('test:ask');
     }, 30000);
 
     it('should demonstrate "we" communication style', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const response = await askInstance.ask('Explain what we are doing in this conversation');
       expect(typeof response).toBe('string');
@@ -433,7 +425,7 @@ const debug = Debug('test:ask');
 
   describe('Memory and Context', () => {
     it('should maintain conversation memory', async () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       await askInstance.ask('Remember that my favorite color is blue');
       const response = await askInstance.ask('What is my favorite color?');
@@ -443,7 +435,7 @@ const debug = Debug('test:ask');
     }, 60000);
 
     it('should have project info methods from AI base class', () => {
-      const askInstance = new Ask(process.env.OPENROUTER_API_KEY!, 'Test Project');
+      const askInstance = new Ask({ token: process.env.OPENROUTER_API_KEY!, projectName: 'Test Project' });
       
       const projectInfo = askInstance.getProjectInfo();
       expect(projectInfo).toBeDefined();

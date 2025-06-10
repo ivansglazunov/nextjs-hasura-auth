@@ -10,11 +10,11 @@ import Debug from 'hasyx/lib/debug';
 // the .env is loaded from the user's current directory, not from hasyx package directory
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-import { AI, Do, AIOptions } from 'hasyx/lib/ai';
+import { AI, AIOptions } from 'hasyx/lib/ai';
+import { printMarkdown } from 'hasyx/lib/markdown-terminal';
 import { execDo, execContext, ExecResult } from 'hasyx/lib/exec';
 import { execTsDo, execTsContext } from 'hasyx/lib/exec-tsx';
 import { terminalDo, terminalContext } from 'hasyx/lib/terminal';
-import { printMarkdown } from 'hasyx/lib/markdown-terminal';
 
 const debug = Debug('hasyx:ask-hasyx');
 
@@ -42,17 +42,17 @@ export interface AskHasyxOptions extends AIOptions {
 }
 
 export class AskHasyx extends AI {
+  public askOptions: AskOptions;
+  public outputHandlers: OutputHandlers;
+  private isReplMode: boolean = false;
   public context: string;
   public engines: {
     exec?: typeof execDo;
     execTs?: typeof execTsDo;
     terminal?: typeof terminalDo;
   };
-  private isReplMode: boolean = false;
-  public askOptions: AskOptions;
-  public outputHandlers: OutputHandlers;
 
-  constructor(token: string, options: AskHasyxOptions = {}) {
+  constructor(options: AskHasyxOptions) {
     const { askOptions = {}, outputHandlers = {}, ...aiOptions } = options;
 
     const defaultAskOptions: AskOptions = { exec: true, execTs: true, terminal: true };
@@ -63,6 +63,7 @@ export class AskHasyx extends AI {
     if (finalAskOptions.execTs) contextParts.push(execTsContext);
     if (finalAskOptions.terminal) contextParts.push(terminalContext);
 
+    // Enhanced system prompt with code execution instructions
     const defaultSystemPrompt = `You are an AI assistant for development projects.
 
 We are working together on this project. When we need to execute code, analyze data, or perform operations, we use the available execution environments.
@@ -88,104 +89,122 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     
     const finalSystemPrompt = aiOptions.systemPrompt || defaultSystemPrompt;
 
+    // Create proper AIOptions for the new AI constructor
     const finalAiOptions: AIOptions = {
-      model: 'google/gemini-2.5-flash-preview',
-      temperature: 0.1,
-      max_tokens: 2048,
-      ...aiOptions,
+      provider: aiOptions.provider!, // Provider is required now
       systemPrompt: finalSystemPrompt,
+      onResponse: aiOptions.onResponse,
+      onStream: aiOptions.onStream,
+      onStreamEnd: aiOptions.onStreamEnd
     };
     
-    super(token, finalAiOptions);
+    super(finalAiOptions);
 
     this.askOptions = finalAskOptions;
     this.outputHandlers = outputHandlers;
     this.context = contextParts.join('\n\n');
-    this.systemPrompt = finalSystemPrompt;
     
     this.engines = {};
     if (this.askOptions.exec) this.engines.exec = execDo;
     if (this.askOptions.execTs) this.engines.execTs = execTsDo;
     if (this.askOptions.terminal) this.engines.terminal = terminalDo;
+  }
 
-    // Setup progress callbacks with overridable handlers
-    this._onThinking = () => {
-      if (this.outputHandlers.onThinking) {
-        this.outputHandlers.onThinking();
-      } else if (this.isReplMode) {
-        this.defaultOutput('🧠 AI думает...');
-      }
-    };
+  // Default output handler - can be overridden
+  protected defaultOutput(message: string): void {
+    if (this.outputHandlers.onOutput) {
+      this.outputHandlers.onOutput(message);
+    } else {
+      console.log(message);
+    }
+  }
 
-    this._onCodeFound = async (code: string, format: 'js' | 'tsx' | 'terminal') => {
-      if (this.outputHandlers.onCodeFound) {
-        await this.outputHandlers.onCodeFound(code, format);
-      } else if (this.isReplMode) {
-        this.defaultOutput(`📋 Найден ${format.toUpperCase()} код для выполнения:`);
-        const displayFormat = format === 'terminal' ? 'bash' : format;
-        await printMarkdown(`\`\`\`${displayFormat}\n${code}\n\`\`\``);
-      }
-    };
+  // Default error handler - can be overridden  
+  protected defaultError(error: string): void {
+    if (this.outputHandlers.onError) {
+      this.outputHandlers.onError(error);
+    } else {
+      console.error(error);
+    }
+  }
 
-    this._onCodeExecuting = (code: string, format: 'js' | 'tsx' | 'terminal') => {
-      if (this.outputHandlers.onCodeExecuting) {
-        this.outputHandlers.onCodeExecuting(code, format);
-      } else if (this.isReplMode) {
-        this.defaultOutput(`⚡ Выполняется ${format.toUpperCase()} код...`);
-      }
-    };
-
-    this._onCodeResult = async (result: string) => {
-      if (this.outputHandlers.onCodeResult) {
-        await this.outputHandlers.onCodeResult(result);
-      } else if (this.isReplMode) {
-        this.defaultOutput(`✅ Результат выполнения:`);
-        await printMarkdown(`\`\`\`\n${result}\n\`\`\``);
-      }
-    };
-
-    this._onResponse = (response: string) => {
-      if (this.outputHandlers.onResponse) {
-        this.outputHandlers.onResponse(response);
-      } else if (this.isReplMode) {
-        this.defaultOutput(`💭 AI ответил (${response.length} символов)`);
-      }
-    };
-
-    // Setup Do handler
-    this._do = async (doItem: Do): Promise<Do> => {
+  /**
+   * Parse and execute code blocks in AI response
+   */
+  private async executeCodeBlocks(response: string): Promise<string> {
+    debug('Executing code blocks in response:', response.substring(0, 200) + '...');
+    
+    // Regex to match code execution patterns like: > 😈uuid/do/exec/js
+    const codeBlockRegex = />\s*😈([^/]+)\/do\/(exec|terminal)\/(js|tsx|bash)\s*\n```(?:js|tsx|bash)\s*([\s\S]*?)```/g;
+    
+    let processedResponse = response;
+    let match;
+    
+    while ((match = codeBlockRegex.exec(response)) !== null) {
+      const [fullMatch, uuid, operation, format, code] = match;
+      debug('Found code block:', { uuid, operation, format, code: code.substring(0, 50) + '...' });
+      
       try {
-        if (this._onCodeExecuting) this._onCodeExecuting(doItem.request, doItem.format);
-
-        let execResult: ExecResult | any;
-
-        if (doItem.operation.startsWith('do/exec/js')) {
-          if (!this.askOptions.exec || !this.engines.exec) throw new Error('JavaScript execution is disabled');
-          execResult = await this.engines.exec.exec(doItem.request);
-        } else if (doItem.operation.startsWith('do/exec/tsx')) {
-          if (!this.askOptions.execTs || !this.engines.execTs) throw new Error('TypeScript execution is disabled');
-          execResult = await this.engines.execTs.exec(doItem.request);
-        } else if (doItem.operation.startsWith('do/terminal/')) {
-          if (!this.askOptions.terminal || !this.engines.terminal) throw new Error('Terminal execution is disabled');
-          const shell = doItem.operation.split('/')[2];
-          execResult = await this.engines.terminal.exec(doItem.request, shell);
-        } else {
-          throw new Error(`Unknown operation: ${doItem.operation}`);
+        if (this.outputHandlers.onCodeFound) {
+          await this.outputHandlers.onCodeFound(code, format as 'js' | 'tsx' | 'terminal');
+        } else if (this.isReplMode) {
+          this.defaultOutput(`📋 Найден ${format.toUpperCase()} код для выполнения:`);
+          const displayFormat = format === 'bash' ? 'bash' : format;
+          await printMarkdown(`\`\`\`${displayFormat}\n${code}\n\`\`\``);
         }
 
-        const formattedResponse = this.formatResult(execResult);
-        doItem.response = formattedResponse;
-        
-        if (this._onCodeResult) await this._onCodeResult(formattedResponse);
-        
-        return doItem;
+        if (this.outputHandlers.onCodeExecuting) {
+          this.outputHandlers.onCodeExecuting(code, format as 'js' | 'tsx' | 'terminal');
+        } else if (this.isReplMode) {
+          this.defaultOutput(`⚡ Выполняется ${format.toUpperCase()} код...`);
+        }
+
+        let execResult: ExecResult | any;
+        let formattedResult: string;
+
+        if (format === 'js' && this.askOptions.exec && this.engines.exec) {
+          execResult = await this.engines.exec.exec(code);
+          formattedResult = this.formatResult(execResult);
+        } else if (format === 'tsx' && this.askOptions.execTs && this.engines.execTs) {
+          execResult = await this.engines.execTs.exec(code);
+          formattedResult = this.formatResult(execResult);
+        } else if (format === 'bash' && this.askOptions.terminal && this.engines.terminal) {
+          execResult = await this.engines.terminal.exec(code, 'bash');
+          formattedResult = this.formatResult(execResult);
+        } else {
+          throw new Error(`${format} execution is disabled or not supported`);
+        }
+
+        if (this.outputHandlers.onCodeResult) {
+          await this.outputHandlers.onCodeResult(formattedResult);
+        } else if (this.isReplMode) {
+          this.defaultOutput(`✅ Результат выполнения:`);
+          await printMarkdown(`\`\`\`\n${formattedResult}\n\`\`\``);
+        }
+
+        // Replace the code block with execution result in the response
+        processedResponse = processedResponse.replace(fullMatch, 
+          `\`\`\`${format}\n${code}\n\`\`\`\n\n**Результат выполнения:**\n\`\`\`\n${formattedResult}\n\`\`\``
+        );
+
       } catch (error) {
         const errorMessage = `Error: ${error instanceof Error ? error.message : String(error)}`;
-        doItem.response = errorMessage;
-        if (this._onCodeResult) await this._onCodeResult(errorMessage);
-        return doItem;
+        
+        if (this.outputHandlers.onCodeResult) {
+          await this.outputHandlers.onCodeResult(errorMessage);
+        } else if (this.isReplMode) {
+          this.defaultOutput(`❌ Ошибка выполнения:`);
+          await printMarkdown(`\`\`\`\n${errorMessage}\n\`\`\``);
+        }
+
+        // Replace with error in the response
+        processedResponse = processedResponse.replace(fullMatch, 
+          `\`\`\`${format}\n${code}\n\`\`\`\n\n**Ошибка выполнения:**\n\`\`\`\n${errorMessage}\n\`\`\``
+        );
       }
-    };
+    }
+
+    return processedResponse;
   }
 
   private formatResult(result: any): string {
@@ -225,102 +244,32 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     return String(result);
   }
 
-  // Default output handler - can be overridden
-  protected defaultOutput(message: string): void {
-    if (this.outputHandlers.onOutput) {
-      this.outputHandlers.onOutput(message);
-    } else {
-      console.log(message);
-    }
-  }
-
-  // Default error handler - can be overridden  
-  protected defaultError(error: string): void {
-    if (this.outputHandlers.onError) {
-      this.outputHandlers.onError(error);
-    } else {
-      console.error(error);
-    }
-  }
-
   /**
-   * Ask a question with beautiful streaming output (for non-REPL usage)
+   * Ask a question with beautiful streaming output and code execution (for non-REPL usage)
    */
   async askWithBeautifulOutput(question: string): Promise<string> {
     debug('Processing question with beautiful output:', question);
     
-    return new Promise((resolve, reject) => {
-      let accumulatedText = '';
-      let finalResponse = '';
+    try {
+      // Get AI response
+      const response = await this.ask(question);
       
-      this.asking(question).subscribe({
-        next: (event) => {
-          switch (event.type) {
-            case 'thinking':
-              this.defaultOutput('🧠 AI думает...');
-              break;
-              
-            case 'iteration':
-              if (event.data.iteration > 1) {
-                this.defaultOutput(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
-              }
-              break;
-              
-            case 'text':
-              // For non-REPL mode, we can buffer text for markdown rendering
-              accumulatedText += event.data.delta;
-              break;
-              
-            case 'code_found':
-              this.defaultOutput(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
-              const displayFormat = event.data.format === 'terminal' ? 'bash' : event.data.format;
-              this.defaultOutput(`\`\`\`${displayFormat}`);
-              this.defaultOutput(event.data.code);
-              this.defaultOutput('```');
-              break;
-              
-            case 'code_executing':
-              this.defaultOutput(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
-              break;
-              
-            case 'code_result':
-              const status = event.data.success ? '✅' : '❌';
-              this.defaultOutput(`${status} Результат выполнения:`);
-              this.defaultOutput('```');
-              this.defaultOutput(event.data.result);
-              this.defaultOutput('```');
-              break;
-              
-            case 'complete':
-              finalResponse = event.data.finalResponse;
-              this.defaultOutput(`💭 Завершено (${event.data.iterations} итераций)`);
-              break;
-              
-            case 'error':
-              this.defaultError(`❌ Ошибка в итерации ${event.data.iteration}: ${event.data.error.message}`);
-              break;
-          }
-        },
-        complete: async () => {
-          try {
-            // Render accumulated text as markdown for beautiful output
-            if (accumulatedText) {
-              await printMarkdown(accumulatedText);
-            }
-            resolve(finalResponse || accumulatedText);
-          } catch (error) {
-            reject(error);
-          }
-        },
-        error: (error) => {
-          reject(error);
-        }
-      });
-    });
+      // Execute code blocks in response
+      const processedResponse = await this.executeCodeBlocks(response);
+      
+      // Render response as markdown for beautiful output
+      await printMarkdown(processedResponse);
+      
+      return processedResponse;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.defaultError(`❌ Error: ${errorMessage}`);
+      throw error;
+    }
   }
 
   /**
-   * Interactive REPL mode for terminal interaction with streaming support
+   * Interactive REPL mode for terminal interaction
    */
   async repl(): Promise<void> {
     this.isReplMode = true;
@@ -343,10 +292,6 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     }
 
     try {
-      if (this._do) {
-        // Code execution is available - this is handled in welcome message above
-      }
-      
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -363,83 +308,25 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
           return;
         }
 
-        debug('Processing REPL question with streaming:', question);
+        debug('Processing REPL question:', question);
         
         try {
-          let accumulatedText = '';
-          let responseBuffer = '';
+          this.defaultOutput('🧠 AI думает...');
           
-          // Use new streaming method
-          this.asking(question).subscribe({
-            next: (event) => {
-              switch (event.type) {
-                case 'thinking':
-                  this.defaultOutput('🧠 AI думает...');
-                  break;
-                  
-                case 'iteration':
-                  if (event.data.iteration > 1) {
-                    this.defaultOutput(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
-                  }
-                  break;
-                  
-                case 'text':
-                  // Print text in real-time without newlines
-                  process.stdout.write(event.data.delta);
-                  accumulatedText += event.data.delta;
-                  responseBuffer += event.data.delta;
-                  break;
-                  
-                case 'code_found':
-                  // Add newline before code block if needed
-                  if (responseBuffer && !responseBuffer.endsWith('\n')) {
-                    this.defaultOutput('');
-                  }
-                  this.defaultOutput(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
-                  const displayFormat = event.data.format === 'terminal' ? 'bash' : event.data.format;
-                  this.defaultOutput(`\`\`\`${displayFormat}`);
-                  this.defaultOutput(event.data.code);
-                  this.defaultOutput('```');
-                  responseBuffer = ''; // Reset buffer after code block
-                  break;
-                  
-                case 'code_executing':
-                  this.defaultOutput(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
-                  break;
-                  
-                case 'code_result':
-                  const status = event.data.success ? '✅' : '❌';
-                  this.defaultOutput(`${status} Результат выполнения:`);
-                  this.defaultOutput('```');
-                  this.defaultOutput(event.data.result);
-                  this.defaultOutput('```');
-                  break;
-                  
-                case 'complete':
-                  // Ensure we end with a newline
-                  if (responseBuffer && !responseBuffer.endsWith('\n')) {
-                    this.defaultOutput('');
-                  }
-                  this.defaultOutput(`💭 Завершено (${event.data.iterations} итераций)`);
-                  break;
-                  
-                case 'error':
-                  this.defaultError(`❌ Ошибка в итерации ${event.data.iteration}: ${event.data.error.message}`);
-                  break;
-              }
-            },
-            complete: () => {
-              this.defaultOutput('');
-              rl.prompt();
-            },
-            error: (error) => {
-              this.defaultError(`❌ Ошибка стриминга: ${error.message}`);
-              rl.prompt();
-            }
-          });
+          // Get AI response
+          const response = await this.ask(question);
+          
+          // Execute code blocks in response
+          const processedResponse = await this.executeCodeBlocks(response);
+          
+          // Print the processed response
+          await printMarkdown(processedResponse);
+          
+          this.defaultOutput('💭 Ответ завершен');
+          rl.prompt();
           
         } catch (error) {
-          debug('Error in streaming REPL:', error);
+          debug('Error in REPL:', error);
           this.defaultError(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
           rl.prompt();
         }
@@ -465,7 +352,58 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
         process.exit(0);
       });
     } finally {
-      this.isReplMode = false; // Disable progress callbacks when exiting REPL
+      this.isReplMode = false;
+    }
+  }
+
+  /**
+   * Override askStream to support callback options
+   */
+  async askStream(
+    message: string, 
+    options: { 
+      addToMemory?: boolean; 
+      onStream?: (chunk: string) => void; 
+      onStreamEnd?: () => void 
+    } = { addToMemory: true }
+  ): Promise<string> {
+    // Use super.askStream for simple case
+    if (!options.onStream && !options.onStreamEnd) {
+      return await super.askStream(message, { addToMemory: options.addToMemory });
+    }
+    
+    // For custom streaming callbacks, we need to manually handle the stream
+    const userMessage = { role: 'user' as const, content: message };
+    const messages = [...this.memory, userMessage];
+    
+    try {
+      const stream = await (this as any).provider.askStream(messages);
+      const reader = stream.getReader();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        fullResponse += value;
+        if (options.onStream) {
+          options.onStream(value);
+        }
+      }
+
+      if (options.onStreamEnd) {
+        options.onStreamEnd();
+      }
+
+      if (options.addToMemory !== false) {
+        this.memory.push(userMessage);
+        this.memory.push({ role: 'assistant', content: fullResponse });
+      }
+
+      return fullResponse;
+    } catch (error) {
+      throw error;
     }
   }
 }

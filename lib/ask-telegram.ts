@@ -68,7 +68,14 @@ export class TelegramAskWrapper extends AskHasyx {
     // Remove telegram options from askOptions to avoid passing to parent
     const { telegram, ...cleanAskOptions } = askOptions;
 
-    super(token, context, options, systemPrompt, cleanAskOptions, outputHandlers);
+    super({
+      token,
+      context,
+      ...options,
+      systemPrompt,
+      askOptions: cleanAskOptions,
+      outputHandlers,
+    });
 
     this.chatId = chatId;
     this.botToken = botToken;

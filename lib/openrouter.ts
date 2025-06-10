@@ -1,11 +1,5 @@
 import { Exec, ExecContext } from './exec';
-
-export interface OpenRouterMessage {
-  role: 'system' | 'user' | 'assistant' | 'tool';
-  content: string;
-  name?: string;
-  tool_call_id?: string;
-}
+import { AIMessage, AIProvider } from './provider';
 
 export interface OpenRouterTool {
   type: 'function';
@@ -16,7 +10,7 @@ export interface OpenRouterTool {
   };
 }
 
-export interface OpenRouterOptions {
+export interface OpenRouterRequestOptions {
   model?: string;
   temperature?: number;
   max_tokens?: number;
@@ -31,6 +25,11 @@ export interface OpenRouterOptions {
   user?: string;
   timeout?: number;
   systemPrompt?: string;
+}
+
+export interface OpenRouterOptions extends OpenRouterRequestOptions {
+  token: string;
+  context?: ExecContext;
 }
 
 export interface OpenRouterResponse {
@@ -70,8 +69,8 @@ export interface OpenRouterResponse {
   model: string;
 }
 
-export class OpenRouter {
-  private defaultOptions: OpenRouterOptions = {
+export class OpenRouter implements AIProvider {
+  private defaultOptions: OpenRouterRequestOptions = {
     model: 'google/gemini-2.5-flash-preview',
     temperature: 0.7,
     max_tokens: 4096,
@@ -84,20 +83,19 @@ export class OpenRouter {
   public context: ExecContext;
   private execInstance: Exec;
   private token: string;
-  private options: OpenRouterOptions;
+  private options: OpenRouterRequestOptions;
 
   constructor(
-    token: string, 
-    context: ExecContext = {}, 
-    options: OpenRouterOptions = {}
+    options: OpenRouterOptions
   ) {
-    if (!token) {
+    if (!options.token) {
       throw new Error('OpenRouter API token is required');
     }
 
-    this.token = token;
-    this.options = { ...this.defaultOptions, ...options };
-    this.context = { ...context };
+    this.token = options.token;
+    const { token, context, ...restOptions } = options;
+    this.options = { ...this.defaultOptions, ...restOptions };
+    this.context = { ...(context || {}) };
     this.execInstance = new Exec({ initialContext: this.context });
   }
 
@@ -105,13 +103,13 @@ export class OpenRouter {
    * Send a message or array of messages to the AI
    */
   async ask(
-    messages: string | OpenRouterMessage | OpenRouterMessage[],
-    options: OpenRouterOptions = {}
+    messages: string | AIMessage | AIMessage[],
+    options: OpenRouterRequestOptions = {}
   ): Promise<string> {
     const finalOptions = { ...this.options, ...options };
     
     // Normalize messages to array format
-    let normalizedMessages: OpenRouterMessage[];
+    let normalizedMessages: AIMessage[];
     
     if (typeof messages === 'string') {
       normalizedMessages = [{ role: 'user', content: messages }];
@@ -173,13 +171,13 @@ export class OpenRouter {
    * Send a message or array of messages to the AI with streaming support
    */
   async askStream(
-    messages: string | OpenRouterMessage | OpenRouterMessage[],
-    options: OpenRouterOptions = {}
+    messages: string | AIMessage | AIMessage[],
+    options: OpenRouterRequestOptions = {}
   ): Promise<ReadableStream<string>> {
     const finalOptions = { ...this.options, ...options, stream: true };
     
     // Normalize messages to array format
-    let normalizedMessages: OpenRouterMessage[];
+    let normalizedMessages: AIMessage[];
     
     if (typeof messages === 'string') {
       normalizedMessages = [{ role: 'user', content: messages }];
@@ -317,7 +315,7 @@ export class OpenRouter {
    */
   async askWithExec(
     message: string,
-    options: OpenRouterOptions = {}
+    options: OpenRouterRequestOptions = {}
   ): Promise<{ response: string; execResults?: Record<string, any> }> {
     const systemPrompt = `You are a helpful AI assistant with the ability to execute JavaScript code.
 
@@ -337,7 +335,7 @@ IMPORTANT:
 - The last expression in the code block will be returned
 - Use console.log() for debugging output`;
 
-    const messages: OpenRouterMessage[] = [
+    const messages: AIMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: message }
     ];
@@ -391,7 +389,7 @@ IMPORTANT:
   /**
    * Update the OpenRouter options
    */
-  updateOptions(updates: OpenRouterOptions): void {
+  updateOptions(updates: OpenRouterRequestOptions): void {
     this.options = { ...this.options, ...updates };
   }
 
@@ -413,35 +411,35 @@ IMPORTANT:
   /**
    * Create a system message
    */
-  static systemMessage(content: string): OpenRouterMessage {
+  static systemMessage(content: string): AIMessage {
     return { role: 'system', content };
   }
 
   /**
    * Create a user message
    */
-  static userMessage(content: string): OpenRouterMessage {
+  static userMessage(content: string): AIMessage {
     return { role: 'user', content };
   }
 
   /**
    * Create an assistant message
    */
-  static assistantMessage(content: string): OpenRouterMessage {
+  static assistantMessage(content: string): AIMessage {
     return { role: 'assistant', content };
   }
 
   /**
    * Create a tool message
    */
-  static toolMessage(content: string, toolCallId: string, name?: string): OpenRouterMessage {
+  static toolMessage(content: string, toolCallId: string, name?: string): AIMessage {
     return { role: 'tool', content, tool_call_id: toolCallId, name };
   }
 
   /**
    * Create a conversation from multiple messages
    */
-  static conversation(...messages: (string | OpenRouterMessage)[]): OpenRouterMessage[] {
+  static conversation(...messages: (string | AIMessage)[]): AIMessage[] {
     return messages.map(msg => {
       if (typeof msg === 'string') {
         return { role: 'user', content: msg };

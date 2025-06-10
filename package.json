@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.296",
+  "version": "0.1.297",
   "description": "Modern full-stack framework with real-time GraphQL, AI integration, and seamless development experience",
   "homepage": "https://hasyx.deep.foundation/",
   "engines": {
@@ -39,6 +39,7 @@
     "ask": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/ask.ts",
     "js": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/js.ts",
     "tsx": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/tsx.ts",
+    "ollama": "ollama",
     "logs": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/cli-hasyx.ts logs",
     "logs-diffs": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/cli-hasyx.ts logs-diffs",
     "logs-states": "NODE_OPTIONS=\"--experimental-vm-modules\" tsx lib/cli-hasyx.ts logs-states"
@@ -168,6 +169,7 @@
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.6",
     "next-ws": "^2.0.7",
+    "ollama-node": "^0.1.28",
     "png-to-ico": "^2.1.8",
     "prettier": "^3.5.3",
     "puppeteer": "^24.9.0",
@@ -193,7 +195,6 @@
     "ts-essentials": "^10.0.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "tsx": "^4.19.4",
     "tw-animate-css": "^1.2.5",
     "typescript": "^5",
     "use-m": "^8.10.25",
