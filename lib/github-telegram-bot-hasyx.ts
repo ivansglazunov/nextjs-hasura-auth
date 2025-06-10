@@ -4,6 +4,7 @@ import * as path from 'path';
 
 import { TelegramBot } from './telegram-bot';
 import { Ask } from './ask';
+import { OpenRouter } from './openrouter';
 import Debug from './debug';
 
 const debug = Debug('hasyx:github-telegram-bot');
@@ -354,10 +355,11 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
   const workflowStatus = await fetchWorkflowStatus(commitInfo.sha, repositoryUrl, githubToken);
   
   // Create Ask instance for AI analysis
-  const ask = new Ask(
-    openRouterApiKey || 'dummy-key',
-    projectName || 'Unknown Project'
-  );
+  const provider = new OpenRouter({ token: openRouterApiKey || 'dummy-key' });
+  const ask = new Ask({
+    provider,
+    projectName: projectName || 'Unknown Project'
+  });
   
   // Map status to emojis
   const getStatusEmoji = (status: string) => {
@@ -448,7 +450,7 @@ Remember: this is not just a notification, it's a CELEBRATION of progress! 🎉
 Return ONLY the joyful message content without any additional text.`;
 
   console.log(`🧠 Sending context to AI for message generation...`);
-  const aiResponse = await ask.ask(contextPrompt);
+  const aiResponse = await ask.askWithBeautifulOutput(contextPrompt);
   
   console.log(`✅ AI generated message successfully`);
   console.log(`📄 Generated message length: ${aiResponse.length} characters`);
