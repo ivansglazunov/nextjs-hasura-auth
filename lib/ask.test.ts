@@ -12,7 +12,10 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 const debug = Debug('test:ask');
 
 (!!process?.env?.OPENROUTER_API_KEY ? describe : describe.skip)('Real Ask Class & AI Integration Tests', () => {
-  
+  afterEach(async () => {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  });
+
   describe('Environment Validation', () => {
     it('should validate OPENROUTER_API_KEY exists', () => {
       expect(process.env.OPENROUTER_API_KEY).toBeDefined();

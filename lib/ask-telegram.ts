@@ -1,4 +1,5 @@
 import { AskHasyx, AskOptions, OutputHandlers } from './ask-hasyx';
+import { ExecResult, ConsoleLog } from './exec';
 import { sendTelegramMessage } from './telegram-bot';
 import Debug from './debug';
 
@@ -68,7 +69,12 @@ export class TelegramAskWrapper extends AskHasyx {
     // Remove telegram options from askOptions to avoid passing to parent
     const { telegram, ...cleanAskOptions } = askOptions;
 
-    super(token, context, options, systemPrompt, cleanAskOptions, outputHandlers);
+    super(token, {
+      ...options,
+      systemPrompt,
+      askOptions: cleanAskOptions,
+      outputHandlers
+    });
 
     this.chatId = chatId;
     this.botToken = botToken;
@@ -290,6 +296,49 @@ export class TelegramAskWrapper extends AskHasyx {
 }
 
 /**
+ * Format execution result properly including logs (similar to AskHasyx.formatResult)
+ */
+function formatExecutionResult(result: any): string {
+  // Handle new { result, logs } format from exec/exec-tsx
+  if (result && typeof result === 'object' && 'result' in result && 'logs' in result) {
+    const execResult = result as ExecResult;
+    const formattedResult = formatSingleResult(execResult.result);
+    
+    if (execResult.logs && execResult.logs.length > 0) {
+      const formattedLogs = execResult.logs.map(log => 
+        `[${log.level.toUpperCase()}] ${log.args.map(arg => formatSingleResult(arg, true)).join(' ')}`
+      ).join('\n');
+      return `Result:\n${formattedResult}\n\nLogs:\n${formattedLogs}`;
+    }
+    return formattedResult;
+  }
+  
+  // Handle terminal results or other direct results
+  return formatSingleResult(result);
+}
+
+/**
+ * Format single result value
+ */
+function formatSingleResult(result: any, isLogArg: boolean = false): string {
+  if (result === undefined) return 'undefined';
+  if (result === null) return 'null';
+  if (typeof result === 'string') return result;
+  if (typeof result === 'number' || typeof result === 'boolean') return String(result);
+  if (result instanceof Error) return `Error: ${result.message}`;
+  if (typeof result === 'function') return `[Function: ${result.name || 'anonymous'}]`;
+  if (typeof result === 'object') {
+    try {
+      // For log arguments, use more compact format. For main results, pretty print.
+      return JSON.stringify(result, null, isLogArg ? 0 : 2);
+    } catch {
+      return String(result);
+    }
+  }
+  return String(result);
+}
+
+/**
  * Creates or retrieves a Telegram Ask instance for a specific user
  */
 export function defineTelegramAsk(
@@ -382,19 +431,21 @@ echo "Hello World"
         const { execTsDo } = await import('hasyx/lib/exec-tsx');
         const { terminalDo } = await import('hasyx/lib/terminal');
         
-        let result: string;
+        let execResult: any;
         if (doItem.format === 'js') {
-          result = await execDo.exec(doItem.request);
+          execResult = await execDo.exec(doItem.request);
         } else if (doItem.format === 'tsx') {
-          result = await execTsDo.exec(doItem.request);
+          execResult = await execTsDo.exec(doItem.request);
         } else if (doItem.format === 'terminal') {
-          result = await terminalDo.exec(doItem.request);
+          execResult = await terminalDo.exec(doItem.request);
         } else {
           throw new Error(`Unsupported execution format: ${doItem.format}`);
         }
         
-        doItem.response = String(result);
-        debug(`Code execution completed for ${doItem.id}: ${String(result).substring(0, 100)}...`);
+        // Format result properly including logs (similar to AskHasyx.formatResult)
+        const formattedResult = formatExecutionResult(execResult);
+        doItem.response = formattedResult;
+        debug(`Code execution completed for ${doItem.id}: ${formattedResult.substring(0, 100)}...`);
         
         return doItem;
       } catch (error) {
