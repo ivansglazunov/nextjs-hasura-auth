@@ -168,14 +168,17 @@ export async function sendTelegramMessage(
   token: string, 
   chatId: number | string, 
   text: string, 
-  replyToMessageId?: number,
-  messageThreadId?: number
+  options: {
+    reply_to_message_id?: number;
+    message_thread_id?: number;
+    parse_mode?: 'MarkdownV2' | 'HTML' | 'Markdown';
+    [key: string]: any;
+  } = {}
 ): Promise<any> {
   return callTelegramApi(token, 'sendMessage', {
     chat_id: chatId,
     text: text,
-    reply_to_message_id: replyToMessageId,
-    message_thread_id: messageThreadId
+    ...options,
   });
 }
 
@@ -209,8 +212,8 @@ export class TelegramBot {
        * @param replyToMessageId Optional message ID to reply to
        * @param threadId Optional thread ID for forum messages
        */
-      sendMessage: async (text: string, replyToMessageId?: number, threadId?: number) => {
-        return sendTelegramMessage(this.token, chatId, text, replyToMessageId, threadId);
+      sendMessage: async (text: string, options: { reply_to_message_id?: number, message_thread_id?: number, parse_mode?: 'MarkdownV2' | 'HTML' | 'Markdown' } = {}) => {
+        return sendTelegramMessage(this.token, chatId, text, options);
       }
     };
   }
