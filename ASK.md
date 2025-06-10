@@ -1,170 +1,71 @@
-# Ask AI
+# AI Assistant CLI (`ask`)
 
-Ask AI assistant via command line with code execution capabilities.
+The `ask` command provides a powerful command-line interface to interact with an AI assistant that can execute code and perform tasks.
 
 ## Quick Start
 
-### Get Help
+The primary way to use the assistant is via the `npm run ask` script, which passes your arguments to the `ask.ts` entrypoint.
+
+### Non-Interactive Mode (`-e`)
+
+For single questions, use the `-e` (or `--execute`) flag.
 
 ```bash
-# Show all available options
-npm run ask -- --help
-npx tsx ./lib/ask.ts --help
+# Ask a simple question
+npm run ask -- -e "What is the capital of France?"
 
-# Alternative command format
-npx hasyx ask --help  # (if hasyx package is globally installed)
+# Request a command to be executed
+npm run ask -- -e "List all files in the current directory"
 ```
 
-### Basic Usage
+### Provider and Model Selection
+
+You can specify which AI provider and model to use with the `--provider` and `--model` flags.
+
+#### Using Ollama (Local)
+
+To use a local model via Ollama, ensure the Ollama service is running.
 
 ```bash
-# Interactive mode (default)
+# Use the gemma2:2b model from Ollama
+npm run ask -- -e "How many CPU cores are available?" --provider ollama --model gemma2:2b
+```
+
+#### Using OpenRouter (Cloud)
+
+To use a cloud model via OpenRouter, make sure your `OPENROUTER_API_KEY` is set in a `.env` file.
+
+```bash
+# Use Google's Gemini Flash model (default)
+npm run ask -- -e "Explain recursion in one paragraph."
+
+# Explicitly specify the provider and model
+npm run ask -- -e "Explain recursion in one paragraph." --provider openrouter --model google/gemini-flash-1.5
+```
+
+### Interactive Mode
+
+To start a persistent conversation, run the command without the `-e` flag.
+
+```bash
+# Start interactive chat with the default provider (OpenRouter)
 npm run ask
 
-# Direct question  
-npm run ask -- "What is 2+2?"
-
-# Specify provider and model
-npm run ask -- --provider openrouter --model google/gemini-2.5-flash-preview "Explain recursion"
-npm run ask -- --provider ollama --model gemma2:2b "Write a Python function"
+# Start interactive chat with Ollama
+npm run ask -- --provider ollama --model gemma2:2b
 ```
 
-### List Available Models
+In interactive mode, you can type your questions and press Enter. The assistant will maintain the conversation history for the duration of the session. Type `exit` or press `Ctrl+C` to quit.
 
-You can list all available models for different AI providers:
+## How It Works
 
-```bash
-# List available Ollama models (local models)
-npm run ask -- --provider ollama --models
-npx tsx ./lib/ask.ts --provider ollama --models
+The `ask` command is powered by the new Hasyx AI architecture, centered around the `Dialog` class.
 
-# List available OpenRouter models (free models only)
-npm run ask -- --provider openrouter --models
-npx tsx ./lib/ask.ts --provider openrouter --models
-```
+1.  **Argument Parsing**: `ask.ts` reads the `--provider` and `--model` arguments to instantiate the correct `AIProvider`.
+2.  **Dialog Initialization**: It creates a `Dialog` instance, providing it with the chosen provider, a set of tools (`TerminalTool`, `ExecJSTool`), and a system prompt.
+3.  **Event Handling**: It listens to the `dialog.onChange` event stream to print formatted output to the terminal, showing the AI's thoughts, tool calls, and results in real-time.
 
-## Provider Support
-
-The Ask command supports multiple AI providers:
-
-**Ollama (Local Models)**
-- All locally installed models are available and free
-- Requires Ollama service running on localhost:11434
-- Models must be downloaded using `ollama pull model_name`
-- Example models: `gemma2:2b`, `llama3.2:1b`, `phi3:mini`
-
-**OpenRouter (Cloud Models)**
-- Only free models are listed (where prompt, completion, and request costs are $0)
-- Requires `OPENROUTER_API_KEY` environment variable
-- Wide variety of models from different providers
-- Examples: `google/gemini-2.5-flash-preview`, `mistralai/mistral-7b-instruct:free`
-
-### Using availableModels in Code
-
-You can also import and use the `availableModels` function programmatically:
-
-```javascript
-import { availableModels } from './lib/available-models';
-
-// Get Ollama models
-const ollamaModels = await availableModels({ provider: 'ollama' });
-console.log('Ollama models:', ollamaModels);
-
-// Get OpenRouter free models (requires token)
-const openrouterModels = await availableModels({ 
-  provider: 'openrouter', 
-  token: process.env.OPENROUTER_API_KEY 
-});
-console.log('OpenRouter free models:', openrouterModels);
-```
-
-The function returns an array of `AIModel` objects with the following structure:
-
-```typescript
-interface AIModel {
-  id: string;         // Model identifier
-  name: string;       // Human-readable name
-  provider: string;   // Provider name ('ollama' or 'openrouter')
-  free?: boolean;     // Whether the model is free
-  context_length?: number;    // Maximum context length
-  description?: string;       // Model description
-}
-```
-
-## Code Execution
-
-Ask AI can execute JavaScript, TypeScript, and terminal commands automatically when needed.
-
-### Execution Engines
-
-- **JavaScript**: Execute JS code snippets for calculations, demonstrations
-- **TypeScript**: Execute TS code with full type checking
-- **Terminal**: Execute bash commands for system operations
-
-### Code Execution Format
-
-AI responses preserve the original format to maintain code execution commands. When AI needs to execute code, it uses special markers:
-
-```
-> 😈uuid/do/exec/js
-```js
-2 + 2
-```
-
-> 😈uuid/do/exec/tsx  
-```tsx
-interface User { name: string }
-const user: User = { name: "John" }
-console.log(user)
-```
-
-> 😈uuid/do/terminal/bash
-```bash
-echo "Current time: $(date)"
-```
-```
-
-**Important**: The Ask command no longer applies "beautiful" formatting to preserve these execution markers.
-
-## Interactive Mode
-
-Start interactive mode for ongoing conversations:
-
-```bash
-npm run ask
-```
-
-Features:
-- Persistent conversation memory within session
-- Streaming responses for real-time feedback  
-- Code execution results shown inline
-- Use Ctrl+C to exit
-
-Example session:
-```
-🤖 Ask AI anything. Type your question and press Enter. Use Ctrl+C to exit.
-💡 AI responses will be shown as-is to preserve code execution format!
-😈 AI can execute code automatically! Enabled engines: JavaScript, TypeScript, Terminal
-> What's the current time?
-🧠 AI думает...
-
-I'll help you get the current time using a terminal command.
-
-> 😈time-123e4567-e89b-12d3-a456-426614174000/do/terminal/bash
-```bash
-date
-```
-
-**Результат выполнения:**
-```
-Mon Jan 13 10:30:45 UTC 2025
-```
-
-The current time is Monday, January 13th, 2025 at 10:30:45 UTC.
-
-💭 Ответ завершен
-> 
-```
+For a deeper understanding of the architecture, see [AI.md](./AI.md).
 
 ## Features
 

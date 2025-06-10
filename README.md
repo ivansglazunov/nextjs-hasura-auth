@@ -9,6 +9,10 @@ Hasyx = Next.js + Hasura + auth + client + building
 Hasyx provides a robust starting point and a set of tools for building applications using Next.js (App Router), Hasura, and strong authentication patterns. It simplifies setup with JWT-based authentication via NextAuth.js, a secure GraphQL proxy to Hasura, direct WebSocket support for subscriptions, and a powerful dynamic query generator.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-%F0%9F%9A%80-brightgreen)](https://hasyx.vercel.app/)
+[![AI Architecture Docs](https://img.shields.io/badge/AI%20Architecture-MD-red)](AI.md)
+[![AI Assistant CLI Docs](https://img.shields.io/badge/AI%20Assistant%20CLI-MD-blue)](ASK.md)
+[![Ollama Integration Docs](https://img.shields.io/badge/Ollama%20Integration-MD-orange)](OLLAMA.md)
+[![OpenRouter Integration Docs](https://img.shields.io/badge/OpenRouter%20Integration-MD-green)](OPENROUTER.md)
 [![Generator Documentation](https://img.shields.io/badge/Generator%20Docs-MD-blue)](GENERATOR.md) 
 [![Constructor Documentation](https://img.shields.io/badge/Constructor%20Docs-MD-teal)](CONSTRUCTOR.md)
 [![Apollo Client Documentation](https://img.shields.io/badge/Apollo%20Client%20Docs-MD-orange)](APOLLO.md)
@@ -18,9 +22,6 @@ Hasyx provides a robust starting point and a set of tools for building applicati
 [![Code Execution Engine Documentation](https://img.shields.io/badge/Exec%20Engine-MD-darkgreen)](EXEC.md)
 [![TypeScript Execution Engine Documentation](https://img.shields.io/badge/ExecTs%20Engine-MD-darkblue)](EXEC-TS.md)
 [![Terminal Library Documentation](https://img.shields.io/badge/Terminal%20Library-MD-indigo)](TERMINAL.md)
-[![OpenRouter AI Integration Documentation](https://img.shields.io/badge/OpenRouter%20AI-MD-brightgreen)](OPENROUTER.md)
-[![Cytoscape Integration Documentation](https://img.shields.io/badge/Cyto%20Docs-MD-red)](CYTO.md)
-[![Hasyx Identifier (HID) Documentation](https://img.shields.io/badge/HID%20Docs-MD-lightgrey)](HID.md)
 [![Notifications System Documentation](https://img.shields.io/badge/Notify%20System-MD-blueviolet)](NOTIFY.md)
 [![Firebase Notifications Documentation](https://img.shields.io/badge/Notify%20Firebase-MD-gold)](NOTIFY-FIREBASE.md)
 [![Telegram Bot Notifications Documentation](https://img.shields.io/badge/Notify%20Telegram%20Bot-MD-skyblue)](NOTIFY-TELEGRAM-BOT.md)
@@ -53,10 +54,9 @@ Hasyx takes responsibility for:
 *   Pre-configuring Jest for TypeScript testing of files within the `./lib` directory.
 *   Integrating Resend for sending email verification messages (when `RESEND_API_KEY` is set).
 *   Interactive `npx hasyx cli js [<filePath>] [-e "<script>" | --eval "<script>"]` for quick scripting, data exploration, or debugging interactions with your Hasura backend, with the `client` object available in the global scope.
-*   **Universal Code Execution Engine:** A secure JavaScript execution environment that works in both Node.js and browser contexts, with isolated VM contexts, timeout protection, async/await support, and built-in dynamic npm package loading via use-m. See [`EXEC.md`](EXEC.md) for details.
-*   **TypeScript Execution Engine:** A TypeScript-aware code execution engine that extends the base Exec class with in-memory TypeScript compilation, automatic tsconfig.lib.json loading, and seamless TypeScript syntax detection. Includes `npx hasyx tsx` command for TypeScript execution. See [`EXEC-TS.md`](EXEC-TS.md) for details.
-*   **Terminal Emulation Library:** A comprehensive terminal emulation library for Node.js applications with support for spawning shell processes, executing commands with timeout protection, session management, event handling, and factory functions for different terminal types (bash, zsh, node, python, docker, ssh). Features complete test coverage and cross-platform compatibility using native Node.js APIs. See [`TERMINAL.md`](TERMINAL.md) for details.
-*   **OpenRouter AI Integration with Real-time Streaming:** Complete AI integration with OpenRouter API, supporting multiple AI models (Claude, GPT, Llama, etc.) with built-in code execution capabilities. Features **genuine Server-Sent Events (SSE) streaming** with character-by-character output and real-time progress indicators showing AI thinking, code found, execution status, and results. AI can execute JavaScript/TypeScript code automatically and continue reasoning based on results through iterative processing (up to 3 iterations). Includes both programmatic API and CLI interface with `npx hasyx ask` command. First response tokens appear in 0.5-2 seconds vs 5-10 seconds without streaming. The Ask system uses a modular architecture: **`AskHasyx`** (base class with full AI functionality), **`Ask`** (project-specific extensions), and **`ask.template`** (template for child projects). Similarly, other modules follow this pattern: **`debug.template`**, **`cli.template`**, and **`github-telegram-bot.template`** are copied to child projects during `npx hasyx init`. Execution engines (JavaScript, TypeScript, Terminal) can be configured via `AskOptions` interface. See [`OPENROUTER.md`](OPENROUTER.md) and [`ASK.md`](ASK.md) for details.
+*   **Event-Driven AI Engine:** A modular AI core built around a `Dialog` orchestrator. It supports tool usage and multiple LLM backends through a provider pattern (`Ollama` for local models, `OpenRouter` for cloud models). Interaction is primarily handled via the `npm run ask` command-line interface. See [AI.md](./AI.md) for architecture details.
+*   **Universal Code Execution Engine:** A secure JavaScript/TypeScript execution environment.
+*   **Terminal Emulation Library:** A library for spawning and managing shell processes.
 *   Migrations control with `npx hasyx migrate [filter]` and `npx hasyx unmigrate [filter]` for easy database schema management from `./migrations` directory, with optional filtering to run only specific migrations.
 *   Event triggers with `npx hasyx events` for easy event trigger management from `./events` directory, already configured to NEXT_PUBLIC_MAIN_URL (vercel in most cases) /api/events/[name] routing with security headers.
 *   **Server-side Debug Logging:** Built-in `debug()` method for database logging when `HASYX_DEBUG=1` is enabled, storing structured debug data in a dedicated `debug` table for monitoring and troubleshooting production systems.
@@ -133,6 +133,10 @@ Applying best development practices from the listed ecosystems, we have combined
 
 Explore the different modules and functionalities of Hasyx:
 
+*   **[AI.md](./AI.md):** High-level overview of the event-driven AI architecture.
+*   **[ASK.md](./ASK.md):** Guide to using the AI assistant command-line interface.
+*   **[OLLAMA.md](./OLLAMA.md):** Instructions for using local models with Ollama.
+*   **[OPENROUTER.md](./OPENROUTER.md):** Instructions for using cloud models with OpenRouter.
 *   **[GENERATOR.md](GENERATOR.md):** Learn about the powerful dynamic query generator for Hasura.
 *   **[CONSTRUCTOR.md](CONSTRUCTOR.md):** Visual GraphQL query builder with real-time results and development roadmap.
 *   **[APOLLO.md](APOLLO.md):** Understand how to use the Apollo Client with Hasyx.
@@ -143,8 +147,6 @@ Explore the different modules and functionalities of Hasyx:
 *   **[EXEC.md](EXEC.md):** Universal JavaScript code execution engine for both Node.js and browser environments.
 *   **[EXEC-TS.md](EXEC-TS.md):** TypeScript execution engine with in-memory compilation and automatic configuration loading.
 *   **[TERMINAL.md](TERMINAL.md):** Comprehensive terminal emulation library for Node.js with process spawning, command execution, session management, and factory functions for different terminal types.
-*   **[OPENROUTER.md](OPENROUTER.md):** AI integration with OpenRouter API and code execution capabilities.
-*   **[ASK.md](ASK.md):** AI assistant command-line interface with real-time streaming for asking questions using OpenRouter with Google Gemini 2.5 Flash Preview model.
 *   **[MARKDOWN-TERMINAL.md](MARKDOWN-TERMINAL.md):** Beautiful markdown formatting for terminal output with colors, syntax highlighting, and proper styling.
 *   **[CYTO.md](CYTO.md):** Guide to Cytoscape.js integration for graph visualizations.
 *   **[HID.md](HID.md):** Explanation of Hasyx Identifiers (HID) for resource identification.
@@ -271,6 +273,16 @@ Get your Next.js project integrated with Hasura and authentication in minutes!
 7.  **Run Development Server:**
     ```bash
     npx hasyx dev
+    ```
+
+8. **Use the AI Assistant:**
+    Start interacting with the AI using the `ask` command.
+    ```bash
+    # Get help on a topic using the default cloud provider
+    npm run ask -- -e "How do I add a new table in Hasura?"
+
+    # Use a local model via Ollama
+    npm run ask -- -e "Write a python script to parse a CSV file" --provider ollama --model codellama:7b
     ```
 
 ## ⚙️ CLI Commands
