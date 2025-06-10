@@ -2,7 +2,7 @@
 
 import dotenv from 'dotenv';
 import path from 'path';
-import readline from 'readline';
+import readline2 from 'readline2';
 import Debug from 'hasyx/lib/debug';
 
 // Load environment variables from .env file in current working directory
@@ -11,7 +11,7 @@ import Debug from 'hasyx/lib/debug';
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 import { AI, AIOptions } from 'hasyx/lib/ai';
-import { printMarkdown } from 'hasyx/lib/markdown-terminal';
+// Removed static import of printMarkdown - using dynamic imports to avoid readline conflicts
 import { execDo, execContext, ExecResult } from 'hasyx/lib/exec';
 import { execTsDo, execTsContext } from 'hasyx/lib/exec-tsx';
 import { terminalDo, terminalContext } from 'hasyx/lib/terminal';
@@ -45,6 +45,7 @@ export class AskHasyx extends AI {
   public askOptions: AskOptions;
   public outputHandlers: OutputHandlers;
   private isReplMode: boolean = false;
+  protected suppressConsoleOutput: boolean = false; // Can be overridden by child classes
   public context: string;
   public engines: {
     exec?: typeof execDo;
@@ -150,7 +151,14 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
         } else if (this.isReplMode) {
           this.defaultOutput(`📋 Найден ${format.toUpperCase()} код для выполнения:`);
           const displayFormat = format === 'bash' ? 'bash' : format;
-          await printMarkdown(`\`\`\`${displayFormat}\n${code}\n\`\`\``);
+          const { formatMarkdown } = await import('./markdown-terminal');
+        const codeFormatted = await formatMarkdown(`\`\`\`${displayFormat}\n${code}\n\`\`\``);
+        
+        if (this.isReplMode) {
+          process.stdout.write(codeFormatted + '\n');
+        } else {
+          console.log(codeFormatted);
+        }
         }
 
         if (this.outputHandlers.onCodeExecuting) {
@@ -179,7 +187,14 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
           await this.outputHandlers.onCodeResult(formattedResult);
         } else if (this.isReplMode) {
           this.defaultOutput(`✅ Результат выполнения:`);
-          await printMarkdown(`\`\`\`\n${formattedResult}\n\`\`\``);
+          const { formatMarkdown } = await import('./markdown-terminal');
+          const resultFormatted = await formatMarkdown(`\`\`\`\n${formattedResult}\n\`\`\``);
+          
+          if (this.isReplMode) {
+            process.stdout.write(resultFormatted + '\n');
+          } else {
+            console.log(resultFormatted);
+          }
         }
 
         // Replace the code block with execution result in the response
@@ -194,7 +209,14 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
           await this.outputHandlers.onCodeResult(errorMessage);
         } else if (this.isReplMode) {
           this.defaultOutput(`❌ Ошибка выполнения:`);
-          await printMarkdown(`\`\`\`\n${errorMessage}\n\`\`\``);
+          const { formatMarkdown } = await import('./markdown-terminal');
+          const errorFormatted = await formatMarkdown(`\`\`\`\n${errorMessage}\n\`\`\``);
+          
+          if (this.isReplMode) {
+            process.stdout.write(errorFormatted + '\n');
+          } else {
+            console.log(errorFormatted);
+          }
         }
 
         // Replace with error in the response
@@ -252,15 +274,60 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     
     try {
       // Get AI response
-      const response = await this.ask(question);
+      let response = await this.ask(question);
       
       // Execute code blocks in response
       const processedResponse = await this.executeCodeBlocks(response);
       
-      // Render response as markdown for beautiful output
-      await printMarkdown(processedResponse);
+      // Check if any code was executed (results added to response)
+      const hasExecutionResults = processedResponse.includes('**Результат выполнения:**') || processedResponse.includes('**Ошибка выполнения:**');
       
-      return processedResponse;
+      let finalResponse = processedResponse;
+      
+      // If code was executed, send results back to AI for analysis (up to 3 iterations)
+      if (hasExecutionResults) {
+        debug('Code execution results detected, sending back to AI for analysis');
+        
+        for (let iteration = 0; iteration < 3; iteration++) {
+          try {
+            // Send the results back to AI for analysis
+            const analysisResponse = await this.ask(`Проанализируй результаты выполнения кода выше и ответь пользователю:\n\n${finalResponse}`);
+            
+            // Execute any new code blocks in the analysis
+            const analysisProcessed = await this.executeCodeBlocks(analysisResponse);
+            
+            // If AI provided additional analysis, append it
+            if (analysisResponse.trim() && !analysisResponse.includes('```')) {
+              finalResponse += '\n\n' + analysisProcessed;
+              break; // AI provided text analysis, we're done
+            } else if (analysisProcessed.includes('**Результат выполнения:**')) {
+              // AI executed more code, continue iteration
+              finalResponse = analysisProcessed;
+              debug(`Code execution iteration ${iteration + 1} completed`);
+            } else {
+              break; // No more code to execute
+            }
+          } catch (iterationError) {
+            debug(`Error in iteration ${iteration + 1}:`, iterationError);
+            break; // Stop iterations on error
+          }
+        }
+      }
+      
+      // Render final response as markdown for beautiful output (unless suppressed)
+      if (!this.suppressConsoleOutput) {
+        const { formatMarkdown } = await import('./markdown-terminal');
+        const formatted = await formatMarkdown(finalResponse);
+        
+        // Use direct stdout write to avoid readline conflicts in REPL mode
+        if (this.isReplMode) {
+          process.stdout.write(formatted + '\n');
+        } else {
+          console.log(formatted);
+        }
+      }
+      
+      return finalResponse;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.defaultError(`❌ Error: ${errorMessage}`);
@@ -292,7 +359,8 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
     }
 
     try {
-      const rl = readline.createInterface({
+      // Use readline2 which automatically fixes the mouse scroll issue
+      const rl = readline2.createInterface({
         input: process.stdin,
         output: process.stdout,
         prompt: '> '
@@ -314,13 +382,52 @@ ${finalAskOptions.execTs ? '- When you need to execute TypeScript, you MUST use 
           this.defaultOutput('🧠 AI думает...');
           
           // Get AI response
-          const response = await this.ask(question);
+          let response = await this.ask(question);
           
           // Execute code blocks in response
-          const processedResponse = await this.executeCodeBlocks(response);
+          let processedResponse = await this.executeCodeBlocks(response);
           
-          // Print the processed response
-          await printMarkdown(processedResponse);
+          // Check if any code was executed (results added to response)
+          const hasExecutionResults = processedResponse.includes('**Результат выполнения:**') || processedResponse.includes('**Ошибка выполнения:**');
+          
+          let finalResponse = processedResponse;
+          
+          // If code was executed, send results back to AI for analysis (up to 3 iterations)
+          if (hasExecutionResults) {
+            debug('Code execution results detected in REPL, sending back to AI for analysis');
+            
+            for (let iteration = 0; iteration < 3; iteration++) {
+              try {
+                // Send the results back to AI for analysis
+                const analysisResponse = await this.ask(`Проанализируй результаты выполнения кода выше и ответь пользователю:\n\n${finalResponse}`);
+                
+                // Execute any new code blocks in the analysis
+                const analysisProcessed = await this.executeCodeBlocks(analysisResponse);
+                
+                // If AI provided additional analysis, append it
+                if (analysisResponse.trim() && !analysisResponse.includes('```')) {
+                  finalResponse += '\n\n' + analysisProcessed;
+                  break; // AI provided text analysis, we're done
+                } else if (analysisProcessed.includes('**Результат выполнения:**')) {
+                  // AI executed more code, continue iteration
+                  finalResponse = analysisProcessed;
+                  debug(`REPL code execution iteration ${iteration + 1} completed`);
+                } else {
+                  break; // No more code to execute
+                }
+              } catch (iterationError) {
+                debug(`Error in REPL iteration ${iteration + 1}:`, iterationError);
+                break; // Stop iterations on error
+              }
+            }
+          }
+          
+          // Print the final response using direct output to avoid conflicts with readline
+          const { formatMarkdown } = await import('./markdown-terminal');
+          const formatted = await formatMarkdown(finalResponse);
+          
+          // Output directly to stdout to maintain proper terminal behavior
+          process.stdout.write(formatted + '\n');
           
           this.defaultOutput('💭 Ответ завершен');
           rl.prompt();

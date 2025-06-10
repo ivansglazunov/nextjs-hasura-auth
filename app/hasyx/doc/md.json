@@ -532,6 +532,41 @@
           "level": 3
         },
         {
+          "title": "Available Models",
+          "url": "/hasyx/doc/ASK#available-models",
+          "level": 2
+        },
+        {
+          "title": "List Available Models",
+          "url": "/hasyx/doc/ASK#list-available-models",
+          "level": 3
+        },
+        {
+          "title": "Provider Support",
+          "url": "/hasyx/doc/ASK#provider-support",
+          "level": 3
+        },
+        {
+          "title": "Example Output",
+          "url": "/hasyx/doc/ASK#example-output",
+          "level": 3
+        },
+        {
+          "title": "Using Specific Models",
+          "url": "/hasyx/doc/ASK#using-specific-models",
+          "level": 3
+        },
+        {
+          "title": "Programmatic Access",
+          "url": "/hasyx/doc/ASK#programmatic-access",
+          "level": 3
+        },
+        {
+          "title": "Model Information",
+          "url": "/hasyx/doc/ASK#model-information",
+          "level": 3
+        },
+        {
           "title": "Configuration",
           "url": "/hasyx/doc/ASK#configuration",
           "level": 2
@@ -6068,6 +6103,169 @@
       "level": 1
     },
     {
+      "title": "Use-Query Hook",
+      "url": "/hasyx/doc/USE-QUERY",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/USE-QUERY#features",
+          "level": 2
+        },
+        {
+          "title": "Installation",
+          "url": "/hasyx/doc/USE-QUERY#installation",
+          "level": 2
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/USE-QUERY#basic-usage",
+          "level": 2
+        },
+        {
+          "title": "1. Create Individual Query Hooks",
+          "url": "/hasyx/doc/USE-QUERY#1-create-individual-query-hooks",
+          "level": 3
+        },
+        {
+          "title": "2. Create Multiple Queries at Once",
+          "url": "/hasyx/doc/USE-QUERY#2-create-multiple-queries-at-once",
+          "level": 3
+        },
+        {
+          "title": "3. Utility Hooks for Common Types",
+          "url": "/hasyx/doc/USE-QUERY#3-utility-hooks-for-common-types",
+          "level": 3
+        },
+        {
+          "title": "API Reference",
+          "url": "/hasyx/doc/USE-QUERY#api-reference",
+          "level": 2
+        },
+        {
+          "title": "Utility Hooks",
+          "url": "/hasyx/doc/USE-QUERY#utility-hooks",
+          "level": 3
+        },
+        {
+          "title": "Setter Functions",
+          "url": "/hasyx/doc/USE-QUERY#setter-functions",
+          "level": 2
+        },
+        {
+          "title": "Direct Value Setting",
+          "url": "/hasyx/doc/USE-QUERY#direct-value-setting",
+          "level": 3
+        },
+        {
+          "title": "Functional Updates",
+          "url": "/hasyx/doc/USE-QUERY#functional-updates",
+          "level": 3
+        },
+        {
+          "title": "URL Behavior",
+          "url": "/hasyx/doc/USE-QUERY#url-behavior",
+          "level": 2
+        },
+        {
+          "title": "Parameter Serialization",
+          "url": "/hasyx/doc/USE-QUERY#parameter-serialization",
+          "level": 3
+        },
+        {
+          "title": "URL Examples",
+          "url": "/hasyx/doc/USE-QUERY#url-examples",
+          "level": 3
+        },
+        {
+          "title": "Empty Values",
+          "url": "/hasyx/doc/USE-QUERY#empty-values",
+          "level": 3
+        },
+        {
+          "title": "Real-World Example",
+          "url": "/hasyx/doc/USE-QUERY#real-world-example",
+          "level": 2
+        },
+        {
+          "title": "Best Practices",
+          "url": "/hasyx/doc/USE-QUERY#best-practices",
+          "level": 2
+        },
+        {
+          "title": "1. Choose Meaningful Parameter Names",
+          "url": "/hasyx/doc/USE-QUERY#1-choose-meaningful-parameter-names",
+          "level": 3
+        },
+        {
+          "title": "2. Provide Sensible Defaults",
+          "url": "/hasyx/doc/USE-QUERY#2-provide-sensible-defaults",
+          "level": 3
+        },
+        {
+          "title": "3. Use TypeScript for Complex Objects",
+          "url": "/hasyx/doc/USE-QUERY#3-use-typescript-for-complex-objects",
+          "level": 3
+        },
+        {
+          "title": "4. Keep URLs Clean",
+          "url": "/hasyx/doc/USE-QUERY#4-keep-urls-clean",
+          "level": 3
+        },
+        {
+          "title": "5. Group Related Queries",
+          "url": "/hasyx/doc/USE-QUERY#5-group-related-queries",
+          "level": 3
+        },
+        {
+          "title": "Integration with Next.js",
+          "url": "/hasyx/doc/USE-QUERY#integration-with-nextjs",
+          "level": 2
+        },
+        {
+          "title": "Performance Considerations",
+          "url": "/hasyx/doc/USE-QUERY#performance-considerations",
+          "level": 2
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/USE-QUERY#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/USE-QUERY#common-issues",
+          "level": 3
+        },
+        {
+          "title": "Debug Tips",
+          "url": "/hasyx/doc/USE-QUERY#debug-tips",
+          "level": 3
+        },
+        {
+          "title": "Migration from Other State Management",
+          "url": "/hasyx/doc/USE-QUERY#migration-from-other-state-management",
+          "level": 2
+        },
+        {
+          "title": "From useState",
+          "url": "/hasyx/doc/USE-QUERY#from-usestate",
+          "level": 3
+        },
+        {
+          "title": "From Zustand",
+          "url": "/hasyx/doc/USE-QUERY#from-zustand",
+          "level": 3
+        },
+        {
+          "title": "From Redux",
+          "url": "/hasyx/doc/USE-QUERY#from-redux",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "Wstunnel Integration",
       "url": "/hasyx/doc/WSTUNNEL",
       "collapse": true,
@@ -11422,5 +11620,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-10T15:15:29.923Z"
+  "lastUpdated": "2025-06-10T17:09:09.850Z"
 }

@@ -316,6 +316,109 @@ The factorial of 5 is **120**. This means 5! = 5 × 4 × 3 × 2 × 1 = 120.
 👋 Goodbye!
 ```
 
+## Available Models
+
+### List Available Models
+
+You can list all available models for different AI providers:
+
+```bash
+# List available Ollama models (local models)
+npm run ask -- --provider ollama --models
+npx tsx ./lib/ask.ts --provider ollama --models
+
+# List available OpenRouter models (free models only)
+npm run ask -- --provider openrouter --models
+npx tsx ./lib/ask.ts --provider openrouter --models
+```
+
+### Provider Support
+
+The Ask command now supports multiple AI providers:
+
+**Ollama (Local Models)**
+- All locally installed models are available and free
+- Requires Ollama service running on localhost:11434
+- Models must be downloaded using `ollama pull model_name`
+
+**OpenRouter (Cloud Models)**
+- Only free models are listed (where prompt, completion, and request costs are $0)
+- Requires `OPENROUTER_API_KEY` environment variable
+- Currently shows 69+ free models including Gemini, Llama, Qwen, and more
+
+### Example Output
+
+```bash
+$ npm run ask -- --provider ollama --models
+
+🤖 Fetching available models for ollama...
+
+📋 Available ollama models (3 found):
+
+• gemma2:2b
+  Context: 2 tokens
+  Description: Local Ollama model - Size: 1629518495
+
+• phi3:3.8b-mini-4k-instruct-q4_0
+  Context: 3 tokens
+  Description: Local Ollama model - Size: 2176178369
+
+• phi3:mini
+  Context: 3 tokens
+  Description: Local Ollama model - Size: 2176178913
+
+💡 Usage: npm run ask -- --provider ollama --model <model_id> "Your question"
+```
+
+### Using Specific Models
+
+Once you know the available models, you can use them:
+
+```bash
+# Use specific Ollama model
+npm run ask -- --provider ollama --model gemma2:2b "What is TypeScript?"
+
+# Use specific OpenRouter model  
+npm run ask -- --provider openrouter --model meta-llama/llama-3.3-70b-instruct:free "Explain React hooks"
+```
+
+### Programmatic Access
+
+The `availableModels` function is also available for programmatic use:
+
+```bash
+# Direct function import
+npx tsx -e "
+import { availableModels } from './lib/available-models';
+
+// Get Ollama models
+const ollamaModels = await availableModels({ provider: 'ollama' });
+console.log('Ollama models:', ollamaModels.length);
+
+// Get OpenRouter models (requires API key)
+const openrouterModels = await availableModels({ 
+  provider: 'openrouter', 
+  token: process.env.OPENROUTER_API_KEY 
+});
+console.log('OpenRouter free models:', openrouterModels.length);
+"
+```
+
+### Model Information
+
+Each model includes standardized information:
+
+```typescript
+interface AIModel {
+  id: string;           // Model identifier for API calls
+  name: string;         // Human-readable name
+  provider: string;     // 'ollama' or 'openrouter'
+  free?: boolean;       // Always true for listed models
+  context_length?: number;  // Maximum context window in tokens
+  description?: string; // Model description and capabilities
+}
+```
+
 ## Configuration
 
 ### Default Settings

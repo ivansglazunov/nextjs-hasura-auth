@@ -36,6 +36,7 @@ export class TelegramAskWrapper extends AskHasyx {
   private bufferTime: number;
   private maxMessageLength: number;
   private enableCodeBlocks: boolean;
+  protected suppressConsoleOutput: boolean = true; // Suppress automatic console output for Telegram
 
   constructor(
     token: string,
@@ -184,10 +185,16 @@ export class TelegramAskWrapper extends AskHasyx {
       this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'}, Started: ${new Date().toISOString()}`);
       
       // Use the parent's askWithBeautifulOutput which handles code execution
+      // Console output is suppressed by suppressConsoleOutput flag
       const processedResponse = await super.askWithBeautifulOutput(question);
       
-      // The response is already processed and displayed by super.askWithBeautifulOutput
-      // but we suppress that output and handle it ourselves for Telegram
+      // ИСПРАВЛЕНО: Отправляем ответ AI в Telegram!
+      if (processedResponse && processedResponse.trim()) {
+        // Format the response as markdown for Telegram
+        const { formatMarkdown } = await import('./markdown-terminal');
+        const formatted = await formatMarkdown(processedResponse);
+        this.defaultOutput(formatted);
+      }
       
       const totalTime = Math.round((Date.now() - operationStartTime) / 1000);
       this.defaultOutput(`💭 Завершено (${totalTime}s)`);
@@ -200,6 +207,7 @@ export class TelegramAskWrapper extends AskHasyx {
     } catch (error) {
       this.defaultError(`Ошибка: ${error instanceof Error ? error.message : String(error)}`);
       this.defaultOutput(`🔧 Debug: Error in Container ${process.env.HOSTNAME || 'unknown'}: ${error instanceof Error ? error.stack || 'No stack' : 'Unknown'}`);
+      await this.flushMessageBuffer();
       throw error;
     }
   }
@@ -207,7 +215,7 @@ export class TelegramAskWrapper extends AskHasyx {
   // Override ask method to use our Telegram-specific askWithBeautifulOutput
   async ask(question: string): Promise<string> {
     debug(`Processing question for chat ${this.chatId}:`, question);
-    return await this.askWithBeautifulOutput(question);
+    return await super.ask(question);
   }
 
   // Force flush any pending messages

@@ -259,7 +259,6 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     '.npmrc': '.npmrc.template',
     'Dockerfile': 'Dockerfile',
     '.dockerignore': '.dockerignore',
-    'DOCKER.md': 'DOCKER.md',
     'vercel.json': 'vercel.json',
     'babel.jest.config.mjs': 'babel.jest.config.mjs',
     'jest.config.mjs': 'jest.config.mjs',

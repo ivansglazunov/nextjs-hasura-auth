@@ -1,5 +1,5 @@
 import { AIMessage } from "./ai";
-import { AIProvider } from "./ai";
+import { AIProvider, AIModel, AvailableModelsOptions } from "./ai";
 import Debug from 'debug';
 
 const debug = Debug('hasyx:ollama');
@@ -355,6 +355,39 @@ export class Ollama implements AIProvider {
       const errorMessage = error instanceof Error ? error.message : String(error);
       debug('Failed to pull model', { modelName, error: errorMessage });
       throw new Error(`Failed to pull model ${modelName}: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Get available models in standardized format
+   */
+  async availableModels(options?: AvailableModelsOptions): Promise<AIModel[]> {
+    try {
+      const baseUrl = options?.baseUrl || this.options.baseUrl;
+      const response = await fetch(`${baseUrl}/api/tags`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const models = data.models || [];
+
+      return models.map((model: any) => ({
+        id: model.name,
+        name: model.name,
+        provider: 'ollama',
+        free: true, // All local Ollama models are free
+        context_length: model.details?.parameter_size ? parseInt(model.details.parameter_size) : undefined,
+        description: `Local Ollama model - ${model.size ? `Size: ${model.size}` : 'Available'}`
+      }));
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      debug('Failed to get available models', { error: errorMessage });
+      throw new Error(`Failed to get available models: ${errorMessage}`);
     }
   }
 } 

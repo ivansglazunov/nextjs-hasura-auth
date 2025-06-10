@@ -155,12 +155,30 @@ async function fetchWorkflowStatus(commitSha: string, repoUrl: string, githubTok
   
   if (!response.ok) {
     console.error(`❌ GitHub Workflows API error: ${response.status} ${response.statusText}`);
-    // Return unknown status instead of throwing
+    if (response.status === 403) {
+      console.warn(`⚠️ This likely means the GITHUB_TOKEN lacks 'actions:read' permissions for private repositories`);
+      console.warn(`💡 For private repos, ensure the token has workflow read permissions`);
+    }
+    // Return unknown status with complete structure instead of throwing
     return {
       test: 'unknown',
       publish: 'unknown', 
       deploy: 'unknown',
-      details: { error: `GitHub API error: ${response.status}` }
+      details: {
+        error: `GitHub API error: ${response.status}`,
+        workflows: [],
+        testResults: null,
+        publishResults: null,
+        deployResults: null,
+        summary: {
+          totalWorkflows: 0,
+          successfulWorkflows: 0,
+          failedWorkflows: 0,
+          testFailures: [],
+          publishDetails: null,
+          deployUrl: null
+        }
+      }
     };
   }
   
@@ -355,7 +373,9 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
   const workflowStatus = await fetchWorkflowStatus(commitInfo.sha, repositoryUrl, githubToken);
   
   // Create Ask instance for AI analysis
-  const provider = new OpenRouter({ token: openRouterApiKey || 'dummy-key' });
+  const provider = new OpenRouter({
+    token: openRouterApiKey || 'dummy-key'
+  });
   const ask = new Ask({
     provider,
     projectName: projectName || 'Unknown Project'

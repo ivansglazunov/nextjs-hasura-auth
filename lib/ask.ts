@@ -4,6 +4,7 @@ import { AskHasyx, AskHasyxOptions, ensureOpenRouterApiKey } from 'hasyx/lib/ask
 import { OpenRouter } from 'hasyx/lib/openrouter';
 import { Ollama } from 'hasyx/lib/ollama';
 import { AIProvider } from "./ai";
+import { availableModels } from './available-models';
 import { Command } from 'commander';
 
 interface AskOptions extends Omit<AskHasyxOptions, 'provider'> {
@@ -109,20 +110,63 @@ if (typeof require !== 'undefined' && require.main === module) {
     .description('AI assistant with code execution capabilities')
     .option('--provider <name>', 'AI provider to use (openrouter, ollama)', 'openrouter')
     .option('--model <name>', 'Model to use')
+    .option('--models', 'List available models for the provider')
     .argument('[question]', 'Question to ask the AI')
     .parse();
 
   const options = program.opts();
   const [question] = program.args;
   
-  // Determine model based on provider if not specified
-  let model = options.model;
-  if (!model) {
-    model = options.provider === 'ollama' ? 'gemma2:2b' : 'google/gemini-2.5-flash-preview';
-  }
-
   (async () => {
     try {
+      // Handle --models flag
+      if (options.models) {
+        console.log(`🤖 Fetching available models for ${options.provider}...`);
+        
+        let models;
+        if (options.provider === 'openrouter') {
+          await ensureOpenRouterApiKey();
+          if (!process.env.OPENROUTER_API_KEY) {
+            throw new Error('OPENROUTER_API_KEY is required');
+          }
+          models = await availableModels({
+            provider: 'openrouter',
+            token: process.env.OPENROUTER_API_KEY
+          });
+        } else if (options.provider === 'ollama') {
+          models = await availableModels({
+            provider: 'ollama'
+          });
+        } else {
+          throw new Error(`Unknown provider: ${options.provider}`);
+        }
+
+        console.log(`\n📋 Available ${options.provider} models (${models.length} found):\n`);
+        
+        for (const model of models) {
+          console.log(`• ${model.id}`);
+          if (model.name !== model.id) {
+            console.log(`  Name: ${model.name}`);
+          }
+          if (model.context_length) {
+            console.log(`  Context: ${model.context_length.toLocaleString()} tokens`);
+          }
+          if (model.description) {
+            console.log(`  Description: ${model.description}`);
+          }
+          console.log('');
+        }
+        
+        console.log(`💡 Usage: npm run ask -- --provider ${options.provider} --model <model_id> "Your question"`);
+        return;
+      }
+      
+      // Determine model based on provider if not specified
+      let model = options.model;
+      if (!model) {
+        model = options.provider === 'ollama' ? 'gemma2:2b' : 'google/gemini-2.5-flash-preview';
+      }
+
       // Ensure OpenRouter API Key is configured if using OpenRouter
       if (options.provider === 'openrouter') {
         await ensureOpenRouterApiKey();
@@ -141,7 +185,7 @@ if (typeof require !== 'undefined' && require.main === module) {
       if (question) {
         console.log(`🤖 Using ${options.provider} with model ${model}`);
         const response = await ask.askWithBeautifulOutput(question);
-        process.exit(0);
+        return;
       }
       
       // Otherwise start REPL
