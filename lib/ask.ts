@@ -3,7 +3,7 @@
 import { AskHasyx, AskHasyxOptions, ensureOpenRouterApiKey } from 'hasyx/lib/ask-hasyx';
 import { OpenRouter } from 'hasyx/lib/openrouter';
 import { Ollama } from 'hasyx/lib/ollama';
-import { AIProvider } from 'hasyx/lib/provider';
+import { AIProvider } from "./ai";
 import { Command } from 'commander';
 
 interface AskOptions extends Omit<AskHasyxOptions, 'provider'> {

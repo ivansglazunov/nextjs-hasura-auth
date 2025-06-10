@@ -322,7 +322,7 @@ export class HasyxClient extends Hasyx {
  * Hook to get a HasyxClient instance (client-side version of Hasyx)
  * This version includes working useQuery and useSubscription methods
  */
-export function useClient(providedClient?: HasyxApolloClient | null): HasyxClient {
+export function useNewHasyx(providedClient?: HasyxApolloClient | null): HasyxClient {
   const apolloClient = useApolloClient();
   const client = (providedClient ?? apolloClient) as HasyxApolloClient;
   
@@ -334,8 +334,6 @@ export function useClient(providedClient?: HasyxApolloClient | null): HasyxClien
     return new HasyxClient(client, client.hasyxGenerator, client._options);
   }, [client, client.hasyxGenerator, client._options]);
 }
-
-export const useHasyx = useClient;
 
 // Convenience aliases
 export const useSelect = useQuery;

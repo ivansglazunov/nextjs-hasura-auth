@@ -1,4 +1,5 @@
-import { AIMessage, AIProvider } from './provider';
+import { AIMessage } from "./ai";
+import { AIProvider } from "./ai";
 import Debug from 'debug';
 
 const debug = Debug('hasyx:ollama');

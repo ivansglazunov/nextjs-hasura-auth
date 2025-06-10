@@ -30,9 +30,6 @@ export function useHasyx(): Hasyx {
 // Alias for compatibility
 export const useClient = useHasyx;
 
-// Re-export useSession from next-auth/react for use throughout the app
-export const useSession = useSessionNextAuth;
-
 // Re-export useTelegramMiniapp for easy access throughout the app
 export { useTelegramMiniapp };
 

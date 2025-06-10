@@ -27,8 +27,6 @@ export * from './auth';
 // For backwards compatibility: explicitly re-export getTokenFromRequest
 export type { JWT } from './auth-next';
 
-// Re-export main client hooks for convenience
-// These are available from hasyx/lib/provider.tsx directly
 export { 
   useQuery, 
   useSubscription, 

@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "hasyx/components/ui/avatar";
 import { LogOut, LogIn, User, Settings, Github, Mail, MailCheck } from "lucide-react";
 import { signOut, signIn } from "next-auth/react";
-import { useClient, useSession } from 'hasyx';
+import { useNewHasyx, useSession } from 'hasyx';
 import { useSubscription } from 'hasyx';
 import { OAuthButtons } from '../auth/oauth-buttons';
 

@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { OpenRouter } from './openrouter';
-import { AIMessage } from './provider';
+import { AIMessage } from "./ai";
 
 // Load environment variables from .env file
 dotenv.config();

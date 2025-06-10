@@ -6,9 +6,29 @@
       "collapse": true,
       "items": [
         {
-          "title": "🚀 New Real-time Streaming Features",
-          "url": "/hasyx/doc/AI#new-real-time-streaming-features",
+          "title": "Architecture Overview",
+          "url": "/hasyx/doc/AI#architecture-overview",
           "level": 2
+        },
+        {
+          "title": "🚀 Real-time Streaming Features",
+          "url": "/hasyx/doc/AI#real-time-streaming-features",
+          "level": 2
+        },
+        {
+          "title": "AI Class Constructor",
+          "url": "/hasyx/doc/AI#ai-class-constructor",
+          "level": 2
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/AI#basic-usage",
+          "level": 3
+        },
+        {
+          "title": "Provider Interface",
+          "url": "/hasyx/doc/AI#provider-interface",
+          "level": 3
         },
         {
           "title": "Stream Event Types",
@@ -1452,6 +1472,11 @@
           "level": 2
         },
         {
+          "title": "Automated Graph Rendering with `hasyx/lib/renderer`",
+          "url": "/hasyx/doc/CYTO#automated-graph-rendering-with-hasyxlibrenderer",
+          "level": 2
+        },
+        {
           "title": "Key Aspects and Benefits",
           "url": "/hasyx/doc/CYTO#key-aspects-and-benefits",
           "level": 2
@@ -2667,6 +2692,194 @@
       "level": 1
     },
     {
+      "title": "Hasyx Logs System",
+      "url": "/hasyx/doc/LOGS",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Overview",
+          "url": "/hasyx/doc/LOGS#overview",
+          "level": 2
+        },
+        {
+          "title": "Architecture",
+          "url": "/hasyx/doc/LOGS#architecture",
+          "level": 2
+        },
+        {
+          "title": "Database Schema",
+          "url": "/hasyx/doc/LOGS#database-schema",
+          "level": 3
+        },
+        {
+          "title": "Configuration",
+          "url": "/hasyx/doc/LOGS#configuration",
+          "level": 2
+        },
+        {
+          "title": "hasyx.config.json",
+          "url": "/hasyx/doc/LOGS#hasyxconfigjson",
+          "level": 3
+        },
+        {
+          "title": "CLI Commands",
+          "url": "/hasyx/doc/LOGS#cli-commands",
+          "level": 2
+        },
+        {
+          "title": "Apply Configuration",
+          "url": "/hasyx/doc/LOGS#apply-configuration",
+          "level": 3
+        },
+        {
+          "title": "Testing",
+          "url": "/hasyx/doc/LOGS#testing",
+          "level": 3
+        },
+        {
+          "title": "Diffs System",
+          "url": "/hasyx/doc/LOGS#diffs-system",
+          "level": 2
+        },
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/LOGS#features",
+          "level": 3
+        },
+        {
+          "title": "Workflow",
+          "url": "/hasyx/doc/LOGS#workflow",
+          "level": 3
+        },
+        {
+          "title": "Implementation",
+          "url": "/hasyx/doc/LOGS#implementation",
+          "level": 3
+        },
+        {
+          "title": "States System",
+          "url": "/hasyx/doc/LOGS#states-system",
+          "level": 2
+        },
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/LOGS#features",
+          "level": 3
+        },
+        {
+          "title": "Workflow",
+          "url": "/hasyx/doc/LOGS#workflow",
+          "level": 3
+        },
+        {
+          "title": "Implementation",
+          "url": "/hasyx/doc/LOGS#implementation",
+          "level": 3
+        },
+        {
+          "title": "Event Triggers",
+          "url": "/hasyx/doc/LOGS#event-triggers",
+          "level": 2
+        },
+        {
+          "title": "Diffs Event Trigger",
+          "url": "/hasyx/doc/LOGS#diffs-event-trigger",
+          "level": 3
+        },
+        {
+          "title": "Workflow Example",
+          "url": "/hasyx/doc/LOGS#workflow-example",
+          "level": 3
+        },
+        {
+          "title": "Security & Permissions",
+          "url": "/hasyx/doc/LOGS#security-permissions",
+          "level": 2
+        },
+        {
+          "title": "Database Protections",
+          "url": "/hasyx/doc/LOGS#database-protections",
+          "level": 3
+        },
+        {
+          "title": "Trigger Protection",
+          "url": "/hasyx/doc/LOGS#trigger-protection",
+          "level": 3
+        },
+        {
+          "title": "Testing",
+          "url": "/hasyx/doc/LOGS#testing",
+          "level": 2
+        },
+        {
+          "title": "Test Coverage",
+          "url": "/hasyx/doc/LOGS#test-coverage",
+          "level": 3
+        },
+        {
+          "title": "Test Strategy",
+          "url": "/hasyx/doc/LOGS#test-strategy",
+          "level": 3
+        },
+        {
+          "title": "Dependencies",
+          "url": "/hasyx/doc/LOGS#dependencies",
+          "level": 2
+        },
+        {
+          "title": "Migration",
+          "url": "/hasyx/doc/LOGS#migration",
+          "level": 2
+        },
+        {
+          "title": "Migration File Structure",
+          "url": "/hasyx/doc/LOGS#migration-file-structure",
+          "level": 3
+        },
+        {
+          "title": "Apply Migration",
+          "url": "/hasyx/doc/LOGS#apply-migration",
+          "level": 3
+        },
+        {
+          "title": "Production Considerations",
+          "url": "/hasyx/doc/LOGS#production-considerations",
+          "level": 2
+        },
+        {
+          "title": "Performance",
+          "url": "/hasyx/doc/LOGS#performance",
+          "level": 3
+        },
+        {
+          "title": "Monitoring",
+          "url": "/hasyx/doc/LOGS#monitoring",
+          "level": 3
+        },
+        {
+          "title": "Security",
+          "url": "/hasyx/doc/LOGS#security",
+          "level": 3
+        },
+        {
+          "title": "Scalability",
+          "url": "/hasyx/doc/LOGS#scalability",
+          "level": 3
+        },
+        {
+          "title": "Integration",
+          "url": "/hasyx/doc/LOGS#integration",
+          "level": 2
+        },
+        {
+          "title": "CLI Integration",
+          "url": "/hasyx/doc/LOGS#cli-integration",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "Markdown Terminal",
       "url": "/hasyx/doc/MARKDOWN-TERMINAL",
       "collapse": true,
@@ -3206,6 +3419,214 @@
         {
           "title": "Platform Support Status",
           "url": "/hasyx/doc/NOTIFY#platform-support-status",
+          "level": 2
+        }
+      ],
+      "level": 1
+    },
+    {
+      "title": "Ollama",
+      "url": "/hasyx/doc/OLLAMA",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/OLLAMA#features",
+          "level": 2
+        },
+        {
+          "title": "Prerequisites",
+          "url": "/hasyx/doc/OLLAMA#prerequisites",
+          "level": 2
+        },
+        {
+          "title": "Install Ollama",
+          "url": "/hasyx/doc/OLLAMA#install-ollama",
+          "level": 3
+        },
+        {
+          "title": "Start Ollama Service",
+          "url": "/hasyx/doc/OLLAMA#start-ollama-service",
+          "level": 3
+        },
+        {
+          "title": "Install AI Models",
+          "url": "/hasyx/doc/OLLAMA#install-ai-models",
+          "level": 3
+        },
+        {
+          "title": "Installation",
+          "url": "/hasyx/doc/OLLAMA#installation",
+          "level": 2
+        },
+        {
+          "title": "Basic Usage",
+          "url": "/hasyx/doc/OLLAMA#basic-usage",
+          "level": 2
+        },
+        {
+          "title": "Creating an Ollama Provider",
+          "url": "/hasyx/doc/OLLAMA#creating-an-ollama-provider",
+          "level": 3
+        },
+        {
+          "title": "Configuration Options",
+          "url": "/hasyx/doc/OLLAMA#configuration-options",
+          "level": 3
+        },
+        {
+          "title": "Simple AI Conversations",
+          "url": "/hasyx/doc/OLLAMA#simple-ai-conversations",
+          "level": 3
+        },
+        {
+          "title": "Model Management",
+          "url": "/hasyx/doc/OLLAMA#model-management",
+          "level": 2
+        },
+        {
+          "title": "Check Service Status",
+          "url": "/hasyx/doc/OLLAMA#check-service-status",
+          "level": 3
+        },
+        {
+          "title": "List Available Models",
+          "url": "/hasyx/doc/OLLAMA#list-available-models",
+          "level": 3
+        },
+        {
+          "title": "Pull New Models",
+          "url": "/hasyx/doc/OLLAMA#pull-new-models",
+          "level": 3
+        },
+        {
+          "title": "Recommended Models",
+          "url": "/hasyx/doc/OLLAMA#recommended-models",
+          "level": 2
+        },
+        {
+          "title": "For Development (Low Resource)",
+          "url": "/hasyx/doc/OLLAMA#for-development-low-resource",
+          "level": 3
+        },
+        {
+          "title": "For Production (Balanced)",
+          "url": "/hasyx/doc/OLLAMA#for-production-balanced",
+          "level": 3
+        },
+        {
+          "title": "For Coding Tasks",
+          "url": "/hasyx/doc/OLLAMA#for-coding-tasks",
+          "level": 3
+        },
+        {
+          "title": "For Advanced Tasks",
+          "url": "/hasyx/doc/OLLAMA#for-advanced-tasks",
+          "level": 3
+        },
+        {
+          "title": "Integration with Ask CLI",
+          "url": "/hasyx/doc/OLLAMA#integration-with-ask-cli",
+          "level": 2
+        },
+        {
+          "title": "Using Ollama with `hasyx ask`",
+          "url": "/hasyx/doc/OLLAMA#using-ollama-with-hasyx-ask",
+          "level": 3
+        },
+        {
+          "title": "Configuration in `.env`",
+          "url": "/hasyx/doc/OLLAMA#configuration-in-env",
+          "level": 3
+        },
+        {
+          "title": "Provider Selection Priority",
+          "url": "/hasyx/doc/OLLAMA#provider-selection-priority",
+          "level": 3
+        },
+        {
+          "title": "Advanced Usage",
+          "url": "/hasyx/doc/OLLAMA#advanced-usage",
+          "level": 2
+        },
+        {
+          "title": "Custom Model Configuration",
+          "url": "/hasyx/doc/OLLAMA#custom-model-configuration",
+          "level": 3
+        },
+        {
+          "title": "Streaming with Progress",
+          "url": "/hasyx/doc/OLLAMA#streaming-with-progress",
+          "level": 3
+        },
+        {
+          "title": "Multiple Models",
+          "url": "/hasyx/doc/OLLAMA#multiple-models",
+          "level": 3
+        },
+        {
+          "title": "Performance Tips",
+          "url": "/hasyx/doc/OLLAMA#performance-tips",
+          "level": 2
+        },
+        {
+          "title": "Memory Management",
+          "url": "/hasyx/doc/OLLAMA#memory-management",
+          "level": 3
+        },
+        {
+          "title": "Model Selection by Available RAM",
+          "url": "/hasyx/doc/OLLAMA#model-selection-by-available-ram",
+          "level": 3
+        },
+        {
+          "title": "Optimization",
+          "url": "/hasyx/doc/OLLAMA#optimization",
+          "level": 3
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/OLLAMA#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/OLLAMA#common-issues",
+          "level": 3
+        },
+        {
+          "title": "Debugging",
+          "url": "/hasyx/doc/OLLAMA#debugging",
+          "level": 3
+        },
+        {
+          "title": "Example Projects",
+          "url": "/hasyx/doc/OLLAMA#example-projects",
+          "level": 2
+        },
+        {
+          "title": "1. Local Code Assistant",
+          "url": "/hasyx/doc/OLLAMA#1-local-code-assistant",
+          "level": 3
+        },
+        {
+          "title": "2. Educational Tutor",
+          "url": "/hasyx/doc/OLLAMA#2-educational-tutor",
+          "level": 3
+        },
+        {
+          "title": "3. Creative Writing Assistant",
+          "url": "/hasyx/doc/OLLAMA#3-creative-writing-assistant",
+          "level": 3
+        },
+        {
+          "title": "Testing",
+          "url": "/hasyx/doc/OLLAMA#testing",
+          "level": 2
+        },
+        {
+          "title": "Comparison: Ollama vs OpenRouter",
+          "url": "/hasyx/doc/OLLAMA#comparison-ollama-vs-openrouter",
           "level": 2
         }
       ],
@@ -3796,6 +4217,59 @@
           "title": "`ask` 🤖",
           "url": "/hasyx/doc/README#ask",
           "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
+      "title": "Hasyx Data Renderer for Graph Visualizations",
+      "url": "/hasyx/doc/RENDERER",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Overview",
+          "url": "/hasyx/doc/RENDERER#overview",
+          "level": 2
+        },
+        {
+          "title": "Core Components",
+          "url": "/hasyx/doc/RENDERER#core-components",
+          "level": 2
+        },
+        {
+          "title": "1. `<QueriesManager />`",
+          "url": "/hasyx/doc/RENDERER#1-queriesmanager",
+          "level": 3
+        },
+        {
+          "title": "2. `<QueriesRenderer />`",
+          "url": "/hasyx/doc/RENDERER#2-queriesrenderer",
+          "level": 3
+        },
+        {
+          "title": "3. `<CytoNodeRenderer />`",
+          "url": "/hasyx/doc/RENDERER#3-cytonoderenderer",
+          "level": 3
+        },
+        {
+          "title": "4. `<CytoEdgeRenderer />`",
+          "url": "/hasyx/doc/RENDERER#4-cytoedgerenderer",
+          "level": 3
+        },
+        {
+          "title": "5. `RowParser()`",
+          "url": "/hasyx/doc/RENDERER#5-rowparser",
+          "level": 3
+        },
+        {
+          "title": "Comprehensive Usage Example",
+          "url": "/hasyx/doc/RENDERER#comprehensive-usage-example",
+          "level": 2
+        },
+        {
+          "title": "Summary",
+          "url": "/hasyx/doc/RENDERER#summary",
+          "level": 2
         }
       ],
       "level": 1
@@ -4636,13 +5110,8 @@
           "level": 3
         },
         {
-          "title": "Custom Output Handlers",
-          "url": "/hasyx/doc/TELEGRAM-ASK#custom-output-handlers",
-          "level": 3
-        },
-        {
-          "title": "wrapTelegramAsk()",
-          "url": "/hasyx/doc/TELEGRAM-ASK#wraptelegramask",
+          "title": "Manual AskHasyx Creation with Custom Handlers",
+          "url": "/hasyx/doc/TELEGRAM-ASK#manual-askhasyx-creation-with-custom-handlers",
           "level": 3
         },
         {
@@ -4713,106 +5182,6 @@
         {
           "title": "Code Generation Bot",
           "url": "/hasyx/doc/TELEGRAM-ASK#code-generation-bot",
-          "level": 3
-        },
-        {
-          "title": "Terminal Command Bot",
-          "url": "/hasyx/doc/TELEGRAM-ASK#terminal-command-bot",
-          "level": 3
-        },
-        {
-          "title": "Security Considerations",
-          "url": "/hasyx/doc/TELEGRAM-ASK#security-considerations",
-          "level": 2
-        },
-        {
-          "title": "API Key Management",
-          "url": "/hasyx/doc/TELEGRAM-ASK#api-key-management",
-          "level": 3
-        },
-        {
-          "title": "User Isolation",
-          "url": "/hasyx/doc/TELEGRAM-ASK#user-isolation",
-          "level": 3
-        },
-        {
-          "title": "Rate Limiting",
-          "url": "/hasyx/doc/TELEGRAM-ASK#rate-limiting",
-          "level": 3
-        },
-        {
-          "title": "Troubleshooting",
-          "url": "/hasyx/doc/TELEGRAM-ASK#troubleshooting",
-          "level": 2
-        },
-        {
-          "title": "Common Issues",
-          "url": "/hasyx/doc/TELEGRAM-ASK#common-issues",
-          "level": 3
-        },
-        {
-          "title": "Debug Mode",
-          "url": "/hasyx/doc/TELEGRAM-ASK#debug-mode",
-          "level": 3
-        },
-        {
-          "title": "Migration Guide",
-          "url": "/hasyx/doc/TELEGRAM-ASK#migration-guide",
-          "level": 2
-        },
-        {
-          "title": "From Basic Telegram Bot",
-          "url": "/hasyx/doc/TELEGRAM-ASK#from-basic-telegram-bot",
-          "level": 3
-        },
-        {
-          "title": "From Console Ask",
-          "url": "/hasyx/doc/TELEGRAM-ASK#from-console-ask",
-          "level": 3
-        },
-        {
-          "title": "Best Practices",
-          "url": "/hasyx/doc/TELEGRAM-ASK#best-practices",
-          "level": 2
-        },
-        {
-          "title": "1. Instance Management",
-          "url": "/hasyx/doc/TELEGRAM-ASK#1-instance-management",
-          "level": 3
-        },
-        {
-          "title": "2. Error Handling",
-          "url": "/hasyx/doc/TELEGRAM-ASK#2-error-handling",
-          "level": 3
-        },
-        {
-          "title": "3. Performance",
-          "url": "/hasyx/doc/TELEGRAM-ASK#3-performance",
-          "level": 3
-        },
-        {
-          "title": "4. Security",
-          "url": "/hasyx/doc/TELEGRAM-ASK#4-security",
-          "level": 3
-        },
-        {
-          "title": "Related Documentation",
-          "url": "/hasyx/doc/TELEGRAM-ASK#related-documentation",
-          "level": 2
-        },
-        {
-          "title": "Contributing",
-          "url": "/hasyx/doc/TELEGRAM-ASK#contributing",
-          "level": 2
-        },
-        {
-          "title": "Roadmap",
-          "url": "/hasyx/doc/TELEGRAM-ASK#roadmap",
-          "level": 2
-        },
-        {
-          "title": "Planned Features",
-          "url": "/hasyx/doc/TELEGRAM-ASK#planned-features",
           "level": 3
         }
       ],
@@ -6029,5 +6398,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-07T16:51:27.906Z"
+  "lastUpdated": "2025-06-10T02:24:20.318Z"
 }

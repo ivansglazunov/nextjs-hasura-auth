@@ -1,5 +1,6 @@
 import { Exec, ExecContext } from './exec';
-import { AIMessage, AIProvider } from './provider';
+import { AIMessage } from "./ai";
+import { AIProvider } from "./ai";
 
 export interface OpenRouterTool {
   type: 'function';

@@ -1,5 +1,4 @@
 // Hasyx AI class
-import { AIMessage, AIProvider } from './provider';
 import Debug from 'debug';
 
 const debug = Debug('hasyx:ai');
@@ -107,4 +106,16 @@ export class AI {
       this.memory.push({ role: 'system', content: this.systemPrompt });
     }
   }
-} 
+}
+export interface AIProvider {
+  ask(messages: string | AIMessage | AIMessage[], options?: any): Promise<string>;
+  askStream(messages: string | AIMessage | AIMessage[], options?: any): Promise<ReadableStream<string>>;
+  updateOptions(updates: any): void;
+}
+export interface AIMessage {
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string;
+  name?: string;
+  tool_call_id?: string;
+}
+ 
