@@ -112,7 +112,7 @@ async function main() {
       path,
     };
     
-    exec = new ExecTs(fullContext);
+    exec = new ExecTs({ initialContext: fullContext });
     
     // Add exec to its own context after creation
     exec.updateContext({ exec });

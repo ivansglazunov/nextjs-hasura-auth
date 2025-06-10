@@ -1,4 +1,6 @@
 import { AskHasyx, AskOptions, OutputHandlers } from './ask-hasyx';
+import { OpenRouter } from './openrouter';
+import { ExecResult, ConsoleLog } from './exec';
 import { sendTelegramMessage } from './telegram-bot';
 import Debug from './debug';
 
@@ -68,13 +70,17 @@ export class TelegramAskWrapper extends AskHasyx {
     // Remove telegram options from askOptions to avoid passing to parent
     const { telegram, ...cleanAskOptions } = askOptions;
 
-    super({
+    // Create OpenRouter provider for the new architecture
+    const provider = new OpenRouter({
       token,
-      context,
-      ...options,
+      ...options
+    });
+
+    super({
+      provider,
       systemPrompt,
       askOptions: cleanAskOptions,
-      outputHandlers,
+      outputHandlers
     });
 
     this.chatId = chatId;
@@ -171,117 +177,31 @@ export class TelegramAskWrapper extends AskHasyx {
   async askWithBeautifulOutput(question: string): Promise<string> {
     debug(`Processing question with Telegram output for chat ${this.chatId}:`, question);
     
-    return new Promise((resolve, reject) => {
-      let accumulatedText = '';
-      let finalResponse = '';
-      
-      // Add timeout for AI operations (3 minutes instead of 5 for faster restart)
-      const timeout = setTimeout(() => {
-        this.defaultError('⏰ AI operation timed out. Please try a simpler question or try again later.');
-        this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'} timeout after 3 minutes`);
-        reject(new Error('AI operation timeout'));
-      }, 3 * 60 * 1000);
-      
-      // Track if we have any pending code execution
-      let pendingCodeExecution = 0;
+    try {
       let operationStartTime = Date.now();
       
-      this.asking(question).subscribe({
-        next: (event) => {
-          switch (event.type) {
-            case 'thinking':
-              this.defaultOutput('🧠 AI думает...');
-              this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'}, Started: ${new Date().toISOString()}`);
-              break;
-              
-            case 'iteration':
-              if (event.data.iteration > 1) {
-                this.defaultOutput(`🔄 Итерация ${event.data.iteration}: ${event.data.reason}`);
-                this.defaultOutput(`⏱️ Runtime: ${Math.round((Date.now() - operationStartTime) / 1000)}s`);
-              }
-              break;
-              
-            case 'text':
-              // Accumulate text but don't send yet
-              accumulatedText += event.data.delta;
-              break;
-              
-            case 'code_found':
-              // Send accumulated text before showing code block
-              if (accumulatedText.trim()) {
-                this.defaultOutput(accumulatedText);
-                accumulatedText = ''; // Reset after sending
-              }
-              this.defaultOutput(`📋 Найден ${event.data.format.toUpperCase()} код для выполнения:`);
-              const displayFormat = event.data.format === 'terminal' ? 'bash' : event.data.format;
-              this.defaultOutput(`\`\`\`${displayFormat}\n${event.data.code}\n\`\`\``);
-              break;
-              
-            case 'code_executing':
-              pendingCodeExecution++;
-              this.defaultOutput(`⚡ Выполняется ${event.data.format.toUpperCase()} код...`);
-              this.defaultOutput(`🔧 Debug: Execution engine ${event.data.format}, Container ${process.env.HOSTNAME || 'unknown'}`);
-              break;
-              
-            case 'code_result':
-              pendingCodeExecution = Math.max(0, pendingCodeExecution - 1);
-              const status = event.data.success ? '✅' : '❌';
-              this.defaultOutput(`${status} Результат выполнения:`);
-              this.defaultOutput(`\`\`\`\n${event.data.result}\n\`\`\``);
-              
-              // Отправляем debug info в Telegram вместо логов
-              if (!event.data.success) {
-                this.defaultOutput(`🔧 Debug: Execution failed, Container ${process.env.HOSTNAME || 'unknown'}, Runtime: ${Math.round((Date.now() - operationStartTime) / 1000)}s`);
-              }
-              break;
-              
-            case 'complete':
-              finalResponse = event.data.finalResponse;
-              const totalTime = Math.round((Date.now() - operationStartTime) / 1000);
-              this.defaultOutput(`💭 Завершено (${event.data.iterations} итераций, ${totalTime}s)`);
-              this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'}, Execution results: ${event.data.executionResults.length}`);
-              break;
-              
-            case 'error':
-              this.defaultError(`❌ Ошибка в итерации ${event.data.iteration}: ${event.data.error.message}`);
-              this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'}, Error stack: ${event.data.error.stack || 'No stack'}`);
-              break;
-          }
-        },
-        complete: async () => {
-          try {
-            clearTimeout(timeout);
-            
-            // Check if we have pending code executions
-            if (pendingCodeExecution > 0) {
-              this.defaultOutput(`⚠️ Внимание: ${pendingCodeExecution} операций кода все еще выполняются в фоне.`);
-              this.defaultOutput(`🔧 Debug: Pending executions may cause issues on container restart`);
-            }
-            
-            // Send final accumulated text if any (this replaces printMarkdown)
-            if (accumulatedText.trim()) {
-              this.defaultOutput(accumulatedText);
-            }
-            
-            const totalTime = Math.round((Date.now() - operationStartTime) / 1000);
-            this.defaultOutput(`ℹ️ Сессия завершена. Время: ${totalTime}s, Container: ${process.env.HOSTNAME || 'unknown'}`);
-            
-            // Flush any remaining messages
-            await this.flushMessageBuffer();
-            resolve(finalResponse || accumulatedText);
-          } catch (error) {
-            this.defaultOutput(`🔧 Debug: Error in completion handler: ${error instanceof Error ? error.message : 'Unknown'}`);
-            reject(error);
-          }
-        },
-        error: (error) => {
-          clearTimeout(timeout);
-          this.defaultError(`Ошибка стриминга: ${error.message}`);
-          this.defaultOutput(`🔧 Debug: Streaming error in Container ${process.env.HOSTNAME || 'unknown'}: ${error.stack || 'No stack'}`);
-          reject(error);
-        }
-      });
-    });
+      this.defaultOutput('🧠 AI думает...');
+      this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'}, Started: ${new Date().toISOString()}`);
+      
+      // Use the parent's askWithBeautifulOutput which handles code execution
+      const processedResponse = await super.askWithBeautifulOutput(question);
+      
+      // The response is already processed and displayed by super.askWithBeautifulOutput
+      // but we suppress that output and handle it ourselves for Telegram
+      
+      const totalTime = Math.round((Date.now() - operationStartTime) / 1000);
+      this.defaultOutput(`💭 Завершено (${totalTime}s)`);
+      this.defaultOutput(`🔧 Debug: Container ${process.env.HOSTNAME || 'unknown'}, Complete`);
+      
+      // Flush any remaining messages
+      await this.flushMessageBuffer();
+      
+      return processedResponse;
+    } catch (error) {
+      this.defaultError(`Ошибка: ${error instanceof Error ? error.message : String(error)}`);
+      this.defaultOutput(`🔧 Debug: Error in Container ${process.env.HOSTNAME || 'unknown'}: ${error instanceof Error ? error.stack || 'No stack' : 'Unknown'}`);
+      throw error;
+    }
   }
 
   // Override ask method to use our Telegram-specific askWithBeautifulOutput
@@ -294,6 +214,49 @@ export class TelegramAskWrapper extends AskHasyx {
   async flush(): Promise<void> {
     await this.flushMessageBuffer();
   }
+}
+
+/**
+ * Format execution result properly including logs (similar to AskHasyx.formatResult)
+ */
+function formatExecutionResult(result: any): string {
+  // Handle new { result, logs } format from exec/exec-tsx
+  if (result && typeof result === 'object' && 'result' in result && 'logs' in result) {
+    const execResult = result as ExecResult;
+    const formattedResult = formatSingleResult(execResult.result);
+    
+    if (execResult.logs && execResult.logs.length > 0) {
+      const formattedLogs = execResult.logs.map(log => 
+        `[${log.level.toUpperCase()}] ${log.args.map(arg => formatSingleResult(arg, true)).join(' ')}`
+      ).join('\n');
+      return `Result:\n${formattedResult}\n\nLogs:\n${formattedLogs}`;
+    }
+    return formattedResult;
+  }
+  
+  // Handle terminal results or other direct results
+  return formatSingleResult(result);
+}
+
+/**
+ * Format single result value
+ */
+function formatSingleResult(result: any, isLogArg: boolean = false): string {
+  if (result === undefined) return 'undefined';
+  if (result === null) return 'null';
+  if (typeof result === 'string') return result;
+  if (typeof result === 'number' || typeof result === 'boolean') return String(result);
+  if (result instanceof Error) return `Error: ${result.message}`;
+  if (typeof result === 'function') return `[Function: ${result.name || 'anonymous'}]`;
+  if (typeof result === 'object') {
+    try {
+      // For log arguments, use more compact format. For main results, pretty print.
+      return JSON.stringify(result, null, isLogArg ? 0 : 2);
+    } catch {
+      return String(result);
+    }
+  }
+  return String(result);
 }
 
 /**
@@ -382,40 +345,11 @@ echo "Hello World"
       }
     );
 
-    // ВАЖНО: Устанавливаем обработчик выполнения кода
-    ask._do = async (doItem) => {
-      try {
-        const { execDo } = await import('hasyx/lib/exec');
-        const { execTsDo } = await import('hasyx/lib/exec-tsx');
-        const { terminalDo } = await import('hasyx/lib/terminal');
-        
-        let result: string;
-        if (doItem.format === 'js') {
-          result = await execDo.exec(doItem.request);
-        } else if (doItem.format === 'tsx') {
-          result = await execTsDo.exec(doItem.request);
-        } else if (doItem.format === 'terminal') {
-          result = await terminalDo.exec(doItem.request);
-        } else {
-          throw new Error(`Unsupported execution format: ${doItem.format}`);
-        }
-        
-        doItem.response = String(result);
-        debug(`Code execution completed for ${doItem.id}: ${String(result).substring(0, 100)}...`);
-        
-        return doItem;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        doItem.response = `Error: ${errorMessage}`;
-        debug(`Code execution failed for ${doItem.id}: ${errorMessage}`);
-        
-        return doItem;
-      }
-    };
-
-    // Очищаем память для свежего старта (важно для предотвращения "памяти" между контейнерами)
+    // Code execution is now handled by the parent AskHasyx class automatically
+    // No need to set up custom _do handler anymore
+    
+    // Clear memory for fresh start (important to prevent "memory" between containers)
     ask.clearMemory();
-    ask.clearResults();
 
     instance = {
       ask,
@@ -433,12 +367,11 @@ echo "Hello World"
     instance.lastActivity = new Date();
     debug(`Retrieved existing TelegramAsk instance for user ${userId}, chat ${chatId}`);
     
-    // Для уже существующего экземпляра тоже очищаем память, если она слишком большая
-    const memorySize = instance.ask.getMemory().length;
-    if (memorySize > 20) { // Если больше 20 сообщений, очищаем
+    // For existing instances, clear memory if it's too large
+    const memorySize = instance.ask.memory.length;
+    if (memorySize > 20) { // If more than 20 messages, clear
       debug(`Clearing memory for user ${userId} (${memorySize} messages)`);
       instance.ask.clearMemory();
-      instance.ask.clearResults();
     }
   }
 
@@ -494,11 +427,10 @@ export function clearAllTelegramAskInstances(): void {
 export function resetAllTelegramAskInstances(): void {
   debug(`Resetting all ${instances.size} instances`);
   
-  // Clear memory and results for all instances
+  // Clear memory for all instances  
   for (const [key, instance] of instances.entries()) {
     try {
       instance.ask.clearMemory();
-      instance.ask.clearResults();
       debug(`Cleared memory for instance: ${key}`);
     } catch (error) {
       debug(`Error clearing memory for instance ${key}:`, error);

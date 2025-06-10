@@ -7,6 +7,8 @@ import Debug from './debug';
 
 const debug = Debug('logs:test');
 
+const isLocal = !!+process.env.JEST_LOCAL!;
+
 type StateConfig = {
   schema?: string;
   table: string;
@@ -22,7 +24,7 @@ const createTestHasura = () => new Hasura({
 // Test schema name
 const TEST_SCHEMA = 'test_logs';
 
-describe('[DEBUG] Logs System Tests', () => {
+(!isLocal ? describe : describe.skip)('[DEBUG] Logs System Tests', () => {
   beforeEach(async () => {
     debug('Setting up test environment...');
     

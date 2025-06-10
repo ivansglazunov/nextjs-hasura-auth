@@ -110,7 +110,7 @@ async function main() {
       path,
     };
     
-    exec = new Exec(fullContext);
+    exec = new Exec({ initialContext: fullContext });
     
     // Add exec to its own context after creation
     exec.updateContext({ exec });
