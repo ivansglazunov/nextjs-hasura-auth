@@ -4,8 +4,10 @@ import Debug from './debug';
 
 const debug = Debug('test:ollama');
 
+const isLocal = !!+process.env.JEST_LOCAL!;
+
 // Real Ollama integration tests with Gemma2 2B model
-describe('Real Ollama Integration Tests', () => {
+(!isLocal ? describe : describe.skip)('Real Ollama Integration Tests', () => {
   const TEST_MODEL = 'gemma2:2b';
   let ollama: Ollama;
   let ai: AI;
