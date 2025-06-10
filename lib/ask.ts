@@ -1,7 +1,9 @@
 import { generateTerminalHandler } from './ai/terminal';
 import { OpenRouterProvider } from './ai/providers/openrouter';
+import { OllamaProvider } from './ai/providers/ollama';
 import { ExecJSTool } from './ai/tools/exec-js-tool';
 import { TerminalTool } from './ai/tools/terminal-tool';
+import { AIProvider } from './ai/ai';
 import { Tool } from './ai/tool';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -31,14 +33,32 @@ ${tools.map(t => `- ${t.name}: ${t.contextPreprompt}`).join('\n')}
 const tools = [new ExecJSTool(), new TerminalTool()];
 const systemPrompt = getSystemPrompt(tools);
 
-if (!process.env.OPENROUTER_API_KEY) {
-  throw new Error('OPENROUTER_API_KEY is not set in the environment variables.');
+function getProviderFromArgs(): AIProvider {
+  const args = process.argv.slice(2);
+  const providerArgIndex = args.findIndex(arg => arg === '--provider');
+  const modelArgIndex = args.findIndex(arg => arg === '--model');
+
+  const providerName = providerArgIndex !== -1 ? args[providerArgIndex + 1] : 'openrouter';
+  const modelName = modelArgIndex !== -1 ? args[modelArgIndex + 1] : undefined;
+
+  if (providerName === 'ollama') {
+    console.log(`Using Ollama provider with model: ${modelName || 'default'}`);
+    return new OllamaProvider({ model: modelName });
+  }
+
+  // Default to OpenRouter
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new Error('OPENROUTER_API_KEY is not set for OpenRouterProvider.');
+  }
+  const model = modelName || 'google/gemini-flash-1.5';
+  console.log(`Using OpenRouter provider with model: ${model}`);
+  return new OpenRouterProvider({
+    token: process.env.OPENROUTER_API_KEY,
+    model: model
+  });
 }
 
-const provider = new OpenRouterProvider({
-  token: process.env.OPENROUTER_API_KEY,
-  model: 'google/gemini-flash-1.5'
-});
+const provider = getProviderFromArgs();
 
 export const ask = generateTerminalHandler({
   provider,
@@ -47,8 +67,12 @@ export const ask = generateTerminalHandler({
 });
 
 async function main() {
-  // This runs the interactive mode when the script is executed directly
-  ask();
+    const args = process.argv.slice(2);
+    const executeIndex = args.findIndex(arg => arg === '-e' || arg === '--execute');
+    const execute = executeIndex !== -1 ? args[executeIndex + 1] : undefined;
+    
+  // This runs the interactive mode or executes a command
+  ask({ execute });
 }
 
 // Check if the script is being run directly
