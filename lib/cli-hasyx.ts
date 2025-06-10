@@ -800,6 +800,11 @@ export const askCommand = async (options: any) => {
     // Always use Hasyx's ask module
     debug('Using default Hasyx ask.ts with streaming support');
 
+    if (!ask) {
+      console.error('❌ Ask instance is not available. Please check your OpenRouter API key configuration.');
+      process.exit(1);
+    }
+
     if (options.eval) {
       // Direct question mode with beautiful streaming output
       const response = await ask.askWithBeautifulOutput(options.eval);

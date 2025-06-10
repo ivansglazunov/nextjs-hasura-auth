@@ -28,7 +28,7 @@ export * from './auth';
 export type { JWT } from './auth-next';
 
 // Re-export main client hooks for convenience
-export { useHasyx, useClient, useSession, useTelegramMiniapp } from './provider';
+// These are available from hasyx/lib/provider.tsx directly
 export { 
   useQuery, 
   useSubscription, 

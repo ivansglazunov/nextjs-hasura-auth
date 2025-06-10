@@ -335,6 +335,8 @@ export function useClient(providedClient?: HasyxApolloClient | null): HasyxClien
   }, [client, client.hasyxGenerator, client._options]);
 }
 
+export const useHasyx = useClient;
+
 // Convenience aliases
 export const useSelect = useQuery;
 export const useInsert = (genOpts: Omit<GenerateOptions, 'operation'>, hookOpts?: MutationHookOptions<any, any>) =>

@@ -30,7 +30,7 @@ export * from './auth';
 export type { JWT } from './auth-next';
 
 // Re-export main client hooks for convenience
-export { useHasyx, useClient, useSession } from './provider';
+// These are available from ./provider.tsx directly
 export { 
   useQuery, 
   useSubscription, 
