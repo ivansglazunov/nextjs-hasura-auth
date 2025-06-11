@@ -795,7 +795,7 @@ export const askCommand = async (options: any) => {
   // The logic is now handled by the ask module itself.
   // We just need to call it with the correct options.
   try {
-    ask({ execute: options.eval });
+    ask();
   } catch (error) {
     console.error('❌ Error in ask command:', error);
     debug('Ask command error:', error);
