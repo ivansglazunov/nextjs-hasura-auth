@@ -1,6 +1,7 @@
 import { Dialog, DialogEvent, DialogOptions } from './dialog';
 import readline from 'readline';
 import Debug from '../debug';
+import chalk from 'chalk';
 
 const debug = Debug('ai:terminal');
 
@@ -17,17 +18,33 @@ export function generateTerminalHandler(options: TerminalHandlerOptions) {
     onChange: (event: DialogEvent) => {
         debug('Dialog event: %s', event.type);
         switch(event.type) {
+            case 'ask':
+                // No visible output for the initial ask, Thinking... will be shown by thoughts
+                break;
             case 'ai_chunk':
-                process.stdout.write(event.chunk);
+                process.stdout.write(chalk.gray(`[ai_chunk] `) + event.chunk);
+                break;
+            case 'thought_chunk':
+                process.stdout.write(chalk.yellow(`[thought_chunk] `) + chalk.yellow(event.chunk));
+                break;
+            case 'thought':
+                 // This event signifies the end of a thought block, a newline is good.
+                process.stdout.write('\n');
                 break;
             case 'tool_call':
-                process.stdout.write(`\n🤖 Calling tool: ${event.name}...\n`);
+                console.log(chalk.cyan(`\n[tool_call] Calling tool: ${event.name}...`));
+                break;
+            case 'tool_result':
+                console.log(chalk.magenta(`[tool_result] ID ${event.id}:`), event.result);
+                break;
+            case 'ai_response':
+                console.log(chalk.green(`\n[ai_response]`), event.content);
                 break;
             case 'error':
-                process.stderr.write(`\nAn error occurred: ${event.error}\n`);
+                process.stderr.write(chalk.red(`\n[error] An error occurred: ${event.error}\n`));
                 break;
             case 'done':
-                process.stdout.write('\n');
+                process.stdout.write(chalk.bold('\n[done]\n'));
                 break;
         }
     },

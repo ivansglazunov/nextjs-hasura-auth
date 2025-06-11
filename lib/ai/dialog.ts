@@ -1,6 +1,7 @@
 import { AIMessage, AIProvider } from './ai';
 import { Tool, ToolResult, FoundToolCall } from './tool';
 import { Tooler } from './tooler';
+import { parseThinkingBuffer } from './dialog-parser';
 import Debug from '../debug';
 
 const debug = Debug('dialog');
@@ -10,6 +11,8 @@ export type DialogEvent =
   | { type: 'ai_request', messages: AIMessage[] }
   | { type: 'ai_chunk', chunk: string }
   | { type: 'ai_response', content: string }
+  | { type: 'thought_chunk', chunk: string }
+  | { type: 'thought', content: string }
   | { type: 'tool_call', id: string, name: string, command: string, content: string }
   | { type: 'tool_log', id: string, log: any }
   | { type: 'tool_result', id: string, result: any, error?: string }
@@ -147,19 +150,32 @@ export class Dialog {
     if (this.method === 'stream') {
       const stream = await this.provider.stream(messagesToSend);
       const reader = stream.getReader();
-      fullResponse = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
+      
+      const { response } = await parseThinkingBuffer(reader, (event) => {
+        if (event.type === 'thought_chunk') {
+          this.emit({ type: 'thought_chunk', chunk: event.chunk });
+        } else {
+          this.emit({ type: 'ai_chunk', chunk: event.chunk });
         }
-        this.emit({ type: 'ai_chunk', chunk: value });
-        fullResponse += value;
-      }
+      });
+      fullResponse = response;
+
     } else { // query
       const result = await this.provider.query(messagesToSend);
-      fullResponse = result.content;
+      let responseContent = result.content;
+      const thinkRegex = /<think>([\s\S]*?)<\/think>\s*/gm;
+      const matches = [...responseContent.matchAll(thinkRegex)];
+
+      if (matches.length > 0) {
+        matches.forEach(match => {
+          const thoughtContent = match[1].trim();
+          if (thoughtContent) {
+            this.emit({ type: 'thought', content: thoughtContent });
+          }
+        });
+        responseContent = responseContent.replace(thinkRegex, '');
+      }
+      fullResponse = responseContent;
     }
 
     this.emit({ type: 'ai_response', content: fullResponse });
@@ -167,8 +183,14 @@ export class Dialog {
     this.memory.push(assistantMessage);
 
     if (this.tooler) {
-      debug('Calling tooler with response length: %d', fullResponse.length);
-      await this.tooler.call(fullResponse);
+      debug('Full response before tool call: "%s"', fullResponse);
+      const toolCalls = this.tooler.findToolCalls(fullResponse);
+      if (toolCalls.length > 0) {
+        if (toolCalls.length > 1) {
+          debug(`Found ${toolCalls.length} tool calls, but executing only the first one.`);
+        }
+        await this.tooler.call(toolCalls[0].fullMatch);
+      }
     }
 
     // If no tool calls were made, the cycle is done.

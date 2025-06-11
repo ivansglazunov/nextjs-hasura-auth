@@ -9,6 +9,7 @@ export interface FoundToolCall {
   tool: Tool;
   command: string; // e.g., 'exec'
   content: string; // The code or command to execute
+  fullMatch: string;
 }
 
 export interface ToolOptions {

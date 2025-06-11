@@ -36,13 +36,13 @@ export class Tooler {
     return preprompt;
   }
 
-  private _findToolsInString(response: string): FoundToolCall[] {
+  public findToolCalls(response: string): FoundToolCall[] {
     const foundCalls: FoundToolCall[] = [];
     const regex = />\s*😈([^/]+)\/([^/]+)\/([^/\n]+)\s*\n\`\`\`[a-z]*\s*([\s\S]*?)\`\`\`/g;
 
     let match;
     while ((match = regex.exec(response)) !== null) {
-      const [_, id, toolName, command, content] = match;
+      const [fullMatch, id, toolName, command, content] = match;
 
       const tool = this.tools.get(toolName);
       if (tool) {
@@ -50,7 +50,8 @@ export class Tooler {
           id,
           tool,
           command,
-          content: content.trim()
+          content: content.trim(),
+          fullMatch
         });
       }
     }
@@ -58,7 +59,7 @@ export class Tooler {
   }
 
   public async call(response: string): Promise<void> {
-    const calls = this._findToolsInString(response);
+    const calls = this.findToolCalls(response);
 
     for (const call of calls) {
       if (this.history.has(call.id)) {
