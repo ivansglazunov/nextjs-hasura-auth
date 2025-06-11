@@ -162,7 +162,7 @@ export function CytoNode({ data, ...props }: {
         label: name,
         image: image,
       },
-      ...props?.elements,
+      ...props?.element,
       classes: cn('entity', { avatar: !!image, opened, }, props.classes)
     }}
     children={opened ? <Card data={data} onClose={() => setOpened(false)} /> : null}

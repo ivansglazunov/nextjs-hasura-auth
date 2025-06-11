@@ -41,6 +41,7 @@ ls -la
 const tools = [new ExecJSTool(), new TerminalTool()];
 const systemPrompt = getSystemPrompt();
 
+let using = '';
 function getProviderFromArgs(): AIProvider {
   const args = process.argv.slice(2);
   const providerArgIndex = args.findIndex(arg => arg === '--provider');
@@ -50,7 +51,7 @@ function getProviderFromArgs(): AIProvider {
   const modelName = modelArgIndex !== -1 ? args[modelArgIndex + 1] : undefined;
 
   if (providerName === 'ollama') {
-    console.log(`Using Ollama provider with model: ${modelName || 'default'}`);
+    using = `Using Ollama provider with model: ${modelName || 'default'}`;
     return new OllamaProvider({ model: modelName });
   }
 

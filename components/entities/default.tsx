@@ -164,7 +164,7 @@ export function CytoNode({ data, ...props }: {
       id: data.id,
       label: data?.name,
     },
-    ...props?.elements,
+    ...props?.element,
     classes: cn('entity', props.classes)
   }} />;
 }

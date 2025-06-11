@@ -630,9 +630,8 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
     const isNew = !cyEl.length;
 
     const dataForCy = {
-      linkId: id,
       id,
-      label: element?.data?.label || id,
+      label: element?.data?.label
       parent: (parent && parent.id()) || undefined,
       ...element?.data
     };
