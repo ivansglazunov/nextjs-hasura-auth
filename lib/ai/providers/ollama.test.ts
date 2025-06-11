@@ -1,7 +1,9 @@
 import { OllamaProvider } from './ollama';
 import { AIMessage } from '../ai';
 
-describe('OllamaProvider', () => {
+const isLocal = !!+process.env.JEST_LOCAL!;
+
+(isLocal ? describe.skip : describe)('OllamaProvider', () => {
   const testModel = 'gemma2:2b'; // Make sure this model is available on your Ollama server
 
   // Helper to check if Ollama server is running

@@ -11,6 +11,7 @@ import { Exec } from './exec';
 import Debug from './debug';
 // Import all exports from index.ts to provide as context
 import * as hasyxLib from './index';
+import { generateConsole } from './ai/console';
 
 const debug = Debug('hasyx:js');
 
@@ -87,9 +88,12 @@ async function main() {
     client = new Hasyx(apolloAdminClient, generator);
     
     // Create execution context with all hasyx exports
+    const dialog = generateConsole();
     const fullContext = {
       // Core instances
       client,
+      hasyx: client,
+      dialog,
       // All hasyx library exports
       ...hasyxLib,
       // Node.js globals
@@ -115,9 +119,10 @@ async function main() {
     // Add exec to its own context after creation
     exec.updateContext({ exec });
     
-    console.log('✅ Hasyx client initialized with admin privileges.');
+    console.log('✅ Hasyx client (hasyx & client) initialized with admin privileges.');
     console.log('✅ Exec environment initialized with full hasyx context.');
-    console.log('📦 Available in context: client, exec, all hasyx exports, and Node.js globals.');
+    console.log('✅ Console AI Dialog available as `dialog`. Usage: dialog.ask("your question")');
+    console.log('📦 Available in context: hasyx, client, dialog, exec, all hasyx exports, and Node.js globals.');
     debug('Hasyx client and Exec created successfully with full context.');
   } catch (err) {
     console.error('❌ Failed to initialize Hasyx client:', err);
@@ -157,7 +162,7 @@ async function main() {
   } else {
     debug('Starting REPL session.');
     console.log('🟢 Hasyx REPL started.');
-    console.log('📦 Available: client, exec, and all hasyx library exports');
+    console.log('�� Available: client, dialog, exec, and all hasyx library exports');
     console.log('   Type .exit to close.');
     
     const replServer = repl.start({

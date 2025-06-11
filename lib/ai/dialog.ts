@@ -22,6 +22,7 @@ export interface DialogOptions {
   systemPrompt?: string;
   onChange?: (event: DialogEvent) => void;
   onError?: (error: any) => void;
+  method?: 'stream' | 'query';
 }
 
 export class Dialog {
@@ -29,6 +30,7 @@ export class Dialog {
   private readonly tooler?: Tooler;
   private readonly onChange: (event: DialogEvent) => void;
   private readonly onError?: (error: any) => void;
+  private readonly method: 'stream' | 'query';
   private memory: AIMessage[] = [];
   private _toSend: AIMessage[] = [];
   private _promise: Promise<any> | null = null;
@@ -38,8 +40,13 @@ export class Dialog {
     this.provider = options.provider;
     this.onChange = options.onChange || (() => { });
     this.onError = options.onError;
+    this.method = options.method || 'stream';
 
-    debug('Initializing Dialog with systemPrompt length: %d and %d tools', options.systemPrompt?.length || 0, options.tools?.length || 0);
+    if (this.method !== 'stream' && this.method !== 'query') {
+      throw new Error("Dialog option 'method' must be either 'stream' or 'query'.");
+    }
+
+    debug('Initializing Dialog with method: %s, systemPrompt length: %d and %d tools', this.method, options.systemPrompt?.length || 0, options.tools?.length || 0);
 
     let systemPrompt = options.systemPrompt || '';
 
@@ -90,11 +97,25 @@ export class Dialog {
     this.scheduleSend();
   }
 
-  ask(message: AIMessage) {
-    debug('ask called with content: "%s"', message.content);
-    this.emit({ type: 'ask', message });
-    this._toSend.push(message);
+  ask(message: string | AIMessage): Promise<void> {
+    let userMessage: AIMessage;
+
+    if (typeof message === 'string') {
+      userMessage = { role: 'user', content: message };
+    } else if (message && typeof message.role === 'string' && typeof message.content === 'string') {
+      userMessage = message;
+    } else {
+      const err = new Error('Invalid message format passed to ask(). Must be a string or an object with "role" and "content" properties.');
+      debug('Error: %s, received: %o', err.message, message);
+      this.emit({ type: 'error', error: err.message });
+      throw err;
+    }
+
+    debug('ask called with content: "%s"', userMessage.content);
+    this.emit({ type: 'ask', message: userMessage });
+    this._toSend.push(userMessage);
     this.scheduleSend();
+    return this._promise as Promise<void>;
   }
 
   private scheduleSend() {
@@ -119,19 +140,26 @@ export class Dialog {
     this._toSend = [];
 
     this.emit({ type: 'ai_request', messages: messagesToSend });
-    debug('Sending %d messages to provider. Full messages object: %o', messagesToSend.length, messagesToSend);
+    debug('Sending %d messages to provider using method "%s". Full messages object: %o', messagesToSend.length, this.method, messagesToSend);
 
-    const stream = await this.provider.stream(messagesToSend);
-    const reader = stream.getReader();
-    let fullResponse = '';
+    let fullResponse: string;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
+    if (this.method === 'stream') {
+      const stream = await this.provider.stream(messagesToSend);
+      const reader = stream.getReader();
+      fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        this.emit({ type: 'ai_chunk', chunk: value });
+        fullResponse += value;
       }
-      this.emit({ type: 'ai_chunk', chunk: value });
-      fullResponse += value;
+    } else { // query
+      const result = await this.provider.query(messagesToSend);
+      fullResponse = result.content;
     }
 
     this.emit({ type: 'ai_response', content: fullResponse });

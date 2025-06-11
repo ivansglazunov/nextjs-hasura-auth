@@ -23,7 +23,7 @@ export class OpenRouterProvider implements AIProvider {
       throw new Error('OpenRouter API token is required');
     }
     this.options = {
-      model: 'google/gemini-2.5-flash-preview',
+      model: 'sarvamai/sarvam-m:free',
       temperature: 0.7,
       top_p: 1,
       top_k: 0,

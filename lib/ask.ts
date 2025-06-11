@@ -75,12 +75,7 @@ export const ask = generateTerminalHandler({
 });
 
 async function main() {
-    const args = process.argv.slice(2);
-    const executeIndex = args.findIndex(arg => arg === '-e' || arg === '--execute');
-    const execute = executeIndex !== -1 ? args[executeIndex + 1] : undefined;
-    
-  // This runs the interactive mode or executes a command
-  ask({ execute });
+  await ask();
 }
 
 // Check if the script is being run directly
