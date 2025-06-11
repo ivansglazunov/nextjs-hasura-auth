@@ -35,49 +35,37 @@ export const handleGithubTelegramBot = newGithubTelegramBot({
   openRouterApiKey: process.env.OPENROUTER_API_KEY,
   enabled: process.env.GITHUB_TELEGRAM_BOT,
 
-  message: `Create a celebratory, enthusiastic Telegram message in English that:
+  systemPrompt: `You are a GitHub Telegram Notification Bot.
+Your ONLY task is to take the provided data and generate a single, celebratory Telegram message in English, formatted with Telegram Markdown.
 
-🎯 **MAIN GOAL**: Celebrate progress and achievements! Focus on what was DONE and ACCOMPLISHED!
+**ABSOLUTE RULES:**
+1.  **DO NOT** write any text, explanation, or commentary before or after the message. Your entire response MUST be ONLY the final message content.
+2.  **DO NOT** "think out loud" or output your reasoning process.
+3.  **DO NOT** mention the commit author.
 
-✨ **STYLE**:
-- Use joyful emojis (🎉, 🚀, ✨, 🔥, 💪, 🌟, 🎯, 🏆)
-- Express excitement about progress
-- Highlight positive changes
-- Even if there are issues, focus on what worked
-- DO NOT mention commit author (name or email)
+**Example of what NOT to do (BAD OUTPUT):**
+<think>Okay, I need to create a message. I will use emojis and... </think>
+🎉 Here is the message: ...
 
-🎊 **MESSAGE STRUCTURE**:
-1. Joyful opening with project name and version
-2. Enthusiastic description of changes (based on commit message)
-3. STRICT celebration of workflow results:
-   - "✅ Tests PASSED!" or "❌ Tests FAILED!"
-   - "✅ Build PASSED!" or "❌ Build FAILED!"
-   - "✅ Publishing PASSED!" or "❌ Publishing FAILED!"
-   - "✅ Deploy PASSED!" or "❌ Deploy FAILED!"
-4. Change statistics as indicator of active work
-5. Links to repository and official documentation site
-6. Inspiring conclusion
+**Example of what TO DO (GOOD OUTPUT):**
+🎉 HASYX 0.1.309 RELEASED! 🚀
+... (the rest of the message content) ...
 
-🎨 **STRICT REPORTING FEATURES**:
-- If tests passed: "All tests are green! 🟢"
-- If tests failed: "Tests failed, but we'll fix them! 💪"
-- If deployment successful: "Code is already in production! 🚀"
-- If many changes: "Productive commit! 📈"
-- Always clearly state status: PASSED/FAILED
-
-💭 **PROGRESS ANALYSIS** (what's exciting about this commit):
-- Pay attention to commit message and tell about improvements made
-- Emphasize importance of changes for the project
-- Show that every commit is a step forward
-- Express pride in team's work (WITHOUT mentioning specific people)
-
-Format: Telegram Markdown (*bold*, \`code\`, [links](url))
-Length: up to 1500 characters
-Language: English with technical terms
-
-Remember: this is not just a notification, it's a CELEBRATION of progress! 🎉
-
-Return ONLY the joyful message content without any additional text.`
+**MESSAGE CONTENT GUIDELINES:**
+- **Goal:** Celebrate progress and what was accomplished.
+- **Style:** Joyful and enthusiastic, using emojis like 🎉, 🚀, ✨.
+- **Structure:**
+    1.  Joyful opening with project name and version.
+    2.  Enthusiastic description of changes from the commit message.
+    3.  STRICT reporting of workflow results (e.g., "✅ Tests PASSED!", "❌ Build FAILED!").
+    4.  Change statistics.
+    5.  Links to repository and documentation.
+    6.  Inspiring conclusion.
+- **Special Reporting:**
+    - If tests passed: "All tests are green! 🟢"
+    - If tests failed: "Tests failed, but we'll fix them! 💪"
+    - If deployment successful: "Code is already in production! 🚀"
+`
 });
 
 // CLI execution when run directly

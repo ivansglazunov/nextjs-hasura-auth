@@ -35,7 +35,7 @@ export interface GithubTelegramBotOptions {
   telegramBotToken?: string;
   repositoryUrl?: string;
   enabled?: boolean | string | number;
-  message: string; // Required message parameter
+  systemPrompt: string; // Required prompt parameter
 
   // New properties to replace process.env and pckg
   telegramChannelId?: string; // Single channel for GitHub notifications
@@ -345,7 +345,7 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
     commitSha = process.env.GITHUB_SHA,
     githubToken = process.env.GITHUB_TOKEN,
     repositoryUrl,
-    message,
+    systemPrompt,
     openRouterApiKey = process.env.OPENROUTER_API_KEY,
     projectName = 'Unknown Project',
     projectVersion,
@@ -355,28 +355,18 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
   
   debug(`🤖 Generating AI-powered commit notification message...`);
   
-  if (!commitSha || !repositoryUrl || !message || !openRouterApiKey) {
+  if (!commitSha || !repositoryUrl || !systemPrompt || !openRouterApiKey) {
     throw new Error('Missing required options for askGithubTelegramBot');
   }
 
   const commitInfo = await fetchCommitInfo(commitSha, repositoryUrl, githubToken);
   const workflowStatus = await fetchWorkflowStatus(commitInfo.sha, repositoryUrl, githubToken);
   
-  const provider = new OpenRouterProvider({ token: openRouterApiKey });
+  const provider = new OpenRouterProvider({ 
+    token: openRouterApiKey,
+    model: 'sarvamai/sarvam-m:free',
+  });
   
-  const systemPrompt = `Create a joyful, celebratory Telegram notification message for a GitHub commit that radiates happiness about the progress made!
-
-**IMPORTANT**: Return ONLY the final Telegram message content. Do not include any explanatory text, comments, or meta-discussion. Do not say "Here's the message" or "How's this?" - just return the pure message content.
-
-**STRICT REQUIREMENTS**:
-- DO NOT mention who made the commit (no author name or email)
-- ALWAYS include clear, strict reporting of workflow statuses
-- For failed tests/builds/publishes: be explicit about failures but maintain positive tone
-- If any MD files are mentioned in commit message, provide direct GitHub links: https://github.com/ivansglazunov/hasyx/blob/main/lib/FILENAME.md
-- Format: Telegram Markdown (*bold*, \`code\`, [links](url))
-- Language: English with technical terms
-- Remember: this is not just a notification, it's a CELEBRATION of progress! 🎉`;
-
   const getStatusEmoji = (status: string) => {
     switch (status) {
       case 'success': return '✅';
@@ -416,8 +406,6 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
 ${workflowStatus.details.workflows.map(w => 
   `- ${w.name}: ${w.conclusion} ${getStatusEmoji(w.conclusion)} (${w.duration}s)`
 ).join('\n')}
-
-${message}
 
 **MANDATORY LINKS AT THE END**:
 🔗 Repository: ${repositoryUrl}
