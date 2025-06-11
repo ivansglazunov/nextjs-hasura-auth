@@ -631,7 +631,7 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
 
     const dataForCy = {
       id,
-      label: element?.data?.label
+      label: element?.data?.label,
       parent: (parent && parent.id()) || undefined,
       ...element?.data
     };
