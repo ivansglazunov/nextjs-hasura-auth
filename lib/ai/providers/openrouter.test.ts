@@ -19,7 +19,7 @@ describe('OpenRouterProvider', () => {
   it('should initialize with default options', () => {
     const provider = new OpenRouterProvider({ token: 'test-key' });
     // @ts-ignore
-    expect(provider.options.model).toBe('google/gemini-2.5-flash-preview');
+    expect(provider.options.model).toBe('sarvamai/sarvam-m:free');
   });
 
   describeWithApiKey('API Calls', () => {

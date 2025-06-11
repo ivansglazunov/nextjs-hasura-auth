@@ -58,7 +58,7 @@ function getProviderFromArgs(): AIProvider {
   if (!process.env.OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY is not set for OpenRouterProvider.');
   }
-  const model = modelName || 'google/gemini-flash-1.5';
+  const model = modelName || 'sarvamai/sarvam-m:free';
   console.log(`Using OpenRouter provider with model: ${model}`);
   return new OpenRouterProvider({
     token: process.env.OPENROUTER_API_KEY,

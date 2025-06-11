@@ -11,6 +11,8 @@ export interface OpenRouterProviderOptions extends ProviderOptions {
   top_k?: number;
   frequency_penalty?: number;
   presence_penalty?: number;
+  tool_choice?: string;
+  timeout?: number; // Timeout in milliseconds
 }
 
 export class OpenRouterProvider implements AIProvider {
@@ -27,21 +29,36 @@ export class OpenRouterProvider implements AIProvider {
       top_k: 0,
       frequency_penalty: 0,
       presence_penalty: 0,
+      timeout: 60000, // 60 seconds default timeout
       ...options
     };
   }
 
-  private async fetchAPI(body: any): Promise<Response> {
-    return fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.options.token}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://github.com/ivansglazunov/hasyx',
-        'X-Title': 'Hasyx Framework'
-      },
-      body: JSON.stringify(body)
-    });
+  private async fetchAPI(body: any, options: { timeout: number }): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), options.timeout);
+
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.options.token}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://github.com/ivansglazunov/hasyx',
+          'X-Title': 'Hasyx Framework'
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      return response;
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error(`OpenRouter API request timed out after ${options.timeout}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   async query(messages: AIMessage[], options: OpenRouterProviderOptions = this.options): Promise<AIMessage> {
@@ -56,9 +73,10 @@ export class OpenRouterProvider implements AIProvider {
       top_k: finalOptions.top_k,
       frequency_penalty: finalOptions.frequency_penalty,
       presence_penalty: finalOptions.presence_penalty,
+      ...(finalOptions.tool_choice && { tool_choice: finalOptions.tool_choice }),
     };
 
-    const response = await this.fetchAPI(requestBody);
+    const response = await this.fetchAPI(requestBody, { timeout: finalOptions.timeout! });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -84,9 +102,10 @@ export class OpenRouterProvider implements AIProvider {
       top_k: finalOptions.top_k,
       frequency_penalty: finalOptions.frequency_penalty,
       presence_penalty: finalOptions.presence_penalty,
+      ...(finalOptions.tool_choice && { tool_choice: finalOptions.tool_choice }),
     };
 
-    const response = await this.fetchAPI(requestBody);
+    const response = await this.fetchAPI(requestBody, { timeout: finalOptions.timeout! });
 
     if (!response.ok) {
       const errorText = await response.text();

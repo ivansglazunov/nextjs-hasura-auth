@@ -47,14 +47,15 @@ describeWithApiKey('Dialog Class with Real Components', () => {
             }
         });
 
-        dialog.ask('Say "hello"');
+        dialog.ask({ role: 'user', content: 'Say "hello"' });
     }, 30000);
 
     it('should handle a real tool cycle with ExecJSTool', (done) => {
         debug('Test: should handle a real tool cycle with ExecJSTool');
         const provider = new OpenRouterProvider({
             token: process.env.OPENROUTER_API_KEY!,
-            user: `test-user-${Math.random()}`
+            user: `test-user-${Math.random()}`,
+            model: 'sarvamai/sarvam-m:free'
         });
         const jsTool = new ExecJSTool();
 
@@ -87,7 +88,7 @@ describeWithApiKey('Dialog Class with Real Components', () => {
             }
         });
 
-        dialog.ask('Use javascript tool to calculate 5 + 3');
+        dialog.ask({ role: 'user', content: 'Use javascript tool to calculate 5 + 3' });
     }, 60000);
 
     it('should stop and resume correctly with real calls', (done) => {
@@ -113,7 +114,7 @@ describeWithApiKey('Dialog Class with Real Components', () => {
                     // After first question is done
                     if (askCounter === 1 && !resumed) {
                         dialog.stop();
-                        dialog.ask('Second question'); 
+                        dialog.ask({ role: 'user', content: 'Second question' }); 
                         
                         setTimeout(() => {
                             expect(askCounter).toBe(1); // Should not have increased
@@ -133,6 +134,6 @@ describeWithApiKey('Dialog Class with Real Components', () => {
             }
         });
 
-        dialog.ask('First question, say "one"');
+        dialog.ask({ role: 'user', content: 'First question, say "one"' });
     }, 60000);
 }); 
