@@ -23,7 +23,7 @@ export class OpenRouterProvider implements AIProvider {
       throw new Error('OpenRouter API token is required');
     }
     this.options = {
-      model: 'sarvamai/sarvam-m:free',
+      model: 'deepseek/deepseek-chat-v3-0324:free',
       temperature: 0.7,
       top_p: 1,
       top_k: 0,

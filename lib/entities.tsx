@@ -67,7 +67,7 @@ export function Button({ data, ...props }: EntityButtonProps) {
   
   const EntityComponent = getEntityComponent(typename);
   
-  return <EntityComponent.Button data={data} {...props} />;
+  return <EntityComponent.Button data={data as any} {...props} />;
 }
 
 export function Card({ data, onClose, ...props }: EntityCardProps) {
@@ -76,7 +76,7 @@ export function Card({ data, onClose, ...props }: EntityCardProps) {
   
   const EntityComponent = getEntityComponent(typename);
   
-  return <EntityComponent.Card data={data} onClose={onClose} {...props} />;
+  return <EntityComponent.Card data={data as any} onClose={onClose} {...props} />;
 } 
 
 export function CytoNode({ data, ...props }: EntityCytoNodeProps) {
@@ -85,5 +85,5 @@ export function CytoNode({ data, ...props }: EntityCytoNodeProps) {
   
   const EntityComponent = getEntityComponent(typename);
   
-  return <EntityComponent.CytoNode data={data} {...props} />;
+  return <EntityComponent.CytoNode data={data as any} {...props} />;
 } 

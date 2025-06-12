@@ -364,7 +364,7 @@ export async function askGithubTelegramBot(options: GithubTelegramBotOptions): P
   
   const provider = new OpenRouterProvider({ 
     token: openRouterApiKey,
-    model: 'sarvamai/sarvam-m:free',
+    model: 'deepseek/deepseek-chat-v3-0324:free',
   });
   
   const getStatusEmoji = (status: string) => {

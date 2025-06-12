@@ -74,7 +74,7 @@ export function generateTelegramHandler(options: TelegramHandlerOptions) {
         
       if (!dialog) {
         debug(`Creating new Dialog for chat ${chatId}`);
-        const provider = new OpenRouterProvider({ token: process.env.OPENROUTER_API_KEY, model: 'sarvamai/sarvam-m:free' });
+        const provider = new OpenRouterProvider({ token: process.env.OPENROUTER_API_KEY, model: 'deepseek/deepseek-chat-v3-0324:free' });
         
         dialog = new Dialog({
           provider,

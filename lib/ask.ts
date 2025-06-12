@@ -1,42 +1,33 @@
-import { generateTerminalHandler } from './ai/terminal';
-import { OpenRouterProvider } from './ai/providers/openrouter';
-import { OllamaProvider } from './ai/providers/ollama';
-import { ExecJSTool } from './ai/tools/exec-js-tool';
-import { TerminalTool } from './ai/tools/terminal-tool';
-import { AIProvider } from './ai/ai';
-import { Tool } from './ai/tool';
 import * as dotenv from 'dotenv';
+import { AIProvider } from 'hasyx/lib/ai/ai';
+import { OllamaProvider } from 'hasyx/lib/ai/providers/ollama';
+import { OpenRouterProvider } from 'hasyx/lib/ai/providers/openrouter';
+import { generateTerminalHandler } from 'hasyx/lib/ai/terminal';
+import { ExecJSTool } from 'hasyx/lib/ai/tools/exec-js-tool';
+import { TerminalTool } from 'hasyx/lib/ai/tools/terminal-tool';
+import { createSystemPrompt } from 'hasyx/lib/ai/core-prompts';
 import * as path from 'path';
 
 // Load .env file from the root of the project
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const getSystemPrompt = () => `
-You are a powerful AI assistant running in a terminal. Your primary goal is to achieve user requests by executing commands by using tools.
+const getSystemPrompt = () => {
+  const appContext = `You are a powerful AI assistant in a terminal environment. Your goal is to help users by executing commands or answering their questions.
 
-**Process:**
-1.  **Analyze the user's request.**
-2.  **Select the most appropriate tool from the list provided.**
-3.  **Formulate the command and content for the tool.**
-4.  **Respond ONLY with the tool execution syntax. Do not add any other text or explanations.**
+**RESPONSE MODES:**
+1. **Tool Execution**: If the user's request requires an action (running code, system commands, file operations), use the appropriate tool
+2. **Direct Answer**: If the user is asking questions or having a conversation that doesn't require tool execution, respond in plain text
 
-**Execution Format:**
-> 😈<uuid>/<tool_name>/<command>
-\`\`\`<language>
-# your code or command here
-\`\`\`
+**CAPABILITIES:**
+- Execute JavaScript code for calculations, data processing, and programming tasks  
+- Run terminal commands for system operations, file management, and shell tasks
+- Provide direct answers for questions, explanations, and conversations`;
 
-**Example for listing files:**
-> 😈ls-123/terminal/exec
-\`\`\`bash
-ls -la
-\`\`\`
-
-**IMPORTANT:**
-- Your entire response must be ONLY the execution block, starting with \`> 😈\`.
-- Directly execute commands whenever possible. Do not ask for permission.
-- The \`<uuid>\` must be a unique identifier for each command.
-`;
+  const tools = [new ExecJSTool(), new TerminalTool()];
+  const toolDescriptions = tools.map(tool => `- ${tool.name}: ${tool.contextPreprompt}`);
+  
+  return createSystemPrompt(appContext, toolDescriptions);
+};
 
 const tools = [new ExecJSTool(), new TerminalTool()];
 const systemPrompt = getSystemPrompt();
@@ -59,7 +50,7 @@ function getProviderFromArgs(): AIProvider {
   if (!process.env.OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY is not set for OpenRouterProvider.');
   }
-  const model = modelName || 'sarvamai/sarvam-m:free';
+  const model = modelName || 'deepseek/deepseek-chat-v3-0324:free';
   console.log(`Using OpenRouter provider with model: ${model}`);
   return new OpenRouterProvider({
     token: process.env.OPENROUTER_API_KEY,

@@ -19,7 +19,7 @@ describe('OpenRouterProvider', () => {
   it('should initialize with default options', () => {
     const provider = new OpenRouterProvider({ token: 'test-key' });
     // @ts-ignore
-    expect(provider.options.model).toBe('sarvamai/sarvam-m:free');
+    expect(provider.options.model).toBe('deepseek/deepseek-chat-v3-0324:free');
   });
 
   describeWithApiKey('API Calls', () => {

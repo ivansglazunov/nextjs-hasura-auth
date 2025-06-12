@@ -38,7 +38,8 @@ export function generateTerminalHandler(options: TerminalHandlerOptions) {
                 console.log(chalk.magenta(`[tool_result] ID ${event.id}:`), event.result);
                 break;
             case 'ai_response':
-                console.log(chalk.green(`\n[ai_response]`), event.content);
+                // Don't show ai_response because content is already streamed via ai_chunk
+                // This prevents duplication of the same content
                 break;
             case 'error':
                 process.stderr.write(chalk.red(`\n[error] An error occurred: ${event.error}\n`));

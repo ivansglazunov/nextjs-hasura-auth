@@ -1,6 +1,6 @@
 import Debug from '../debug';
 
-const parseDebug = Debug('hasyx:dialog:parser');
+const debug = Debug('hasyx:dialog:parser');
 
 export type ParsedChunk =
   | { type: 'thought_chunk', chunk: string }
@@ -27,7 +27,7 @@ export async function parseThinkingBuffer(
   let buffer = '';
   let isThinking = false;
 
-  parseDebug('Starting stream parsing.');
+  debug('Starting stream parsing.');
 
   const processBuffer = () => {
     let tagsFound = true;
@@ -42,7 +42,7 @@ export async function parseThinkingBuffer(
             if (endTagIndex !== -1) {
                 const thoughtChunk = buffer.substring(0, endTagIndex);
                 if (thoughtChunk) {
-                    parseDebug('Found thought chunk: "%s"', thoughtChunk);
+                    debug('Found thought chunk: "%s"', thoughtChunk);
                     handle({ type: 'thought_chunk', chunk: thoughtChunk });
                     thoughts += thoughtChunk;
                 }
@@ -56,7 +56,7 @@ export async function parseThinkingBuffer(
                 // Found a start tag, this is the normal case.
                 const responseChunk = buffer.substring(0, startTagIndex);
                 if (responseChunk) {
-                    parseDebug('Found response chunk: "%s"', responseChunk);
+                    debug('Found response chunk: "%s"', responseChunk);
                     handle({ type: 'response_chunk', chunk: responseChunk });
                     response += responseChunk;
                 }
@@ -66,7 +66,7 @@ export async function parseThinkingBuffer(
             } else if (endTagIndex !== -1) {
                 // SPECIAL CASE: Found an end tag while not thinking.
                 // This implies the model forgot the opening tag.
-                parseDebug('Found closing </think> tag while not in thinking mode. Retroactively classifying previous response content as a thought.');
+                debug('Found closing </think> tag while not in thinking mode. Retroactively classifying previous response content as a thought.');
                 const thoughtChunk = buffer.substring(0, endTagIndex);
                 
                 // The entire 'response' accumulator and the current buffer up to the tag are thoughts.
@@ -91,26 +91,26 @@ export async function parseThinkingBuffer(
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
-      parseDebug('Stream finished.');
+      debug('Stream finished.');
       break;
     }
-    parseDebug('Read chunk from stream: "%s"', value);
+    // parseDebug('Read chunk from stream: "%s"', value);
     buffer += value;
     processBuffer();
   }
 
   if (buffer.length > 0) {
     if (!isThinking) {
-      parseDebug('Found final response chunk left in buffer: "%s"', buffer);
+      debug('Found final response chunk left in buffer: "%s"', buffer);
       handle({ type: 'response_chunk', chunk: buffer });
       response += buffer;
     } else {
-      parseDebug('Warning: Stream ended with an unterminated <think> block. Content: "%s"', buffer);
+      debug('Warning: Stream ended with an unterminated <think> block. Content: "%s"', buffer);
       handle({ type: 'thought_chunk', chunk: buffer });
       thoughts += buffer;
     }
   }
 
-  parseDebug('Parsing complete. Total thoughts length: %d, Total response length: %d', thoughts.length, response.length);
+  debug('Parsing complete. Total thoughts length: %d, Total response length: %d', thoughts.length, response.length);
   return { thoughts, response };
 } 

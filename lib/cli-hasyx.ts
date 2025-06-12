@@ -248,6 +248,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/hasyx/constructor/page.tsx': 'app/hasyx/constructor/page.tsx',
     'app/hasyx/doc/page.tsx': 'app/hasyx/doc/page.tsx',
     'app/hasyx/doc/[filename]/page.tsx': 'app/hasyx/doc/[filename]/page.tsx',
+    'app/hasyx/doc/[filename]/client.tsx': 'app/hasyx/doc/[filename]/client.tsx',
     'components/sidebar/layout.tsx': 'components/sidebar/layout.tsx',
     'components/entities/default.tsx': 'components/entities/default.tsx',
     'lib/entities.tsx': 'lib/entities.template',

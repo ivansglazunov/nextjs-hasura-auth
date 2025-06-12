@@ -2,23 +2,12 @@ import { Tool, ToolResult } from '../tool';
 import { terminalDo } from '../../../lib/terminal';
 import { ExecResult as InternalExecResult } from '../../../lib/exec';
 
-const contextPreprompt = `
-📦 **Terminal Execution Environment (terminal)**
+const contextPreprompt = `📦 **Terminal Execution Environment (terminal)**
 
-You can execute shell commands in a terminal.
+Execute shell commands in terminal.
 
-**Execution Format:**
-> 😈<uuid>/terminal/exec
-\`\`\`bash
-# your shell command here
-\`\`\`
-
-**Example:**
-> 😈ls-123/terminal/exec
-\`\`\`bash
-ls -la
-\`\`\`
-`;
+Format: > 😈<uuid>/terminal/exec
+Example: > 😈ls-123/terminal/exec`;
 
 export class TerminalTool extends Tool {
   constructor(options: {} = {}) {
@@ -29,7 +18,7 @@ export class TerminalTool extends Tool {
   }
 
   async execute(command: string, content: string, tooler: any): Promise<ToolResult> {
-    if (command !== 'exec') {
+    if (command.trim() !== 'exec') {
       throw new Error(`Unknown command for TerminalTool: ${command}`);
     }
 

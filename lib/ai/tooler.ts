@@ -49,7 +49,7 @@ export class Tooler {
         foundCalls.push({
           id,
           tool,
-          command,
+          command: command.trim(),
           content: content.trim(),
           fullMatch
         });
