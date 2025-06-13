@@ -1,6 +1,9 @@
 import { Tool, ToolResult } from '../tool';
 import { terminalDo } from '../../../lib/terminal';
 import { ExecResult as InternalExecResult } from '../../../lib/exec';
+import Debug from '../../debug';
+
+const debug = Debug('hasyx:terminal-tool');
 
 const contextPreprompt = `📦 **Terminal Execution Environment (terminal)**
 
@@ -10,11 +13,15 @@ Format: > 😈<uuid>/terminal/exec
 Example: > 😈ls-123/terminal/exec`;
 
 export class TerminalTool extends Tool {
-  constructor(options: {} = {}) {
+  private timeout: number;
+
+  constructor(options: { timeout?: number } = {}) {
     super({
       name: 'terminal',
       contextPreprompt: contextPreprompt
     });
+    this.timeout = options.timeout !== undefined ? options.timeout : 30000; // 30 seconds default, 0 = no timeout
+    debug('TerminalTool initialized with timeout: %d ms', this.timeout);
   }
 
   async execute(command: string, content: string, tooler: any): Promise<ToolResult> {
@@ -22,28 +29,39 @@ export class TerminalTool extends Tool {
       throw new Error(`Unknown command for TerminalTool: ${command}`);
     }
 
-    try {
-      // terminalDo.exec returns a string, we need to wrap it
-      const resultString: string = await terminalDo.exec(content, 'bash');
-      const execResult: InternalExecResult = {
-        result: resultString,
-        logs: [] // terminalDo doesn't currently capture logs in the same way
-      };
+    debug('Executing terminal command with timeout %d: %s', this.timeout, content);
 
-      if (tooler.onLog && execResult.logs) {
-        execResult.logs.forEach(log => tooler.onLog(log));
+    try {
+      // Create terminal with configured timeout
+      const terminal = new (await import('../../../lib/terminal')).Terminal({ 
+        commandTimeout: this.timeout,
+        autoStart: false 
+      });
+      
+      let result: string;
+      try {
+        await terminal.start();
+        result = await terminal.execute(content);
+      } finally {
+        terminal.destroy();
       }
 
+      debug('Terminal command successful, result length: %d', result.length);
+      
       return {
         id: 'not_used',
-        result: execResult.result
+        result: result
       };
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      debug('Terminal command failed: %s', errorMessage);
+      
+      // Return error as result instead of null, so AI can see what went wrong
       return {
         id: 'not_used',
-        result: null,
-        error: error instanceof Error ? error.message : String(error)
+        result: `Command failed: ${errorMessage}`,
+        error: errorMessage
       };
     }
   }

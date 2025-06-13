@@ -21,7 +21,7 @@ const getSystemPrompt = (tools: Tool[]) => {
 };
 
 const handleTelegram = generateTelegramHandler({
-  tools: [new ExecJSTool(), new TerminalTool()],
+  tools: [new ExecJSTool(), new TerminalTool({ timeout: 0 })],
   getSystemPrompt,
 });
 

@@ -2,6 +2,9 @@ import { EventEmitter } from 'events';
 import * as os from 'os';
 import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
+import Debug from './debug';
+
+const debug = Debug('hasyx:terminal');
 
 // Global terminal registry for cleanup
 const terminalRegistry = new Set<Terminal>();
@@ -32,6 +35,7 @@ export interface TerminalOptions {
   flowControlPause?: string;
   flowControlResume?: string;
   autoStart?: boolean; // Auto-start terminal on creation
+  commandTimeout?: number; // Command timeout in milliseconds, 0 = no timeout
   onData?: (data: string) => void;
   onError?: (error: Error) => void;
   onExit?: (code: number, signal?: number) => void;
@@ -183,14 +187,17 @@ export class Terminal extends EventEmitter {
   }
 
   public async execute(command: string): Promise<string> {
+    debug('Executing command: %s', command);
     return new Promise<string>((resolve, reject) => {
       if (!this.isReady) {
+        debug('Terminal not ready, queueing command: %s', command);
         // Queue command if terminal is not ready
         this.commandQueue.push({ command, resolve, reject });
         return;
       }
 
       if (!this.childProcess || !this.childProcess.stdin) {
+        debug('Terminal not running, rejecting command: %s', command);
         reject(new Error('Terminal is not running'));
         return;
       }
@@ -216,14 +223,23 @@ export class Terminal extends EventEmitter {
       let stdout = '';
       let stderr = '';
 
-      // Set up timeout
-      const commandTimeout = setTimeout(() => {
-        commandProcess.kill('SIGKILL');
-        terminalCommand.completed = true;
-        terminalCommand.output = stdout || stderr;
-        this.emit('commandTimeout', terminalCommand);
-        reject(new Error(`Command timeout: ${command}`));
-      }, 10000); // 10 seconds timeout
+      // Set up timeout (0 = no timeout)
+      let commandTimeout: NodeJS.Timeout | null = null;
+      const timeoutMs = this.options.commandTimeout !== undefined ? this.options.commandTimeout : 10000;
+      
+      if (timeoutMs > 0) {
+        debug('Setting timeout for command "%s": %dms', command, timeoutMs);
+        commandTimeout = setTimeout(() => {
+          debug('Command timed out: %s', command);
+          commandProcess.kill('SIGKILL');
+          terminalCommand.completed = true;
+          terminalCommand.output = stdout || stderr;
+          this.emit('commandTimeout', terminalCommand);
+          reject(new Error(`Command timeout: ${command}`));
+        }, timeoutMs);
+      } else {
+        debug('No timeout set for command: %s', command);
+      }
 
       commandProcess.stdout?.on('data', (data) => {
         const output = data.toString(this.options.encoding as BufferEncoding || 'utf8');
@@ -244,22 +260,28 @@ export class Terminal extends EventEmitter {
       });
 
       commandProcess.on('close', (code, signal) => {
-        clearTimeout(commandTimeout);
+        if (commandTimeout) clearTimeout(commandTimeout);
         terminalCommand.completed = true;
         terminalCommand.output = stdout;
+        
+        debug('Command completed: %s, code: %d, stdout length: %d, stderr length: %d', 
+              command, code, stdout.length, stderr.length);
         
         this.emit('commandComplete', terminalCommand);
         
         if (code === 0) {
+          debug('Command successful: %s', command);
           resolve(stdout.trim());
         } else {
+          debug('Command failed: %s, code: %d, error: %s', command, code, stderr || stdout);
           reject(new Error(`Command failed with code ${code}: ${stderr || stdout}`));
         }
       });
 
       commandProcess.on('error', (error) => {
-        clearTimeout(commandTimeout);
+        if (commandTimeout) clearTimeout(commandTimeout);
         terminalCommand.completed = true;
+        debug('Command error: %s, error: %s', command, error.message);
         this.emit('error', error);
         reject(error);
       });

@@ -23,13 +23,13 @@ const getSystemPrompt = () => {
 - Run terminal commands for system operations, file management, and shell tasks
 - Provide direct answers for questions, explanations, and conversations`;
 
-  const tools = [new ExecJSTool(), new TerminalTool()];
+  const tools = [new ExecJSTool(), new TerminalTool({ timeout: 0 })];
   const toolDescriptions = tools.map(tool => `- ${tool.name}: ${tool.contextPreprompt}`);
   
   return createSystemPrompt(appContext, toolDescriptions);
 };
 
-const tools = [new ExecJSTool(), new TerminalTool()];
+const tools = [new ExecJSTool(), new TerminalTool({ timeout: 0 })];
 const systemPrompt = getSystemPrompt();
 
 let using = '';
