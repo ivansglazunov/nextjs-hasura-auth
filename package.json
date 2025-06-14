@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.316",
+  "version": "0.1.317",
   "description": "Modern full-stack framework with real-time GraphQL, AI integration, and seamless development experience",
   "homepage": "https://hasyx.deep.foundation/",
   "engines": {

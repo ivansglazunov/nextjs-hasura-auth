@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import * as os from 'os';
 import * as path from 'path';
+import * as fs from 'fs';
 import { spawn, ChildProcess } from 'child_process';
 import Debug from './debug';
 
@@ -142,13 +143,13 @@ export class Terminal extends EventEmitter {
         // Check if we're in Alpine Linux (common in Docker containers)
         const isAlpine = process.platform === 'linux' && 
           (process.env.PATH?.includes('/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') ||
-           !require('fs').existsSync('/bin/bash'));
+           !fs.existsSync('/bin/bash'));
         
         debug('Alpine Linux detection: %s', isAlpine);
-        debug('Checking /bin/bash existence: %s', require('fs').existsSync('/bin/bash'));
-        debug('Checking /bin/sh existence: %s', require('fs').existsSync('/bin/sh'));
+        debug('Checking /bin/bash existence: %s', fs.existsSync('/bin/bash'));
+        debug('Checking /bin/sh existence: %s', fs.existsSync('/bin/sh'));
         
-        if (isAlpine || !require('fs').existsSync('/bin/bash')) {
+        if (isAlpine || !fs.existsSync('/bin/bash')) {
           debug('Using /bin/sh instead of /bin/bash');
           return '/bin/sh';
         }
