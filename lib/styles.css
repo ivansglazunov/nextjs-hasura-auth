@@ -1,4 +1,4 @@
-/*! tailwindcss v4.1.5 | MIT License | https://tailwindcss.com */
+/*! tailwindcss v4.1.4 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
 @layer theme {
@@ -1751,7 +1751,7 @@
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
   .transition {
-    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, visibility, content-visibility, overlay, pointer-events;
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
@@ -1828,10 +1828,6 @@
     --tw-ease: linear;
     transition-timing-function: linear;
   }
-  .fade-in-0 {
-    --tw-enter-opacity: calc(0/100);
-    --tw-enter-opacity: 0;
-  }
   .outline-none {
     --tw-outline-style: none;
     outline-style: none;
@@ -1842,6 +1838,9 @@
   }
   .\[test\:hasyx\] {
     test: hasyx;
+  }
+  .fade-in-0 {
+    --tw-enter-opacity: 0;
   }
   .paused {
     animation-play-state: paused;
@@ -3185,7 +3184,6 @@
   }
   .data-\[state\=closed\]\:fade-out-0 {
     &[data-state="closed"] {
-      --tw-exit-opacity: calc(0/100);
       --tw-exit-opacity: 0;
     }
   }
@@ -3224,7 +3222,6 @@
   .group-data-\[viewport\=false\]\/navigation-menu\:data-\[state\=closed\]\:fade-out-0 {
     &:is(:where(.group\/navigation-menu)[data-viewport="false"] *) {
       &[data-state="closed"] {
-        --tw-exit-opacity: calc(0/100);
         --tw-exit-opacity: 0;
       }
     }
@@ -3317,7 +3314,6 @@
   }
   .data-\[state\=open\]\:fade-in-0 {
     &[data-state="open"] {
-      --tw-enter-opacity: calc(0/100);
       --tw-enter-opacity: 0;
     }
   }
@@ -3361,7 +3357,6 @@
   .group-data-\[viewport\=false\]\/navigation-menu\:data-\[state\=open\]\:fade-in-0 {
     &:is(:where(.group\/navigation-menu)[data-viewport="false"] *) {
       &[data-state="open"] {
-        --tw-enter-opacity: calc(0/100);
         --tw-enter-opacity: 0;
       }
     }
@@ -5008,12 +5003,12 @@
     height: 0;
   }
   to {
-    height: var(--radix-accordion-content-height,var(--bits-accordion-content-height,var(--reka-accordion-content-height,auto)));
+    height: var(--radix-accordion-content-height,var(--bits-accordion-content-height));
   }
 }
 @keyframes accordion-up {
   from {
-    height: var(--radix-accordion-content-height,var(--bits-accordion-content-height,var(--reka-accordion-content-height,auto)));
+    height: var(--radix-accordion-content-height,var(--bits-accordion-content-height));
   }
   to {
     height: 0;

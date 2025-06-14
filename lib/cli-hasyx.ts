@@ -13,7 +13,7 @@ import { migrate } from './migrate';
 import { unmigrate } from './unmigrate';
 import { generateHasuraSchema } from './hasura-schema';
 import { runJsEnvironment } from './js';
-import { ask } from './ask';
+import { generateAsk } from './ask';
 import { runTsxEnvironment } from './tsx';
 import { assetsCommand } from './assets';
 import { eventsCommand } from './events-cli';
@@ -796,7 +796,8 @@ export const askCommand = async (options: any) => {
   // The logic is now handled by the ask module itself.
   // We just need to call it with the correct options.
   try {
-    ask();
+    const ask = generateAsk();
+    await ask();
   } catch (error) {
     console.error('❌ Error in ask command:', error);
     debug('Ask command error:', error);

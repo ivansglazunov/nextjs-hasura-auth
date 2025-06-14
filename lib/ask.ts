@@ -58,15 +58,18 @@ function getProviderFromArgs(): AIProvider {
   });
 }
 
-const provider = getProviderFromArgs();
+export const generateAsk = () => {
+  const provider = getProviderFromArgs();
 
-export const ask = generateTerminalHandler({
-  provider,
-  tools,
-  systemPrompt
-});
+  return generateTerminalHandler({
+    provider,
+    tools,
+    systemPrompt
+  });
+}
 
 async function main() {
+  const ask = generateAsk();
   await ask();
 }
 
