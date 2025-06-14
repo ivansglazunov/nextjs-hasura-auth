@@ -186,22 +186,43 @@ The `testAuthorize` function allows developers to:
 
 ```typescript
 import { testAuthorize } from 'hasyx/lib/auth';
+import myCustomSchema from '../path/to/my-custom-schema.json';
 
 // In a test or development script:
 async function testProtectedFeature() {
   // Authenticate as user with ID "user_id_here"
-  const { axios, apollo, hasyx } = await testAuthorize('user_id_here');
+  const { axios, apollo, hasyx } = await testAuthorize(
+    'user_id_here',
+    { 
+      // Optionally pass ApolloClient options and a custom schema
+      schema: myCustomSchema, 
+      ws: false // Example: disable WebSockets for this client
+    }
+  );
   
   // These clients are now authenticated as the specified user
   const response = await axios.get('/api/protected-route');
   console.log('Protected data:', response.data);
   
   // Make GraphQL queries as the authenticated user
-  const result = await apollo.query({
-    query: YOUR_GRAPHQL_QUERY
-  });
+  // The 'hasyx' instance will use myCustomSchema
+  const result = await hasyx.select({ table: 'my_table' });
 }
 ```
+
+**Function Signature:**
+
+```typescript
+testAuthorize(
+  userId: string, 
+  options?: TestAuthorizeOptions
+): Promise<{ axios, apollo, hasyx }>
+```
+
+The optional `options` object (`TestAuthorizeOptions`) extends the `ApolloOptions` from `lib/apollo.tsx` and allows you to pass any valid option for `createApolloClient` (like `url`, `ws`, `headers`, `secret`), plus a `schema` property.
+
+*   `schema`: If provided, the returned `hasyx` instance will be initialized with this schema instead of the default one. This is useful for tests that involve a different or partial GraphQL schema.
+*   Other `ApolloOptions` (e.g., `ws: false`): These are passed directly to the `createApolloClient` function, allowing you to customize the behavior of the returned `apollo` and `hasyx` clients for a specific test.
 
 **How It Works:**
 

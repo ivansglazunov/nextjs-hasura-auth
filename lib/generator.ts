@@ -6,7 +6,10 @@ const debug = Debug('apollo:generator');
 // Types for options and return value
 export type GenerateOperation = 'query' | 'subscription' | 'insert' | 'update' | 'delete';
 
-export type Generate = (opts: GenerateOptions) => GenerateResult;
+export type Generate = {
+    (opts: GenerateOptions): GenerateResult;
+    schema: any;
+}
 
 export interface OnConflictOptions {
   constraint: string; // Constraint name, e.g., 'users_pkey' or 'users_email_key'
@@ -107,8 +110,7 @@ export function Generator(schema: any): Generate { // We take the __schema objec
       throw new Error('❌ Query root type description not found in schema types.');
   }
 
-
-  return function generate(opts: GenerateOptions): GenerateResult {
+  function generate(opts: GenerateOptions): GenerateResult {
     let varCounter = opts.varCounter || 1;
 
     if (!opts || !opts.operation || !opts.table) {
@@ -740,6 +742,10 @@ export function Generator(schema: any): Generate { // We take the __schema objec
         throw error;
     }
   };
+
+  generate.schema = schema;
+
+  return generate;
 }
 
 // Export Generator with already loaded schema (or null/undefined if loading failed)

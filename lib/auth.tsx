@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { useSession as useSessionNextAuth } from "next-auth/react";
-import schema from '../public/hasura-schema.json';
-import { createApolloClient, HasyxApolloClient } from './apollo';
+import hasyxSchema from '../public/hasura-schema.json';
+import { ApolloOptions, createApolloClient, HasyxApolloClient } from './apollo';
 import Debug from './debug';
 import { Generator } from './generator';
 import { Hasyx } from './hasyx';
@@ -9,7 +9,6 @@ import { generateJWT as generateHasuraJWT } from './jwt';
 import { useTelegramMiniapp } from './telegram-miniapp';
 
 const debug = Debug('auth');
-const generate = Generator(schema);
 
 /**
  * Represents the structure of a NextAuth session, potentially augmented with Hasyx/Hasura specific claims.
@@ -69,6 +68,10 @@ export function useSession(): SessionData {
   return sessionDataNextAuth as SessionData;
 }
 
+export interface TestAuthorizeOptions extends ApolloOptions {
+  schema?: any;
+};
+
 /**
  * Authorizes a client as a specific user for testing purposes.
  * 
@@ -80,7 +83,14 @@ export function useSession(): SessionData {
  * @returns {Promise<{ axios: AxiosInstance, apollo: HasyxApolloClient, hasyx: Hasyx }>} An object containing configured axios, apollo, and hasyx instances.
  * @throws {Error} If not in dev/test, TEST_TOKEN is missing, NEXTAUTH_SECRET is missing, or the user is not found in the database.
  */
-export async function testAuthorize(userId: string): Promise<{ axios: AxiosInstance, apollo: HasyxApolloClient, hasyx: Hasyx }> {
+export async function testAuthorize(userId: string, {
+  schema = hasyxSchema,
+  ..._options
+}: TestAuthorizeOptions = {
+  schema: hasyxSchema,
+}): Promise<{ axios: AxiosInstance, apollo: HasyxApolloClient, hasyx: Hasyx }> {
+  const generate = Generator(schema);
+
   const testAuthorizeDebug = Debug('auth:testAuthorize');
   testAuthorizeDebug(`Attempting test authorization for userId: ${userId}`);
 
@@ -172,6 +182,7 @@ export async function testAuthorize(userId: string): Promise<{ axios: AxiosInsta
   const apolloInstance = createApolloClient({
     token: jwt,
     ws: true, // Or false, depending on test needs
+    ..._options,
   });
   testAuthorizeDebug(`Apollo client instance created with token.`);
 

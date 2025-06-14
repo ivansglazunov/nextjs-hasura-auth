@@ -12,6 +12,8 @@ import { ApolloError, FetchResult, Observable, OperationVariables, ApolloQueryRe
 import type { MutationHookOptions as ApolloMutationHookOptions, QueryHookOptions as ApolloQueryHookOptions, SubscriptionHookOptions as ApolloSubscriptionHookOptions, QueryResult, SubscriptionResult } from '@apollo/client/react';
 import { HasyxApolloClient } from './apollo';
 import Debug from './debug';
+import { testAuthorize, TestAuthorizeOptions } from './auth';
+import { AxiosInstance } from 'axios';
 
 const debug = Debug('hasyx:client'); const DEFAULT_POLLING_INTERVAL = 1000;
 
@@ -74,6 +76,14 @@ export class Hasyx {
    */
   get userId(): string | null {
     return this._user?.id || null;
+  }
+
+  testAuthorize(userId: string, options: TestAuthorizeOptions): Promise<{ axios: AxiosInstance, apollo: HasyxApolloClient, hasyx: Hasyx }> {
+    return testAuthorize(userId, {
+      ...this.apolloClient._options,
+      schema: this.generate.schema,
+      ...options,
+    });
   }
 
   /**

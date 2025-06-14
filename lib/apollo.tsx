@@ -45,7 +45,6 @@ export interface HasyxApolloClient extends ApolloClient<any> {
 }
 
 const createRoleLink = () => setContext((request: GraphQLRequest, previousContext: any) => {
-
   const role = previousContext?.role;
   debug(`roleLink: Role from context: ${role}`);
   if (role) {
@@ -73,15 +72,15 @@ const createRoleLink = () => setContext((request: GraphQLRequest, previousContex
 export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClient {
   debug('apollo', '🔌 Creating Apollo client with options:', options);
 
-  const {
-    url = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL,
-    ws = false,
-    token = undefined,
-    secret = process.env.HASURA_ADMIN_SECRET,
-    role,
-  } = options;
+  const url = options.url || process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL;
 
-  const _role = role || (secret ? 'admin' : token ? 'user' : 'anonymous');
+  const ws = options.ws || false;
+
+  const token = options.token || undefined;
+
+  const secret = options.secret || (token || options.role === 'anonymous' ? undefined : process.env.HASURA_ADMIN_SECRET);
+
+  const role = options.role || (token ? 'user' : secret ? 'admin' : 'anonymous');
 
   debug(`apollo: Resolved endpoint URL: ${url} (from options: ${options.url}, fallback: ${process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL})`);
   debug(`apollo: Resolved WS setting: ${ws} (from options: ${options.ws})`);
@@ -108,7 +107,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
       debug('apollo', '🔒 Using JWT token for Authorization header');
       return {
         headers: {
-          'X-Hasura-Role': _role,
+          'X-Hasura-Role': role,
           ...headers,
           Authorization: `Bearer ${token}`,
         }
@@ -117,14 +116,14 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
       debug('apollo', '🔑 Using Admin Secret for x-hasura-admin-secret header');
       return {
         headers: {
-          'X-Hasura-Role': _role,
+          'X-Hasura-Role': role,
           ...headers,
           'x-hasura-admin-secret': secret,
         }
       }
     }
     debug('apollo', '🔓 Sending request without authentication headers');
-    return { headers: { 'X-Hasura-Role': _role, ...headers } };
+    return { headers: { 'X-Hasura-Role': role, ...headers } };
   });
 
 
@@ -157,11 +156,11 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
 
     if (token) {
       debug('apollo', '🔒 Preparing JWT token for WS connectionParams');
-      wsConnectionParams.headers = { 'X-Hasura-Role': _role, Authorization: `Bearer ${token}` };
+      wsConnectionParams.headers = { 'X-Hasura-Role': role, Authorization: `Bearer ${token}` };
     } else if (secret) {
       debug('apollo', '🔑 Preparing Admin Secret for WS connectionParams');
 
-      wsConnectionParams.headers = { 'X-Hasura-Role': _role, 'x-hasura-admin-secret': secret };
+      wsConnectionParams.headers = { 'X-Hasura-Role': role, 'x-hasura-admin-secret': secret };
     } else {
       debug('apollo', '🔓 No auth for WS connectionParams');
     }
@@ -192,7 +191,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
             debug('🔒 Adding admin secret to WebSocket connection');
             return {
               headers: {
-                'X-Hasura-Role': _role,
+                'X-Hasura-Role': role,
                 'x-hasura-admin-secret': secret,
               },
             };
@@ -287,7 +286,7 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
     ws,
     token,
     secret,
-    role: _role,
+    role: role,
   };
 
   if (wsClientInstance) {

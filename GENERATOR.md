@@ -37,6 +37,28 @@ const { queryString, query, variables }: GenerateResult = generate(options);
 // or `queryString` for logging/debugging.
 ```
 
+### Accessing the Schema
+
+The `generate` function instance also exposes the schema object it was initialized with via the `schema` property. This can be useful for introspection or for passing the schema to other functions that need it.
+
+```typescript
+import { Generator } from 'hasyx'; 
+import schema from '@/public/hasura-schema.json';
+
+// Initialize the generator
+const generate = Generator(schema); 
+
+// Access the schema directly from the instance
+const schemaObject = generate.schema;
+
+console.log(schemaObject.version); // e.g., 3
+
+// This is useful when you need to pass the schema to another utility
+// that depends on the same schema version, for example hasyx.testAuthorize
+// from an existing hasyx instance.
+// See HASYX.md for more details.
+```
+
 <details>
 <summary>Options (`GenerateOptions` Interface)</summary>
 
