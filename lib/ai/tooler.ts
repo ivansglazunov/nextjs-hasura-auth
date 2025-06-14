@@ -38,10 +38,12 @@ export class Tooler {
 
   public findToolCalls(response: string): FoundToolCall[] {
     const foundCalls: FoundToolCall[] = [];
-    const regex = />\s*😈([^/]+)\/([^/]+)\/([^/\n]+)\s*\n\`\`\`[a-z]*\s*([\s\S]*?)\`\`\`/g;
-
+    
+    // Try with code blocks first
+    const regexWithCodeBlocks = />\s*😈([^/]+)\/([^/]+)\/([^/\n]+)\s*\n\`\`\`[a-z]*\s*([\s\S]*?)\`\`\`/g;
+    
     let match;
-    while ((match = regex.exec(response)) !== null) {
+    while ((match = regexWithCodeBlocks.exec(response)) !== null) {
       const [fullMatch, id, toolName, command, content] = match;
 
       const tool = this.tools.get(toolName);
@@ -55,6 +57,27 @@ export class Tooler {
         });
       }
     }
+    
+    // If no code blocks found, try without code blocks (simpler format)
+    if (foundCalls.length === 0) {
+      const regexWithoutCodeBlocks = />\s*😈([^/]+)\/([^/]+)\/([^/\n]+)\s*\n([^\n>]+)/g;
+      
+      while ((match = regexWithoutCodeBlocks.exec(response)) !== null) {
+        const [fullMatch, id, toolName, command, content] = match;
+
+        const tool = this.tools.get(toolName);
+        if (tool) {
+          foundCalls.push({
+            id,
+            tool,
+            command: command.trim(),
+            content: content.trim(),
+            fullMatch
+          });
+        }
+      }
+    }
+    
     return foundCalls;
   }
 

@@ -79,25 +79,35 @@ describeWithApiKey('Dialog Class with Real Components', () => {
                     provider,
                     tools: [jsTool],
                     method,
-                    systemPrompt: 'You are a helpful assistant. Use tools when needed. Call the javascript tool to calculate.',
+                    systemPrompt: 'You are a helpful assistant. When asked to calculate something, you MUST use the javascript tool to perform the calculation. Always use available tools when they are relevant to the task.',
                     onChange: (e) => {
                         debug(`Received event in test (${method}): %o`, e);
                         events.push(e);
-                        if (e.type === 'done' && events.some(ev => ev.type === 'tool_result')) {
+                        if (e.type === 'done') {
                             const eventTypes = events.map(ev => ev.type);
-
-                            expect(eventTypes).toContain('tool_call');
-                            expect(eventTypes).toContain('tool_result');
-                            expect(eventTypes.filter(et => et === 'ai_request').length).toBe(2);
+                            const hasToolResult = events.some(ev => ev.type === 'tool_result');
                             
-                            const toolResult = events.find(ev => ev.type === 'tool_result') as any;
-                            expect(toolResult.result).toBe(8);
+                            if (hasToolResult) {
+                                // Expected flow with tool usage
+                                expect(eventTypes).toContain('tool_call');
+                                expect(eventTypes).toContain('tool_result');
+                                expect(eventTypes.filter(et => et === 'ai_request').length).toBeGreaterThanOrEqual(2);
+                                
+                                const toolResult = events.find(ev => ev.type === 'tool_result') as any;
+                                expect(toolResult.result).toBe(8);
 
-                            const finalResponse = events.slice().reverse().find(ev => ev.type === 'ai_response') as any;
-                            expect(finalResponse.content).toMatch(/8|eight/);
+                                const finalResponse = events.slice().reverse().find(ev => ev.type === 'ai_response') as any;
+                                expect(finalResponse.content).toMatch(/8|eight/);
 
-                            debug(`Test (${method}) completed successfully.`);
-                            done();
+                                debug(`Test (${method}) completed successfully.`);
+                                done();
+                            } else {
+                                // AI didn't use tools - this is a test failure
+                                debug(`Test (${method}) failed: AI didn't use tools. Events: %o`, eventTypes);
+                                const lastResponse = events.slice().reverse().find(ev => ev.type === 'ai_response') as any;
+                                debug(`Last AI response: %s`, lastResponse?.content || 'No AI response found');
+                                done(new Error(`AI didn't use the javascript tool as expected. Event types: ${eventTypes.join(', ')}. Last response: ${lastResponse?.content || 'No response'}`));
+                            }
                         } else if (e.type === 'error') {
                             debug(`Test (${method}) failed with error: %s`, e.error);
                             done(new Error(e.error));

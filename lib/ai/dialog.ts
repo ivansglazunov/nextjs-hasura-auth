@@ -185,11 +185,15 @@ export class Dialog {
     if (this.tooler) {
       debug('Full response before tool call: "%s"', fullResponse);
       const toolCalls = this.tooler.findToolCalls(fullResponse);
+      debug('Found %d tool calls: %o', toolCalls.length, toolCalls.map(call => ({ id: call.id, tool: call.tool.name, command: call.command, content: call.content })));
       if (toolCalls.length > 0) {
         if (toolCalls.length > 1) {
           debug(`Found ${toolCalls.length} tool calls, but executing only the first one.`);
         }
+        debug('Calling tooler with first tool call: %s', toolCalls[0].fullMatch);
         await this.tooler.call(toolCalls[0].fullMatch);
+      } else {
+        debug('No tool calls found in response');
       }
     }
 
