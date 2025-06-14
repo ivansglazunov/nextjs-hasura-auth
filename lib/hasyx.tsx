@@ -15,7 +15,7 @@ import Debug from './debug';
 
 const debug = Debug('hasyx:client'); const DEFAULT_POLLING_INTERVAL = 1000;
 
-interface ClientMethodOptions extends Omit<GenerateOptions, 'operation'> {
+export interface HasyxOptions extends Omit<GenerateOptions, 'operation'> {
   role?: string;
   pollingInterval?: number;
   ws?: boolean;
@@ -82,7 +82,7 @@ export class Hasyx {
    * @returns Promise resolving with the query result data (unwrapped from the top-level key, e.g., the array or single object), except for aggregate queries which return the full `{ aggregate, nodes }` structure.
    * @throws ApolloError if the query fails or returns GraphQL errors.
    */
-  async select<TData = any>(options: ClientMethodOptions): Promise<TData> {
+  async select<TData = any>(options: HasyxOptions): Promise<TData> {
     const { role, ...genOptions } = options;
     debug('Executing select with options:', genOptions, 'Role:', role);
     const generated: GenerateResult = this.generate({ ...genOptions, operation: 'query' });
@@ -119,7 +119,7 @@ export class Hasyx {
    * @returns Promise resolving with the mutation result data. For single inserts (`insert_table_one`), returns the inserted object. For bulk inserts, returns the full `{ affected_rows, returning }` object.
    * @throws ApolloError if the mutation fails or returns GraphQL errors.
    */
-  async insert<TData = any>(options: ClientMethodOptions): Promise<TData> {
+  async insert<TData = any>(options: HasyxOptions): Promise<TData> {
     const { role, ...genOptions } = options;
     debug('Executing insert with options:', genOptions, 'Role:', role);
     const generated: GenerateResult = this.generate({ ...genOptions, operation: 'insert' });
@@ -161,7 +161,7 @@ export class Hasyx {
    * @returns Promise resolving with the mutation result data. For `_by_pk` updates, returns the updated object. For bulk updates (using `where`), returns the full `{ affected_rows, returning }` object.
    * @throws ApolloError if the mutation fails or returns GraphQL errors.
    */
-  async update<TData = any>(options: ClientMethodOptions): Promise<TData> {
+  async update<TData = any>(options: HasyxOptions): Promise<TData> {
     const { role, ...genOptions } = options;
     debug('Executing update with options:', genOptions, 'Role:', role);
     const generated: GenerateResult = this.generate({ ...genOptions, operation: 'update' });
@@ -202,7 +202,7 @@ export class Hasyx {
    * @returns Promise resolving with the mutation result data. For `_by_pk` deletes, returns the deleted object. For bulk deletes (using `where`), returns the full `{ affected_rows, returning }` object.
    * @throws ApolloError if the mutation fails or returns GraphQL errors.
    */
-  async delete<TData = any>(options: ClientMethodOptions): Promise<TData> {
+  async delete<TData = any>(options: HasyxOptions): Promise<TData> {
     const { role, ...genOptions } = options;
     debug('Executing delete with options:', genOptions, 'Role:', role);
     const generated: GenerateResult = this.generate({ ...genOptions, operation: 'delete' });
@@ -243,7 +243,7 @@ export class Hasyx {
    * @returns Promise resolving with the upserted record data.
    * @throws ApolloError if the operation fails.
    */
-  async upsert<TData = any>(options: ClientMethodOptions): Promise<TData> {
+  async upsert<TData = any>(options: HasyxOptions): Promise<TData> {
     const { role, on_conflict, ...genOptions } = options;
     debug('Executing upsert with options:', genOptions, 'on_conflict:', on_conflict, 'Role:', role);
 
@@ -366,7 +366,7 @@ export class Hasyx {
    * @returns An Observable for the subscription results, emitting the unwrapped data directly.
    */
   subscribe<TData = any, TVariables extends OperationVariables = OperationVariables>(
-    options: ClientMethodOptions
+    options: HasyxOptions
   ): Observable<TData> {
     const { role, pollingInterval, ws, ...genOptions } = options;
     const interval = pollingInterval || DEFAULT_POLLING_INTERVAL;
@@ -393,7 +393,7 @@ export class Hasyx {
     }
     return this._subscribeWithWebSocket<TData, TVariables>({ role, ...genOptions });
   }
-  private _subscribeWithPolling<TData>(options: ClientMethodOptions & { role?: string }, interval: number): Observable<TData> {
+  private _subscribeWithPolling<TData>(options: HasyxOptions & { role?: string }, interval: number): Observable<TData> {
     const { role, ...genOptions } = options;
     debug('Creating polling-based subscription Observable');
     debug("Hasyx._subscribeWithPolling: Using HTTP polling for subscription");
@@ -443,7 +443,7 @@ export class Hasyx {
     });
   }
   private _subscribeWithWebSocket<TData, TVariables extends OperationVariables>(
-    options: ClientMethodOptions & { role?: string }
+    options: HasyxOptions & { role?: string }
   ): Observable<TData> {
     const { role, ...genOptions } = options;
     const generated: GenerateResult = this.generate({ ...genOptions, operation: 'subscription' });
