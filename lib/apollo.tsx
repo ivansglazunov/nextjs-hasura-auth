@@ -26,36 +26,37 @@ const debug = Debug('apollo');
 
 const isClient = typeof window !== 'undefined';
 
-debug(`Environment check: isClient=${isClient}`); 
+debug(`Environment check: isClient=${isClient}`);
 
 export interface ApolloOptions {
   url?: string;
   ws?: boolean;
   token?: string;
   secret?: string;
+  role?: string;
 }
 
 export interface HasyxApolloClient extends ApolloClient<any> {
   Provider: React.ComponentType<{ children: React.ReactNode }>;
   _options: ApolloOptions;
-  hasyxGenerator: Generate; 
-  graphqlWsClient?: GraphQLWSClientInstance; 
-  terminate?: () => void; 
+  hasyxGenerator: Generate;
+  graphqlWsClient?: GraphQLWSClientInstance;
+  terminate?: () => void;
 }
 
 const createRoleLink = () => setContext((request: GraphQLRequest, previousContext: any) => {
-  
-  const role = previousContext?.role; 
+
+  const role = previousContext?.role;
   debug(`roleLink: Role from context: ${role}`);
   if (role) {
     return {
       headers: {
-        ...previousContext.headers, 
         'X-Hasura-Role': role,
+        ...previousContext?.headers,
       },
     };
   }
-  
+
   return {};
 });
 
@@ -66,18 +67,22 @@ const createRoleLink = () => setContext((request: GraphQLRequest, previousContex
  * @param {boolean} options.ws - Use WebSocket connection
  * @param {string} options.token - JWT token for authorization
  * @param {string} options.secret - Admin secret for Hasura
+ * @param {string} options.role - Role for the client
  * @returns {ApolloClient} Apollo Client
  */
 export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClient {
   debug('apollo', '🔌 Creating Apollo client with options:', options);
-  
-  const { 
+
+  const {
     url = process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL,
-    ws = false, 
-    token = undefined, 
-    secret = process.env.HASURA_ADMIN_SECRET 
+    ws = false,
+    token = undefined,
+    secret = process.env.HASURA_ADMIN_SECRET,
+    role,
   } = options;
-  
+
+  const _role = role || (secret ? 'admin' : token ? 'user' : 'anonymous');
+
   debug(`apollo: Resolved endpoint URL: ${url} (from options: ${options.url}, fallback: ${process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL})`);
   debug(`apollo: Resolved WS setting: ${ws} (from options: ${options.ws})`);
   debug(`apollo: Resolved token: ${token ? '******' : 'undefined'} (from options)`);
@@ -87,62 +92,58 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
     console.error('❌ Apollo Client Error: Endpoint URL is not defined. Checked options.url and NEXT_PUBLIC_HASURA_GRAPHQL_URL.');
     throw new Error('❌ options.url or NEXT_PUBLIC_HASURA_GRAPHQL_URL not defined');
   }
-  
+
   debug('apollo', '🔌 Creating Apollo client with endpoint:', url);
-  
-  
-  
+
   const roleLink = createRoleLink();
-  
-  
-  
-  
+
   const baseHttpLink = new HttpLink({
     uri: url,
     fetch,
   });
 
-  
   const authHeaderLink = setContext((_, { headers }) => {
-    
-     if (token) {
-         debug('apollo', '🔒 Using JWT token for Authorization header');
-         return {
-             headers: {
-                 ...headers,
-                 Authorization: `Bearer ${token}`,
-             }
-         }
-     } else if (secret) {
-          debug('apollo', '🔑 Using Admin Secret for x-hasura-admin-secret header');
-         return {
-             headers: {
-                 ...headers,
-                'x-hasura-admin-secret': secret,
-             }
-         }
-     }
-     debug('apollo', '🔓 Sending request without authentication headers');
-     return { headers };
-  });
-  
-  
-  const httpLink = ApolloLink.from([roleLink, authHeaderLink, baseHttpLink]);
-  
-  
-  
-  let link = httpLink; 
 
-  
-  debug('apollo', `🚀 Checking WS setup: ws=${ws}, isClient=${isClient}`); 
+    if (token) {
+      debug('apollo', '🔒 Using JWT token for Authorization header');
+      return {
+        headers: {
+          'X-Hasura-Role': _role,
+          ...headers,
+          Authorization: `Bearer ${token}`,
+        }
+      }
+    } else if (secret) {
+      debug('apollo', '🔑 Using Admin Secret for x-hasura-admin-secret header');
+      return {
+        headers: {
+          'X-Hasura-Role': _role,
+          ...headers,
+          'x-hasura-admin-secret': secret,
+        }
+      }
+    }
+    debug('apollo', '🔓 Sending request without authentication headers');
+    return { headers: { 'X-Hasura-Role': _role, ...headers } };
+  });
+
+
+  const httpLink = ApolloLink.from([roleLink, authHeaderLink, baseHttpLink]);
+
+
+
+  let link = httpLink;
+
+
+  debug('apollo', `🚀 Checking WS setup: ws=${ws}, isClient=${isClient}`);
 
   let wsClientInstance: GraphQLWSClientInstance | undefined = undefined;
 
-  
+
   if (ws) {
-    debug('apollo', '✅ Entering WS Link creation block.'); 
-    
-    
+    debug('apollo', '✅ Entering WS Link creation block.');
+
+
     const wsEndpoint = createWebSocketUrl(url);
     debug('apollo', '🔌 Setting up GraphQLWsLink for:', wsEndpoint);
     debug('===========================');
@@ -150,55 +151,56 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
     debug(`URL: ${url}`);
     debug(`WebSocket URL: ${wsEndpoint}`);
     debug('===========================');
-    
-    
+
+
     const wsConnectionParams: Record<string, any> = {};
-    
+
     if (token) {
       debug('apollo', '🔒 Preparing JWT token for WS connectionParams');
-      wsConnectionParams.headers = { Authorization: `Bearer ${token}` };
+      wsConnectionParams.headers = { 'X-Hasura-Role': _role, Authorization: `Bearer ${token}` };
     } else if (secret) {
       debug('apollo', '🔑 Preparing Admin Secret for WS connectionParams');
-      
-      wsConnectionParams.headers = { 'x-hasura-admin-secret': secret };
+
+      wsConnectionParams.headers = { 'X-Hasura-Role': _role, 'x-hasura-admin-secret': secret };
     } else {
       debug('apollo', '🔓 No auth for WS connectionParams');
     }
-    
+
     debug('apollo', '📝 WS connection params prepared:', wsConnectionParams);
-    
+
     try {
-      
-      const protocols = ['graphql-transport-ws']; 
-      
-      
+
+      const protocols = ['graphql-transport-ws'];
+
+
       if (url.includes('hasura.app')) {
         debug('🔍 Detected Hasura Cloud - using graphql-transport-ws protocol');
       }
-      
+
       const wsClient = graphqlWSClient({
         url: wsEndpoint,
-        webSocketImpl: isClient ? undefined : isomorphicWs, 
+        webSocketImpl: isClient ? undefined : isomorphicWs,
         // @ts-ignore
-        inactivityTimeout: 30000, 
-        lazy: false, 
-        retryAttempts: 5, 
+        inactivityTimeout: 30000,
+        lazy: false,
+        retryAttempts: 5,
         connectionParams: () => {
           debug('apollo', '⚙️ Evaluating connectionParams function...');
-          
+
           if (secret) {
-            
+
             debug('🔒 Adding admin secret to WebSocket connection');
             return {
               headers: {
+                'X-Hasura-Role': _role,
                 'x-hasura-admin-secret': secret,
               },
             };
           }
-          
+
           return wsConnectionParams;
         },
-        
+
         on: {
           connected: (socket) => {
             debug('apollo', '🔗 [graphql-ws] WebSocket connected:', socket);
@@ -213,24 +215,24 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
           },
           closed: (event) => debug('apollo', '🚪 [graphql-ws] WebSocket closed:', event),
         }
-        
+
       });
-      
-      wsClientInstance = wsClient; 
-      
+
+      wsClientInstance = wsClient;
+
       const wsLink = new GraphQLWsLink(wsClient);
       debug('apollo', '🔗 GraphQLWsLink created with wsClient');
       debug('GraphQLWsLink successfully created for subscriptions');
 
-      
+
       link = split(
         ({ query }) => {
           const definition = getMainDefinition(query);
           const isSubscription = definition.kind === 'OperationDefinition' &&
-                                 definition.operation === 'subscription';
+            definition.operation === 'subscription';
           debug('apollo', `🔗 Split link decision: isSubscription=${isSubscription}, operation=${definition.kind === 'OperationDefinition' ? definition.operation : 'fragment'}, kind=${definition.kind}`);
-          
-          
+
+
           if (isSubscription) {
             const operationType = definition.kind === 'OperationDefinition' ? definition.operation : 'fragment';
             debug('💬 Using WebSocket link for subscription:', definition.kind, operationType);
@@ -239,11 +241,11 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
             const operationType = definition.kind === 'OperationDefinition' ? definition.operation : 'fragment';
             debug('💬 Using HTTP link for operation:', definition.kind, operationType);
           }
-          
+
           return isSubscription;
         },
-        wsLink, 
-        httpLink 
+        wsLink,
+        httpLink
       );
       debug('apollo', '✅ Final link split set up properly: WS for subscriptions, HTTP for queries/mutations');
     } catch (err) {
@@ -253,11 +255,11 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
   } else {
     debug('apollo', '❌ Skipping WS Link creation.', { ws, isClient });
   }
-  
 
-  
+
+
   const apolloClientInstance: HasyxApolloClient = new ApolloClient({
-    link: link, 
+    link: link,
     cache: new InMemoryCache(),
     defaultOptions: {
       watchQuery: {
@@ -285,19 +287,20 @@ export function createApolloClient(options: ApolloOptions = {}): HasyxApolloClie
     ws,
     token,
     secret,
+    role: _role,
   };
 
   if (wsClientInstance) {
     apolloClientInstance.graphqlWsClient = wsClientInstance;
   }
 
-  
+
   apolloClientInstance.terminate = () => {
     if (apolloClientInstance.graphqlWsClient) {
       debug('apollo', '🔌 Disposing WebSocket client.');
       apolloClientInstance.graphqlWsClient?.dispose();
     }
-    
+
     // Force cleanup of Apollo Client cache and subscriptions
     try {
       apolloClientInstance.stop();
@@ -358,16 +361,16 @@ query CheckConnection {
  * @returns {Promise<boolean>} True if connection is successful
  */
 export async function checkConnection(client = getClient()): Promise<boolean> {
-  const result = await client.query({ 
+  const result = await client.query({
     query: CHECK_CONNECTION_QUERY,
-    fetchPolicy: 'no-cache' 
+    fetchPolicy: 'no-cache'
   });
-  
+
   return !!(result.data?.__schema?.queryType?.name);
 }
 
 const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
-  
+
 });
 
 export default {
