@@ -237,6 +237,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/layout.tsx': 'app/layout.tsx',
     'app/page.tsx': 'app/page.tsx',
     'app/globals.css': 'app/globals.css',
+    'app/auth/callback/route.ts': 'app/auth/callback/route.ts',
     'app/hasyx/diagnostics/page.tsx': 'app/hasyx/diagnostics/page.tsx',
     'app/hasyx/aframe/page.tsx': 'app/hasyx/aframe/page.tsx',
     'app/hasyx/aframe/client.tsx': 'app/hasyx/aframe/client.tsx',
@@ -292,6 +293,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
   const ensureDirs = [
     '.github/workflows',
     '.vscode',
+    'app/auth/callback',
     'app/api/auth/[...nextauth]',
     'app/api/auth/verify',
     'app/api/graphql',

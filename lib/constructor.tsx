@@ -527,9 +527,11 @@ function ReturningSection({
 }) {
   const addField = (fieldName: string, isRelation: boolean, targetTable?: string, isList?: boolean) => {
     if (isRelation && targetTable) {
+      const targetFields = getFieldsFromTable(schema, targetTable);
+      const hasIdField = targetFields.some(f => f.name === 'id' && !f.isRelation);
       const newRelation: NestedReturning = {
         [fieldName]: {
-          returning: ['id'],
+          returning: hasIdField ? ['id'] : [],
           ...(isList && { limit: 10 }),
         }
       };
@@ -993,6 +995,13 @@ function HasyxConstructor({ value, onChange, defaultTable = 'users', schema = ha
       physicalFields = newTableFields
         .filter(field => !field.isRelation && !field.name.startsWith('_hasyx_') && allowedColumns.includes(field.name))
         .map(field => field.name);
+    }
+
+    if (physicalFields.length === 0) {
+      const hasIdField = newTableFields.some(field => field.name === 'id' && !field.isRelation);
+      if (hasIdField) {
+        physicalFields.push('id');
+      }
     }
     
     onChange({
@@ -1505,6 +1514,13 @@ export default function Constructor({ serverSession, sidebarData, schema = hasyx
         physicalFields = newTableFields
           .filter(field => !field.isRelation && !field.name.startsWith('_hasyx_') && allowedColumns.includes(field.name))
           .map(field => field.name);
+      }
+
+      if (physicalFields.length === 0) {
+        const hasIdField = newTableFields.some(field => field.name === 'id' && !field.isRelation);
+        if (hasIdField) {
+          physicalFields.push('id');
+        }
       }
 
       setConstructorState(s => ({ 

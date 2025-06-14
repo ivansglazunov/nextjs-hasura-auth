@@ -432,7 +432,7 @@ export async function proxySOCKET(
         return;
       }
       try {
-        const messageStr = message.toString();
+        let messageStr = message.toString();
         const parsedMessage = JSON.parse(messageStr);
         const type = parsedMessage.type;
 
@@ -484,7 +484,17 @@ export async function proxySOCKET(
         // === DEBUG: Special handling for error messages ===
         if (type === 'error') {
           debug(`❌ [${clientId}] === ERROR MESSAGE FROM HASURA ===`);
-          debug(`📋 [${clientId}] Error details:`, parsedMessage.payload);
+          debug(`📋 [${clientId}] Original error payload:`, parsedMessage.payload);
+
+          // FIX: Normalize Hasura's error payload.
+          // Hasura sometimes sends { "errors": [...] } which is not compliant.
+          // The graphql-transport-ws spec expects payload to be an array of errors.
+          if (parsedMessage.payload && typeof parsedMessage.payload === 'object' && Array.isArray(parsedMessage.payload.errors)) {
+            debug(`⚠️ [${clientId}] Re-formatting non-compliant error payload to be an array.`);
+            parsedMessage.payload = parsedMessage.payload.errors;
+            messageStr = JSON.stringify(parsedMessage);
+          }
+          
           if (parsedMessage.payload && parsedMessage.payload.errors) {
             debug(`🔍 [${clientId}] GraphQL errors:`, parsedMessage.payload.errors);
             parsedMessage.payload.errors.forEach((error: any, index: number) => {
@@ -502,7 +512,8 @@ export async function proxySOCKET(
           parsedMessage.type = 'next';
           messageToSend = JSON.stringify(parsedMessage);
         } else if (type === 'error') {
-          debug(`❗ [${clientId}] Forwarding error H -> C`);
+          // The error payload is now corrected above, so we just forward it.
+          debug(`❗ [${clientId}] Forwarding corrected error H -> C`);
         } else if (type === 'complete') {
           debug(`✅ [${clientId}] Forwarding complete H -> C`);
         } else {

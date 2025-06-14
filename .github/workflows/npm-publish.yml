@@ -26,6 +26,8 @@ jobs:
           cp lib/debug.ts lib/debug.template
           cp lib/cli.ts lib/cli.template
           cp lib/github-telegram-bot.ts lib/github-telegram-bot.template
+          cp lib/ask.ts lib/ask.template
+          cp lib/entities.tsx lib/entities.template
       - name: Install dependencies
         run: npm ci # Use ci for more reliable installs in CI
 

@@ -2373,6 +2373,11 @@
           "level": 2
         },
         {
+          "title": "Accessing the Schema",
+          "url": "/hasyx/doc/GENERATOR#accessing-the-schema",
+          "level": 3
+        },
+        {
           "title": "Options (`GenerateOptions` Interface)",
           "url": "/hasyx/doc/GENERATOR#options-generateoptions-interface",
           "level": 2
@@ -11038,5 +11043,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-14T09:01:16.654Z"
+  "lastUpdated": "2025-06-14T18:58:37.601Z"
 }
