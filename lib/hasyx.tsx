@@ -80,7 +80,8 @@ export class Hasyx {
 
   testAuthorize(userId: string, options: TestAuthorizeOptions): Promise<{ axios: AxiosInstance, apollo: HasyxApolloClient, hasyx: Hasyx }> {
     return testAuthorize(userId, {
-      ...this.apolloClient._options,
+      url: this.apolloClient._options.url,
+      ws: this.apolloClient._options.ws,
       schema: this.generate.schema,
       ...options,
     });
