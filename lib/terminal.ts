@@ -126,24 +126,52 @@ export class Terminal extends EventEmitter {
   private getDefaultShell(): string {
     const platform = os.platform();
     
+    debug('Detecting default shell for platform: %s', platform);
+    
     switch (platform) {
       case 'win32':
-        return process.env.COMSPEC || 'cmd.exe';
+        const comspec = process.env.COMSPEC || 'cmd.exe';
+        debug('Windows detected, using COMSPEC: %s', comspec);
+        return comspec;
       case 'darwin':
       case 'linux':
       default:
-        return process.env.SHELL || '/bin/bash';
+        const shellEnv = process.env.SHELL;
+        debug('Unix-like system detected, SHELL env: %s', shellEnv);
+        
+        // Check if we're in Alpine Linux (common in Docker containers)
+        const isAlpine = process.platform === 'linux' && 
+          (process.env.PATH?.includes('/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') ||
+           !require('fs').existsSync('/bin/bash'));
+        
+        debug('Alpine Linux detection: %s', isAlpine);
+        debug('Checking /bin/bash existence: %s', require('fs').existsSync('/bin/bash'));
+        debug('Checking /bin/sh existence: %s', require('fs').existsSync('/bin/sh'));
+        
+        if (isAlpine || !require('fs').existsSync('/bin/bash')) {
+          debug('Using /bin/sh instead of /bin/bash');
+          return '/bin/sh';
+        }
+        
+        const defaultShell = shellEnv || '/bin/bash';
+        debug('Using default shell: %s', defaultShell);
+        return defaultShell;
     }
   }
 
   public start(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.childProcess) {
+        debug('Terminal already started, resolving');
         resolve();
         return;
       }
 
       try {
+        debug('Starting terminal with shell: %s, args: %o', this.options.shell, this.options.args);
+        debug('Working directory: %s', this.options.cwd);
+        debug('Environment variables: %o', Object.keys(this.options.env || {}));
+        
         // Set up environment with terminal information
         const env = { ...this.options.env } as any;
         // Add terminal-specific vars
@@ -151,18 +179,24 @@ export class Terminal extends EventEmitter {
         if (this.options.cols) env.COLUMNS = this.options.cols.toString();
         if (this.options.rows) env.LINES = this.options.rows.toString();
 
+        debug('Final environment setup complete');
+
         // Spawn the shell process
+        debug('Spawning shell process...');
         this.childProcess = spawn(this.options.shell!, this.options.args!, {
           cwd: this.options.cwd,
           env: env,
           stdio: ['pipe', 'pipe', 'pipe']
         });
         
+        debug('Shell process spawned with PID: %s', this.childProcess?.pid);
+        
         this.session.isActive = true;
         this.setupChildProcessHandlers();
         
         // Wait a bit for shell to initialize
         setTimeout(() => {
+          debug('Terminal initialization complete, marking as ready');
           this.isReady = true;
           this.processCommandQueue();
           this.emit('ready');
@@ -178,7 +212,10 @@ export class Terminal extends EventEmitter {
           rows: this.options.rows
         });
         
+        debug('Terminal start event emitted');
+        
       } catch (error) {
+        debug('Error starting terminal: %o', error);
         this.emit('error', error);
         if (this.onError) this.onError(error as Error);
         reject(error);
@@ -204,11 +241,14 @@ export class Terminal extends EventEmitter {
 
       // For simple command execution, we'll use a separate child process
       // This ensures we get clean output without shell interactions
+      debug('Creating command process with shell: %s, command: %s', this.options.shell, command);
       const commandProcess = spawn(this.options.shell!, ['-c', command], {
         cwd: this.options.cwd,
         env: this.options.env,
         stdio: ['pipe', 'pipe', 'pipe']
       });
+
+      debug('Command process created with PID: %s', commandProcess?.pid);
 
       const terminalCommand: TerminalCommand = {
         id: `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -282,6 +322,9 @@ export class Terminal extends EventEmitter {
         if (commandTimeout) clearTimeout(commandTimeout);
         terminalCommand.completed = true;
         debug('Command error: %s, error: %s', command, error.message);
+        debug('Error details - code: %s, syscall: %s, path: %s, errno: %s', 
+              (error as any).code, (error as any).syscall, (error as any).path, (error as any).errno);
+        debug('Shell used: %s, args: %o', this.options.shell, ['-c', command]);
         this.emit('error', error);
         reject(error);
       });

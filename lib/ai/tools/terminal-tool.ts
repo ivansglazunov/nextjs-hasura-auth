@@ -32,18 +32,25 @@ export class TerminalTool extends Tool {
     debug('Executing terminal command with timeout %d: %s', this.timeout, content);
 
     try {
+      debug('Creating terminal instance...');
       // Create terminal with configured timeout
       const terminal = new (await import('../../../lib/terminal')).Terminal({ 
         commandTimeout: this.timeout,
         autoStart: false 
       });
       
+      debug('Terminal instance created, starting...');
+      
       let result: string;
       try {
         await terminal.start();
+        debug('Terminal started successfully, executing command...');
         result = await terminal.execute(content);
+        debug('Command executed successfully');
       } finally {
+        debug('Destroying terminal instance...');
         terminal.destroy();
+        debug('Terminal instance destroyed');
       }
 
       debug('Terminal command successful, result length: %d', result.length);
@@ -56,6 +63,7 @@ export class TerminalTool extends Tool {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       debug('Terminal command failed: %s', errorMessage);
+      debug('Error object: %o', error);
       
       // Return error as result instead of null, so AI can see what went wrong
       return {
