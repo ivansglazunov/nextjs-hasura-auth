@@ -496,6 +496,34 @@ export async function configureDocker(rl: readline.Interface, envPath: string): 
     }
   }
 
+  // Configure Docker publishing
+  console.log('\n🚀 Docker Publishing Configuration');
+  console.log('==================================');
+  console.log('Controls whether GitHub Actions will automatically build and push Docker images');
+  console.log('to Docker Hub when code is pushed to the repository.');
+  
+  const currentDockerPublish = envVars.DOCKER_PUBLISH;
+  const isCurrentlyEnabled = currentDockerPublish === '1';
+  
+  console.log(`\n🔍 Current Docker publishing status: ${isCurrentlyEnabled ? '✅ ENABLED' : '❌ DISABLED'}`);
+  
+  let shouldToggle = false;
+  if (isCurrentlyEnabled) {
+    shouldToggle = await askYesNo(rl, 'Docker publishing is currently enabled. Do you want to disable it?', false);
+    if (shouldToggle) {
+      envVars.DOCKER_PUBLISH = '0';
+      changed = true;
+      console.log('❌ Docker publishing disabled');
+    }
+  } else {
+    shouldToggle = await askYesNo(rl, 'Docker publishing is currently disabled. Do you want to enable it?', false);
+    if (shouldToggle) {
+      envVars.DOCKER_PUBLISH = '1';
+      changed = true;
+      console.log('✅ Docker publishing enabled');
+    }
+  }
+
   // Configure default port
   const currentPort = envVars.PORT;
   if (currentPort) {
@@ -545,6 +573,9 @@ export async function configureDocker(rl: readline.Interface, envPath: string): 
     console.log('🔐 Docker Hub Password/Token: Not configured');
   }
   
+  const dockerPublishEnabled = envVars.DOCKER_PUBLISH === '1';
+  console.log(`🚀 Docker Publishing: ${dockerPublishEnabled ? '✅ ENABLED' : '❌ DISABLED'}`);
+  
   if (envVars.PORT) {
     console.log(`🚪 Default Port: ${envVars.PORT}`);
   }
@@ -558,7 +589,7 @@ export async function configureDocker(rl: readline.Interface, envPath: string): 
 
   console.log('\n🎉 Docker configuration completed!');
   
-  if (envVars.DOCKER_USERNAME && envVars.DOCKER_PASSWORD) {
+  if (envVars.DOCKER_USERNAME && envVars.DOCKER_PASSWORD && dockerPublishEnabled) {
     console.log('\n🚀 Next steps for GitHub Actions:');
     console.log('   1. Push your code to GitHub repository');
     console.log('   2. Docker credentials will be automatically synced to GitHub secrets');
@@ -566,7 +597,12 @@ export async function configureDocker(rl: readline.Interface, envPath: string): 
     console.log('   4. Use `npx hasyx docker define [port]` to create containers');
   } else {
     console.log('\n💡 To enable automatic Docker publishing:');
-    console.log('   • Set DOCKER_USERNAME and DOCKER_PASSWORD in .env');
+    if (!envVars.DOCKER_USERNAME || !envVars.DOCKER_PASSWORD) {
+      console.log('   • Set DOCKER_USERNAME and DOCKER_PASSWORD in .env');
+    }
+    if (!dockerPublishEnabled) {
+      console.log('   • Enable Docker publishing by setting DOCKER_PUBLISH=1');
+    }
     console.log('   • Run sync command to upload secrets to GitHub');
     console.log('   • GitHub Actions will handle the rest');
   }

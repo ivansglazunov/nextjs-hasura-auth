@@ -33,6 +33,7 @@ export interface GenerateOptions {
   variables?: Record<string, any>; // Keep flexible for now
   varCounter?: number;
   on_conflict?: OnConflictOptions; // Added for upsert
+  role?: string;
 }
 
 export interface GenerateResult {
