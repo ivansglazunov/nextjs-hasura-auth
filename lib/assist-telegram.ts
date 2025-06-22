@@ -1,6 +1,7 @@
 import readline from 'readline';
 import Debug from './debug';
 import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret } from './assist-common';
+import { API_URL } from './url';
 import path from 'path';
 import fs from 'fs-extra';
 import spawn from 'cross-spawn'; // For potential calibration scripts
@@ -97,6 +98,47 @@ export async function configureTelegramBot(rl: readline.Interface, envPath: stri
         delete envVars.TELEGRAM_ADMIN_CHAT_ID; // Remove if new value is empty string
     }
     changed = true;
+  }
+
+  // Ask about setting up webhook for this application
+  if (newToken && newToken.trim() !== '') {
+    const shouldSetupWebhook = await askYesNo(rl, 'Do you want to set this application as the webhook URL for your Telegram bot?', false);
+    
+    if (shouldSetupWebhook) {
+      console.log('🔗 Setting up Telegram bot webhook...');
+      
+      // Get current API URL, ensure it has https protocol for webhook
+      let webhookUrl = API_URL;
+      if (!webhookUrl.startsWith('http')) {
+        webhookUrl = `https://${webhookUrl}`;
+      }
+      
+      // Ensure webhook URL uses https (Telegram requires HTTPS for webhooks)
+      if (webhookUrl.startsWith('http://') && !webhookUrl.includes('localhost')) {
+        webhookUrl = webhookUrl.replace('http://', 'https://');
+      }
+      
+      // Add the telegram bot endpoint
+      const telegramBotEndpoint = `${webhookUrl}/api/telegram_bot`;
+      
+      try {
+        console.log(`📡 Making webhook request to: ${telegramBotEndpoint}`);
+        
+        const response = await fetch(`https://api.telegram.org/bot${newToken}/setWebhook?url=${encodeURIComponent(telegramBotEndpoint)}`);
+        const result = await response.json();
+        
+        if (result.ok) {
+          console.log('✅ Webhook set successfully!');
+          console.log(`🔗 Telegram bot webhook URL: ${telegramBotEndpoint}`);
+        } else {
+          console.error('❌ Failed to set webhook:', result.description);
+          console.error('💡 Make sure your bot token is correct and the URL is accessible via HTTPS.');
+        }
+      } catch (error) {
+        console.error('❌ Error setting webhook:', error);
+        console.error('💡 Please check your internet connection and try again.');
+      }
+    }
   }
 
   if (changed) {
@@ -224,6 +266,7 @@ async function main() {
   }
 }
 
-if (require.main === module) {
+// Check if this script is being run directly (ES module compatible)
+if (typeof process !== 'undefined' && process.argv && process.argv[1] && process.argv[1].includes('assist-telegram')) {
   main();
 } 

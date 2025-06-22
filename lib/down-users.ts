@@ -30,6 +30,14 @@ export async function dropMetadata(hasura: Hasura) {
     role: ['user', 'me', 'admin', 'anonymous']
   });
   
+  // Drop permissions for auth_passive table
+  await hasura.deletePermission({
+    schema: 'public',
+    table: 'auth_passive',
+    operation: 'select',
+    role: ['admin']
+  });
+  
   debug('  ✅ Permissions dropped.');
 
   debug('  🗑️ Dropping relationships...');
@@ -49,7 +57,8 @@ export async function dropMetadata(hasura: Hasura) {
   
   debug('  ✅ Relationships dropped.');
 
-  debug('  🗑️ Untracking tables users and accounts...');
+  debug('  🗑️ Untracking tables users, accounts and auth_passive...');
+  await hasura.untrackTable({ schema: 'public', table: 'auth_passive' });
   await hasura.untrackTable({ schema: 'public', table: 'accounts' });
   await hasura.untrackTable({ schema: 'public', table: 'users' });
   debug('✅ Tables untracked.');
@@ -69,6 +78,7 @@ export async function dropTables(hasura: Hasura) {
   });
   
   // Drop tables
+  await hasura.deleteTable({ schema: 'public', table: 'auth_passive' });
   await hasura.deleteTable({ schema: 'public', table: 'accounts' });
   await hasura.deleteTable({ schema: 'public', table: 'users' });
   

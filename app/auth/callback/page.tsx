@@ -25,7 +25,56 @@ export default function AuthCallbackPage() {
       debug('User authenticated successfully, preparing redirect...');
       setHasRedirected(true);
       
-      // Get pre-auth URL if it exists
+      // Check if this is passive mode authentication
+      const passiveId = localStorage.getItem('nextauth_passive_id');
+      const passiveProvider = localStorage.getItem('nextauth_passive_provider');
+      
+      if (passiveId && passiveProvider) {
+        debug('Passive mode detected. Passive ID:', passiveId);
+        
+        // Call the passive-complete API to save the JWT
+        try {
+          fetch('/api/auth/passive-complete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ passiveId }),
+          }).then(response => {
+            if (response.ok) {
+              debug('JWT saved successfully for passive ID:', passiveId);
+            } else {
+              debug('Failed to save JWT for passive ID:', passiveId);
+            }
+          });
+        } catch (error) {
+          debug('Error calling passive-complete API:', error);
+        }
+        
+        // Send message to parent window about successful authentication
+        if (window.opener) {
+          debug('Sending success message to parent window');
+          window.opener.postMessage({
+            type: 'NEXTAUTH_SIGNIN_SUCCESS',
+            passiveId,
+            provider: passiveProvider
+          }, window.location.origin);
+          
+          // Close this popup window
+          setTimeout(() => {
+            window.close();
+          }, 1000);
+          
+          return;
+        } else {
+          debug('No opener window found, treating as regular redirect');
+          // Clean up passive localStorage if no opener
+          localStorage.removeItem('nextauth_passive_id');
+          localStorage.removeItem('nextauth_passive_provider');
+        }
+      }
+      
+      // Regular (non-passive) authentication redirect
       const preAuthUrl = sessionStorage.getItem('preAuthUrl') || '/';
       sessionStorage.removeItem('preAuthUrl');
       

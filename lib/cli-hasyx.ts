@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import spawn from 'cross-spawn';
 import Debug from './debug';
-import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './events';
+import { createDefaultEventTriggers, syncEventTriggersFromDirectory, syncAllTriggersFromDirectory } from './events';
 import { buildDocumentation } from './doc-public';
 import * as assist from './assist';
 import { printMarkdown } from './markdown-terminal';
@@ -237,7 +237,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/layout.tsx': 'app/layout.tsx',
     'app/page.tsx': 'app/page.tsx',
     'app/globals.css': 'app/globals.css',
-    'app/auth/callback/route.ts': 'app/auth/callback/route.ts',
+    'app/auth/callback/page.ts': 'app/auth/callback/page.ts',
     'app/hasyx/diagnostics/page.tsx': 'app/hasyx/diagnostics/page.tsx',
     'app/hasyx/aframe/page.tsx': 'app/hasyx/aframe/page.tsx',
     'app/hasyx/aframe/client.tsx': 'app/hasyx/aframe/client.tsx',
@@ -504,6 +504,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
         "npm-publish": "npm run build && npm publish",
         "cli": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName}`,
         "assist": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} assist`,
+        "telegram": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} telegram`,
         "js": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} js`,
         "tsx": `NODE_OPTIONS=\"--experimental-vm-modules\" npx ${packageName} tsx`,
         "logs": `npx ${packageName} logs`,

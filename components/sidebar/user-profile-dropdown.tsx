@@ -77,7 +77,7 @@ function getProviderIcon(provider: string) {
 }
 
 function UserAccountsList({ userId }: { userId: string }) {
-  const { data: accounts, loading } = useSubscription(
+  const { data: accounts = [], loading } = useSubscription(
     {
       table: 'accounts',
       where: { user_id: { _eq: userId } },
@@ -89,7 +89,7 @@ function UserAccountsList({ userId }: { userId: string }) {
     return <div className="text-sm text-muted-foreground px-2 py-1">Loading accounts...</div>;
   }
 
-  if (accounts.length === 0) {
+  if (accounts?.length === 0) {
     return <div className="text-sm text-muted-foreground px-2 py-1">No connected accounts</div>;
   }
 

@@ -7,8 +7,13 @@ import { Label } from "hasyx/components/ui/label";
 import { KeyRound } from "lucide-react";
 import { signIn } from "next-auth/react";
 import React, { useState } from "react";
+import { usePassive } from '../passive';
+import { API_URL } from 'hasyx/lib/url';
 
 export function CredentialsSignInCard(props: React.HTMLAttributes<HTMLDivElement>) {
+  const passiveClient = usePassive();
+  const isPassiveMode = !!process.env.NEXT_PUBLIC_PASSIVE_AUTH;
+  
   // State for credentials form
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,37 +25,68 @@ export function CredentialsSignInCard(props: React.HTMLAttributes<HTMLDivElement
     setError(null); // Clear previous error
     setInfoMessage(null); // Clear previous info message
     setIsCredentialsLoading(true);
-    // No try-catch needed here, signIn promise resolves with error details
-    const result = await signIn('credentials', {
-      redirect: false, // Prevent page reload
-      email,
-      password,
-    });
+    
+    try {
+      if (isPassiveMode) {
+        // Passive mode - use standard NextAuth signIn with passive parameter
+        const currentUrl = window.location.href;
+        localStorage.setItem('nextauth_passive_redirect', currentUrl);
+        localStorage.setItem('nextauth_passive_id', passiveClient.id);
+        
+        const result = await signIn('credentials', {
+          redirect: false,
+          email,
+          password,
+          callbackUrl: `/?passive=${passiveClient.id}`,
+        });
+        
+        if (result?.error) {
+          setError('Invalid credentials');
+        } else if (result?.ok) {
+          setInfoMessage('Authentication initiated. Waiting for completion...');
+          setEmail('');
+          setPassword('');
+          passiveClient.start();
+        }
+        
+      } else {
+        // Standard NextAuth flow
+        const result = await signIn('credentials', {
+          redirect: false, // Prevent page reload
+          email,
+          password,
+        });
 
-    if (result?.error) {
-      let actualError = result.error; // Default to the code like 'CredentialsSignin'
+        if (result?.error) {
+          let actualError = result.error; // Default to the code like 'CredentialsSignin'
 
-      // Try to parse the actual error message from the URL returned by NextAuth
-      if (result.url) {
-        try {
-          const url = new URL(result.url);
-          const errorParam = url.searchParams.get('error');
-          if (errorParam) {
-            actualError = decodeURIComponent(errorParam);
-            console.log('Parsed error from URL:', actualError);
+          // Try to parse the actual error message from the URL returned by NextAuth
+          if (result.url) {
+            try {
+              const url = new URL(result.url);
+              const errorParam = url.searchParams.get('error');
+              if (errorParam) {
+                actualError = decodeURIComponent(errorParam);
+                console.log('Parsed error from URL:', actualError);
+              }
+            } catch (parseError) {
+              console.error('Failed to parse error URL:', parseError);
+            }
           }
-        } catch (parseError) {
-          console.error('Failed to parse error URL:', parseError);
+
+          // Display the parsed error or the default code
+          setError(actualError);
+        } else if (result?.ok) {
+          // Session should update automatically via useSession (no state change needed here)
+          setEmail('');
+          setPassword('');
         }
       }
-
-      // Display the parsed error or the default code
-      setError(actualError);
-    } else if (result?.ok) {
-      // Session should update automatically via useSession (no state change needed here)
-      setEmail('');
-      setPassword('');
+    } catch (error) {
+      console.error('Authentication error:', error);
+      setError('Authentication failed');
     }
+    
     setIsCredentialsLoading(false);
   };
 

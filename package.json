@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.326",
+  "version": "0.1.328",
   "description": "Modern full-stack framework with real-time GraphQL, AI integration, and seamless development experience",
   "homepage": "https://hasyx.deep.foundation/",
   "engines": {
@@ -29,7 +29,7 @@
     "ws": "npx --yes next-ws-cli@latest patch -y",
     "migrate": "tsx lib/migrate.ts",
     "unmigrate": "tsx lib/unmigrate.ts",
-    "events": "NODE_OPTIONS=\"--experimental-vm-modules\" npx hasyx events",
+    "events": "NODE_OPTIONS=\"--experimental-vm-modules\" npx tsx lib/events.ts",
     "schema": "npm run hasura:schema && npm run hasura:types",
     "hasura:schema": "tsx ./lib/hasura-schema.ts",
     "hasura:types": "graphql-codegen --config ./lib/hasura-types.ts",
@@ -162,6 +162,7 @@
     "lucide-react": "0.488.0",
     "marked": "15.0.12",
     "marked-terminal": "7.3.0",
+    "mock-local-storage": "^1.1.24",
     "next": "15.3.1",
     "next-auth": "4.24.11",
     "next-themes": "0.4.6",

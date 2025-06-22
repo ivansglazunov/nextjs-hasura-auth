@@ -182,12 +182,15 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
         return true;
       },
 
-      async jwt({ token, user, account, profile }): Promise<DefaultJWT> {
-        debug('JWT Callback: input', { userId: token.sub, provider: account?.provider });
+      async jwt({ token, user, account, profile, trigger }): Promise<DefaultJWT> {
+        debug('JWT Callback: input', { userId: token.sub, provider: account?.provider, trigger });
 
         let userId: string | undefined = token.sub;
         let provider: string | undefined = account?.provider;
         let emailVerified: string | null | undefined = token.emailVerified; // Start with existing token value
+        
+        // Note: Passive mode for OAuth is handled separately
+        // For credentials, passive auth goes through custom endpoint
         
         // This block runs only on sign-in when account and user/profile are passed
         if (account && user) {
@@ -326,7 +329,7 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
         return session; // Return the session adhering to DefaultSession + our extensions
       },
       
-      // Updated redirect callback for token passing
+      // Updated redirect callback for token passing and passive support
       async redirect({ url, baseUrl }: { url: string, baseUrl: string }): Promise<string> {
         debug('Redirect Callback: url=', url, 'baseUrl=', baseUrl, 'tempToken=', tempTokenForRedirect ? 'present' : 'null');
         

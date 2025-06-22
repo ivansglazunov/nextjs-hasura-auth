@@ -49,6 +49,49 @@ export interface EventTriggerDefinition {
 }
 
 /**
+ * Structure of a Hasura Cron Trigger definition file
+ */
+export interface CronTriggerDefinition {
+  name: string;
+  webhook?: string; // Full URL for webhook
+  webhook_path?: string; // Path only, to be combined with API_URL
+  schedule: string; // Cron expression
+  payload?: any; // JSON payload to send
+  comment?: string; // Optional comment
+  retry_conf?: {
+    num_retries?: number;
+    timeout_seconds?: number;
+    tolerance_seconds?: number;
+    retry_interval_seconds?: number;
+  };
+  headers?: {
+    name: string;
+    value?: string;
+    value_from_env?: string;
+  }[];
+  include_in_metadata?: boolean; // Whether to include in metadata export
+}
+
+/**
+ * Union type for both event and cron trigger definitions
+ */
+export type TriggerDefinition = EventTriggerDefinition | CronTriggerDefinition;
+
+/**
+ * Type guard to check if definition is a cron trigger
+ */
+export function isCronTrigger(def: TriggerDefinition): def is CronTriggerDefinition {
+  return 'schedule' in def;
+}
+
+/**
+ * Type guard to check if definition is an event trigger
+ */
+export function isEventTrigger(def: TriggerDefinition): def is EventTriggerDefinition {
+  return 'table' in def;
+}
+
+/**
  * Validate that an event trigger definition has all required fields
  */
 export function validateEventTriggerDefinition(def: EventTriggerDefinition): string[] {
@@ -83,17 +126,54 @@ export function validateEventTriggerDefinition(def: EventTriggerDefinition): str
 }
 
 /**
- * Load all event trigger definitions from a directory
+ * Validate that a cron trigger definition has all required fields
  */
-export async function loadEventTriggerDefinitions(eventsDir: string): Promise<EventTriggerDefinition[]> {
-  debug(`Loading event trigger definitions from ${eventsDir}`);
-  const triggers: EventTriggerDefinition[] = [];
+export function validateCronTriggerDefinition(def: CronTriggerDefinition): string[] {
+  const errors: string[] = [];
+
+  if (!def.name) {
+    errors.push('Cron trigger must have a name');
+  }
+
+  if (!def.schedule) {
+    errors.push('Cron trigger must specify a schedule (cron expression)');
+  }
+
+  // Either webhook or webhook_path must be specified
+  if (!def.webhook && !def.webhook_path) {
+    errors.push('Cron trigger must specify either webhook or webhook_path');
+  }
+
+  return errors;
+}
+
+/**
+ * Validate a trigger definition (either event or cron)
+ */
+export function validateTriggerDefinition(def: TriggerDefinition): string[] {
+  if (isCronTrigger(def)) {
+    return validateCronTriggerDefinition(def);
+  } else {
+    return validateEventTriggerDefinition(def);
+  }
+}
+
+/**
+ * Load all trigger definitions from a directory (both event and cron triggers)
+ */
+export async function loadTriggerDefinitions(eventsDir: string): Promise<{
+  eventTriggers: EventTriggerDefinition[];
+  cronTriggers: CronTriggerDefinition[];
+}> {
+  debug(`Loading trigger definitions from ${eventsDir}`);
+  const eventTriggers: EventTriggerDefinition[] = [];
+  const cronTriggers: CronTriggerDefinition[] = [];
 
   try {
     // Ensure the directory exists
     if (!await fs.pathExists(eventsDir)) {
       debug(`Events directory ${eventsDir} does not exist`);
-      return [];
+      return { eventTriggers, cronTriggers };
     }
 
     // Read all files in the directory
@@ -110,7 +190,7 @@ export async function loadEventTriggerDefinitions(eventsDir: string): Promise<Ev
       try {
         const filePath = path.join(eventsDir, file);
         const content = await fs.readFile(filePath, 'utf8');
-        const triggerDef: EventTriggerDefinition = JSON.parse(content);
+        const triggerDef: TriggerDefinition = JSON.parse(content);
 
         // Use filename (without extension) as trigger name if not specified
         if (!triggerDef.name) {
@@ -118,23 +198,36 @@ export async function loadEventTriggerDefinitions(eventsDir: string): Promise<Ev
           debug(`Using filename as trigger name: ${triggerDef.name}`);
         }
 
-        // Validate the trigger definition
-        const errors = validateEventTriggerDefinition(triggerDef);
+        // Validate and categorize the trigger definition
+        const errors = validateTriggerDefinition(triggerDef);
         if (errors.length > 0) {
-          debug(`Invalid event trigger definition in ${file}: ${errors.join(', ')}`);
+          debug(`Invalid trigger definition in ${file}: ${errors.join(', ')}`);
         } else {
-          triggers.push(triggerDef);
-          debug(`Loaded event trigger definition: ${triggerDef.name}`);
+          if (isCronTrigger(triggerDef)) {
+            cronTriggers.push(triggerDef);
+            debug(`Loaded cron trigger definition: ${triggerDef.name}`);
+          } else {
+            eventTriggers.push(triggerDef);
+            debug(`Loaded event trigger definition: ${triggerDef.name}`);
+          }
         }
       } catch (error) {
         debug(`Error processing file ${file}: ${error}`);
       }
     }
   } catch (error) {
-    debug(`Error loading event trigger definitions: ${error}`);
+    debug(`Error loading trigger definitions: ${error}`);
   }
 
-  return triggers;
+  return { eventTriggers, cronTriggers };
+}
+
+/**
+ * Load all event trigger definitions from a directory (legacy function)
+ */
+export async function loadEventTriggerDefinitions(eventsDir: string): Promise<EventTriggerDefinition[]> {
+  const { eventTriggers } = await loadTriggerDefinitions(eventsDir);
+  return eventTriggers;
 }
 
 /**
@@ -373,21 +466,179 @@ export async function syncEventTriggers(hasura: Hasura, localTriggers: EventTrig
 }
 
 /**
- * Main function to synchronize all event triggers from a directory
+ * Create or update a cron trigger in Hasura
  */
-export async function syncEventTriggersFromDirectory(eventsDir: string, hasuraUrl?: string, hasuraSecret?: string, baseUrl?: string): Promise<void> {
-  debug('Synchronizing event triggers from directory');
+export async function createOrUpdateCronTrigger(
+  hasura: Hasura,
+  trigger: CronTriggerDefinition,
+  baseUrl?: string
+): Promise<boolean> {
+  debug(`Creating/updating cron trigger: ${trigger.name}`);
+
+  try {
+    // Validate the trigger definition
+    const errors = validateCronTriggerDefinition(trigger);
+    if (errors.length > 0) {
+      debug(`Cron trigger ${trigger.name} validation errors: ${errors.join(', ')}`);
+      return false;
+    }
+
+    // Construct the webhook URL
+    let webhookUrl = trigger.webhook;
+    if (!webhookUrl && trigger.webhook_path) {
+      const base = baseUrl || API_URL;
+      webhookUrl = `${base}${trigger.webhook_path}`;
+    }
+
+    if (!webhookUrl) {
+      debug(`Cron trigger ${trigger.name} is missing webhook URL`);
+      return false;
+    }
+
+    // Prepare headers with environment variable resolution
+    const headers = (trigger.headers || []).map(header => {
+      if (header.value_from_env) {
+        return {
+          name: header.name,
+          value: process.env[header.value_from_env] || ''
+        };
+      }
+      return {
+        name: header.name,
+        value: header.value || ''
+      };
+    });
+
+    // Create or update the cron trigger
+    await hasura.defineCronTrigger({
+      name: trigger.name,
+      webhook: webhookUrl,
+      schedule: trigger.schedule,
+      payload: trigger.payload,
+      headers,
+      replace: true
+    });
+
+    debug(`Cron trigger ${trigger.name} created/updated successfully`);
+    return true;
+  } catch (error) {
+    debug(`Error creating/updating cron trigger ${trigger.name}: ${error}`);
+    return false;
+  }
+}
+
+/**
+ * Delete a cron trigger from Hasura
+ */
+export async function deleteCronTrigger(hasura: Hasura, name: string): Promise<boolean> {
+  debug(`Deleting cron trigger: ${name}`);
+
+  try {
+    await hasura.deleteCronTrigger({ name });
+    debug(`Cron trigger ${name} deleted successfully`);
+    return true;
+  } catch (error) {
+    debug(`Error deleting cron trigger ${name}: ${error}`);
+    return false;
+  }
+}
+
+/**
+ * Get existing cron triggers from Hasura
+ */
+export async function getExistingCronTriggers(hasura: Hasura): Promise<Record<string, CronTriggerDefinition>> {
+  debug('Getting existing cron triggers from Hasura');
+
+  try {
+    const metadata = await hasura.exportMetadata();
+    const cronTriggers = metadata.cron_triggers || [];
+
+    const existingTriggers: Record<string, CronTriggerDefinition> = {};
+
+    for (const trigger of cronTriggers) {
+      // Convert Hasura format back to our definition format
+      const definition: CronTriggerDefinition = {
+        name: trigger.name,
+        webhook: trigger.webhook,
+        schedule: trigger.schedule,
+        payload: trigger.payload,
+        comment: trigger.comment,
+        retry_conf: trigger.retry_conf ? {
+          num_retries: trigger.retry_conf.num_retries,
+          timeout_seconds: trigger.retry_conf.timeout_seconds,
+          tolerance_seconds: trigger.retry_conf.tolerance_seconds,
+          retry_interval_seconds: trigger.retry_conf.retry_interval_seconds
+        } : undefined,
+        headers: trigger.headers ? trigger.headers.map((h: any) => ({
+          name: h.name,
+          value: h.value
+        })) : undefined,
+        include_in_metadata: trigger.include_in_metadata
+      };
+
+      existingTriggers[trigger.name] = definition;
+    }
+
+    debug(`Found ${Object.keys(existingTriggers).length} existing cron triggers`);
+    return existingTriggers;
+  } catch (error) {
+    debug(`Error getting existing cron triggers: ${error}`);
+    return {};
+  }
+}
+
+/**
+ * Synchronize local cron trigger definitions with Hasura
+ */
+export async function syncCronTriggers(hasura: Hasura, localTriggers: CronTriggerDefinition[], baseUrl?: string): Promise<void> {
+  debug(`Synchronizing ${localTriggers.length} cron triggers with Hasura`);
+
+  try {
+    // Get existing triggers from Hasura
+    const existingTriggers = await getExistingCronTriggers(hasura);
+    const existingNames = new Set(Object.keys(existingTriggers));
+    const localNames = new Set(localTriggers.map(t => t.name));
+
+    // Create or update local triggers
+    for (const trigger of localTriggers) {
+      const success = await createOrUpdateCronTrigger(hasura, trigger, baseUrl);
+      if (success) {
+        debug(`✓ Cron trigger ${trigger.name} synchronized`);
+      } else {
+        debug(`✗ Failed to synchronize cron trigger ${trigger.name}`);
+      }
+    }
+
+    // Delete triggers that exist in Hasura but not locally
+    for (const existingName of existingNames) {
+      if (!localNames.has(existingName)) {
+        debug(`Deleting cron trigger ${existingName} (not found locally)`);
+        await deleteCronTrigger(hasura, existingName);
+      }
+    }
+
+    debug('Cron trigger synchronization completed');
+  } catch (error) {
+    debug(`Error synchronizing cron triggers: ${error}`);
+  }
+}
+
+/**
+ * Synchronize all triggers (both event and cron) from a directory
+ */
+export async function syncAllTriggersFromDirectory(eventsDir: string, hasuraUrl?: string, hasuraSecret?: string, baseUrl?: string): Promise<void> {
+  debug('Synchronizing all triggers from directory');
 
   // Check if HASURA_EVENT_SECRET is set
   const eventSecret = process.env.HASURA_EVENT_SECRET;
   if (!eventSecret) {
     debug('HASURA_EVENT_SECRET not set in environment');
-    console.warn('⚠️ WARNING: HASURA_EVENT_SECRET is not set. This is required for secure event trigger handling.');
+    console.warn('⚠️ WARNING: HASURA_EVENT_SECRET is not set. This is required for secure trigger handling.');
     console.warn('   Please set HASURA_EVENT_SECRET in your environment variables.');
 
     // In production, we should fail if the secret is not set
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('HASURA_EVENT_SECRET is required for event trigger synchronization in production');
+      throw new Error('HASURA_EVENT_SECRET is required for trigger synchronization in production');
     }
   }
 
@@ -397,17 +648,32 @@ export async function syncEventTriggersFromDirectory(eventsDir: string, hasuraUr
 
   if (!url || !secret) {
     debug('Missing Hasura URL or admin secret');
-    throw new Error('NEXT_PUBLIC_HASURA_GRAPHQL_URL and HASURA_ADMIN_SECRET are required for event trigger synchronization');
+    throw new Error('NEXT_PUBLIC_HASURA_GRAPHQL_URL and HASURA_ADMIN_SECRET are required for trigger synchronization');
   }
 
   const hasura = new Hasura({ url, secret });
 
-  // Load trigger definitions from the directory
-  const triggers = await loadEventTriggerDefinitions(eventsDir);
-  debug(`Loaded ${triggers.length} event trigger definitions`);
+  // Load all trigger definitions from the directory
+  const { eventTriggers, cronTriggers } = await loadTriggerDefinitions(eventsDir);
+  debug(`Loaded ${eventTriggers.length} event triggers and ${cronTriggers.length} cron triggers`);
 
-  // Synchronize the triggers with Hasura
-  await syncEventTriggers(hasura, triggers, baseUrl);
+  // Synchronize both types of triggers
+  await Promise.all([
+    syncEventTriggers(hasura, eventTriggers, baseUrl),
+    syncCronTriggers(hasura, cronTriggers, baseUrl)
+  ]);
+
+  debug('All triggers synchronized successfully');
+}
+
+/**
+ * Main function to synchronize all event triggers from a directory (backward compatibility)
+ */
+export async function syncEventTriggersFromDirectory(eventsDir: string, hasuraUrl?: string, hasuraSecret?: string, baseUrl?: string): Promise<void> {
+  debug('Synchronizing event triggers from directory (legacy function - use syncAllTriggersFromDirectory for full support)');
+  
+  // For backward compatibility, call the new function
+  await syncAllTriggersFromDirectory(eventsDir, hasuraUrl, hasuraSecret, baseUrl);
 }
 
 /**
@@ -800,7 +1066,7 @@ export async function main() {
       console.log(`ℹ️ Using base URL for webhooks: ${baseUrl}`);
     }
     
-    await syncEventTriggersFromDirectory(eventsDir, undefined, undefined, baseUrl);
+    await syncAllTriggersFromDirectory(eventsDir, undefined, undefined, baseUrl);
     console.log('✅ Event triggers synchronized successfully!');
     debug('Event triggers synchronized');
   } catch (error) {

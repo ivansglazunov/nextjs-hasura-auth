@@ -1294,13 +1294,13 @@ export class Hasura {
     }
     
     return await this.v1({
-      type: 'pg_create_cron_trigger',
+      type: 'create_cron_trigger',
       args: {
         name,
         webhook,
         schedule,
-        payload,
-        headers,
+        payload: payload || {},
+        headers: headers || [],
         include_in_metadata: true
       }
     });
@@ -1312,13 +1312,13 @@ export class Hasura {
     debug(`🏗️ Creating cron trigger ${name}`);
     
     return await this.v1({
-      type: 'pg_create_cron_trigger',
+      type: 'create_cron_trigger',
       args: {
         name,
         webhook,
         schedule,
-        payload,
-        headers,
+        payload: payload || {},
+        headers: headers || [],
         include_in_metadata: true
       }
     });
@@ -1330,7 +1330,7 @@ export class Hasura {
     debug(`🗑️ Deleting cron trigger ${name}`);
     
     return await this.v1({
-      type: 'pg_delete_cron_trigger',
+      type: 'delete_cron_trigger',
       args: { name }
     });
   }

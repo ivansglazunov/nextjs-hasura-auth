@@ -205,6 +205,30 @@ export async function applySQLSchema(hasura: Hasura) {
     comment: 'Additional provider-specific data (e.g., Telegram username, photo_url)'
   });
   
+  // Define auth_passive table for passive authentication
+  await hasura.defineTable({
+    schema: 'public',
+    table: 'auth_passive',
+    id: 'id',
+    type: ColumnType.UUID
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'auth_passive',
+    name: 'jwt',
+    type: ColumnType.TEXT,
+    comment: 'JWT token for passive authentication'
+  });
+  
+  await hasura.defineColumn({
+    schema: 'public',
+    table: 'auth_passive',
+    name: 'redirect',
+    type: ColumnType.TEXT,
+    comment: 'Redirect URL after authentication'
+  });
+  
   // Create foreign key constraint
   await hasura.defineForeignKey({
     from: { schema: 'public', table: 'accounts', column: 'user_id' },
@@ -230,6 +254,7 @@ export async function trackTables(hasura: Hasura) {
   
   await hasura.trackTable({ schema: 'public', table: 'users' });
   await hasura.trackTable({ schema: 'public', table: 'accounts' });
+  await hasura.trackTable({ schema: 'public', table: 'auth_passive' });
   
   debug('✅ Users tables tracking complete.');
 }
@@ -333,6 +358,16 @@ export async function applyPermissions(hasura: Hasura) {
     role: 'admin',
     filter: {},
     columns: ['id', 'user_id', 'type', 'provider', 'provider_account_id', 'provider_data', 'created_at']
+  });
+
+  // Auth passive permissions - only admin can access this table
+  await hasura.definePermission({
+    schema: 'public',
+    table: 'auth_passive',
+    operation: 'select',
+    role: 'admin',
+    filter: {},
+    columns: ['id', 'jwt', 'redirect', 'created_at']
   });
 
   debug('✅ Users permissions applied.');

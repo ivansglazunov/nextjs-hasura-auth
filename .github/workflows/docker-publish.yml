@@ -12,7 +12,6 @@ env:
 
 jobs:
   build-and-push:
-    if: env.DOCKER_PUBLISH != '0'
     runs-on: ubuntu-latest
     permissions:
       contents: read

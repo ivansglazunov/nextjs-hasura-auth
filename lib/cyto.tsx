@@ -426,9 +426,17 @@ export const Cyto = memo(function Graph({
         ref={bgRef}
         className="absolute inset-0"
         style={{
-          backgroundImage: `linear-gradient(${gridColor} .1em, transparent .1em), linear-gradient(90deg, ${gridColor} .1em, transparent .1em)`,
-          backgroundSize: `3em 3em`,
-          backgroundPosition: `0px 0px`
+          width: '100%',
+        height: '100%',
+          backgroundImage: `
+            radial-gradient(circle at 0 0, ${gridColor} 1px, transparent 1px),
+            radial-gradient(circle at .1em .1em, ${gridColor} 1px, transparent 1px),
+            radial-gradient(circle at 0 .1em, ${gridColor} 1px, transparent 1px),
+            radial-gradient(circle at .1em 0, ${gridColor} 1px, transparent 1px)
+          `,
+          backgroundSize: '3em 3em',
+          backgroundPosition: '0 0, 0 0, 0 0, 0 0',
+          backgroundRepeat: 'repeat',
         }}
       />
       {cytoscape}
@@ -839,7 +847,10 @@ const CytoNodeComponentCore: React.FC<CytoNodeProps & { forwardedRef: React.Ref<
     }
 
     return () => {
-      if (currentCyEl && currentCyEl.length && currentCyEl.inside()) currentCyEl.off('position', handlePositionEvent);
+      if (currentCyEl && currentCyEl.length && currentCyEl.inside()) {
+        currentCyEl.style({ 'width': 'auto', 'height': 'auto' });
+        currentCyEl.off('position', handlePositionEvent);
+      }
       if (htmlElement && observer) {
         observer.unobserve(htmlElement);
       }

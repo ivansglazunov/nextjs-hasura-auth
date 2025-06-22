@@ -5052,6 +5052,182 @@
       "level": 1
     },
     {
+      "title": "Telegram WebApp Integration",
+      "url": "/hasyx/doc/TELEGRAM-WEBAPP",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Архитектура",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#",
+          "level": 2
+        },
+        {
+          "title": "OAuth провайдеры:",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#oauth",
+          "level": 3
+        },
+        {
+          "title": "Credentials провайдеры:",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#credentials",
+          "level": 3
+        },
+        {
+          "title": "Telegram WebApp Integration",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#telegram-webapp-integration",
+          "level": 2
+        },
+        {
+          "title": "Компоненты",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#",
+          "level": 3
+        },
+        {
+          "title": "Настройка",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#",
+          "level": 3
+        },
+        {
+          "title": "Безопасность",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#",
+          "level": 3
+        },
+        {
+          "title": "Функционал WebApp",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#webapp",
+          "level": 3
+        },
+        {
+          "title": "Тестирование",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#",
+          "level": 3
+        },
+        {
+          "title": "Развертывание",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#",
+          "level": 3
+        },
+        {
+          "title": "Отладка",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#",
+          "level": 3
+        },
+        {
+          "title": "SDK Dependencies",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#sdk-dependencies",
+          "level": 3
+        },
+        {
+          "title": "Заключение",
+          "url": "/hasyx/doc/TELEGRAM-WEBAPP#",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
+      "title": "Telegram Bot Webhook Configuration",
+      "url": "/hasyx/doc/TELEGRAM-WEBHOOK",
+      "collapse": true,
+      "items": [
+        {
+          "title": "Overview",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#overview",
+          "level": 2
+        },
+        {
+          "title": "Features",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#features",
+          "level": 2
+        },
+        {
+          "title": "Automatic Webhook Setup",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#automatic-webhook-setup",
+          "level": 3
+        },
+        {
+          "title": "Security Features",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#security-features",
+          "level": 3
+        },
+        {
+          "title": "Usage",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#usage",
+          "level": 2
+        },
+        {
+          "title": "CLI Commands",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#cli-commands",
+          "level": 3
+        },
+        {
+          "title": "Configuration Process",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#configuration-process",
+          "level": 3
+        },
+        {
+          "title": "Environment Variables",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#environment-variables",
+          "level": 3
+        },
+        {
+          "title": "Webhook Endpoint",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#webhook-endpoint",
+          "level": 3
+        },
+        {
+          "title": "Technical Implementation",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#technical-implementation",
+          "level": 2
+        },
+        {
+          "title": "URL Processing",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#url-processing",
+          "level": 3
+        },
+        {
+          "title": "API Call",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#api-call",
+          "level": 3
+        },
+        {
+          "title": "Error Handling",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#error-handling",
+          "level": 3
+        },
+        {
+          "title": "Testing",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#testing",
+          "level": 2
+        },
+        {
+          "title": "Integration",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#integration",
+          "level": 2
+        },
+        {
+          "title": "Security Notes",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#security-notes",
+          "level": 2
+        },
+        {
+          "title": "Troubleshooting",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#troubleshooting",
+          "level": 2
+        },
+        {
+          "title": "Common Issues",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#common-issues",
+          "level": 3
+        },
+        {
+          "title": "Debug Information",
+          "url": "/hasyx/doc/TELEGRAM-WEBHOOK#debug-information",
+          "level": 3
+        }
+      ],
+      "level": 1
+    },
+    {
       "title": "GitHub → Telegram Bot Integration",
       "url": "/hasyx/doc/TELEGRAM_BOT",
       "collapse": true,
@@ -11043,5 +11219,5 @@
       "level": 1
     }
   ],
-  "lastUpdated": "2025-06-14T18:58:37.601Z"
+  "lastUpdated": "2025-06-22T17:32:39.530Z"
 }

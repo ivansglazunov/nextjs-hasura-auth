@@ -1,36 +1,52 @@
 # Events System Documentation
 
-The Hasyx Events system provides a seamless integration between Hasura Event Triggers and Next.js API routes, allowing you to handle database changes in real-time with automatic synchronization and secure webhook handling.
+The Hasyx Events system provides a seamless integration between Hasura Event Triggers, Cron Triggers, and Next.js API routes, allowing you to handle database changes in real-time and execute scheduled tasks with automatic synchronization and secure webhook handling.
 
 ## Overview
 
 The Events system consists of three main components:
 
-1. **Event Trigger Definitions** - JSON configuration files in the `/events` directory
+1. **Trigger Definitions** - JSON configuration files in the `/events` directory
 2. **CLI Commands** - Synchronization tools (`npx hasyx events`)
 3. **API Route Handlers** - Next.js routes that process incoming events from Hasura
 
+## Supported Trigger Types
+
+### Event Triggers (Data Triggers)
+Handle database changes in real-time when data is inserted, updated, or deleted.
+
+### Cron Triggers (Scheduled Tasks)
+Execute webhook calls on a schedule using cron expressions for recurring tasks.
+
 ## Architecture Flow
 
+**Event Triggers:**
 ```
 Database Change → Hasura Event Trigger → Webhook → Next.js API Route → Your Handler
 ```
 
-## Event Trigger Definitions
+**Cron Triggers:**
+```
+Cron Schedule → Hasura Cron Trigger → Webhook → Next.js API Route → Your Handler
+```
+
+## Trigger Definitions
 
 ### Directory Structure
 
 ```
 /events/
-├── users.json           # User table events
-├── accounts.json        # Account table events
-├── notify.json          # Notification events
-└── subscription-billing.json # Billing events
+├── users.json           # User table events (Event Trigger)
+├── accounts.json        # Account table events (Event Trigger)
+├── notify.json          # Notification events (Event Trigger)
+└── subscription-billing.json # Billing cron task (Cron Trigger)
 ```
 
-### Configuration Format
+### Event Trigger Configuration Format
 
-Each JSON file defines a Hasura Event Trigger:
+Each JSON file can define either a Hasura Event Trigger or a Cron Trigger.
+
+#### Event Trigger Example
 
 ```json
 {
@@ -63,7 +79,32 @@ Each JSON file defines a Hasura Event Trigger:
 }
 ```
 
+#### Cron Trigger Example
+
+```json
+{
+  "name": "subscription_billing_cron",
+  "webhook_path": "/api/events/subscription-billing",
+  "schedule": "*/10 * * * *",
+  "comment": "Process subscription billing every 10 minutes",
+  "retry_conf": {
+    "num_retries": 3,
+    "interval_sec": 15,
+    "timeout_sec": 60
+  },
+  "headers": [
+    {
+      "name": "X-Hasura-Event-Secret",
+      "value_from_env": "HASURA_EVENT_SECRET"
+    }
+  ],
+  "include_in_metadata": true
+}
+```
+
 ### Configuration Options
+
+#### Event Trigger Fields
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -80,11 +121,25 @@ Each JSON file defines a Hasura Event Trigger:
 | `retry_conf` | object | No | Retry configuration |
 | `headers` | array | No | Custom headers for webhook requests |
 
+#### Cron Trigger Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Unique trigger name |
+| `webhook` | string | No | Full webhook URL |
+| `webhook_path` | string | No | Path only (combined with NEXT_PUBLIC_MAIN_URL) |
+| `schedule` | string | Yes | Cron schedule expression (e.g., `*/10 * * * *`) - [Cron Format](#cron-schedule-format) |
+| `payload` | object | No | JSON payload to send with webhook |
+| `comment` | string | No | Description of the cron trigger |
+| `retry_conf` | object | No | Retry configuration |
+| `headers` | array | No | Custom headers for webhook requests |
+| `include_in_metadata` | boolean | No | Include trigger in metadata export (defaults to true) |
+
 ## CLI Commands
 
 ### `npx hasyx events`
 
-Synchronizes local event trigger definitions with Hasura.
+Synchronizes local trigger definitions (both Event Triggers and Cron Triggers) with Hasura.
 
 **Basic Usage:**
 ```bash
@@ -92,12 +147,12 @@ npx hasyx events
 ```
 
 **Available Options:**
-- `--init` - Create default event trigger definitions in the events directory
-- `--clean` - Remove security headers from event definitions (they will be added automatically during sync)
+- `--init` - Create default trigger definitions in the events directory
+- `--clean` - Remove security headers from trigger definitions (they will be added automatically during sync)
 
 **What the command does:**
 1. Loads all `.json` files from `/events` directory
-2. Validates each configuration
+2. Validates each configuration (Event Triggers and Cron Triggers)
 3. Creates/updates triggers in Hasura
 4. Adds security headers automatically
 5. Removes triggers that exist in Hasura but not locally
@@ -154,7 +209,9 @@ export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
 
 ### Custom Handlers
 
-Create specific handlers for different event types:
+Create specific handlers for different trigger types:
+
+#### Event Trigger Handler
 
 **`/app/api/events/users/route.ts`**
 ```typescript
@@ -183,7 +240,41 @@ export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
 });
 ```
 
-### Event Payload Structure
+#### Cron Trigger Handler
+
+**`/app/api/events/subscription-billing/route.ts`**
+```typescript
+import { hasyxEvent, HasuraCronPayload } from 'hasyx/lib/events';
+
+export const POST = hasyxEvent(async (payload: HasuraCronPayload) => {
+  // Handle cron trigger execution
+  console.log('Processing subscription billing...');
+  
+  // Perform scheduled task
+  try {
+    // Process subscription renewals
+    // Send billing notifications
+    // Update subscription statuses
+    
+    return { 
+      success: true, 
+      message: 'Billing processed successfully',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Billing process failed:', error);
+    return { 
+      success: false, 
+      error: error.message,
+      timestamp: new Date().toISOString()
+    };
+  }
+});
+```
+
+### Payload Structure
+
+#### Event Trigger Payload
 
 The `HasuraEventPayload` interface provides typed access to event data:
 
@@ -214,6 +305,21 @@ interface HasuraEventPayload {
     schema: string;
     name: string;
   };
+}
+```
+
+#### Cron Trigger Payload
+
+The `HasuraCronPayload` interface provides typed access to cron trigger data:
+
+```typescript
+interface HasuraCronPayload {
+  id: string;
+  scheduled_time: string;
+  created_at: string;
+  name: string;
+  payload?: any;  // Custom payload defined in trigger
+  comment?: string;
 }
 ```
 
@@ -318,7 +424,47 @@ export const POST = hasyxEvent(async (payload: HasuraEventPayload) => {
 });
 ```
 
-### 2. Handling User Registration Events
+### 2. Adding a New Cron Trigger
+
+**Step 1: Create cron trigger definition**
+```bash
+# Create events/daily-reports.json
+{
+  "name": "daily_reports_cron",
+  "webhook_path": "/api/events/daily-reports",
+  "schedule": "0 8 * * *",
+  "comment": "Generate daily reports at 8 AM",
+  "payload": {
+    "report_type": "daily",
+    "format": "pdf"
+  }
+}
+```
+
+**Step 2: Synchronize with Hasura**
+```bash
+npx hasyx events
+```
+
+**Step 3: Create API handler**
+```typescript
+// app/api/events/daily-reports/route.ts
+import { hasyxEvent, HasuraCronPayload } from 'hasyx/lib/events';
+
+export const POST = hasyxEvent(async (payload: HasuraCronPayload) => {
+  console.log('Generating daily reports...');
+  
+  // Access custom payload
+  const { report_type, format } = payload.payload || {};
+  
+  // Generate and send reports
+  await generateDailyReports(report_type, format);
+  
+  return { success: true, message: 'Reports generated successfully' };
+});
+```
+
+### 3. Handling User Registration Events
 
 **Event Definition (`events/users.json`):**
 ```json
@@ -351,7 +497,7 @@ export const POST = hasyxEvent(async (payload) => {
 });
 ```
 
-### 3. Debugging Events
+### 4. Debugging Events
 
 **Enable Debug Logging:**
 ```bash
@@ -362,6 +508,41 @@ DEBUG=events,events-cli npx hasyx events
 1. Go to Hasura Console → Data → [Your Table] → Events
 2. View event logs and delivery status
 3. Check retry attempts and error messages
+
+**Check Cron Trigger Status:**
+1. Go to Hasura Console → Events → Cron Triggers
+2. View trigger status and execution history
+3. Check scheduled times and next execution
+
+## Cron Schedule Format
+
+Cron triggers use the standard 5-field cron format:
+
+```
+* * * * *
+│ │ │ │ │
+│ │ │ │ └─── Day of Week (0-6, Sunday=0)
+│ │ │ └───── Month (1-12)
+│ │ └─────── Day of Month (1-31)
+│ └───────── Hour (0-23)
+└─────────── Minute (0-59)
+```
+
+### Common Cron Examples
+
+| Schedule | Description |
+|----------|-------------|
+| `*/10 * * * *` | Every 10 minutes |
+| `0 8 * * *` | Daily at 8:00 AM |
+| `0 0 * * 0` | Weekly on Sunday at midnight |
+| `0 0 1 * *` | Monthly on the 1st at midnight |
+| `0 9 * * 1-5` | Weekdays at 9:00 AM |
+| `30 14 * * *` | Daily at 2:30 PM |
+
+### Cron Expression Tools
+
+- [Crontab Guru](https://crontab.guru/) - Interactive cron expression builder
+- [Cron Expression Generator](https://www.freeformatter.com/cron-expression-generator-quartz.html)
 
 ## Troubleshooting
 
@@ -400,6 +581,25 @@ DEBUG=events,events-cli npx hasyx events
 npx hasyx events --init
 ```
 
+**5. Cron Trigger Not Executing**
+```
+❌ Cron trigger created but not executing
+```
+**Solution:**
+- Verify cron schedule format is correct
+- Check if trigger is enabled in Hasura Console
+- Ensure webhook URL is accessible from Hasura
+- Check Hasura logs for execution errors
+
+**6. Invalid Cron Schedule**
+```
+❌ Invalid cron expression
+```
+**Solution:**
+- Use the 5-field format: `minute hour day month weekday`
+- Test your cron expression using [Crontab Guru](https://crontab.guru/)
+- Ensure all fields are within valid ranges
+
 ### Debug Commands
 
 **View Hasura Metadata:**
@@ -419,6 +619,14 @@ curl -X POST http://localhost:3000/api/events/test \
   -H "Content-Type: application/json" \
   -H "X-Hasura-Event-Secret: your-secret" \
   -d '{"event": {"op": "INSERT", "data": {"new": {"id": 1}}}}'
+```
+
+**Test Cron Handler Locally:**
+```bash
+curl -X POST http://localhost:3000/api/events/subscription-billing \
+  -H "Content-Type: application/json" \
+  -H "X-Hasura-Event-Secret: your-secret" \
+  -d '{"id": "test-123", "scheduled_time": "2024-01-01T08:00:00Z", "created_at": "2024-01-01T08:00:00Z", "name": "test_cron"}'
 ```
 
 ## Advanced Usage
@@ -463,6 +671,36 @@ Use different webhook URLs for different environments:
 }
 ```
 
+### Advanced Cron Trigger Features
+
+#### Custom Payload
+Send custom data with cron triggers:
+
+```json
+{
+  "name": "user_cleanup_cron",
+  "schedule": "0 2 * * *",
+  "webhook_path": "/api/events/cleanup",
+  "payload": {
+    "cleanup_type": "inactive_users",
+    "days_inactive": 30,
+    "batch_size": 100
+  }
+}
+```
+
+#### Environment-Specific Schedules
+Use different schedules for different environments:
+
+```json
+{
+  "name": "backup_cron",
+  "schedule": "0 3 * * *",
+  "webhook_path": "/api/events/backup",
+  "comment": "Daily backup at 3 AM (production schedule)"
+}
+```
+
 ## Integration with Other Systems
 
 ### Email Notifications
@@ -504,17 +742,37 @@ export const POST = hasyxEvent(async (payload) => {
 
 ## Best Practices
 
-1. **Use specific handlers** for different event types rather than one giant handler
+### General Practices
+
+1. **Use specific handlers** for different trigger types rather than one giant handler
 2. **Keep handlers lightweight** - delegate heavy work to background jobs
 3. **Always return success response** to prevent unnecessary retries
 4. **Use TypeScript** for better payload type safety
-5. **Monitor event delivery** in Hasura Console
+5. **Monitor trigger delivery** in Hasura Console
 6. **Test handlers locally** before deploying
 7. **Use environment-specific secrets** for security
 8. **Log important events** for debugging and monitoring
 
+### Event Trigger Specific
+
+9. **Use minimal column sets** in event triggers to reduce payload size
+10. **Filter events at database level** when possible rather than in handlers
+11. **Handle both INSERT and UPDATE** when business logic requires it
+
+### Cron Trigger Specific
+
+12. **Use descriptive cron trigger names** that indicate their purpose
+13. **Add meaningful comments** to explain schedule and purpose
+14. **Consider timezone implications** - Hasura uses UTC
+15. **Implement idempotency** in cron handlers for safe retries
+16. **Use appropriate retry configurations** for critical scheduled tasks
+17. **Monitor cron execution logs** regularly for failures
+18. **Test cron schedules** thoroughly before production deployment
+
 ## Related Documentation
 
 - [Hasura Event Triggers Documentation](https://hasura.io/docs/latest/event-triggers/index/)
+- [Hasura Scheduled Triggers (Cron) Documentation](https://hasura.io/docs/latest/scheduled-triggers/index/)
 - [Next.js API Routes](https://nextjs.org/docs/api-routes/introduction)
-- [Hasyx CLI Documentation](./README.md#cli-commands) 
+- [Hasyx CLI Documentation](./README.md#cli-commands)
+- [Cron Expression Guide](https://crontab.guru/) 

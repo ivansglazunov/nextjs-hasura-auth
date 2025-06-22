@@ -2,14 +2,14 @@ import fs from 'fs-extra';
 import path from 'path';
 import Debug from './debug';
 import dotenv from 'dotenv';
-import { createDefaultEventTriggers, syncEventTriggersFromDirectory } from './events';
+import { createDefaultEventTriggers, syncEventTriggersFromDirectory, syncAllTriggersFromDirectory } from './events';
 
 const debug = Debug('events-cli');
 
 export const eventsCommand = async (options: any) => {
   dotenv.config({ path: path.join(process.cwd(), '.env') });
   debug('Executing "events" command with options:', options);
-  console.log('🔄 Synchronizing Hasura event triggers...');
+  console.log('🔄 Synchronizing Hasura triggers (events and cron)...');
   
   const projectRoot = process.cwd();
   const eventsDir = path.join(projectRoot, 'events');
@@ -40,8 +40,8 @@ export const eventsCommand = async (options: any) => {
   
   // Clean security headers if --clean flag is provided
   if (options.clean) {
-    console.log('🧹 Cleaning security headers from event definitions...');
-    debug('Cleaning security headers from event definitions');
+    console.log('🧹 Cleaning security headers from trigger definitions...');
+    debug('Cleaning security headers from trigger definitions');
     
     try {
       const eventFiles = await fs.readdir(eventsDir);
@@ -49,24 +49,24 @@ export const eventsCommand = async (options: any) => {
       
       for (const file of jsonFiles) {
         const filePath = path.join(eventsDir, file);
-        const eventDef = await fs.readJson(filePath);
+        const triggerDef = await fs.readJson(filePath);
         
         // Remove security headers if they exist
-        if (eventDef.headers) {
-          const originalHeaderCount = eventDef.headers.length;
-          eventDef.headers = eventDef.headers.filter((header: any) => 
+        if (triggerDef.headers) {
+          const originalHeaderCount = triggerDef.headers.length;
+          triggerDef.headers = triggerDef.headers.filter((header: any) => 
             !header.name || !header.name.toLowerCase().includes('authorization')
           );
           
-          if (eventDef.headers.length !== originalHeaderCount) {
-            await fs.writeJson(filePath, eventDef, { spaces: 2 });
+          if (triggerDef.headers.length !== originalHeaderCount) {
+            await fs.writeJson(filePath, triggerDef, { spaces: 2 });
             console.log(`✅ Cleaned security headers from ${file}`);
             debug(`Cleaned security headers from ${file}`);
           }
         }
       }
       
-      console.log('✅ Security headers cleaned from event definitions');
+      console.log('✅ Security headers cleaned from trigger definitions');
       debug('Security headers cleaning completed');
     } catch (error) {
       console.error('❌ Failed to clean security headers:', error);
@@ -75,17 +75,19 @@ export const eventsCommand = async (options: any) => {
     }
   }
   
-  // Synchronize event triggers
-  console.log('🔄 Synchronizing event triggers with Hasura...');
-  debug('Starting event triggers synchronization');
+  // Synchronize all triggers (both event and cron)
+  console.log('🔄 Synchronizing triggers with Hasura...');
+  console.log('   - Event triggers (data changes)');
+  console.log('   - Cron triggers (scheduled tasks)');
+  debug('Starting triggers synchronization');
   
   try {
-    await syncEventTriggersFromDirectory(eventsDir);
-    console.log('✅ Event triggers synchronized successfully');
-    debug('Event triggers synchronization completed successfully');
+    await syncAllTriggersFromDirectory(eventsDir);
+    console.log('✅ All triggers synchronized successfully');
+    debug('Triggers synchronization completed successfully');
   } catch (error) {
-    console.error('❌ Failed to synchronize event triggers:', error);
-    debug(`Error synchronizing event triggers: ${error}`);
+    console.error('❌ Failed to synchronize triggers:', error);
+    debug(`Error synchronizing triggers: ${error}`);
     
     // Provide helpful error messages
     const errorMessage = error instanceof Error ? error.message : String(error);
