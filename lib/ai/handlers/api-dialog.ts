@@ -23,7 +23,7 @@ export function generateDialogHandler(options: DialogHandlerOptions) {
 
   return async function handleDialogRequest(request: Request) {
     debug('Handling dialog API request');
-    
+
     if (request.method === 'OPTIONS') {
       debug('Received OPTIONS request, responding with CORS headers');
       return new NextResponse(null, { status: 204, headers: corsHeaders });
@@ -46,8 +46,8 @@ export function generateDialogHandler(options: DialogHandlerOptions) {
 
       debug('Initializing OpenRouterProvider...');
       const provider = new OpenRouterProvider({
-          token: process.env.OPENROUTER_API_KEY,
-          model: 'anthropic/claude-3.5-sonnet',
+        token: process.env.OPENROUTER_API_KEY,
+        model: 'anthropic/claude-3.5-sonnet',
       });
 
       let responseMessage: AIMessage | undefined;
@@ -74,10 +74,10 @@ export function generateDialogHandler(options: DialogHandlerOptions) {
 
       const lastMessage = messages.pop();
       if (lastMessage) {
-          debug('Asking dialog with message: "%s"', lastMessage.content);
-          await dialog.ask(lastMessage);
+        debug('Asking dialog with message: "%s"', lastMessage.content);
+        await dialog.ask(lastMessage);
       }
-      
+
       if (hasError) {
         throw new Error('Dialog encountered an error during processing.');
       }

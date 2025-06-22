@@ -23,7 +23,7 @@ export function generateConsole() {
         console.log(`\nTool result for ${event.id}:`);
         console.log(event.result);
         if (event.error) {
-            console.error(`Tool error: ${event.error}`);
+          console.error(`Tool error: ${event.error}`);
         }
         break;
       case 'ai_response':
@@ -36,7 +36,7 @@ export function generateConsole() {
         break;
     }
   };
-  
+
   const dialog = new Dialog({
     provider,
     // In this setup, tools and system prompt are managed by the API route

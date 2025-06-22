@@ -14,7 +14,7 @@ export class OllamaProvider implements AIProvider {
     this.options = {
       baseUrl: 'http://localhost:11434',
       model: 'gemma2:2b',
-      timeout: 60000,
+      timeout: 6000000,
       ...options
     };
   }

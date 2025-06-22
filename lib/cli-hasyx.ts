@@ -13,7 +13,7 @@ import { migrate } from './migrate';
 import { unmigrate } from './unmigrate';
 import { generateHasuraSchema } from './hasura-schema';
 import { runJsEnvironment } from './js';
-import { generateAsk } from './ask';
+import { askCommand, askCommandDescribe } from './ask';
 import { runTsxEnvironment } from './tsx';
 import { assetsCommand } from './assets';
 import { eventsCommand } from './events-cli';
@@ -791,21 +791,7 @@ export const jsCommand = async (filePath: string | undefined, options: any) => {
   }
 };
 
-// Ask command
-export const askCommand = async (options: any) => {
-  debug('Executing "ask" command with options:', options);
-  
-  // The logic is now handled by the ask module itself.
-  // We just need to call it with the correct options.
-  try {
-    const ask = generateAsk();
-    await ask();
-  } catch (error) {
-    console.error('❌ Error in ask command:', error);
-    debug('Ask command error:', error);
-    process.exit(1);
-  }
-};
+// Ask command is now exported from ask.ts
 
 /**
  * Ensures OPENROUTER_API_KEY is available, setting it up interactively if needed
@@ -1375,11 +1361,7 @@ export const jsCommandDescribe = (cmd: Command) => {
     .option('-e, --eval <script>', 'Evaluate a string of JavaScript code');
 };
 
-export const askCommandDescribe = (cmd: Command) => {
-  return cmd
-    .description('AI assistant with code execution capabilities')
-    .option('-e, --eval <question>', 'Execute a direct question');
-};
+// askCommandDescribe is now exported from ask.ts
 
 export const tsxCommandDescribe = (cmd: Command) => {
   return cmd

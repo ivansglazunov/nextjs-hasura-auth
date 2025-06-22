@@ -6,6 +6,7 @@ import { generateTerminalHandler } from 'hasyx/lib/ai/terminal';
 import { ExecJSTool } from 'hasyx/lib/ai/tools/exec-js-tool';
 import { TerminalTool } from 'hasyx/lib/ai/tools/terminal-tool';
 import { createSystemPrompt } from 'hasyx/lib/ai/core-prompts';
+import type { Command } from 'commander';
 import * as path from 'path';
 
 // Load .env file from the root of the project
@@ -29,20 +30,18 @@ const getSystemPrompt = () => {
   return createSystemPrompt(appContext, toolDescriptions);
 };
 
-const tools = [new ExecJSTool(), new TerminalTool({ timeout: 0 })];
-const systemPrompt = getSystemPrompt();
+interface AskOptions {
+  provider?: string;
+  model?: string;
+  eval?: string;
+}
 
-let using = '';
-function getProviderFromArgs(): AIProvider {
-  const args = process.argv.slice(2);
-  const providerArgIndex = args.findIndex(arg => arg === '--provider');
-  const modelArgIndex = args.findIndex(arg => arg === '--model');
-
-  const providerName = providerArgIndex !== -1 ? args[providerArgIndex + 1] : 'openrouter';
-  const modelName = modelArgIndex !== -1 ? args[modelArgIndex + 1] : undefined;
+function getProvider(options: AskOptions): AIProvider {
+  const providerName = options.provider || 'openrouter';
+  const modelName = options.model;
 
   if (providerName === 'ollama') {
-    using = `Using Ollama provider with model: ${modelName || 'default'}`;
+    console.log(`Using Ollama provider with model: ${modelName || 'gemma2:2b'}`);
     return new OllamaProvider({ model: modelName });
   }
 
@@ -58,8 +57,10 @@ function getProviderFromArgs(): AIProvider {
   });
 }
 
-export const generateAsk = () => {
-  const provider = getProviderFromArgs();
+export const generateAsk = (options: AskOptions = {}) => {
+  const provider = getProvider(options);
+  const tools = [new ExecJSTool(), new TerminalTool({ timeout: 0 })];
+  const systemPrompt = getSystemPrompt();
 
   return generateTerminalHandler({
     provider,
@@ -68,8 +69,37 @@ export const generateAsk = () => {
   });
 }
 
+// CLI configuration functions for use in cli-hasyx.ts
+export const askCommandDescribe = (cmd: Command) => {
+  return cmd
+    .description('AI assistant with code execution capabilities')
+    .option('-p, --provider <provider>', 'AI provider to use (openrouter, ollama)', 'openrouter')
+    .option('-m, --model <model>', 'Model to use')
+    .option('-e, --eval <question>', 'Execute a direct question');
+};
+
+export const askCommand = async (options: AskOptions) => {
+  try {
+    const ask = generateAsk(options);
+    await ask();
+  } catch (error) {
+    console.error('❌ Error in ask command:', error);
+    process.exit(1);
+  }
+};
+
 async function main() {
-  const ask = generateAsk();
+  // When run directly, parse arguments manually for backwards compatibility
+  const args = process.argv.slice(2);
+  const providerArgIndex = args.findIndex(arg => arg === '--provider');
+  const modelArgIndex = args.findIndex(arg => arg === '--model');
+
+  const options: AskOptions = {
+    provider: providerArgIndex !== -1 ? args[providerArgIndex + 1] : 'openrouter',
+    model: modelArgIndex !== -1 ? args[modelArgIndex + 1] : undefined
+  };
+
+  const ask = generateAsk(options);
   await ask();
 }
 

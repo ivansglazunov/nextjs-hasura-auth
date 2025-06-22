@@ -25,7 +25,7 @@ import {
   localCommandDescribe,
   vercelCommandDescribe,
   jsCommandDescribe, jsCommand,
-  askCommandDescribe, askCommand,
+
   tsxCommandDescribe, tsxCommand,
   subdomainCommandDescribe,
   dockerCommandDescribe,
@@ -39,6 +39,9 @@ import {
   localCommand,
   vercelCommand,
 } from 'hasyx/lib/cli-hasyx';
+
+// Ask command is handled separately with its own imports
+import { askCommand, askCommandDescribe } from './ask';
 
 console.log(`${pckg.name}@${pckg.version}`);
 
@@ -113,7 +116,9 @@ vercelCommandDescribe(program.command('vercel')).action(async () => {
 });
 
 jsCommandDescribe(program.command('js [filePath]')).action(jsCommand);
+
 askCommandDescribe(program.command('ask')).action(askCommand);
+
 tsxCommandDescribe(program.command('tsx [filePath]')).action(tsxCommand);
 
 logsCommandDescribe(program.command('logs')).action(async () => {

@@ -764,52 +764,14 @@ export function createTerminalDo(callbacks: TerminalDoCallbacks = {}): TerminalD
  * Default terminal context for AI
  */
 export const terminalContext = `
-🖥️  **Terminal Execution Environment**
-
-You can execute terminal commands using various shells with node-pty support.
-
-**Available Shells:**
-- bash - Default Linux/macOS shell
-- zsh - Enhanced shell with better features
-- node - Node.js REPL environment
-- python - Python interactive interpreter
-- docker - Docker container commands
-- ssh - Remote shell access
-
-**Execution Format:**
+You not only text ai model, but also you can execute terminal commands using various shells with node-pty support.
+If you need it, write code not just inside markdown code block, but STRICTLY with this pattern:
 > 😈<uuid>/do/terminal/bash
 \`\`\`bash
 your terminal command here
 \`\`\`
-
-**Examples:**
-> 😈ls1/do/terminal/bash
-\`\`\`bash
-ls -la
-\`\`\`
-
-> 😈info1/do/terminal/bash
-\`\`\`bash
-uname -a && pwd
-\`\`\`
-
-> 😈node1/do/terminal/bash
-\`\`\`bash
-node --version
-\`\`\`
-
-> 😈python1/do/terminal/bash
-\`\`\`bash
-python3 --version
-\`\`\`
-
-**Features:**
-- Real terminal process spawning
-- Command timeout protection (5 seconds)
-- Session management
-- Event handling
-- Cross-platform support
-- Graceful error handling
+You receive the result of the execution after it's done.
+You can make many executions in response with different UUIDs.
 `;
 
 /**

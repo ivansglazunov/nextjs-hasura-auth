@@ -115,6 +115,27 @@ Hasyx creates `.github/workflows/docker-publish.yml` for automatic image publish
 2. Add secrets:
    - `DOCKER_USERNAME` - Docker Hub username
    - `DOCKER_PASSWORD` - Docker Hub password or access token
+   - `DOCKER_PUBLISH` - Set to `1` to enable Docker publishing, `0` or unset to disable
+
+### Publishing Control
+Docker image publishing is controlled by the `DOCKER_PUBLISH` environment variable:
+
+- **`DOCKER_PUBLISH=1`** - Enables automatic Docker image publishing to Docker Hub
+- **`DOCKER_PUBLISH=0`** or **unset** - Disables Docker publishing (default)
+
+This allows you to:
+- Control when Docker images are published
+- Disable publishing during development/testing phases
+- Enable publishing only for production releases
+
+You can configure this setting interactively using:
+```bash
+npx tsx lib/assist-docker.ts
+```
+
+The assistant will ask:
+- If publishing is **disabled**: "Do you want to enable it?" (y/N)
+- If publishing is **enabled**: "Do you want to disable it?" (y/N)
 
 ### Automatic Publishing
 - **Push to main/master** → publish with `latest` tag

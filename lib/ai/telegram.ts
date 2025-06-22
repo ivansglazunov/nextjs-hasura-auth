@@ -68,7 +68,7 @@ export function generateTelegramHandler(options: TelegramHandlerOptions) {
         debug('Ignoring non-text message or message without chat ID.');
         return NextResponse.json({ success: true, message: 'Not a text message to handle' });
       }
-      
+
       const chatId = message.chat.id;
       const text = message.text;
       debug(`Processing message from chat ${chatId}: "${text}"`);
@@ -84,18 +84,18 @@ export function generateTelegramHandler(options: TelegramHandlerOptions) {
       debug(`Dialog exists for chat ${chatId}: ${!!dialog}`);
 
       if (text.toLowerCase().trim() === '/start') {
-          debug(`Processing /start command for chat ${chatId}`);
-          dialogs.delete(chatId);
-          dialog = undefined;
-          await sendTelegramMessage(process.env.TELEGRAM_BOT_TOKEN!, chatId, `Hello! I am your AI assistant. Your session has been reset. Send me a task.`);
-          return NextResponse.json({ success: true });
+        debug(`Processing /start command for chat ${chatId}`);
+        dialogs.delete(chatId);
+        dialog = undefined;
+        await sendTelegramMessage(process.env.TELEGRAM_BOT_TOKEN!, chatId, `Hello! I am your AI assistant. Your session has been reset. Send me a task.`);
+        return NextResponse.json({ success: true });
       }
-        
+
       if (!dialog) {
         debug(`Creating new Dialog for chat ${chatId}`);
         debug('Available tools:', tools?.map(t => t.name) || []);
         const provider = new OpenRouterProvider({ token: process.env.OPENROUTER_API_KEY, model: 'deepseek/deepseek-chat-v3-0324:free' });
-        
+
         dialog = new Dialog({
           provider,
           tools,

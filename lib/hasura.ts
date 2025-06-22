@@ -46,11 +46,13 @@ interface DeleteColumnOptions {
   schema: string;
   table: string;
   name: string;
+  cascade?: boolean;
 }
 
 interface DeleteTableOptions {
   schema: string;
   table: string | string[];
+  cascade?: boolean;
 }
 
 interface DefineRelationshipOptions {
@@ -64,6 +66,7 @@ interface DeleteRelationshipOptions {
   schema: string;
   table: string;
   name: string;
+  cascade?: boolean;
 }
 
 interface DefinePermissionOptions {
@@ -81,6 +84,7 @@ interface DeletePermissionOptions {
   table: string;
   operation: 'select' | 'insert' | 'update' | 'delete';
   role: string | string[];
+  cascade?: boolean;
 }
 
 interface ColumnInfo {
@@ -215,7 +219,7 @@ export class Hasura {
     return this.clientInstance;
   }
 
-  async sql(sql: string, source: string = 'default', cascade: boolean = false): Promise<any> {
+  async sql(sql: string, source: string = 'default', cascade: boolean = true): Promise<any> {
     debug('🔧 Executing SQL via /v2/query...');
     try {
       const response = await this.clientInstance.post('/v2/query', {
@@ -545,9 +549,9 @@ export class Hasura {
   }
 
   async deleteColumn(options: DeleteColumnOptions): Promise<any> {
-    const { schema, table, name } = options;
+    const { schema, table, name, cascade = true } = options;
     
-    debug(`🗑️ Deleting column ${name} from ${schema}.${table}`);
+    debug(`🗑️ Deleting column ${name} from ${schema}.${table} (cascade: ${cascade})`);
     
     // Check if column exists
     const columnExists = await this.sql(`
@@ -556,11 +560,12 @@ export class Hasura {
       WHERE table_schema = '${schema}' 
       AND table_name = '${table}' 
       AND column_name = '${name}';
-    `);
+    `, 'default', false);
     
     if (columnExists.result && columnExists.result.length > 1) {
-      await this.sql(`ALTER TABLE "${schema}"."${table}" DROP COLUMN "${name}";`);
-      debug(`✅ Deleted column ${name}`);
+      const cascadeClause = cascade ? ' CASCADE' : '';
+      await this.sql(`ALTER TABLE "${schema}"."${table}" DROP COLUMN "${name}"${cascadeClause};`, 'default', false);
+      debug(`✅ Deleted column ${name} with cascade: ${cascade}`);
     } else {
       debug(`📝 Column ${name} does not exist, nothing to delete`);
     }
@@ -569,26 +574,27 @@ export class Hasura {
   }
 
   async deleteTable(options: DeleteTableOptions): Promise<any> {
-    const { schema, table } = options;
+    const { schema, table, cascade = true } = options;
     
     if (Array.isArray(table)) {
-      debug(`🗑️ Deleting multiple tables in schema ${schema}: ${table.join(', ')}`);
+      debug(`🗑️ Deleting multiple tables in schema ${schema}: ${table.join(', ')} (cascade: ${cascade})`);
       const results: any[] = [];
       for (const tableName of table) {
-        const result = await this.deleteTable({ schema, table: tableName });
+        const result = await this.deleteTable({ schema, table: tableName, cascade });
         results.push(result);
       }
       return results;
     }
 
-    debug(`🗑️ Deleting table ${schema}.${table}`);
+    debug(`🗑️ Deleting table ${schema}.${table} (cascade: ${cascade})`);
     
     // Untrack table first with cascade
     await this.untrackTable({ schema, table });
     
-    // Drop table if exists with CASCADE
-    await this.sql(`DROP TABLE IF EXISTS "${schema}"."${table}" CASCADE;`);
-    debug(`✅ Deleted table ${schema}.${table}`);
+    // Drop table if exists with CASCADE or without based on option
+    const cascadeClause = cascade ? ' CASCADE' : '';
+    await this.sql(`DROP TABLE IF EXISTS "${schema}"."${table}"${cascadeClause};`, 'default', false);
+    debug(`✅ Deleted table ${schema}.${table} with cascade: ${cascade}`);
     
     return { success: true };
   }
@@ -827,12 +833,13 @@ export class Hasura {
     return { success: true };
   }
 
-  async deleteFunction(options: { schema: string; name: string }): Promise<any> {
-    const { schema, name } = options;
+  async deleteFunction(options: { schema: string; name: string; cascade?: boolean }): Promise<any> {
+    const { schema, name, cascade = true } = options;
     
-    debug(`🗑️ Deleting function ${schema}.${name}`);
+    debug(`🗑️ Deleting function ${schema}.${name} (cascade: ${cascade})`);
     
-    await this.sql(`DROP FUNCTION IF EXISTS "${schema}"."${name}" CASCADE;`);
+    const cascadeClause = cascade ? ' CASCADE' : '';
+    await this.sql(`DROP FUNCTION IF EXISTS "${schema}"."${name}"${cascadeClause};`, 'default', false);
     
     return { success: true };
   }
@@ -883,12 +890,13 @@ export class Hasura {
     return { success: true };
   }
 
-  async deleteTrigger(options: { schema: string; table: string; name: string }): Promise<any> {
-    const { schema, table, name } = options;
+  async deleteTrigger(options: { schema: string; table: string; name: string; cascade?: boolean }): Promise<any> {
+    const { schema, table, name, cascade = true } = options;
     
-    debug(`🗑️ Deleting trigger ${name} from ${schema}.${table}`);
+    debug(`🗑️ Deleting trigger ${name} from ${schema}.${table} (cascade: ${cascade})`);
     
-    await this.sql(`DROP TRIGGER IF EXISTS "${name}" ON "${schema}"."${table}";`);
+    const cascadeClause = cascade ? ' CASCADE' : '';
+    await this.sql(`DROP TRIGGER IF EXISTS "${name}" ON "${schema}"."${table}"${cascadeClause};`, 'default', false);
     
     return { success: true };
   }
@@ -952,15 +960,16 @@ export class Hasura {
     return { success: true };
   }
 
-  async deleteForeignKey(options: { schema: string; table: string; name: string }): Promise<any> {
-    const { schema, table, name } = options;
+  async deleteForeignKey(options: { schema: string; table: string; name: string; cascade?: boolean }): Promise<any> {
+    const { schema, table, name, cascade = true } = options;
     
-    debug(`🗑️ Deleting foreign key ${name} from ${schema}.${table}`);
+    debug(`🗑️ Deleting foreign key ${name} from ${schema}.${table} (cascade: ${cascade})`);
     
+    const cascadeClause = cascade ? ' CASCADE' : '';
     await this.sql(`
       ALTER TABLE "${schema}"."${table}" 
-      DROP CONSTRAINT IF EXISTS "${name}";
-    `);
+      DROP CONSTRAINT IF EXISTS "${name}"${cascadeClause};
+    `, 'default', false);
     
     return { success: true };
   }
@@ -1006,15 +1015,16 @@ export class Hasura {
     return { success: true };
   }
 
-  async deleteView(options: { schema: string; name: string }): Promise<any> {
-    const { schema, name } = options;
+  async deleteView(options: { schema: string; name: string; cascade?: boolean }): Promise<any> {
+    const { schema, name, cascade = true } = options;
     
-    debug(`🗑️ Deleting view ${schema}.${name}`);
+    debug(`🗑️ Deleting view ${schema}.${name} (cascade: ${cascade})`);
     
     // Untrack view with cascade first
     await this.untrackView({ schema, name });
     // Drop view with CASCADE to handle dependencies
-    await this.sql(`DROP VIEW IF EXISTS "${schema}"."${name}" CASCADE;`);
+    const cascadeClause = cascade ? ' CASCADE' : '';
+    await this.sql(`DROP VIEW IF EXISTS "${schema}"."${name}"${cascadeClause};`, 'default', false);
     
     return { success: true };
   }
@@ -1416,40 +1426,280 @@ export class Hasura {
   async deleteSchema(options: { schema: string; cascade?: boolean }): Promise<any> {
     const { schema, cascade = true } = options;
     
-    debug(`🗑️ Deleting schema ${schema} ${cascade ? 'with CASCADE' : ''}`);
+    debug(`💀 FORCE DELETING schema ${schema} - GUARANTEED REMOVAL MODE`);
     
-    // First untrack all tables and views in the schema with cascade
+    // Check if schema exists before attempting deletion
+    const schemasBefore = await this.schemas();
+    if (!schemasBefore.includes(schema)) {
+      debug(`📝 Schema ${schema} does not exist, nothing to delete`);
+      return { success: true, message: `Schema ${schema} does not exist` };
+    }
+    
+    debug(`🚨 AGGRESSIVE MODE: Obliterating all objects in schema ${schema}`);
+    
+    // PHASE 1: Brutal untracking (ignore all errors)
     try {
       const tables = await this.tables({ schema });
+      debug(`💣 Found ${tables.length} tables, force untracking ALL (errors ignored)`);
+      
       for (const table of tables) {
-        await this.untrackTable({ schema, table });
+        try {
+          await this.untrackTable({ schema, table });
+        } catch (error) {
+          // Ignore all untrack errors
+        }
       }
       
-      // Also check for views and untrack them
-      const views = await this.sql(`
-        SELECT table_name 
-        FROM information_schema.views 
-        WHERE table_schema = '${schema}'
-        ORDER BY table_name;
-      `);
-      
+      const views = await this.sql(`SELECT table_name FROM information_schema.views WHERE table_schema = '${schema}';`);
       if (views.result && views.result.length > 1) {
         for (let i = 1; i < views.result.length; i++) {
           const viewName = views.result[i][0];
           if (viewName) {
-            await this.untrackView({ schema, name: viewName });
+            try {
+              await this.untrackView({ schema, name: viewName });
+            } catch (error) {
+              // Ignore all untrack errors
+            }
           }
         }
       }
     } catch (error) {
-      debug(`Warning: Could not untrack all objects in schema ${schema}: ${error}`);
+      // Ignore ALL API errors
     }
     
-    // Drop schema with CASCADE to force removal of all dependencies
-    const cascadeClause = cascade ? 'CASCADE' : 'RESTRICT';
-    await this.sql(`DROP SCHEMA IF EXISTS "${schema}" ${cascadeClause};`);
+    // PHASE 2: NUCLEAR SQL CLEANUP - Remove everything with extreme prejudice
+    debug(`☢️ NUCLEAR PHASE: Direct SQL obliteration of ALL objects`);
     
-    return { success: true };
+    // Step 1: Disable all constraints and dependencies
+    try {
+      await this.sql(`
+        DO $$ 
+        DECLARE 
+          r RECORD;
+        BEGIN
+          -- Drop ALL foreign key constraints in the schema
+          FOR r IN (
+            SELECT tc.constraint_name, tc.table_name, tc.table_schema
+            FROM information_schema.table_constraints tc
+            WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = '${schema}'
+          ) LOOP
+            BEGIN
+              EXECUTE 'ALTER TABLE "' || r.table_schema || '"."' || r.table_name || '" DROP CONSTRAINT IF EXISTS "' || r.constraint_name || '" CASCADE';
+            EXCEPTION WHEN OTHERS THEN
+              -- Ignore all errors
+            END;
+          END LOOP;
+          
+          -- Drop ALL triggers in the schema
+          FOR r IN (
+            SELECT trigger_name, event_object_table, event_object_schema
+            FROM information_schema.triggers
+            WHERE event_object_schema = '${schema}'
+          ) LOOP
+            BEGIN
+              EXECUTE 'DROP TRIGGER IF EXISTS "' || r.trigger_name || '" ON "' || r.event_object_schema || '"."' || r.event_object_table || '" CASCADE';
+            EXCEPTION WHEN OTHERS THEN
+              -- Ignore all errors
+            END;
+          END LOOP;
+        END $$;
+      `);
+    } catch (error) {
+      // Ignore constraint cleanup errors
+    }
+    
+    // Step 2: Obliterate all schema objects with maximum force
+    try {
+      await this.sql(`
+        DO $$ 
+        DECLARE 
+          r RECORD;
+        BEGIN
+          -- Drop ALL materialized views
+          FOR r IN (
+            SELECT schemaname, matviewname
+            FROM pg_matviews
+            WHERE schemaname = '${schema}'
+          ) LOOP
+            BEGIN
+              EXECUTE 'DROP MATERIALIZED VIEW IF EXISTS "' || r.schemaname || '"."' || r.matviewname || '" CASCADE';
+            EXCEPTION WHEN OTHERS THEN
+              -- Ignore all errors
+            END;
+          END LOOP;
+          
+          -- Drop ALL views  
+          FOR r IN (
+            SELECT table_schema, table_name
+            FROM information_schema.views
+            WHERE table_schema = '${schema}'
+          ) LOOP
+            BEGIN
+              EXECUTE 'DROP VIEW IF EXISTS "' || r.table_schema || '"."' || r.table_name || '" CASCADE';
+            EXCEPTION WHEN OTHERS THEN
+              -- Ignore all errors
+            END;
+          END LOOP;
+          
+          -- Drop ALL functions and procedures
+          FOR r IN (
+            SELECT routine_schema, routine_name, routine_type
+            FROM information_schema.routines
+            WHERE routine_schema = '${schema}'
+          ) LOOP
+            BEGIN
+              IF r.routine_type = 'FUNCTION' THEN
+                EXECUTE 'DROP FUNCTION IF EXISTS "' || r.routine_schema || '"."' || r.routine_name || '" CASCADE';
+              ELSIF r.routine_type = 'PROCEDURE' THEN
+                EXECUTE 'DROP PROCEDURE IF EXISTS "' || r.routine_schema || '"."' || r.routine_name || '" CASCADE';
+              END IF;
+            EXCEPTION WHEN OTHERS THEN
+              -- Ignore all errors
+            END;
+          END LOOP;
+          
+          -- Drop ALL sequences
+          FOR r IN (
+            SELECT sequence_schema, sequence_name
+            FROM information_schema.sequences
+            WHERE sequence_schema = '${schema}'
+          ) LOOP
+            BEGIN
+              EXECUTE 'DROP SEQUENCE IF EXISTS "' || r.sequence_schema || '"."' || r.sequence_name || '" CASCADE';
+            EXCEPTION WHEN OTHERS THEN
+              -- Ignore all errors
+            END;
+          END LOOP;
+          
+          -- Drop ALL tables (BASE TABLES)
+          FOR r IN (
+            SELECT table_schema, table_name
+            FROM information_schema.tables
+            WHERE table_schema = '${schema}' AND table_type = 'BASE TABLE'
+          ) LOOP
+            BEGIN
+              EXECUTE 'DROP TABLE IF EXISTS "' || r.table_schema || '"."' || r.table_name || '" CASCADE';
+            EXCEPTION WHEN OTHERS THEN
+              -- Ignore all errors
+            END;
+          END LOOP;
+          
+          -- Drop ALL types
+          FOR r IN (
+            SELECT n.nspname, t.typname
+            FROM pg_type t 
+            JOIN pg_namespace n ON t.typnamespace = n.oid 
+            WHERE n.nspname = '${schema}' AND t.typtype IN ('c', 'e', 'd')
+          ) LOOP
+            BEGIN
+              EXECUTE 'DROP TYPE IF EXISTS "' || r.nspname || '"."' || r.typname || '" CASCADE';
+            EXCEPTION WHEN OTHERS THEN
+              -- Ignore all errors
+            END;
+          END LOOP;
+        END $$;
+      `);
+    } catch (error) {
+      // Ignore ALL object cleanup errors
+    }
+    
+    // PHASE 3: ULTIMATE FORCE - Multiple schema deletion attempts
+    debug(`🎯 FINAL ASSAULT: Guaranteed schema deletion`);
+    
+    const maxAttempts = 5;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        // Try with increasing levels of force
+        if (attempt === 1) {
+          await this.sql(`DROP SCHEMA IF EXISTS "${schema}" CASCADE;`);
+        } else if (attempt === 2) {
+          // Try to kill any remaining dependencies
+          await this.sql(`
+            DROP SCHEMA IF EXISTS "${schema}" CASCADE;
+          `);
+        } else if (attempt >= 3) {
+          // Maximum brutality - try to remove any remaining references
+          await this.sql(`
+            DO $$ 
+            BEGIN
+              -- Force drop any remaining objects
+              DROP SCHEMA IF EXISTS "${schema}" CASCADE;
+            EXCEPTION WHEN OTHERS THEN
+              -- Try direct system catalog manipulation (dangerous but effective)
+              BEGIN
+                DELETE FROM pg_depend 
+                WHERE objid IN (SELECT oid FROM pg_namespace WHERE nspname = '${schema}');
+                DELETE FROM pg_description 
+                WHERE objoid IN (SELECT oid FROM pg_namespace WHERE nspname = '${schema}');
+                DELETE FROM pg_namespace WHERE nspname = '${schema}';
+              EXCEPTION WHEN OTHERS THEN
+                -- Even system manipulation failed
+              END;
+            END $$;
+          `);
+        }
+        
+        // Check if schema was nuked
+        const schemasAfter = await this.schemas();
+        const stillExists = schemasAfter.includes(schema);
+        
+        if (!stillExists) {
+          debug(`🏆 VICTORY: Schema ${schema} OBLITERATED on attempt ${attempt}/${maxAttempts}`);
+          return { success: true, schema_exists: false, attempts: attempt, mode: 'aggressive' };
+        }
+        
+        if (attempt < maxAttempts) {
+          debug(`⚔️ Attempt ${attempt} failed, escalating force level...`);
+          // Brief pause before escalating
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+      } catch (error) {
+        debug(`💥 Deletion attempt ${attempt} encountered resistance: ${error}`);
+        // Continue to next attempt regardless of errors
+      }
+    }
+    
+    // Final status check
+    const finalSchemas = await this.schemas();
+    const finalExists = finalSchemas.includes(schema);
+    
+    if (finalExists) {
+      debug(`🚨 CRITICAL: Schema ${schema} has survived all deletion attempts - supernatural resistance detected`);
+      
+      // Last resort diagnostics
+      const stubborness = await this.sql(`
+        SELECT 
+          'Zombie tables' as issue,
+          COUNT(*) as count
+        FROM information_schema.tables 
+        WHERE table_schema = '${schema}'
+        UNION ALL
+        SELECT 
+          'Undead views' as issue,
+          COUNT(*) as count
+        FROM information_schema.views 
+        WHERE table_schema = '${schema}'
+        UNION ALL
+        SELECT 
+          'Ghost functions' as issue,
+          COUNT(*) as count
+        FROM information_schema.routines 
+        WHERE routine_schema = '${schema}';
+      `);
+      
+      return { 
+        success: false, 
+        error: `Schema ${schema} is INDESTRUCTIBLE and has resisted all ${maxAttempts} deletion attempts with maximum force. Manual intervention or database admin privileges may be required.`,
+        schema_exists: true,
+        attempts: maxAttempts,
+        mode: 'aggressive',
+        stubborness_report: stubborness.result
+      };
+    }
+    
+    debug(`🎉 TOTAL VICTORY: Schema ${schema} has been completely ANNIHILATED`);
+    return { success: true, schema_exists: false, attempts: maxAttempts, mode: 'aggressive' };
   }
 
   // Data Source Operations

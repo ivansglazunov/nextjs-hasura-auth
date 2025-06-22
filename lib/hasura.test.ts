@@ -297,8 +297,72 @@ debug('✅ Real Hasura client initialized for testing');
       }
     }, 30000);
     
-    it.skip('should delete schema with cascade option', async () => {});
-    it.skip('should delete schema without cascade option', async () => {});
+    it('should delete schema with cascade option by default', async () => {
+      const testSchema = `test_cascade_default_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create schema with tables and dependencies
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineTable({ schema: testSchema, table: 'posts' });
+        
+        // Create a view with dependency
+        await hasura.sql(`
+          CREATE VIEW "${testSchema}".user_posts AS 
+          SELECT u.id as user_id, p.id as post_id 
+          FROM "${testSchema}".users u 
+          LEFT JOIN "${testSchema}".posts p ON p.id = u.id;
+        `, 'default', false);
+        
+        // Test: Delete schema without specifying cascade (should default to true)
+        const result = await hasura.deleteSchema({ schema: testSchema });
+        
+        // Should succeed due to cascade being true by default
+        expect(result.success).toBeTruthy();
+        
+        // Verify: Schema is gone
+        const schemas = await hasura.schemas();
+        expect(schemas).not.toContain(testSchema);
+        
+      } catch (error) {
+        // Cleanup in case of error
+        try {
+          await hasura.deleteSchema({ schema: testSchema, cascade: true });
+        } catch (cleanupError) {
+          // Ignore cleanup errors
+        }
+        throw error;
+      }
+    }, 30000);
+    
+    it('should delete schema without cascade when explicitly disabled', async () => {
+      const testSchema = `test_no_cascade_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create schema with simple table (no dependencies)
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'simple_table' });
+        
+        // Test: Delete schema with cascade explicitly set to false
+        const result = await hasura.deleteSchema({ schema: testSchema, cascade: false });
+        
+        // Should succeed for simple case without dependencies
+        expect(result.success).toBeTruthy();
+        
+        // Verify: Schema is gone
+        const schemas = await hasura.schemas();
+        expect(schemas).not.toContain(testSchema);
+        
+      } catch (error) {
+        // Cleanup in case of error
+        try {
+          await hasura.deleteSchema({ schema: testSchema, cascade: true });
+        } catch (cleanupError) {
+          // Ignore cleanup errors
+        }
+        throw error;
+      }
+    }, 30000);
     it.skip('should handle deleting non-existent schema gracefully', async () => {});
     it.skip('should not fail when defining existing schema', async () => {});
     it.skip('should exclude system schemas from listing', async () => {});
@@ -582,6 +646,130 @@ debug('✅ Real Hasura client initialized for testing');
         // Verify: Column is gone
         columns = await hasura.columns({ schema: testSchema, table: 'users' });
         expect(columns).not.toHaveProperty('temp_column');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+    
+    it('should delete column with cascade by default', async () => {
+      const testSchema = `test_column_cascade_default_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create test schema, table with dependent objects
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'users',
+          name: 'special_id',
+          type: ColumnType.INTEGER
+        });
+        
+        // Create an index on the column (dependency)
+        await hasura.sql(`
+          CREATE INDEX idx_special_id ON "${testSchema}".users (special_id);
+        `, 'default', false);
+        
+        // Test: Delete column without specifying cascade (should default to true)
+        const result = await hasura.deleteColumn({
+          schema: testSchema,
+          table: 'users',
+          name: 'special_id'
+        });
+        expect(result.success).toBe(true);
+        
+        // Verify: Column is gone (cascade should have removed dependencies)
+        const columns = await hasura.columns({ schema: testSchema, table: 'users' });
+        expect(columns).not.toHaveProperty('special_id');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+    
+    it('should delete column without cascade when explicitly disabled', async () => {
+      const testSchema = `test_column_no_cascade_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create test schema, table with simple column (no dependencies)
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'users',
+          name: 'simple_field',
+          type: ColumnType.TEXT
+        });
+        
+        // Test: Delete column with cascade explicitly set to false
+        const result = await hasura.deleteColumn({
+          schema: testSchema,
+          table: 'users',
+          name: 'simple_field',
+          cascade: false
+        });
+        expect(result.success).toBe(true);
+        
+        // Verify: Column is gone
+        const columns = await hasura.columns({ schema: testSchema, table: 'users' });
+        expect(columns).not.toHaveProperty('simple_field');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+    
+    it('should delete table with cascade by default', async () => {
+      const testSchema = `test_table_cascade_default_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create schema with dependent tables
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineTable({ schema: testSchema, table: 'posts' });
+        
+        // Create a foreign key dependency
+        await hasura.sql(`
+          ALTER TABLE "${testSchema}".posts 
+          ADD COLUMN user_id UUID REFERENCES "${testSchema}".users(id);
+        `, 'default', false);
+        
+        // Test: Delete table without specifying cascade (should default to true)
+        const result = await hasura.deleteTable({
+          schema: testSchema,
+          table: 'users'
+        });
+        expect(result.success).toBe(true);
+        
+        // Verify: Table is gone
+        const tables = await hasura.tables({ schema: testSchema });
+        expect(tables).not.toContain('users');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+    
+    it('should delete table without cascade when explicitly disabled', async () => {
+      const testSchema = `test_table_no_cascade_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create schema with simple table (no dependencies)
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'simple_table' });
+        
+        // Test: Delete table with cascade explicitly set to false
+        const result = await hasura.deleteTable({
+          schema: testSchema,
+          table: 'simple_table',
+          cascade: false
+        });
+        expect(result.success).toBe(true);
+        
+        // Verify: Table is gone
+        const tables = await hasura.tables({ schema: testSchema });
+        expect(tables).not.toContain('simple_table');
         
       } finally {
         await hasura.deleteSchema({ schema: testSchema, cascade: true });
