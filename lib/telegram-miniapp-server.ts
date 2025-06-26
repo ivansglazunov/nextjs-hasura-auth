@@ -196,6 +196,35 @@ export function TelegramMiniappCredentialsProvider({ hasyx }: { hasyx: Hasyx }) 
 
         authorizeDebug('Creating/finding user and account via getOrCreateUserAndAccount');
         
+        // Diagnostics: Check if there are existing accounts with the same provider_account_id
+        try {
+          // Check if there are existing accounts with the same provider_account_id
+          const existingTelegramAccounts = await hasyx.select({
+            table: 'accounts',
+            where: {
+              provider_account_id: { _eq: providerAccountId }
+            },
+            returning: ['id', 'provider', 'provider_account_id', 'user_id']
+          });
+          
+          authorizeDebug('🔍 Existing accounts with same provider_account_id:', existingTelegramAccounts);
+          
+          // Check if there are existing accounts with the same provider_account_id
+          const telegramAccount = await hasyx.select({
+            table: 'accounts',
+            where: {
+              provider: { _eq: 'telegram' },
+              provider_account_id: { _eq: providerAccountId }
+            },
+            returning: ['id', 'provider', 'provider_account_id', 'user_id', { user: ['id', 'name', 'email'] }]
+          });
+          
+          authorizeDebug('🔍 Existing TELEGRAM account:', telegramAccount);
+          
+        } catch (checkError) {
+          authorizeDebug('🔍 Error checking existing accounts:', checkError);
+        }
+        
         const dbUser = await getOrCreateUserAndAccount(
           hasyx,
           'telegram-miniapp', // provider name

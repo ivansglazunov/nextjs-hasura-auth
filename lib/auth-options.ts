@@ -185,6 +185,23 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
       async jwt({ token, user, account, profile, trigger }): Promise<DefaultJWT> {
         debug('JWT Callback: input', { userId: token.sub, provider: account?.provider, trigger });
 
+        // 🔍 ДИАГНОСТИЧЕСКИЙ ЛОГ - ПОЛНЫЙ КОНТЕКСТ JWT CALLBACK
+        debug('🔍 JWT Callback FULL CONTEXT:', {
+          tokenSub: token.sub,
+          userObject: user ? { id: user.id, name: user.name, email: user.email, image: user.image } : null,
+          accountObject: account ? { 
+            provider: account.provider, 
+            providerAccountId: account.providerAccountId,
+            type: account.type 
+          } : null,
+          profileObject: profile ? {
+            name: profile?.name,
+            email: profile?.email,
+            image: profile?.image
+          } : null,
+          trigger: trigger
+        });
+
         let userId: string | undefined = token.sub;
         let provider: string | undefined = account?.provider;
         let emailVerified: string | null | undefined = token.emailVerified; // Start with existing token value
@@ -201,31 +218,89 @@ export function createAuthOptions(additionalProviders: any[] = [], client: Hasyx
             emailVerified = (user as any).emailVerified; // Comes from authorize
             debug(`JWT Callback: Credentials sign-in for ${userId}`);
           } else { // OAuth Provider
-            debug(`JWT Callback: OAuth sign-in via ${provider} for ${userId}`);
-            try {
-              // Assume getOrCreateUserAndAccount returns HasuraUser directly
-              const dbUser: HasuraUser | null = await getOrCreateUserAndAccount(
-                client,                 
-                provider!,              
-                account.providerAccountId!, 
-                profile!,
-                user.image // Pass user.image as the fifth argument
-              );
-
-              if (!dbUser || !dbUser.id) {
-                  throw new Error('Failed to retrieve or create user from DB.');
+            debug(`🔍 JWT Callback: OAuth sign-in via ${provider} for ${userId}`);
+            
+            // 🔍 ДИАГНОСТИЧЕСКИЙ ЛОГ - ПЕРЕД ПРОВЕРКОЙ НЕОБХОДИМОСТИ ВТОРОГО ВЫЗОВА
+            debug('🚨 JWT Callback: Checking if second call to getOrCreateUserAndAccount is needed:', {
+              provider: provider,
+              userId: user.id,
+              providerAccountId: account.providerAccountId,
+              userIdEqualsProviderAccountId: user.id === account.providerAccountId
+            });
+            
+            // 🛠️ ИСПРАВЛЕНИЕ: Не делаем второй вызов если authorize уже создал пользователя
+            // Проверяем: если user.id === account.providerAccountId, значит NextAuth передал наш user.id
+            // как providerAccountId, что означает что это уже второй вызов с неправильными данными
+            if (user.id === account.providerAccountId) {
+              debug('✅ JWT Callback: Skipping second getOrCreateUserAndAccount call - user already processed in authorize');
+              debug('🔍 JWT Callback: User already exists, using existing data:', {
+                userId: user.id,
+                provider: provider
+              });
+              
+              // Просто используем существующего пользователя без повторного DB вызова
+              // Получим актуальные данные пользователя напрямую
+              try {
+                const existingUser = await client.select({
+                  table: 'users',
+                  pk_columns: { id: user.id },
+                  returning: ['id', 'email_verified']
+                });
+                
+                if (existingUser) {
+                  emailVerified = existingUser.email_verified ? new Date(existingUser.email_verified).toISOString() : null;
+                  debug(`✅ JWT Callback: Retrieved existing user data for ${user.id}`);
+                } else {
+                  debug(`⚠️ JWT Callback: Could not find existing user ${user.id} in database`);
+                }
+              } catch (error) {
+                debug('⚠️ JWT Callback: Error retrieving existing user data:', error);
               }
               
-              // Update userId ONLY if it changed (e.g., mapping to existing)
-              userId = dbUser.id; 
-              emailVerified = dbUser.email_verified ? new Date(dbUser.email_verified).toISOString() : null; // Convert unix timestamp to ISO string for NextAuth
-              // Cannot determine isNewUser directly from this return type assumption
-              debug(`JWT Callback: OAuth DB sync completed for ${userId}`); 
-            } catch (error) {
-              console.error('JWT Callback: Critical OAuth user sync error:', error);
-              debug('JWT Callback: Error during OAuth user sync:', error);
-              token.error = 'AccountSyncFailed';
-              return token; // Stop on error
+            } else {
+              // Это действительно новый OAuth вызов с правильными данными
+              debug('🔍 JWT Callback: Making legitimate getOrCreateUserAndAccount call');
+              
+              // 🔍 ДИАГНОСТИЧЕСКИЙ ЛОГ - ПЕРЕД ВТОРЫМ ВЫЗОВОМ
+              debug('🚨 JWT Callback: About to call getOrCreateUserAndAccount with:', {
+                provider: provider,
+                providerAccountId: account.providerAccountId,
+                userImageFromNextAuth: user.image,
+                profileFromNextAuth: profile
+              });
+              
+              try {
+                // Assume getOrCreateUserAndAccount returns HasuraUser directly
+                const dbUser: HasuraUser | null = await getOrCreateUserAndAccount(
+                  client,                 
+                  provider!,              
+                  account.providerAccountId!, 
+                  profile!,
+                  user.image // Pass user.image as the fifth argument
+                );
+
+                if (!dbUser || !dbUser.id) {
+                    throw new Error('Failed to retrieve or create user from DB.');
+                }
+                
+                // 🔍 ДИАГНОСТИЧЕСКИЙ ЛОГ - ПОСЛЕ ВТОРОГО ВЫЗОВА
+                debug('🔍 JWT Callback: getOrCreateUserAndAccount COMPLETED:', {
+                  originalUserId: userId,
+                  dbUserId: dbUser.id,
+                  userIdChanged: userId !== dbUser.id
+                });
+                
+                // Update userId ONLY if it changed (e.g., mapping to existing)
+                userId = dbUser.id; 
+                emailVerified = dbUser.email_verified ? new Date(dbUser.email_verified).toISOString() : null; // Convert unix timestamp to ISO string for NextAuth
+                // Cannot determine isNewUser directly from this return type assumption
+                debug(`JWT Callback: OAuth DB sync completed for ${userId}`); 
+              } catch (error) {
+                console.error('JWT Callback: Critical OAuth user sync error:', error);
+                debug('JWT Callback: Error during OAuth user sync:', error);
+                token.error = 'AccountSyncFailed';
+                return token; // Stop on error
+              }
             }
           }
         }

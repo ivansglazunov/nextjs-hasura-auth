@@ -9,7 +9,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useTelegramWebApp } from 'hasyx/hooks/use-telegram-webapp';
 import { Smartphone, LogOut, Info, Settings } from 'lucide-react';
 
-export default function TelegramWebAppPage() {
+export default function TelegramMiniAppPage() {
   const { data: session, status } = useSession();
   const {
     isInTelegram,

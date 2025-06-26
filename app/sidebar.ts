@@ -43,8 +43,8 @@ export const sidebar: SidebarData = {
           url: "/hasyx/payments",
         },
         {
-          title: "🟠 Telegram",
-          url: "/hasyx/telegram-webapp",
+          title: "🟢 Telegram",
+          url: "/hasyx/telegram-miniapp",
         },
       ],
     },

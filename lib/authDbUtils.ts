@@ -76,17 +76,31 @@ export async function getOrCreateUserAndAccount(
   profile?: UserProfileFromProvider | null,
   image?: string | null
 ): Promise<HasuraUser> {
-  debug(`getOrCreateUserAndAccount called for provider: ${provider}, providerAccountId: ${providerAccountId}`);
+  debug(`🔍 getOrCreateUserAndAccount called for provider: ${provider}, providerAccountId: ${providerAccountId}`);
 
   // --- 1. Try to find the account --- 
   let existingUser: HasuraUser | null = null;
   try {
-    const accountResult = await hasyx.select({
-      table: 'accounts',
-      where: {
+    debug(`🔍 Step 1: Searching for existing account with provider: ${provider}, providerAccountId: ${providerAccountId}`);
+    
+    // 🛠️ Fix: For telegram providers, we search in both variants
+    let whereCondition;
+    if (provider === 'telegram' || provider === 'telegram-miniapp') {
+      whereCondition = {
+        provider: { _in: ['telegram', 'telegram-miniapp'] },
+        provider_account_id: { _eq: providerAccountId },
+      };
+      debug(`🔍 Using telegram multi-provider search for providerAccountId: ${providerAccountId}`);
+    } else {
+      whereCondition = {
         provider: { _eq: provider },
         provider_account_id: { _eq: providerAccountId },
-      },
+      };
+    }
+    
+    const accountResult = await hasyx.select({
+      table: 'accounts',
+      where: whereCondition,
       returning: [
         { user: ['id', 'name', 'email', 'email_verified', 'image', 'password', 'created_at', 'updated_at', 'is_admin', 'hasura_role'] } 
       ],
@@ -95,7 +109,8 @@ export async function getOrCreateUserAndAccount(
 
     if (accountResult?.length > 0 && accountResult?.[0]?.user) {
       existingUser = accountResult?.[0]?.user;
-      debug(`Found existing account for ${provider}:${providerAccountId}. User ID: ${existingUser?.id}`);
+      debug(`✅ Found existing account for ${provider}:${providerAccountId}. User ID: ${existingUser?.id}`);
+      
       // If user exists and image is provided, update it
       if (existingUser && image && existingUser.image !== image) {
         debug(`Updating image for existing user ${existingUser.id}`);
@@ -104,8 +119,12 @@ export async function getOrCreateUserAndAccount(
           pk_columns: { id: existingUser.id },
           _set: { image: image, name: profile?.name ?? existingUser.name } // Also update name if provider has a newer one
         });
-        existingUser.image = image; // Update in-memory object
-        existingUser.name = profile?.name ?? existingUser.name;
+        // 🛠️ Fix: Create a new object instead of modifying readonly properties
+        existingUser = {
+          ...existingUser,
+          image: image,
+          name: profile?.name ?? existingUser.name
+        };
       }
       return existingUser as HasuraUser;
     }
@@ -114,13 +133,15 @@ export async function getOrCreateUserAndAccount(
     throw new Error(`Failed to search for existing account: ${(error as Error).message}`);
   }
 
-  debug(`No existing account found for ${provider}:${providerAccountId}. Proceeding to find/create user.`);
+  debug(`🔍 Step 2: No existing account found for ${provider}:${providerAccountId}. Proceeding to find/create user.`);
 
   // --- 2. Try to find the user by email (if provided) ---
   // Important: Only link if email is provided and preferably verified by the OAuth provider.
   // For credentials, we find the user first in the `authorize` function.
   if (profile?.email && provider !== 'credentials') { // Avoid linking for credentials here
     try {
+      debug(`🔍 Step 2a: Searching for user by email: ${profile.email}`);
+      
       const userByEmailResult = await hasyx.select({
         table: 'users',
         where: { email: { _eq: profile.email } },
@@ -128,9 +149,10 @@ export async function getOrCreateUserAndAccount(
         limit: 1,
       });
 
+
       if (userByEmailResult?.length > 0) {
         existingUser = userByEmailResult?.[0];
-        debug(`Found existing user by email ${profile.email}. User ID: ${existingUser?.id}. Linking account.`);
+        debug(`✅ Found existing user by email ${profile.email}. User ID: ${existingUser?.id}. Linking account.`);
         
         // If user exists and image is provided, update it
         if (existingUser && image && existingUser.image !== image) {
@@ -140,11 +162,16 @@ export async function getOrCreateUserAndAccount(
             pk_columns: { id: existingUser.id },
             _set: { image: image, name: profile?.name ?? existingUser.name } // Also update name
           });
-          existingUser.image = image; // Update in-memory object
-          existingUser.name = profile?.name ?? existingUser.name;
+          // 🛠️ Fix: Create a new object instead of modifying readonly properties
+          existingUser = {
+            ...existingUser,
+            image: image,
+            name: profile?.name ?? existingUser.name
+          };
         }
         
         // Link account to this existing user
+        debug(`🔄 CREATING ACCOUNT RECORD: provider=${provider}, provider_account_id=${providerAccountId}, user_id=${existingUser?.id}`);
         await hasyx.insert({
           table: 'accounts',
           object: {
@@ -155,7 +182,8 @@ export async function getOrCreateUserAndAccount(
           },
           returning: ['id'], // Removed extra backslashes
         });
-        debug(`Account ${provider}:${providerAccountId} linked to user ${existingUser?.id}.`);
+        
+        debug(`✅ Account ${provider}:${providerAccountId} linked to user ${existingUser?.id}.`);
         return existingUser as HasuraUser;
       }
     } catch (error) {
@@ -172,7 +200,8 @@ export async function getOrCreateUserAndAccount(
   }
 
   // --- 3. Create new user and account --- 
-  debug(`No existing user found by email or account link. Creating new user and account for ${provider}:${providerAccountId}.`);
+  debug(`🔍 Step 3: No existing user found by email or account link. Creating new user and account for ${provider}:${providerAccountId}.`);
+  
   try {
     // We need to insert the user first, then the account linking to it.
     // Hasura doesn't directly support nested inserts with linking back in the same mutation easily via the generator.
@@ -197,9 +226,10 @@ export async function getOrCreateUserAndAccount(
       throw new Error('Failed to create new user or retrieve its ID.');
     }
     const newUser = newUserResult;
-    debug(`New user created with ID: ${newUser.id}`);
+    debug(`✅ New user created with ID: ${newUser.id}`);
 
     // Now create the account linked to the new user
+    debug(`🔄 CREATING ACCOUNT RECORD: provider=${provider}, provider_account_id=${providerAccountId}, user_id=${newUser.id}`);
     await hasyx.insert({
       table: 'accounts',
       object: {
@@ -210,7 +240,8 @@ export async function getOrCreateUserAndAccount(
       },
       returning: ['id'], // Removed extra backslashes
     });
-    debug(`Account ${provider}:${providerAccountId} created and linked to new user ${newUser.id}.`);
+    
+    debug(`✅ Account ${provider}:${providerAccountId} created and linked to new user ${newUser.id}.`);
 
     return newUser;
 

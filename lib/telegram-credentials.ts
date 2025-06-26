@@ -78,22 +78,9 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       debug("🔐 Telegram authorize attempt started");
       console.log("🔐 Telegram authorize attempt with credentials keys:", credentials ? Object.keys(credentials) : 'null');
       
-      // Log to database for Vercel debugging
-      hasyx.debug({
-        action: "telegram_auth_start",
-        timestamp: new Date().valueOf(),
-        credentialsKeys: credentials ? Object.keys(credentials) : null,
-        hasCredentials: !!credentials
-      });
-      
       if (!credentials) {
         debug("❌ No credentials provided");
         console.error("❌ Telegram login failed: No credentials provided");
-        hasyx.debug({
-          action: "telegram_auth_error",
-          error: "No credentials provided",
-          timestamp: new Date().valueOf()
-        });
         return null;
       }
 
@@ -101,11 +88,6 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       if (!botToken) {
         debug("❌ TELEGRAM_LOGIN_BOT_TOKEN is not set in environment. Cannot verify hash.");
         console.error("❌ TELEGRAM_LOGIN_BOT_TOKEN is not set in environment. Cannot verify hash.");
-        hasyx.debug({
-          action: "telegram_auth_error",
-          error: "TELEGRAM_LOGIN_BOT_TOKEN not configured",
-          timestamp: new Date().valueOf()
-        });
         throw new Error("Telegram bot token is not configured.");
       }
 
@@ -120,11 +102,6 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       };
       
       debug("📝 Received credentials:", credentialsForLog);
-      hasyx.debug({
-        action: "telegram_auth_credentials",
-        credentials: credentialsForLog,
-        timestamp: new Date().valueOf()
-      });
 
       // Prepare data for hash verification (all fields except 'hash' itself)
       const dataToCheck: Record<string, string | number> = {};
@@ -167,21 +144,10 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       };
       
       console.log("🔍 Telegram hash verification - received vs calculated:", hashVerification);
-      hasyx.debug({
-        action: "telegram_auth_hash_verification",
-        verification: hashVerification,
-        timestamp: new Date().valueOf()
-      });
 
       if (calculatedHash !== credentials.hash) {
         debug("❌ Hash verification failed!");
         console.error("❌ Telegram login failed: Hash verification failed");
-        hasyx.debug({
-          action: "telegram_auth_error",
-          error: "Hash verification failed",
-          verification: hashVerification,
-          timestamp: new Date().valueOf()
-        });
         return null; // Hash mismatch
       }
       debug("✅ Telegram hash verification successful.");
@@ -193,21 +159,10 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       
       const timeVerification = { authDate, now, timeDiff, maxAge: 86400 };
       debug("⏰ Time verification:", timeVerification);
-      hasyx.debug({
-        action: "telegram_auth_time_verification",
-        verification: timeVerification,
-        timestamp: new Date().valueOf()
-      });
       
       if (timeDiff > 86400) { // 24 hours in seconds
         debug("❌ Telegram auth_date is too old. Possible replay attack.");
         console.error("❌ Telegram login failed: Auth date too old (replay attack protection)");
-        hasyx.debug({
-          action: "telegram_auth_error",
-          error: "Auth date too old (replay attack protection)",
-          verification: timeVerification,
-          timestamp: new Date().valueOf()
-        });
         return null;
       }
       debug("✅ Telegram auth_date is recent.");
@@ -230,11 +185,6 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
       };
 
       debug("👤 Processing Telegram user:", userInfo);
-      hasyx.debug({
-        action: "telegram_auth_user_processing",
-        user: userInfo,
-        timestamp: new Date().valueOf()
-      });
 
       try {
         // Use providerAccountId as the Telegram user ID
@@ -250,13 +200,6 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
         };
         
         debug("🔄 Calling getOrCreateUserAndAccount with Telegram data:", { provider: "telegram", providerAccountId, userProfile });
-        hasyx.debug({
-          action: "telegram_auth_db_operation_start",
-          provider: "telegram",
-          providerAccountId,
-          userProfile,
-          timestamp: new Date().valueOf()
-        });
 
         const dbUser = await getOrCreateUserAndAccount(
           hasyx,
@@ -268,13 +211,7 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
 
         if (dbUser && dbUser.id) {
           debug("✅ Telegram user authorized and mapped to DB user:", dbUser.id);
-          console.log("✅ Telegram login successful for user:", dbUser.id);
-          hasyx.debug({
-            action: "telegram_auth_success",
-            dbUserId: dbUser.id,
-            telegramUserId: telegramUser.id,
-            timestamp: new Date().valueOf()
-          });
+          console.log("✅ Telegram login successful for user:", dbUser.id); 
           return {
             id: dbUser.id,
             name: dbUser.name,
@@ -284,24 +221,12 @@ export function TelegramProvider({ hasyx }: { hasyx: Hasyx }) {
         } else {
           debug("❌ Failed to get or create user for Telegram login.");
           console.error("❌ Failed to get or create user for Telegram login.");
-          hasyx.debug({
-            action: "telegram_auth_error",
-            error: "Failed to get or create user in DB",
-            dbUser,
-            timestamp: new Date().valueOf()
-          });
           return null;
         }
       } catch (error) {
         debug("❌ Error during Telegram user processing in DB:", error);
         console.error("❌ Error during Telegram user processing in DB:", error);
-        hasyx.debug({
-          action: "telegram_auth_error",
-          error: "Database operation failed",
-          errorMessage: error instanceof Error ? error.message : String(error),
-          errorStack: error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().valueOf()
-        });
+
         throw new Error("Failed to process Telegram login with database.");
       }
     },
