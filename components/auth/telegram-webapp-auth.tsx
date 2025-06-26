@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from 'hasyx
 import { Badge } from 'hasyx/components/ui/badge';
 import { Loader2, CheckCircle, AlertCircle, Smartphone } from 'lucide-react';
 import { useTelegramWebApp } from 'hasyx/hooks/use-telegram-webapp';
+import { debugLog } from 'hasyx/components/debug-console';
 import Debug from 'hasyx/lib/debug';
 
 const debug = Debug('auth:telegram-webapp');
@@ -81,7 +82,8 @@ export function TelegramWebAppAuth({
       user && 
       initData &&
       status === 'unauthenticated' && 
-      !isAuthenticating
+      !isAuthenticating &&
+      !authError // Don't retry if there was an error
     ) {
       debug('Auto-authenticating Telegram user', {
         userId: user.id,
@@ -89,10 +91,12 @@ export function TelegramWebAppAuth({
       });
       handleTelegramAuth();
     }
-  }, [autoAuth, isInTelegram, user, initData, status, isAuthenticating]);
+  }, [autoAuth, isInTelegram, user, initData, status, isAuthenticating, authError]);
 
   const validateInitData = useCallback(async (initDataString: string): Promise<boolean> => {
+    console.log('🔄 Client: validateInitData called');
     try {
+      console.log('🔄 Client: Making POST request to /api/auth/verify-telegram-webapp');
       debug('Validating initData with server...');
       
       const response = await fetch('/api/auth/verify-telegram-webapp', {
@@ -103,19 +107,29 @@ export function TelegramWebAppAuth({
         body: JSON.stringify({ initData: initDataString }),
       });
 
+      console.log('🔄 Client: Response status:', response.status);
+      console.log('🔄 Client: Response ok:', response.ok);
+
       const result = await response.json();
-      debug('Server validation result:', { success: result.valid });
+      console.log('🔄 Client: Response JSON:', result);
+      debug('Server validation result:', { success: result.success || result.valid });
       
-      return result.valid;
+      return result.success === true || result.valid === true;
     } catch (error) {
+      console.error('🔴 Client: Error validating initData:', error);
       debug('Error validating initData:', error);
       return false;
     }
   }, []);
 
   const handleTelegramAuth = useCallback(async () => {
+    console.log('🔄 Starting handleTelegramAuth');
+    console.log('🔄 InitData length:', initData?.length);
+    console.log('🔄 User:', user);
+    
     if (!initData || !user) {
       const error = 'Telegram WebApp not initialized or no user data';
+      console.error('🔴 Missing data:', { initData: !!initData, user: !!user });
       debug(error);
       setAuthError(error);
       onError?.(error);
@@ -124,6 +138,7 @@ export function TelegramWebAppAuth({
 
     setIsAuthenticating(true);
     setAuthError(null);
+    console.log('🔄 Starting Telegram WebApp authentication...');
     debug('Starting Telegram WebApp authentication...');
 
     try {
@@ -131,12 +146,16 @@ export function TelegramWebAppAuth({
       haptic.impact('light');
 
       // Validate initData with server
+      console.log('🔄 Validating initData with server...');
       const isValid = await validateInitData(initData);
+      console.log('🔄 Server validation result:', isValid);
       
       if (!isValid) {
+        console.error('🔴 Server validation failed');
         throw new Error('Invalid Telegram data');
       }
 
+      console.log('✅ Server validation passed, calling NextAuth signIn...');
       debug('Calling NextAuth signIn with validated data...');
 
       // Use NextAuth signIn with telegram-miniapp provider
@@ -145,6 +164,7 @@ export function TelegramWebAppAuth({
         redirect: false,
       });
 
+      console.log('🔄 NextAuth signIn result:', result);
       debug('NextAuth signIn result:', result);
 
       if (result?.ok) {
@@ -158,10 +178,12 @@ export function TelegramWebAppAuth({
     } catch (error: any) {
       debug('Authentication error:', error);
       const errorMessage = error.message || 'Authentication failed';
+      console.error('🔴 Telegram auth error:', errorMessage, error);
       setAuthError(errorMessage);
       haptic.notification('error');
       onError?.(errorMessage);
-      await showAlert(`Authentication failed: ${errorMessage}`);
+      // Don't show alert to avoid blocking UI
+      // await showAlert(`Authentication failed: ${errorMessage}`);
     } finally {
       setIsAuthenticating(false);
     }
