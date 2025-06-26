@@ -42,6 +42,10 @@ export const sidebar: SidebarData = {
           title: "🟡 Payments",
           url: "/hasyx/payments",
         },
+        {
+          title: "🟠 Telegram",
+          url: "/hasyx/telegram-webapp",
+        },
       ],
     },
     // Add documentation section with collapse functionality

@@ -9,7 +9,7 @@ import { HasuraCard } from "hasyx/components/hasura/card";
 import { ProxyCard } from "hasyx/components/proxy/card";
 import { UsersCard } from "hasyx/components/users/users-card";
 import { NotificationCard } from "hasyx/components/notify";
-import { TelegramDebugCard } from "hasyx/components/auth/telegram-debug-card";
+// import { TelegramDebugCard } from "hasyx/components/auth/telegram-debug-card";
 import { Session } from "next-auth";
 
 interface DiagnosticsProps {
@@ -32,7 +32,7 @@ export default function Diagnostics({ serverSession, sidebarData }: DiagnosticsP
           <SessionCard serverSession={serverSession} />
           <NotificationCard />
           <UsersCard />
-          <TelegramDebugCard />
+          {/* <TelegramDebugCard /> */}
         </div>
         <div className="grid auto-rows-min gap-4 md:grid-cols-3">
           <div className="aspect-video rounded-xl bg-muted/50" />

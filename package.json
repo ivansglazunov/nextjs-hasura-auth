@@ -1,6 +1,6 @@
 {
   "name": "hasyx",
-  "version": "0.1.329",
+  "version": "0.1.330",
   "description": "Modern full-stack framework with real-time GraphQL, AI integration, and seamless development experience",
   "homepage": "https://hasyx.deep.foundation/",
   "engines": {
@@ -208,5 +208,8 @@
   },
   "bin": {
     "hasyx": "./lib/cli.js"
+  },
+  "devDependencies": {
+    "eruda": "^3.4.3"
   }
 }
