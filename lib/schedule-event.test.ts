@@ -41,7 +41,7 @@ function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const isLocal = !+process?.env?.JEST_LOCAL!;
+const isLocal = !!+process?.env?.JEST_LOCAL!;
 
 (isLocal ? describe.skip : describe)('Schedule Event System', () => {
   it('should create schedule, process events, and handle timing correctly', async () => {
