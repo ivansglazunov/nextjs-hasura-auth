@@ -5,6 +5,9 @@ import { API_URL } from './url';
 import path from 'path';
 import fs from 'fs-extra';
 import spawn from 'cross-spawn'; // For potential calibration scripts
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const debug = Debug('assist:telegram');
 

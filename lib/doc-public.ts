@@ -133,7 +133,7 @@ export function scanMarkdownFiles(rootDir: string = process.cwd()): MarkdownFile
           if (!item.startsWith('.') && item !== 'node_modules' && item !== 'dist' && item !== 'build' && item !== 'public') {
             scanDirectory(fullPath);
           }
-        } else if (item.endsWith('.md')) {
+        } else if (item.endsWith('.md') && !item.endsWith('.experiment.md')) {
           try {
             const content = fs.readFileSync(fullPath, 'utf-8');
             const headings = parseMarkdownHeadings(content);
@@ -207,6 +207,7 @@ export function createDocNavigationStructure(markdownFiles: MarkdownFile[]): Sid
  */
 export function buildDocumentation(rootDir: string = process.cwd()) {
   console.log('📚 Building documentation...');
+  console.log('ℹ️ Ignoring *.experiment.md files');
   
   const publicDocDir = path.join(rootDir, 'public', '_doc');
   const appDocDir = path.join(rootDir, 'app', 'hasyx', 'doc');

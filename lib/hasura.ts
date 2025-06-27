@@ -62,6 +62,23 @@ interface DefineRelationshipOptions {
   key: string;
 }
 
+interface DefineUniversalRelationshipOptions {
+  schema: string;
+  table: string;
+  name: string;
+  type: 'object' | 'array';
+  using: {
+    foreign_key_constraint_on?: string | {
+      table: { schema: string; name: string };
+      column: string;
+    };
+    manual_configuration?: {
+      remote_table: { schema: string; name: string };
+      column_mapping: Record<string, string>;
+    };
+  };
+}
+
 interface DeleteRelationshipOptions {
   schema: string;
   table: string;
@@ -642,6 +659,29 @@ export class Hasura {
             column: key.split('.')[1] || key
           }
         }
+      }
+    });
+  }
+
+  async defineRelationship(options: DefineUniversalRelationshipOptions): Promise<any> {
+    const { schema, table, name, type, using } = options;
+    
+    debug(`🔧 Defining ${type} relationship ${name} in ${schema}.${table}`);
+    
+    // Delete existing relationship if exists
+    await this.deleteRelationship({ schema, table, name });
+    
+    // Determine the API type based on relationship type
+    const apiType = type === 'object' ? 'pg_create_object_relationship' : 'pg_create_array_relationship';
+    
+    // Create new relationship
+    return await this.v1({
+      type: apiType,
+      args: {
+        source: 'default',
+        table: { schema, name: table },
+        name,
+        using
       }
     });
   }

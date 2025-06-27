@@ -1,0 +1,18 @@
+{
+  "name": "schedule_processor_cron",
+  "webhook_path": "/api/events/schedule-cron",
+  "schedule": "* * * * *",
+  "comment": "Process scheduled events every minute",
+  "retry_conf": {
+    "num_retries": 3,
+    "interval_sec": 30,
+    "timeout_sec": 120
+  },
+  "headers": [
+    {
+      "name": "X-Hasura-Event-Secret",
+      "value_from_env": "HASURA_EVENT_SECRET"
+    }
+  ],
+  "include_in_metadata": true
+} 

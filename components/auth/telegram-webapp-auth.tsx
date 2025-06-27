@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { signIn, useSession } from 'next-auth/react';
+import { Badge } from 'hasyx/components/ui/badge';
 import { Button } from 'hasyx/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from 'hasyx/components/ui/card';
-import { Badge } from 'hasyx/components/ui/badge';
-import { Loader2, CheckCircle, AlertCircle, Smartphone } from 'lucide-react';
 import { useTelegramWebApp } from 'hasyx/hooks/use-telegram-webapp';
-import { debugLog } from 'hasyx/components/debug-console';
 import Debug from 'hasyx/lib/debug';
+import { AlertCircle, CheckCircle, Loader2, Smartphone } from 'lucide-react';
+import { signIn, useSession } from 'next-auth/react';
+import { useCallback, useEffect, useState } from 'react';
 
 const debug = Debug('auth:telegram-webapp');
 

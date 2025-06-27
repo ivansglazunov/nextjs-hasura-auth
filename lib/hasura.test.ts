@@ -2073,6 +2073,408 @@ debug('✅ Real Hasura client initialized for testing');
         await hasura.deleteSchema({ schema: testSchema, cascade: true });
       }
     }, 60000);
+
+    it('should create object relationship using universal defineRelationship method', async () => {
+      const testSchema = `test_universal_obj_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create test schema and tables with foreign key
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineTable({ schema: testSchema, table: 'posts' });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_id',
+          type: ColumnType.UUID
+        });
+        await hasura.defineForeignKey({
+          from: { schema: testSchema, table: 'posts', column: 'author_id' },
+          to: { schema: testSchema, table: 'users', column: 'id' },
+          on_delete: 'CASCADE'
+        });
+        
+        // Test: Create object relationship using universal method
+        const result = await hasura.defineRelationship({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author',
+          type: 'object',
+          using: {
+            foreign_key_constraint_on: 'author_id'
+          }
+        });
+        expect(result).toBeDefined();
+        
+        // Verify: Relationship exists in metadata
+        const metadata = await hasura.exportMetadata();
+        const source = metadata.sources.find((s: any) => s.name === 'default');
+        const table = source.tables.find((t: any) => 
+          t.table.schema === testSchema && t.table.name === 'posts'
+        );
+        expect(table).toBeDefined();
+        expect(table.object_relationships).toBeDefined();
+        const authorRel = table.object_relationships.find((r: any) => r.name === 'author');
+        expect(authorRel).toBeDefined();
+        expect(authorRel.using.foreign_key_constraint_on).toBe('author_id');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+
+    it('should create array relationship using universal defineRelationship method', async () => {
+      const testSchema = `test_universal_arr_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create test schema and tables with foreign key
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineTable({ schema: testSchema, table: 'posts' });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_id',
+          type: ColumnType.UUID
+        });
+        await hasura.defineForeignKey({
+          from: { schema: testSchema, table: 'posts', column: 'author_id' },
+          to: { schema: testSchema, table: 'users', column: 'id' },
+          on_delete: 'CASCADE'
+        });
+        
+        // Test: Create array relationship using universal method
+        const result = await hasura.defineRelationship({
+          schema: testSchema,
+          table: 'users',
+          name: 'posts',
+          type: 'array',
+          using: {
+            foreign_key_constraint_on: {
+              table: { schema: testSchema, name: 'posts' },
+              column: 'author_id'
+            }
+          }
+        });
+        expect(result).toBeDefined();
+        
+        // Verify: Relationship exists in metadata
+        const metadata = await hasura.exportMetadata();
+        const source = metadata.sources.find((s: any) => s.name === 'default');
+        const table = source.tables.find((t: any) => 
+          t.table.schema === testSchema && t.table.name === 'users'
+        );
+        expect(table).toBeDefined();
+        expect(table.array_relationships).toBeDefined();
+        const postsRel = table.array_relationships.find((r: any) => r.name === 'posts');
+        expect(postsRel).toBeDefined();
+        expect(postsRel.using.foreign_key_constraint_on.table.name).toBe('posts');
+        expect(postsRel.using.foreign_key_constraint_on.column).toBe('author_id');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+
+    it('should replace existing relationship with universal defineRelationship method', async () => {
+      const testSchema = `test_universal_replace_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create test schema, tables and foreign key
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineTable({ schema: testSchema, table: 'posts' });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_id',
+          type: ColumnType.UUID
+        });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'posts',
+          name: 'reviewer_id',
+          type: ColumnType.UUID
+        });
+        await hasura.defineForeignKey({
+          from: { schema: testSchema, table: 'posts', column: 'author_id' },
+          to: { schema: testSchema, table: 'users', column: 'id' },
+          on_delete: 'CASCADE'
+        });
+        await hasura.defineForeignKey({
+          from: { schema: testSchema, table: 'posts', column: 'reviewer_id' },
+          to: { schema: testSchema, table: 'users', column: 'id' },
+          on_delete: 'SET NULL'
+        });
+        
+        // Test: Create object relationship first
+        await hasura.defineRelationship({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author',
+          type: 'object',
+          using: {
+            foreign_key_constraint_on: 'author_id'
+          }
+        });
+        
+        // Test: Replace with different configuration - should work
+        const result = await hasura.defineRelationship({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author',
+          type: 'object',
+          using: {
+            foreign_key_constraint_on: 'reviewer_id'
+          }
+        });
+        expect(result).toBeDefined();
+        
+        // Verify: Relationship was replaced (now uses reviewer_id)
+        const metadata = await hasura.exportMetadata();
+        const source = metadata.sources.find((s: any) => s.name === 'default');
+        const table = source.tables.find((t: any) => 
+          t.table.schema === testSchema && t.table.name === 'posts'
+        );
+        const authorRel = table.object_relationships.find((r: any) => r.name === 'author');
+        expect(authorRel.using.foreign_key_constraint_on).toBe('reviewer_id');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+
+    it('should handle manual configuration relationships', async () => {
+      const testSchema = `test_manual_rel_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create test schema and tables (no foreign key constraint)
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineTable({ schema: testSchema, table: 'posts' });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_id',
+          type: ColumnType.UUID
+        });
+        
+        // Test: Create manual relationship without foreign key constraint
+        const result = await hasura.defineRelationship({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author',
+          type: 'object',
+          using: {
+            manual_configuration: {
+              remote_table: { schema: testSchema, name: 'users' },
+              column_mapping: { author_id: 'id' }
+            }
+          }
+        });
+        expect(result).toBeDefined();
+        
+        // Verify: Manual relationship exists in metadata
+        const metadata = await hasura.exportMetadata();
+        const source = metadata.sources.find((s: any) => s.name === 'default');
+        const table = source.tables.find((t: any) => 
+          t.table.schema === testSchema && t.table.name === 'posts'
+        );
+        expect(table).toBeDefined();
+        expect(table.object_relationships).toBeDefined();
+        const authorRel = table.object_relationships.find((r: any) => r.name === 'author');
+        expect(authorRel).toBeDefined();
+        expect(authorRel.using.manual_configuration).toBeDefined();
+        expect(authorRel.using.manual_configuration.remote_table.name).toBe('users');
+        expect(authorRel.using.manual_configuration.column_mapping.author_id).toBe('id');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+
+    it('should be equivalent to defineObjectRelationshipForeign', async () => {
+      const testSchema = `test_equivalence_obj_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create test schema and tables with foreign key
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineTable({ schema: testSchema, table: 'posts' });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_id',
+          type: ColumnType.UUID
+        });
+        await hasura.defineForeignKey({
+          from: { schema: testSchema, table: 'posts', column: 'author_id' },
+          to: { schema: testSchema, table: 'users', column: 'id' },
+          on_delete: 'CASCADE'
+        });
+        
+        // Create relationship using old method
+        await hasura.defineObjectRelationshipForeign({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_old',
+          key: 'author_id'
+        });
+        
+        // Create relationship using new method
+        await hasura.defineRelationship({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_new',
+          type: 'object',
+          using: {
+            foreign_key_constraint_on: 'author_id'
+          }
+        });
+        
+        // Verify both relationships have identical structure
+        const metadata = await hasura.exportMetadata();
+        const source = metadata.sources.find((s: any) => s.name === 'default');
+        const table = source.tables.find((t: any) => 
+          t.table.schema === testSchema && t.table.name === 'posts'
+        );
+        
+        const oldRel = table.object_relationships.find((r: any) => r.name === 'author_old');
+        const newRel = table.object_relationships.find((r: any) => r.name === 'author_new');
+        
+        expect(oldRel).toBeDefined();
+        expect(newRel).toBeDefined();
+        expect(oldRel.using.foreign_key_constraint_on).toBe(newRel.using.foreign_key_constraint_on);
+        expect(oldRel.using.foreign_key_constraint_on).toBe('author_id');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+
+    it('should be equivalent to defineArrayRelationshipForeign', async () => {
+      const testSchema = `test_equivalence_arr_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create test schema and tables with foreign key
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineTable({ schema: testSchema, table: 'posts' });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_id',
+          type: ColumnType.UUID
+        });
+        await hasura.defineForeignKey({
+          from: { schema: testSchema, table: 'posts', column: 'author_id' },
+          to: { schema: testSchema, table: 'users', column: 'id' },
+          on_delete: 'CASCADE'
+        });
+        
+        // Create relationship using old method
+        await hasura.defineArrayRelationshipForeign({
+          schema: testSchema,
+          table: 'users',
+          name: 'posts_old',
+          key: 'posts.author_id'
+        });
+        
+        // Create relationship using new method
+        await hasura.defineRelationship({
+          schema: testSchema,
+          table: 'users',
+          name: 'posts_new',
+          type: 'array',
+          using: {
+            foreign_key_constraint_on: {
+              table: { schema: testSchema, name: 'posts' },
+              column: 'author_id'
+            }
+          }
+        });
+        
+        // Verify both relationships have identical structure
+        const metadata = await hasura.exportMetadata();
+        const source = metadata.sources.find((s: any) => s.name === 'default');
+        const table = source.tables.find((t: any) => 
+          t.table.schema === testSchema && t.table.name === 'users'
+        );
+        
+        const oldRel = table.array_relationships.find((r: any) => r.name === 'posts_old');
+        const newRel = table.array_relationships.find((r: any) => r.name === 'posts_new');
+        
+        expect(oldRel).toBeDefined();
+        expect(newRel).toBeDefined();
+        expect(oldRel.using.foreign_key_constraint_on.table.name).toBe(newRel.using.foreign_key_constraint_on.table.name);
+        expect(oldRel.using.foreign_key_constraint_on.column).toBe(newRel.using.foreign_key_constraint_on.column);
+        expect(oldRel.using.foreign_key_constraint_on.table.name).toBe('posts');
+        expect(oldRel.using.foreign_key_constraint_on.column).toBe('author_id');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+
+    it('should be equivalent to defineObjectRelationshipForeign', async () => {
+      const testSchema = `test_equivalence_obj_${uuidv4().replace(/-/g, '_')}`;
+      
+      try {
+        // Setup: Create test schema and tables with foreign key
+        await hasura.defineSchema({ schema: testSchema });
+        await hasura.defineTable({ schema: testSchema, table: 'users' });
+        await hasura.defineTable({ schema: testSchema, table: 'posts' });
+        await hasura.defineColumn({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_id',
+          type: ColumnType.UUID
+        });
+        await hasura.defineForeignKey({
+          from: { schema: testSchema, table: 'posts', column: 'author_id' },
+          to: { schema: testSchema, table: 'users', column: 'id' },
+          on_delete: 'CASCADE'
+        });
+        
+        // Create relationship using old method
+        await hasura.defineObjectRelationshipForeign({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_old',
+          key: 'author_id'
+        });
+        
+        // Create relationship using new method
+        await hasura.defineRelationship({
+          schema: testSchema,
+          table: 'posts',
+          name: 'author_new',
+          type: 'object',
+          using: {
+            foreign_key_constraint_on: 'author_id'
+          }
+        });
+        
+        // Verify both relationships have identical structure
+        const metadata = await hasura.exportMetadata();
+        const source = metadata.sources.find((s: any) => s.name === 'default');
+        const table = source.tables.find((t: any) => 
+          t.table.schema === testSchema && t.table.name === 'posts'
+        );
+        
+        const oldRel = table.object_relationships.find((r: any) => r.name === 'author_old');
+        const newRel = table.object_relationships.find((r: any) => r.name === 'author_new');
+        
+        expect(oldRel).toBeDefined();
+        expect(newRel).toBeDefined();
+        expect(oldRel.using.foreign_key_constraint_on).toBe(newRel.using.foreign_key_constraint_on);
+        expect(oldRel.using.foreign_key_constraint_on).toBe('author_id');
+        
+      } finally {
+        await hasura.deleteSchema({ schema: testSchema, cascade: true });
+      }
+    }, 30000);
+
   });
 
   describe('Permission Operations', () => {

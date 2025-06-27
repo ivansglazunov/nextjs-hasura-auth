@@ -1,0 +1,28 @@
+{
+  "name": "events",
+  "table": {
+    "schema": "public",
+    "name": "events"
+  },
+  "webhook_path": "/api/events/events",
+  "insert": {
+    "columns": "*"
+  },
+  "update": {
+    "columns": "*"
+  },
+  "delete": {
+    "columns": "*"
+  },
+  "retry_conf": {
+    "num_retries": 3,
+    "interval_sec": 15,
+    "timeout_sec": 60
+  },
+  "headers": [
+    {
+      "name": "X-Hasura-Event-Secret",
+      "value_from_env": "HASURA_EVENT_SECRET"
+    }
+  ]
+} 

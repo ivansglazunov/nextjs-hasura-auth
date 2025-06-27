@@ -430,4 +430,98 @@ await hasura.defineView({
 });
 ```
 
-### `
+### `deleteView(options: { schema: string; name: string }): Promise<any>`
+
+Delete a database view and untrack it from Hasura.
+
+```typescript
+await hasura.deleteView({
+  schema: 'public',
+  name: 'old_view'
+});
+```
+
+## Relationship Operations
+
+### `defineRelationship(options: DefineUniversalRelationshipOptions): Promise<any>`
+
+Create or replace a relationship between tables (idempotent operation). This is the universal method that can handle both object and array relationships with various configuration options.
+
+```typescript
+// Object relationship using foreign key constraint
+await hasura.defineRelationship({
+  schema: 'public',
+  table: 'posts',
+  name: 'author',
+  type: 'object',
+  using: {
+    foreign_key_constraint_on: 'author_id'
+  }
+});
+
+// Array relationship using foreign key constraint
+await hasura.defineRelationship({
+  schema: 'public',
+  table: 'users',
+  name: 'posts',
+  type: 'array',
+  using: {
+    foreign_key_constraint_on: {
+      table: { schema: 'public', name: 'posts' },
+      column: 'author_id'
+    }
+  }
+});
+
+// Manual relationship configuration
+await hasura.defineRelationship({
+  schema: 'public',
+  table: 'posts',
+  name: 'author',
+  type: 'object',
+  using: {
+    manual_configuration: {
+      remote_table: { schema: 'public', name: 'users' },
+      column_mapping: { author_id: 'id' }
+    }
+  }
+});
+```
+
+### `defineObjectRelationshipForeign(options: DefineRelationshipOptions): Promise<any>`
+
+Create or replace an object relationship using a foreign key constraint (idempotent operation).
+
+```typescript
+await hasura.defineObjectRelationshipForeign({
+  schema: 'public',
+  table: 'posts',
+  name: 'author',
+  key: 'author_id'
+});
+```
+
+### `defineArrayRelationshipForeign(options: DefineRelationshipOptions): Promise<any>`
+
+Create or replace an array relationship using a foreign key constraint (idempotent operation).
+
+```typescript
+await hasura.defineArrayRelationshipForeign({
+  schema: 'public',
+  table: 'users',
+  name: 'posts',
+  key: 'posts.author_id'
+});
+```
+
+### `deleteRelationship(options: DeleteRelationshipOptions): Promise<any>`
+
+Delete a relationship from a table.
+
+```typescript
+await hasura.deleteRelationship({
+  schema: 'public',
+  table: 'posts',
+  name: 'author'
+});
+```
