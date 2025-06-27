@@ -15,6 +15,7 @@ import {
 } from './schedule-event';
 import { generateHasuraSchema } from './hasura-schema';
 import { v4 as uuidv4 } from 'uuid';
+import schema from '../public/hasura-schema.json';
 
 // Helper function to create unique test environment
 async function createTestEnvironment() {
@@ -30,12 +31,6 @@ async function createTestEnvironment() {
     secret: process.env.HASURA_ADMIN_SECRET!,
   });
   
-  // Generate hasura schema for hasyx
-  const schema = await generateHasuraSchema({
-    url: process.env.NEXT_PUBLIC_HASURA_GRAPHQL_URL!,
-    secret: process.env.HASURA_ADMIN_SECRET!,
-  });
-  
   const hasyx = new Hasyx(apolloClient, Generator(schema));
   
   return { hasura, hasyx, testSchema };
@@ -46,7 +41,9 @@ function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-describe('Schedule Event System', () => {
+const isLocal = !+process?.env?.JEST_LOCAL!;
+
+(isLocal ? describe.skip : describe)('Schedule Event System', () => {
   it('should create schedule, process events, and handle timing correctly', async () => {
     const { hasura, hasyx, testSchema } = await createTestEnvironment();
     

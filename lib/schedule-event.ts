@@ -199,7 +199,7 @@ export async function handleEventScheduled(
  */
 export async function processScheduledEvents(
   hasyx: Hasyx,
-  eventHandler: (event: EventRecord, schedule?: ScheduleRecord) => Promise<void>
+  eventHandler: (hasyx: Hasyx, event: EventRecord, schedule?: ScheduleRecord) => Promise<void>
 ) {
   const currentTime = Math.floor(Date.now() / 1000);
   debug(`Processing scheduled events at ${new Date().toISOString()}`);
@@ -230,7 +230,7 @@ export async function processScheduledEvents(
       }
       
       // Call the event handler
-      await eventHandler(event, schedule);
+      await eventHandler(hasyx, event, schedule);
       
       // Mark event as scheduled
       await hasyx.update({
@@ -273,7 +273,7 @@ export async function defaultEventHandler(
  */
 export async function handleScheduleEvent(
   hasyx: Hasyx,
-  eventHandler: (event: EventRecord, schedule?: ScheduleRecord) => Promise<void> = (event, schedule) => defaultEventHandler(hasyx, event, schedule)
+  eventHandler: (hasyx: Hasyx, event: EventRecord, schedule?: ScheduleRecord) => Promise<void> = (hasyx, event, schedule) => defaultEventHandler(hasyx, event, schedule)
 ) {
   return processScheduledEvents(hasyx, eventHandler);
 } 

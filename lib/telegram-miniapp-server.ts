@@ -27,7 +27,7 @@ export interface TelegramMiniappData {
 }
 
 // Validate Telegram initData hash using the same logic as telegram-credentials.ts
-export function validateTelegramInitData(initData: string, botToken: string): boolean {
+export function validateTelegramInitData(initData: string, botToken?: string): boolean {
   console.log('🔍 Server: Starting validateTelegramInitData');
   console.log('🔍 Server: InitData length:', initData?.length);
   console.log('🔍 Server: Bot token present:', !!botToken);

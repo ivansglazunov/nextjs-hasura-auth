@@ -7,11 +7,6 @@ const MANUAL_TESTING = !!+process?.env?.MANUAL_TESTING!;
 
 // Only run these tests if MANUAL_TESTING environment variable is set
 (MANUAL_TESTING ? describe : describe.skip)('Passive Authentication Manual Testing', function(this: any) {
-  
-  console.log('🧪 Passive Authentication Manual Testing');
-  console.log('📧 Test credentials: test@example.com / 123456');
-  console.log('⚙️  Make sure NEXT_PUBLIC_PASSIVE_AUTH=1 is set in your environment');
-  console.log('');
 
   it('should authenticate via Google OAuth with passive mode', async () => {
     const jwt = await new Promise<string>((resolve) => {
