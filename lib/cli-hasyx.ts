@@ -229,6 +229,7 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/api/events/[name]/route.ts': 'app/api/events/[name]/route.ts',
     'app/api/telegram_bot/route.ts': 'app/api/telegram_bot/route.ts',
     'app/api/health/route.ts': 'app/api/health/route.ts',
+    'app/auth/callback/page.tsx': 'app/auth/callback/page.tsx',
   };
 
   // Files to create if not exists (or force replace if --reinit)
@@ -237,7 +238,6 @@ export const initCommand = async (options: any, packageName: string = 'hasyx') =
     'app/layout.tsx': 'app/layout.tsx',
     'app/page.tsx': 'app/page.tsx',
     'app/globals.css': 'app/globals.css',
-    'app/auth/callback/page.ts': 'app/auth/callback/page.ts',
     'app/hasyx/diagnostics/page.tsx': 'app/hasyx/diagnostics/page.tsx',
     'app/hasyx/aframe/page.tsx': 'app/hasyx/aframe/page.tsx',
     'app/hasyx/aframe/client.tsx': 'app/hasyx/aframe/client.tsx',

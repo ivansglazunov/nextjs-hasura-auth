@@ -4,6 +4,7 @@
 // Export all utilities from the lib directory (client-safe modules only)
 export * from './apollo';
 export * from './auth';
+export * from './auth-callback';
 export * from './generator';
 export * from './hasura';
 export * from './hasyx';
