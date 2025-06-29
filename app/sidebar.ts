@@ -46,6 +46,10 @@ export const sidebar: SidebarData = {
           title: "🟢 Telegram",
           url: "/hasyx/telegram-miniapp",
         },
+        {
+          title: "🟠 Roadmap",
+          url: "/hasyx/roadmap",
+        },
       ],
     },
     // Add documentation section with collapse functionality
