@@ -31,7 +31,7 @@ interface TelegramMiniappContextType {
   isInTelegram: boolean;
   initData?: TelegramMiniappData;
   session?: Session;
-  status: 'loading' | 'authenticated' | 'unauthenticated';
+  status: 'loading' | 'authenticated' | 'unauthenticated' | 'server-validating';
   signIn: () => Promise<void>;
 }
 
@@ -71,10 +71,12 @@ export function TelegramMiniappProvider({ children }: { children: React.ReactNod
     isInTelegram: boolean;
     initData?: TelegramMiniappData;
     session?: Session;
-    status: 'loading' | 'authenticated' | 'unauthenticated';
+    status: 'loading' | 'authenticated' | 'unauthenticated' | 'server-validating';
+    serverValidated?: boolean;
   }>({
     isInTelegram: false,
-    status: 'loading'
+    status: 'loading',
+    serverValidated: false
   });
 
   useEffect(() => {
@@ -99,14 +101,20 @@ export function TelegramMiniappProvider({ children }: { children: React.ReactNod
             ...prev,
             isInTelegram: true,
             initData,
-            status: initData.user ? 'authenticated' : 'unauthenticated'
+            // Don't set authenticated status based only on client data
+            status: initData.user ? 'server-validating' : 'unauthenticated'
           }));
 
           if (initData.user) {
             try {
               const session = telegramToSession(initData);
               setState(prev => ({ ...prev, session }));
-              debug('Telegram session created:', session);
+              debug('Telegram session created (pending server validation):', session);
+              
+              // Auto-trigger server validation
+              setTimeout(() => {
+                signInInternal(initData);
+              }, 100);
             } catch (error) {
               debug('Error creating session from Telegram data:', error);
               setState(prev => ({ ...prev, status: 'unauthenticated' }));
@@ -123,13 +131,22 @@ export function TelegramMiniappProvider({ children }: { children: React.ReactNod
     }
   }, []);
 
-  const signIn = async () => {
-    if (!state.initData) {
+  const signInInternal = async (initDataToUse?: TelegramMiniappData) => {
+    const dataToUse = initDataToUse || state.initData;
+    if (!dataToUse) {
       debug('No initData available for sign in');
       return;
     }
 
+    // Skip if already validated
+    if (state.serverValidated) {
+      debug('Already server validated, skipping');
+      return;
+    }
+
     try {
+      setState(prev => ({ ...prev, status: 'server-validating' }));
+      
       // Get raw initData string for server validation
       let initDataString = '';
       
@@ -152,15 +169,33 @@ export function TelegramMiniappProvider({ children }: { children: React.ReactNod
 
       if (response.ok) {
         debug('Server validation successful');
-        // Session is already set in useEffect
+        setState(prev => ({ 
+          ...prev, 
+          status: 'authenticated',
+          serverValidated: true 
+        }));
       } else {
         debug('Server validation failed');
-        setState(prev => ({ ...prev, status: 'unauthenticated' }));
+        setState(prev => ({ 
+          ...prev, 
+          status: 'unauthenticated',
+          session: undefined,
+          serverValidated: false 
+        }));
       }
     } catch (error) {
       debug('Error during sign in:', error);
-      setState(prev => ({ ...prev, status: 'unauthenticated' }));
+      setState(prev => ({ 
+        ...prev, 
+        status: 'unauthenticated',
+        session: undefined,
+        serverValidated: false 
+      }));
     }
+  };
+
+  const signIn = async () => {
+    await signInInternal();
   };
 
   return (

@@ -6,7 +6,6 @@ import Debug from './debug';
 import { Generator } from './generator';
 import { Hasyx } from './hasyx';
 import { generateJWT as generateHasuraJWT } from './jwt';
-import { useTelegramMiniapp } from './telegram-miniapp';
 
 const debug = Debug('auth');
 
@@ -46,25 +45,13 @@ export interface SessionData {
  * 
  * Wraps the `useSession` hook from `next-auth/react` and provides type safety
  * based on the augmented `Session` and `SessionData` interfaces.
- * 
- * Automatically detects and prioritizes Telegram miniapp authentication when available.
  *
  * @returns {SessionData} The current session data and status.
  */
 export function useSession(): SessionData {
   const sessionDataNextAuth = useSessionNextAuth();
-  const telegramMiniapp = useTelegramMiniapp();
 
-  // If in Telegram miniapp environment and authenticated, use Telegram session
-  if (telegramMiniapp.isInTelegram && telegramMiniapp.session && telegramMiniapp.status === 'authenticated') {
-    return {
-      data: telegramMiniapp.session,
-      status: telegramMiniapp.status,
-      update: async () => telegramMiniapp.session || null
-    };
-  }
-
-  // Otherwise, use standard NextAuth session
+  // Return standard NextAuth session
   return sessionDataNextAuth as SessionData;
 }
 

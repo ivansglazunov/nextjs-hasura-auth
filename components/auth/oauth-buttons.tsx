@@ -1,11 +1,59 @@
 import React from 'react';
 import { ProviderButton } from './provider-button';
 import TelegramLoginButton from './telegram-login-button';
+import { TelegramWebAppAuth } from './telegram-webapp-auth';
+import { useTelegramWebApp } from 'hasyx/hooks/use-telegram-webapp';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from 'hasyx/components/ui/card';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 /**
  * Component with buttons for OAuth authorization through various providers
+ * Automatically handles Telegram MiniApp authentication when running inside Telegram
  */
 export function OAuthButtons() {
+  const { isInTelegram, isLoading } = useTelegramWebApp();
+
+  // If we're in Telegram MiniApp, show Telegram WebApp Auth instead of OAuth buttons
+  if (isInTelegram) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 max-w-md mx-auto">
+        <TelegramWebAppAuth 
+          onSuccess={(user) => {
+            console.log('Telegram authentication successful:', user);
+          }}
+          onError={(error) => {
+            console.error('Telegram authentication error:', error);
+          }}
+          className="w-full"
+          autoAuth={true}
+        />
+      </div>
+    );
+  }
+
+  // If still loading telegram webapp detection, show loader
+  if (isLoading) {
+    return (
+      <Card className="max-w-md mx-auto">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <CardTitle className="text-lg">Loading...</CardTitle>
+          </div>
+          <CardDescription>
+            Checking authentication options...
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center">
+            <Loader2 className="animate-spin h-8 w-8 text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show regular OAuth buttons for non-Telegram environments
   return (
     <div className="flex flex-col space-y-3">
       <ProviderButton 
