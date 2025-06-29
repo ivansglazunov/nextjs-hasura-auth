@@ -13,8 +13,10 @@ import dagre from 'cytoscape-dagre';
 import cola from 'cytoscape-cola';
 import edgehandles from 'cytoscape-edgehandles';
 import edgeConnections from 'cytoscape-edge-connections';
+import klay from 'cytoscape-klay';
 
 
+cytoscape.use(klay);
 cytoscape.use(dagre);
 cytoscape.use(cola);
 cytoscape.use(edgeConnections);
