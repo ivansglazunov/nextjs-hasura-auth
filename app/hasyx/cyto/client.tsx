@@ -5,7 +5,7 @@ import { Cyto, CytoStyle } from "hasyx/lib/cyto";
 import { Card as EntityCard, Button as EntityButton } from '../../../lib/entities';
 import { QueriesManager, QueriesRenderer } from 'hasyx/lib/renderer';
 import { useCallback, useMemo, useState } from "react";
-import projectSchema from '../hasura-schema.json';
+import projectSchema from '../../../public/hasura-schema.json';
 
 const debug = Debug('cyto');
 
