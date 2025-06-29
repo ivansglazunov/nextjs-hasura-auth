@@ -1,13 +1,15 @@
 import readline from 'readline';
-import Debug from './debug';
-import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret } from './assist-common';
-import { API_URL } from './url';
 import path from 'path';
 import fs from 'fs-extra';
 import spawn from 'cross-spawn'; // For potential calibration scripts
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Load environment variables FIRST, before any other imports that use process.env
+dotenv.config({ path: path.join(process.cwd(), '.env') });
+
+import Debug from './debug';
+import { createRlInterface, askYesNo, askForInput, parseEnvFile, writeEnvFile, maskDisplaySecret } from './assist-common';
+import { API_URL } from './url';
 
 const debug = Debug('assist:telegram');
 
@@ -110,8 +112,9 @@ export async function configureTelegramBot(rl: readline.Interface, envPath: stri
     if (shouldSetupWebhook) {
       console.log('🔗 Setting up Telegram bot webhook...');
       
-      // Get current API URL, ensure it has https protocol for webhook
-      let webhookUrl = API_URL;
+      // Get current URL from environment, with fallback to localhost:3000
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_MAIN_URL || process.env.NEXT_PUBLIC_API_URL || 'localhost:3000';
+      let webhookUrl = baseUrl;
       if (!webhookUrl.startsWith('http')) {
         webhookUrl = `https://${webhookUrl}`;
       }

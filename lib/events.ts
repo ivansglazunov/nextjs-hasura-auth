@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dotenv from 'dotenv';
 import { API_URL } from './url';
 
-dotenv.config();
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 const debug = Debug('events');
 
