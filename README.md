@@ -428,9 +428,11 @@ When running `init`, Hasyx automatically patches your Next.js project for WebSoc
 │       ├── auth/
 │       │   ├── 🔄 route.ts         # Auth API specific logic (if any)
 │       │   ├── [...nextauth]/
-│       │   │   ├── 🔄 route.ts     # NextAuth.js main handler
-│       │   └── verify/
-│       │       └── 🔄 route.ts     # Email verification or similar auth actions
+│       │   │   └── 🔄 route.ts     # NextAuth.js main handler
+│       │   ├── verify/
+│       │   │   └── 🔄 route.ts     # Email verification or similar auth actions
+│       │   └── verify-telegram-webapp/
+│       │       └── 🔄 route.ts     # Telegram WebApp authentication validation
 │       ├── graphql/
 │       │   └── 🔄 route.ts         # Hasyx GraphQL Proxy to Hasura
 │       └── telegram_bot/
