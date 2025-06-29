@@ -204,56 +204,56 @@ export function TelegramWebAppAuth({
     );
   }
 
-  // Server validation in progress
-  if (status === 'server-validating') {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <CardTitle className="text-lg">Validating Authentication...</CardTitle>
-          </div>
-          <CardDescription>
-            Verifying your Telegram data with server...
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {user && (
-            <div className="p-3 bg-muted rounded-lg">
-              <div className="flex items-center space-x-3">
-                {user.photo_url && (
-                  <img 
-                    src={user.photo_url} 
-                    alt="Avatar" 
-                    className="w-10 h-10 rounded-full"
-                  />
-                )}
-                <div>
-                  <p className="font-medium">
-                    {user.first_name} {user.last_name || ''}
-                  </p>
-                  {user.username && (
-                    <p className="text-sm text-muted-foreground">
-                      @{user.username}
-                    </p>
-                  )}
-                </div>
-                {user.is_premium && (
-                  <Badge variant="secondary" className="ml-auto">
-                    Premium
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-          <div className="mt-3 flex items-center justify-center space-x-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Please wait while we validate your authentication...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // // Server validation in progress
+  // if (status === 'server-validating') {
+  //   return (
+  //     <Card className={className}>
+  //       <CardHeader>
+  //         <div className="flex items-center space-x-2">
+  //           <Loader2 className="h-5 w-5 animate-spin" />
+  //           <CardTitle className="text-lg">Validating Authentication...</CardTitle>
+  //         </div>
+  //         <CardDescription>
+  //           Verifying your Telegram data with server...
+  //         </CardDescription>
+  //       </CardHeader>
+  //       <CardContent>
+  //         {user && (
+  //           <div className="p-3 bg-muted rounded-lg">
+  //             <div className="flex items-center space-x-3">
+  //               {user.photo_url && (
+  //                 <img 
+  //                   src={user.photo_url} 
+  //                   alt="Avatar" 
+  //                   className="w-10 h-10 rounded-full"
+  //                 />
+  //               )}
+  //               <div>
+  //                 <p className="font-medium">
+  //                   {user.first_name} {user.last_name || ''}
+  //                 </p>
+  //                 {user.username && (
+  //                   <p className="text-sm text-muted-foreground">
+  //                     @{user.username}
+  //                   </p>
+  //                 )}
+  //               </div>
+  //               {user.is_premium && (
+  //                 <Badge variant="secondary" className="ml-auto">
+  //                   Premium
+  //                 </Badge>
+  //               )}
+  //             </div>
+  //           </div>
+  //         )}
+  //         <div className="mt-3 flex items-center justify-center space-x-2 text-sm text-muted-foreground">
+  //           <Loader2 className="h-4 w-4 animate-spin" />
+  //           <span>Please wait while we validate your authentication...</span>
+  //         </div>
+  //       </CardContent>
+  //     </Card>
+  //   );
+  // }
 
   // If already authenticated
   if (status === 'authenticated') {
