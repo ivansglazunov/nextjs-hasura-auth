@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateTelegramInitData } from '@/lib/telegram-miniapp-server';
+import { validateTelegramInitData } from 'hasyx/lib/telegram-miniapp-server';
 import Debug from 'hasyx/lib/debug';
 import { withCors } from 'hasyx/lib/cors';
 
